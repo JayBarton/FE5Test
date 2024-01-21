@@ -1,0 +1,25 @@
+#version 330 core
+layout (location = 0) in vec2 vertex; 
+
+out vec2 TextureCoordinates;
+
+uniform vec2 uvs[6];
+uniform mat4 model;
+uniform mat4 projection;
+
+void main()
+{
+	const vec2 position [6] = vec2[]
+	(
+	    vec2(0.0f, 1.0f),
+        vec2(1.0f, 0.0f),
+        vec2(0.0f, 0.0f),
+
+        vec2(0.0f, 1.0f),
+        vec2(1.0f, 1.0f),
+        vec2(1.0f, 0.0f)
+	);
+	
+   TextureCoordinates = uvs[gl_VertexID];
+   gl_Position = projection * model * vec4(position[gl_VertexID], 0.0, 1.0);
+}

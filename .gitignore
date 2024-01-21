@@ -1,0 +1,9 @@
+bin/
+obj/
+Tests/
+.vs/
+Notes/
+x64/
+FE5 Original Sprites/
+Debug/
+FE5Test/
