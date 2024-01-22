@@ -48,7 +48,6 @@ void Camera::update()
             position.y = (levelHeight - halfHeight / cameraScale) ;
         }
 
-
        // glm::vec3 translate(-position.x + halfWidth, -position.y + halfHeight, 0.0f);
        //Round the position to prevent oddities when rendering at decimal positions
         glm::vec3 translate(round(-position.x) + halfWidth, round(-position.y) + halfHeight, 0.0f);

@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "Timing.h"
 #include "TextRenderer.h"
+#include "TileManager.h"
 
 #include <vector>
 #include <map>
@@ -29,19 +30,38 @@
 
 void init();
 void Draw();
-
+void loadMap(std::string nextMap);
 
 // The Width of the screen
 const GLuint SCREEN_WIDTH = 800;
 // The height of the screen
 const GLuint SCREEN_HEIGHT = 600;
 
+const static int TILE_SIZE = 16;
+
 SDL_Window *window;
 SpriteRenderer *Renderer;
 
 GLuint shapeVAO;
 
-Camera camera(SCREEN_WIDTH, SCREEN_HEIGHT, 1800, 1600);
+TextRenderer* Text;
+
+Camera camera;
+
+Texture2D Texture;
+
+std::string levelDirectory = "Levels/";
+int levelWidth;
+int levelHeight;
+
+struct Cursor
+{
+	glm::vec2 position;
+	glm::vec2 dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);
+	std::vector<glm::vec4> uvs;
+};
+
+Cursor cursor;
 
 int main(int argc, char** argv)
 {
@@ -69,11 +89,38 @@ int main(int argc, char** argv)
 
 	float previousTicks = SDL_GetTicks();
 
-
 	camera.setPosition(glm::vec2(0.0f, 0.0f));
 	camera.update();
 
+	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
+	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
+
+//	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
+
+//	ResourceManager::LoadShader("Shaders/postVertexShader.txt", "Shaders/postFragmentShader.txt", nullptr, "postprocessing");
+
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheettest.png", "tiles");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
+
+	Shader myShader;
+	myShader = ResourceManager::GetShader("sprite");
+	Renderer = new SpriteRenderer(myShader);
+
+	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
+
+	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(TILE_SIZE, TILE_SIZE);
+	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
+	cursor.position = glm::vec2(0);
+	Text = new TextRenderer(800, 600);
+	Text->Load("fonts/Teko-Light.TTF", 30);
+
+	loadMap("1.map");
 
 	while (isRunning)
 	{
@@ -108,14 +155,44 @@ int main(int argc, char** argv)
 					isRunning = false;
 				}
 			}
+			if (event.type == SDL_MOUSEWHEEL)
+			{
+				camera.setScale(glm::clamp(camera.getScale() + event.wheel.y * 0.1f, 0.3f, 4.5f));
+			}
+
+			const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
+
+			//Just pringint this out now as a proof of concept
+			if (currentKeyStates[SDL_SCANCODE_RIGHT])
+			{
+				cursor.position.x += 1 * TileManager::TILE_SIZE;
+				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
+				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
+			}
+			if (currentKeyStates[SDL_SCANCODE_LEFT])
+			{
+				cursor.position.x -= 1 * TileManager::TILE_SIZE;
+				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
+				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
+			}
+			if (currentKeyStates[SDL_SCANCODE_UP])
+			{
+				cursor.position.y -= 1 * TileManager::TILE_SIZE;
+				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
+				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
+			}
+			if (currentKeyStates[SDL_SCANCODE_DOWN])
+			{
+				cursor.position.y += 1 * TileManager::TILE_SIZE;
+				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
+				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
+			}
 		}
 		camera.update();
-
 
 		Draw();
 		fps = fpsLimiter.end();
 	}
-
 
 	delete Renderer;
 
@@ -174,7 +251,7 @@ void init()
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-	window = SDL_CreateWindow("Climber", SDL_WINDOWPOS_CENTERED,
+	window = SDL_CreateWindow("FE5", SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
 		SCREEN_HEIGHT, flags);
 
@@ -196,13 +273,60 @@ void init()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+void loadMap(std::string nextMap)
+{
+	std::ifstream map(levelDirectory + nextMap);
+
+	int xTiles = 0;
+	int yTiles = 0;
+	std::string bg = "";
+
+	while (map.good())
+	{
+		std::string thing;
+		map >> thing;
+
+		if (thing == "Level")
+		{
+			map >> xTiles >> yTiles;
+			TileManager::tileManager.setTiles(map, xTiles, yTiles);
+		}
+
+		map.close();
+
+		levelWidth = xTiles * TileManager::TILE_SIZE;
+		levelHeight = yTiles * TileManager::TILE_SIZE;
+		camera = Camera(800, 600, levelWidth, levelHeight);
+
+		camera.setPosition(glm::vec2(0, 0));
+		camera.setScale(1.5f);
+		camera.update();
+	}
+}
+
+
 void Draw()
 {
-
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	Texture2D texture = ResourceManager::GetTexture("bg");
+	Renderer->setUVs();
 
+	ResourceManager::GetShader("shape").Use();
+
+	ResourceManager::GetShader("shape").SetMatrix4("projection", camera.getCameraMatrix());
+
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0);
+
+	TileManager::tileManager.showTiles(Renderer, camera);
+
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
+	Renderer->setUVs(cursor.uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 
 	SDL_GL_SwapWindow(window);
 
