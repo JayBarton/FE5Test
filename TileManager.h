@@ -6,6 +6,7 @@
 #include "Shader.h"
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
+#include "SpriteBatch.h"
 #include <GL/glew.h>
 
 
@@ -71,6 +72,8 @@ public :
     void cleanUp();
 
     std::vector<TileProperties> tileTypes;
+
+    SpriteBatch spriteBatch;
 };
 
 #endif // TILEMANAGER_H

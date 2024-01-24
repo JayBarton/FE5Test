@@ -30,7 +30,7 @@ void Camera::update()
 {
     if(needsMatrixUpdate)
     {
-        if(position.x  - (halfWidth / cameraScale) < 0)
+        if (position.x - (halfWidth / cameraScale) < 0)
         {
             position.x = (halfWidth / cameraScale) ;
         }
@@ -48,7 +48,6 @@ void Camera::update()
             position.y = (levelHeight - halfHeight / cameraScale) ;
         }
 
-       // glm::vec3 translate(-position.x + halfWidth, -position.y + halfHeight, 0.0f);
        //Round the position to prevent oddities when rendering at decimal positions
         glm::vec3 translate(round(-position.x) + halfWidth, round(-position.y) + halfHeight, 0.0f);
 
@@ -80,7 +79,7 @@ bool Camera::onScreen(glm::vec2 p, glm::vec2 size, glm::vec2 offset /*= glm::vec
     glm::vec2 pScreen = worldToScreen(p);
 
     glm::vec4 screenBounds(0 - offset.x, 0 - offset.y, screenWidth + offset.x, screenHeight + offset.y);
-
+	size *= cameraScale;
 	if (pScreen.x  + size.x < screenBounds.x || pScreen.x > screenBounds.z
      || pScreen.y  > screenBounds.w || pScreen.y + size.y < screenBounds.y)
 	{
@@ -103,18 +102,14 @@ glm::vec2 Camera::screenToWorld(glm::vec2 screenCoords)
 
 glm::vec2 Camera::worldToScreen(glm::vec2 screenCoords)
 {
-
-	//invert y
-//	screenCoords.y = screenHeight - screenCoords.y;
-	//Make it so the zero is the center
-	screenCoords += glm::vec2(screenWidth /2.0f, screenHeight/2.0f );
-	//Scale the coordinates
-	screenCoords /= cameraScale;
 	//Translate with the camera position
 	screenCoords -= position;
+	//Scale the coordinates
+	screenCoords *= cameraScale;
+	//Make it so the zero is the center
+	screenCoords += glm::vec2(screenWidth / 2.0f, screenHeight / 2.0f);
 
 	return screenCoords;
-
 }
 
 void Camera::Follow(glm::vec2 p, float speed, float delta)

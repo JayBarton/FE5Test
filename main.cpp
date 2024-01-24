@@ -11,9 +11,11 @@
 #include "Timing.h"
 #include "TextRenderer.h"
 #include "TileManager.h"
+#include "InputManager.h"
 
 #include <vector>
 #include <map>
+#include <cmath>
 #include <SDL.h>
 #include <SDL_Image.h>
 #include <SDL_mixer.h>
@@ -30,7 +32,10 @@
 
 void init();
 void Draw();
+void DrawText();
 void loadMap(std::string nextMap);
+std::string intToString(int i);
+
 
 // The Width of the screen
 const GLuint SCREEN_WIDTH = 800;
@@ -54,14 +59,17 @@ std::string levelDirectory = "Levels/";
 int levelWidth;
 int levelHeight;
 
+//Not sure where I want all this defined
 struct Cursor
 {
 	glm::vec2 position;
 	glm::vec2 dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);
 	std::vector<glm::vec4> uvs;
 };
-
 Cursor cursor;
+bool fastCursor = false;
+
+InputManager inputManager;
 
 int main(int argc, char** argv)
 {
@@ -93,13 +101,18 @@ int main(int argc, char** argv)
 	camera.update();
 
 	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
-	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
+	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "instance");
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
+
+	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
+	glm::vec4 color(1.0f);
+	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", color);
 
 //	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
 
@@ -139,59 +152,92 @@ int main(int argc, char** argv)
 
 		float totalDeltaTime = frameTime / DESIRED_FRAMETIME; //Consider deleting all of this.
 	
-															  //Handle events on queue
+		inputManager.update(deltaTime);
+		//Handle events on queue
 		while (SDL_PollEvent(&event) != 0)
 		{
-			//User requests quit
-			if (event.type == SDL_QUIT)
+			switch (event.type)
+			{
+			case SDL_QUIT:
+				//User requests quit
+				isRunning = false;
+				break;
+			case SDL_KEYDOWN:
+				inputManager.pressKey(event.key.keysym.sym);
+				break;
+			case SDL_KEYUP:
+				inputManager.releaseKey(event.key.keysym.sym);
+				break;
+			case SDL_MOUSEWHEEL:
+				//Not keeping this, just need it to get a sense of size
+				camera.setScale(glm::clamp(camera.getScale() + event.wheel.y * 0.1f, 0.3f, 4.5f));
+				break;
+			}
+
+			if (inputManager.isKeyPressed(SDLK_ESCAPE))
 			{
 				isRunning = false;
 			}
-
-			if (event.type == SDL_KEYDOWN)
-			{
-				if (event.key.keysym.sym == SDLK_ESCAPE)
-				{
-					isRunning = false;
-				}
-			}
-			if (event.type == SDL_MOUSEWHEEL)
-			{
-				camera.setScale(glm::clamp(camera.getScale() + event.wheel.y * 0.1f, 0.3f, 4.5f));
-			}
-
-			const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
-
-			//Just pringint this out now as a proof of concept
-			if (currentKeyStates[SDL_SCANCODE_RIGHT])
-			{
-				cursor.position.x += 1 * TileManager::TILE_SIZE;
-				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
-				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
-			}
-			if (currentKeyStates[SDL_SCANCODE_LEFT])
-			{
-				cursor.position.x -= 1 * TileManager::TILE_SIZE;
-				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
-				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
-			}
-			if (currentKeyStates[SDL_SCANCODE_UP])
-			{
-				cursor.position.y -= 1 * TileManager::TILE_SIZE;
-				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
-				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
-			}
-			if (currentKeyStates[SDL_SCANCODE_DOWN])
-			{
-				cursor.position.y += 1 * TileManager::TILE_SIZE;
-				auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
-				std::cout << tile.name << " " << tile.avoid << " " << tile.defense << " " << "\n";
-			}
 		}
+
+		float cursorSpeed = 0.5f;
+		if (inputManager.isKeyDown(SDLK_LSHIFT))
+		{
+			fastCursor = true;
+			cursorSpeed = 1.0f;
+		}
+		else if (inputManager.isKeyReleased(SDLK_LSHIFT))
+		{
+			fastCursor = false;
+		}
+		int xSpeed = 0;
+		int ySpeed = 0;
+		if (inputManager.isKeyDown(SDLK_RIGHT))
+		{
+			xSpeed = 1;
+		}
+		if (inputManager.isKeyDown(SDLK_LEFT))
+		{
+			xSpeed = -1;
+		}
+		if (inputManager.isKeyDown(SDLK_UP))
+		{
+			ySpeed = -1;
+		}
+		if (inputManager.isKeyDown(SDLK_DOWN))
+		{
+			ySpeed = 1;
+		}
+		float size = TileManager::TILE_SIZE * camera.getScale();
+		cursor.position.x += xSpeed * cursorSpeed * TileManager::TILE_SIZE;
+		cursor.position.y += ySpeed * cursorSpeed * TileManager::TILE_SIZE;
+
+		//Keep cursor positions on the tiles
+		//This all sucks, need a better way of handling this. The issue is I need to floor when going left or down but need
+		//ceil when going up or right
+		if (inputManager.isKeyReleased(SDLK_LEFT))
+		{
+			cursor.position.x = int(cursor.position.x / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
+		}
+		else if (inputManager.isKeyReleased(SDLK_RIGHT))
+		{
+			cursor.position.x = ceil(cursor.position.x / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
+		}
+		if (inputManager.isKeyReleased(SDLK_UP))
+		{
+			cursor.position.y = int(cursor.position.y / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
+		}
+		else if (inputManager.isKeyReleased(SDLK_DOWN))
+		{
+			cursor.position.y = ceil(cursor.position.y / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
+		}
+
+		camera.setPosition(cursor.position);
 		camera.update();
 
 		Draw();
 		fps = fpsLimiter.end();
+		std::cout << fps << std::endl;
 	}
 
 	delete Renderer;
@@ -297,13 +343,14 @@ void loadMap(std::string nextMap)
 		levelWidth = xTiles * TileManager::TILE_SIZE;
 		levelHeight = yTiles * TileManager::TILE_SIZE;
 		camera = Camera(800, 600, levelWidth, levelHeight);
+		//camera = Camera(256, 224, levelWidth, levelHeight);
+
 
 		camera.setPosition(glm::vec2(0, 0));
-		camera.setScale(1.5f);
+		camera.setScale(2.0f);
 		camera.update();
 	}
 }
-
 
 void Draw()
 {
@@ -320,6 +367,8 @@ void Draw()
 
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0);
 
+	ResourceManager::GetShader("instance").Use();
+	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 	TileManager::tileManager.showTiles(Renderer, camera);
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
@@ -328,7 +377,36 @@ void Draw()
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 	Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 
+	DrawText();
+	
 	SDL_GL_SwapWindow(window);
 
+}
 
+void DrawText()
+{
+	if (!fastCursor)
+	{
+		auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
+
+		//Going to need to look into a better way of handling UI placement at some point
+		int xStart = SCREEN_WIDTH;
+		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
+		if (fixedPosition.x >= SCREEN_WIDTH * 0.5f)
+		{
+			xStart = 178;
+		}
+		Text->RenderText(tile.name, xStart - 110, 20, 1);
+		Text->RenderText("DEF", xStart - 120, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
+		Text->RenderText(intToString(tile.defense), xStart - 95, 50, 0.7f);
+		Text->RenderText("AVO", xStart - 85, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
+		Text->RenderText(intToString(tile.avoid) + "%", xStart - 60, 50, 0.7f);
+	}
+}
+
+std::string intToString(int i)
+{
+	std::stringstream s;
+	s << i;
+	return s.str();
 }

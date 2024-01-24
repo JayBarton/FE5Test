@@ -50,7 +50,9 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
     std::string afe;
     tileMap.ignore(1);
     //tileMap >> afe;
-
+    spriteBatch.init();
+    spriteBatch.begin();
+    Texture2D displayTexture = ResourceManager::GetTexture("tiles");
     //std::cout << afe;
     //Initialize the tiles
     for (int i = 0; i < totalTiles; i++)
@@ -71,6 +73,7 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
         {
             auto properties = tileTypes[tileType];
             tiles[i] = { x, y, properties };
+            spriteBatch.addToBatch(displayTexture.ID, glm::vec2(x, y), TILE_SIZE, TILE_SIZE, uvs[tiles[i].properties.theType]);
         }
         //If we don't recognize the tile type
         else
@@ -94,12 +97,14 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
             y += TILE_SIZE;
         }
     }
+    spriteBatch.end();
     return true;
 }
 
 void TileManager::showTiles(SpriteRenderer * renderer, Camera& camera)
 {
-    for(int i = 0; i < totalTiles; i ++)
+    spriteBatch.renderBatch();
+  /*  for (int i = 0; i < totalTiles; i++)
     {
         glm::vec4 box = glm::vec4(glm::vec2(tiles[i].x, tiles[i].y), glm::vec2(TILE_SIZE, TILE_SIZE));
         if(camera.onScreen(glm::vec2(box.x, box.y), glm::vec2(box.z, box.w)))
@@ -114,7 +119,7 @@ void TileManager::showTiles(SpriteRenderer * renderer, Camera& camera)
             renderer->DrawSprite( displayTexture, glm::vec2(box.x, box.y), 0.0f, glm::vec2(box.z, box.w));
 
         }
-    }
+    }*/
 }
 
 bool TileManager::outOfBounds(int x, int y)
