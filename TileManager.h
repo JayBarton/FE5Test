@@ -12,6 +12,7 @@
 
 #include <vector>
 class Camera;
+class Unit;
 class TileManager
 {
 private :
@@ -66,6 +67,8 @@ public :
     void setUp(int width, int height);
 
     void showTiles(SpriteRenderer * renderer, Camera& camera);
+
+    void placeUnit(int x, int y, Unit* unit);
 
     //called when the program stops running, clears the tiles
     void clearTiles();

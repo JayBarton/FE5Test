@@ -12,6 +12,9 @@ struct Cursor
 	float firstDelay = 0.2f;
 	bool firstMove = true; //Not sure how to handle this. I want a slightly longer delay the first time the player moves, unless they are moving fast
 	bool fastCursor = false;
+
+	class Unit* focusedUnit;
+
 	void CheckInput(class InputManager& inputManager, float deltaTime);
 	void CheckBounds();
 };

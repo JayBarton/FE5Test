@@ -13,6 +13,7 @@
 #include "TileManager.h"
 #include "InputManager.h"
 #include "Cursor.h"
+#include "Unit.h"
 
 #include <vector>
 #include <map>
@@ -36,7 +37,7 @@ void Draw();
 void DrawText();
 void loadMap(std::string nextMap);
 std::string intToString(int i);
-
+void resizeWindow(int width, int height);
 
 // The Width of the screen
 const GLuint SCREEN_WIDTH = 800;
@@ -61,6 +62,7 @@ int levelWidth;
 int levelHeight;
 
 Cursor cursor;
+Unit unit;
 
 InputManager inputManager;
 
@@ -113,6 +115,7 @@ int main(int argc, char** argv)
 
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheettest.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("sprite");
@@ -123,11 +126,19 @@ int main(int argc, char** argv)
 	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(TILE_SIZE, TILE_SIZE);
 	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 	cursor.position = glm::vec2(0);
+
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
 
 	loadMap("1.map");
-
+	unit.init();
+	unit.name = "Leif";
+	unit.maxHP = 22;
+	unit.currentHP = 22;
+	//unit.sprite.SetPosition(glm::vec2(48, 96));
+	unit.placeUnit(48, 96);
+	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
+	unit.sprite.uv = &playerUVs;
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
@@ -164,6 +175,14 @@ int main(int argc, char** argv)
 			case SDL_MOUSEWHEEL:
 				//Not keeping this, just need it to get a sense of size
 				camera.setScale(glm::clamp(camera.getScale() + event.wheel.y * 0.1f, 0.3f, 4.5f));
+				break;
+
+			case SDL_WINDOWEVENT:
+
+				if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+				{
+					resizeWindow(event.window.data1, event.window.data2);
+				}
 				break;
 			}
 
@@ -208,7 +227,7 @@ int main(int argc, char** argv)
 
 void init()
 {
-	int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+	int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
 	SDL_Init(SDL_INIT_EVERYTHING);
 
 	int imgFlags = IMG_INIT_PNG;
@@ -254,8 +273,8 @@ void init()
 
 	SDL_GL_SetSwapInterval(1);
 
-	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-
+	//glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	resizeWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_MULTISAMPLE);
@@ -286,10 +305,10 @@ void loadMap(std::string nextMap)
 		levelWidth = xTiles * TileManager::TILE_SIZE;
 		levelHeight = yTiles * TileManager::TILE_SIZE;
 		camera = Camera(800, 600, levelWidth, levelHeight);
-		//camera = Camera(256, 224, levelWidth, levelHeight);
+		camera = Camera(256, 224, levelWidth, levelHeight);
 
 		camera.setPosition(glm::vec2(0, 0));
-		camera.setScale(2.0f);
+	//	camera.setScale(2.0f);
 		camera.update();
 	}
 }
@@ -315,6 +334,8 @@ void Draw()
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
+	unit.Draw(Renderer);
+
 	Renderer->setUVs(cursor.uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 	Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
@@ -334,7 +355,7 @@ void DrawText()
 		//Going to need to look into a better way of handling UI placement at some point
 		int xStart = SCREEN_WIDTH;
 		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
-		if (fixedPosition.x >= SCREEN_WIDTH * 0.5f)
+		if (fixedPosition.x >= camera.screenWidth * 0.5f)
 		{
 			xStart = 178;
 		}
@@ -343,6 +364,23 @@ void DrawText()
 		Text->RenderText(intToString(tile.defense), xStart - 95, 50, 0.7f);
 		Text->RenderText("AVO", xStart - 85, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
 		Text->RenderText(intToString(tile.avoid) + "%", xStart - 60, 50, 0.7f);
+
+		if (auto unit = cursor.focusedUnit)
+		{
+			unit->sprite.getPosition();
+			int yOffset = 24;
+			if (fixedPosition.y < 80) //Just hard setting a distance of 5 tiles from the top. Find a less silly way of doing this
+			{
+				yOffset = -24;
+			}
+			glm::vec2 drawPosition = glm::vec2(unit->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
+			drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+			Text->RenderText(unit->name, drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
+			drawPosition.y += 22.0f;
+			Text->RenderText("HP", drawPosition.x, drawPosition.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+			drawPosition.x += 25;
+			Text->RenderText(intToString(unit->maxHP) + "/" + intToString(unit->currentHP), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
+		}
 	}
 }
 
@@ -351,4 +389,28 @@ std::string intToString(int i)
 	std::stringstream s;
 	s << i;
 	return s.str();
+}
+
+void resizeWindow(int width, int height)
+{
+	if (width < 256)
+	{
+		width = 256;
+	}
+	if (height < 224)
+	{
+		height = 224;
+	}
+	SDL_SetWindowSize(window, width, height);
+	float ratio = 8.0f / 7.0f;
+	int aspectWidth = width;
+	int aspectHeight = float(aspectWidth) / ratio;
+	if (aspectHeight > height)
+	{
+		aspectHeight = height;
+		aspectWidth = float(aspectHeight) * ratio;
+	}
+	int vpx = float(width) / 2.0f - float(aspectWidth) / 2.0f;
+	int vpy = float(height) / 2.0f - float(aspectHeight) / 2.0f;
+	glViewport(vpx, vpy, aspectWidth, aspectHeight);
 }

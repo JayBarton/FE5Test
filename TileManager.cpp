@@ -8,6 +8,7 @@
 
 #include <gtc/matrix_transform.hpp>
 #include "Camera.h"
+#include "Unit.h"
 
 TileManager TileManager::tileManager;
 
@@ -120,6 +121,12 @@ void TileManager::showTiles(SpriteRenderer * renderer, Camera& camera)
 
         }
     }*/
+}
+
+void TileManager::placeUnit(int x, int y, Unit* unit)
+{
+    auto help = getTile(x, y);
+    getTile(x, y)->occupiedBy = unit;
 }
 
 bool TileManager::outOfBounds(int x, int y)

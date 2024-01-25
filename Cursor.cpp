@@ -2,6 +2,7 @@
 #include "TileManager.h"
 #include "InputManager.h"
 #include <SDL.h>
+#include <iostream>
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (inputManager.isKeyDown(SDLK_LSHIFT))
@@ -76,6 +77,15 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 
 	CheckBounds();
+
+	if (auto unit = TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
+	{
+		focusedUnit = unit;
+	}
+	else
+	{
+		focusedUnit = nullptr;
+	}
 }
 
 void Cursor::CheckBounds()

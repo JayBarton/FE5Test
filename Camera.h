@@ -24,6 +24,8 @@ public:
 
 	glm::vec2 screenToWorld(glm::vec2 screenCoords);
 	glm::vec2 worldToScreen(glm::vec2 screenCoords);
+    //Need this for the camera's screen and the actual screen being different sizes. Just using this to draw text right now
+    glm::vec2 worldToRealScreen(glm::vec2 screenCoords, int width, int height);
   //  bool isBoxInView(const glm::vec2& boxPosition, const glm::vec2 dimensions);
 
     void setPosition(const glm::vec2& newPosition)
@@ -64,10 +66,11 @@ public:
 	void Follow(glm::vec2 p, float speed, float delta);
 	void Follow(glm::vec2 p);
 
-protected:
-private:
     int screenWidth;
     int screenHeight;
+
+protected:
+private:
 
     int halfWidth;
     int halfHeight;
