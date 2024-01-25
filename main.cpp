@@ -12,6 +12,7 @@
 #include "TextRenderer.h"
 #include "TileManager.h"
 #include "InputManager.h"
+#include "Cursor.h"
 
 #include <vector>
 #include <map>
@@ -59,15 +60,7 @@ std::string levelDirectory = "Levels/";
 int levelWidth;
 int levelHeight;
 
-//Not sure where I want all this defined
-struct Cursor
-{
-	glm::vec2 position;
-	glm::vec2 dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);
-	std::vector<glm::vec4> uvs;
-};
 Cursor cursor;
-bool fastCursor = false;
 
 InputManager inputManager;
 
@@ -151,7 +144,7 @@ int main(int argc, char** argv)
 		previousTicks = newTicks;
 
 		float totalDeltaTime = frameTime / DESIRED_FRAMETIME; //Consider deleting all of this.
-	
+
 		inputManager.update(deltaTime);
 		//Handle events on queue
 		while (SDL_PollEvent(&event) != 0)
@@ -180,64 +173,15 @@ int main(int argc, char** argv)
 			}
 		}
 
-		float cursorSpeed = 0.5f;
-		if (inputManager.isKeyDown(SDLK_LSHIFT))
-		{
-			fastCursor = true;
-			cursorSpeed = 1.0f;
-		}
-		else if (inputManager.isKeyReleased(SDLK_LSHIFT))
-		{
-			fastCursor = false;
-		}
-		int xSpeed = 0;
-		int ySpeed = 0;
-		if (inputManager.isKeyDown(SDLK_RIGHT))
-		{
-			xSpeed = 1;
-		}
-		if (inputManager.isKeyDown(SDLK_LEFT))
-		{
-			xSpeed = -1;
-		}
-		if (inputManager.isKeyDown(SDLK_UP))
-		{
-			ySpeed = -1;
-		}
-		if (inputManager.isKeyDown(SDLK_DOWN))
-		{
-			ySpeed = 1;
-		}
-		float size = TileManager::TILE_SIZE * camera.getScale();
-		cursor.position.x += xSpeed * cursorSpeed * TileManager::TILE_SIZE;
-		cursor.position.y += ySpeed * cursorSpeed * TileManager::TILE_SIZE;
+		cursor.CheckInput(inputManager, deltaTime);
 
-		//Keep cursor positions on the tiles
-		//This all sucks, need a better way of handling this. The issue is I need to floor when going left or down but need
-		//ceil when going up or right
-		if (inputManager.isKeyReleased(SDLK_LEFT))
-		{
-			cursor.position.x = int(cursor.position.x / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
-		}
-		else if (inputManager.isKeyReleased(SDLK_RIGHT))
-		{
-			cursor.position.x = ceil(cursor.position.x / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
-		}
-		if (inputManager.isKeyReleased(SDLK_UP))
-		{
-			cursor.position.y = int(cursor.position.y / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
-		}
-		else if (inputManager.isKeyReleased(SDLK_DOWN))
-		{
-			cursor.position.y = ceil(cursor.position.y / TileManager::TILE_SIZE) * TileManager::TILE_SIZE;
-		}
-
-		camera.setPosition(cursor.position);
+		//camera.setPosition(cursor.position);
+		camera.Follow(cursor.position);
 		camera.update();
 
 		Draw();
 		fps = fpsLimiter.end();
-		std::cout << fps << std::endl;
+		//std::cout << fps << std::endl;
 	}
 
 	delete Renderer;
@@ -272,7 +216,6 @@ void init()
 	{
 		printf("SDL_image could not initialize! SDL_mage Error: %s\n", IMG_GetError());
 	}
-
 
 	//Initialize SDL_mixer
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
@@ -345,7 +288,6 @@ void loadMap(std::string nextMap)
 		camera = Camera(800, 600, levelWidth, levelHeight);
 		//camera = Camera(256, 224, levelWidth, levelHeight);
 
-
 		camera.setPosition(glm::vec2(0, 0));
 		camera.setScale(2.0f);
 		camera.update();
@@ -385,7 +327,7 @@ void Draw()
 
 void DrawText()
 {
-	if (!fastCursor)
+	if (!cursor.fastCursor)
 	{
 		auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 

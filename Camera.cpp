@@ -18,7 +18,8 @@ Camera::Camera(int screenW, int screenH, int levelW, int levelH) : screenWidth(s
 	boxY = halfHeight;
 	boxW = halfWidth + boxOffset;
 	boxH = halfHeight + halfHeight;
-	border = glm::ivec4(halfWidth - 8, halfHeight - 100, halfWidth + 8, halfHeight);
+	//border = glm::ivec4(halfWidth - 32, halfHeight - 100, halfWidth + 32, halfHeight);
+	border = glm::ivec4(96, 96, screenWidth - 128, screenHeight - 128);
 }
 
 Camera::~Camera()
@@ -142,22 +143,22 @@ void Camera::Follow(glm::vec2 p)
 	glm::vec2 pScreen = worldToScreen(p);
 	if (pScreen.x > border.z)
 	{
-		position.x += pScreen.x - border.z;
+		position.x += (pScreen.x - border.z) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 	else if (pScreen.x < border.x)
 	{
-		position.x -= border.x - pScreen.x;
+		position.x -= (border.x - pScreen.x) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 	if (pScreen.y > border.w)
 	{
-		position.y += pScreen.y - border.w;
+		position.y += (pScreen.y - border.w) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 	else if (pScreen.y < border.y)
 	{
-		position.y -= border.y - pScreen.y;
+		position.y -= (border.y - pScreen.y) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 }
