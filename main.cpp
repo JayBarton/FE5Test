@@ -92,11 +92,38 @@ int main(int argc, char** argv)
 
 	float previousTicks = SDL_GetTicks();
 
+	GLfloat verticies[] =
+	{
+		0.0f, 1.0f, // Left
+		1.0f, 0.0f, // Right
+		0.0f, 0.0f,  // Top
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f
+	};
+
+	GLuint tVBO;
+	glGenVertexArrays(1, &shapeVAO);
+	glGenBuffers(1, &tVBO);
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	glBindVertexArray(shapeVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, tVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
+
 	camera.setPosition(glm::vec2(0.0f, 0.0f));
 	camera.update();
 
 	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "instance");
+	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
@@ -322,12 +349,6 @@ void Draw()
 	Texture2D texture = ResourceManager::GetTexture("bg");
 	Renderer->setUVs();
 
-	ResourceManager::GetShader("shape").Use();
-
-	ResourceManager::GetShader("shape").SetMatrix4("projection", camera.getCameraMatrix());
-
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0);
-
 	ResourceManager::GetShader("instance").Use();
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 	TileManager::tileManager.showTiles(Renderer, camera);
@@ -339,6 +360,22 @@ void Draw()
 	Renderer->setUVs(cursor.uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 	Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+	glm::mat4 model = glm::mat4();
+
+	model = glm::translate(model, glm::vec3(0, 96, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
 
 	DrawText();
 	

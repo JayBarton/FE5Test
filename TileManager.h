@@ -69,6 +69,7 @@ public :
     void showTiles(SpriteRenderer * renderer, Camera& camera);
 
     void placeUnit(int x, int y, Unit* unit);
+    void removeUnit(int x, int y);
 
     //called when the program stops running, clears the tiles
     void clearTiles();

@@ -125,8 +125,12 @@ void TileManager::showTiles(SpriteRenderer * renderer, Camera& camera)
 
 void TileManager::placeUnit(int x, int y, Unit* unit)
 {
-    auto help = getTile(x, y);
     getTile(x, y)->occupiedBy = unit;
+}
+
+void TileManager::removeUnit(int x, int y)
+{
+    getTile(x, y)->occupiedBy = nullptr;
 }
 
 bool TileManager::outOfBounds(int x, int y)

@@ -14,7 +14,9 @@ struct Cursor
 	bool fastCursor = false;
 
 	class Unit* focusedUnit;
+	class Unit* selectedUnit;
 
 	void CheckInput(class InputManager& inputManager, float deltaTime);
 	void CheckBounds();
+	void Move(int x, int y);
 };
