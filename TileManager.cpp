@@ -159,7 +159,7 @@ int TileManager::yPositionToIndex(int y)
 {
     return y/TILE_SIZE;
 }
-
+//Need error checking here
 Tile * TileManager::getTile(int x, int y)
 {
     return &tiles[xPositionToIndex(x) + yPositionToIndex(y) * rowTiles];

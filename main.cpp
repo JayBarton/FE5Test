@@ -34,6 +34,7 @@
 
 void init();
 void Draw();
+void DrawUnitRanges();
 void DrawText();
 void loadMap(std::string nextMap);
 std::string intToString(int i);
@@ -162,6 +163,7 @@ int main(int argc, char** argv)
 	unit.name = "Leif";
 	unit.maxHP = 22;
 	unit.currentHP = 22;
+	unit.move = 6;
 	//unit.sprite.SetPosition(glm::vec2(48, 96));
 	unit.placeUnit(48, 96);
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
@@ -353,6 +355,8 @@ void Draw()
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 	TileManager::tileManager.showTiles(Renderer, camera);
 
+	DrawUnitRanges();
+
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
 	unit.Draw(Renderer);
@@ -361,26 +365,64 @@ void Draw()
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 	Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
-	glm::mat4 model = glm::mat4();
-
-	model = glm::translate(model, glm::vec3(0, 96, 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-
 	DrawText();
 	
 	SDL_GL_SwapWindow(window);
 
+}
+
+void DrawUnitRanges()
+{
+	for (int i = 0; i < cursor.foundTiles.size(); i++)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 0.35f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(cursor.foundTiles[i], 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+
+	for (int i = 0; i < cursor.attackTiles.size(); i++)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 0.35f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(cursor.attackTiles[i], 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+
+	for (int i = 0; i < cursor.drawnPath.size(); i++)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(cursor.drawnPath[i], 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 }
 
 void DrawText()

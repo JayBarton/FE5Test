@@ -3,6 +3,10 @@
 #include "InputManager.h"
 #include <SDL.h>
 #include <iostream>
+#include <algorithm>
+bool compareMoveCost(const searchCell& a, const searchCell& b) {
+	return a.moveCost < b.moveCost;
+}
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (inputManager.isKeyPressed(SDLK_RETURN))
@@ -14,20 +18,43 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				//Can't move to where you already are, this will bring up unit options once those are implemented
 				std::cout << "Unit options here\n";
+				foundTiles.clear();
+				attackTiles.clear();
+				costs.clear();
 			}
 			//Can't move to an already occupied tile
 			else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
 			{
-				TileManager::tileManager.removeUnit(unitCurrentPosition.x, unitCurrentPosition.y);
-				selectedUnit->placeUnit(position.x, position.y);
-				selectedUnit = nullptr;
-				//Will be bringing up unit options here once those are implemented
+				if (path.find(position) != path.end())
+				{
+					glm::vec2 pathPoint = position;
+					drawnPath.clear();
+					drawnPath.push_back(pathPoint);
+					//This is just to make sure I can find a path to follow once I begin animating the units
+					while (pathPoint != unitCurrentPosition)
+					{
+						auto previous = path[pathPoint].previousPosition;
+						drawnPath.push_back(previous);
+						pathPoint = previous;
+					}
+
+					TileManager::tileManager.removeUnit(unitCurrentPosition.x, unitCurrentPosition.y);
+					selectedUnit->placeUnit(position.x, position.y);
+					selectedUnit = nullptr;
+					foundTiles.clear();
+					costs.clear();
+					attackTiles.clear();
+					drawPath = true;
+					//Will be bringing up unit options here once those are implemented
+				}
 			}
 		}
 		else if (focusedUnit)
 		{
 			selectedUnit = focusedUnit;
 			focusedUnit = nullptr;
+
+			FindUnitMoveRange();
 		}
 		else
 		{
@@ -100,7 +127,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		if (movementDelay >= delayTime)
 		{
-			Move(xDirection, yDirection);
+			Move(xDirection, yDirection, true);
 			movementDelay = 0.0f;
 			firstMove = false;
 		}
@@ -112,6 +139,100 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 
 	CheckBounds();
+}
+
+void Cursor::FindUnitMoveRange()
+{
+	std::vector<searchCell> checking;
+	std::vector<std::vector<bool>> checked;
+
+	checked.resize(TileManager::tileManager.levelWidth);
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	{
+		checked[i].resize(TileManager::tileManager.levelHeight);
+	}
+	costs.resize(TileManager::tileManager.levelWidth);
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	{
+		costs[i].resize(TileManager::tileManager.levelHeight);
+	}
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	{
+		for (int c = 0; c < TileManager::tileManager.levelHeight; c++)
+		{
+			costs[i][c] = 50;
+		}
+	}
+	glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
+	costs[normalPosition.x][normalPosition.y] = 0;
+	searchCell first = { normalPosition, 0 };
+	checking.push_back(first);
+	foundTiles.push_back(position);
+	while (checking.size() > 0)
+	{
+		auto current = checking[0];
+		int cost = current.moveCost;
+		glm::vec2 checkPosition = current.position;
+
+		//if (!checked[checkPosition.x][checkPosition.y])
+		{
+			glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+			glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+			glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+			glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+			checked[checkPosition.x][checkPosition.y] = true;
+
+			CheckAdjacentTiles(up, checked, checking, current);
+			CheckAdjacentTiles(down, checked, checking, current);
+			CheckAdjacentTiles(right, checked, checking, current);
+			CheckAdjacentTiles(left, checked, checking, current);
+			checking[0] = checking.back();
+			checking.pop_back();
+			std::sort(checking.begin(), checking.end(), compareMoveCost);
+		}
+	}
+}
+
+void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell)
+{
+	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+	{
+		if (!checked[checkingTile.x][checkingTile.y])
+		{
+			int mCost = startCell.moveCost;
+			auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+			int movementCost = mCost + thisTile->properties.movementCost;
+
+			auto distance = costs[checkingTile.x][checkingTile.y];
+			if (movementCost < costs[checkingTile.x][checkingTile.y])
+			{
+				costs[checkingTile.x][checkingTile.y] = movementCost;
+				if (movementCost <= selectedUnit->move)
+				{
+					path[tilePosition] = { tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+				}
+			}
+			if (movementCost <= selectedUnit->move)
+			{
+				 //This sucks but I'm checking if we have checked this tile yet
+				 if (distance == 50)
+				 {
+					 searchCell newCell{ checkingTile, movementCost };
+					 checking.push_back(newCell);
+					 foundTiles.push_back(tilePosition);
+					 path[tilePosition] = {tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+				 }
+			}
+			else
+			{
+				if (distance == 50)
+				{
+					attackTiles.push_back(tilePosition);
+				}
+			}
+		}
+	}
 }
 
 void Cursor::CheckBounds()
@@ -134,18 +255,31 @@ void Cursor::CheckBounds()
 	}
 }
 
-void Cursor::Move(int x, int y)
+//Not happy with this, but it works for now
+void Cursor::Move(int x, int y, bool held)
 {
-	position += glm::ivec2(x, y) * TileManager::TILE_SIZE;
-	if (!selectedUnit)
+	glm::vec2 moveTo = glm::ivec2(position) + glm::ivec2(x, y) * TileManager::TILE_SIZE;
+	bool move = true;
+	if (held && !fastCursor)
 	{
-		if (auto unit = TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
+		if (path.find(position) != path.end() && path.find(moveTo) == path.end())
 		{
-			focusedUnit = unit;
+			move = false;
 		}
-		else
+	}
+	if (move)
+	{
+		position = moveTo;
+		if (!selectedUnit)
 		{
-			focusedUnit = nullptr;
+			if (auto unit = TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
+			{
+				focusedUnit = unit;
+			}
+			else
+			{
+				focusedUnit = nullptr;
+			}
 		}
 	}
 }
