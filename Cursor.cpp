@@ -14,13 +14,22 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 		if (selectedUnit)
 		{
 			glm::vec2 unitCurrentPosition = selectedUnit->sprite.getPosition();
-			if (unitCurrentPosition == position)
+			if (placingUnit)
+			{
+				TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
+				selectedUnit->placeUnit(position.x, position.y);
+				selectedUnit = nullptr;
+				drawnPath.clear();
+				placingUnit = false;
+			}
+			else if (unitCurrentPosition == position)
 			{
 				//Can't move to where you already are, this will bring up unit options once those are implemented
 				std::cout << "Unit options here\n";
+				placingUnit = true;
 				foundTiles.clear();
-				attackTiles.clear();
 				costs.clear();
+				attackTiles.clear();
 			}
 			//Can't move to an already occupied tile
 			else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
@@ -38,23 +47,23 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 						pathPoint = previous;
 					}
 
-					TileManager::tileManager.removeUnit(unitCurrentPosition.x, unitCurrentPosition.y);
-					selectedUnit->placeUnit(position.x, position.y);
-					selectedUnit = nullptr;
+					selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
+					placingUnit = true;
 					foundTiles.clear();
 					costs.clear();
 					attackTiles.clear();
-					drawPath = true;
 					//Will be bringing up unit options here once those are implemented
 				}
 			}
 		}
 		else if (focusedUnit)
 		{
+			previousPosition = position;
 			selectedUnit = focusedUnit;
 			focusedUnit = nullptr;
 
 			FindUnitMoveRange();
+			path[position] = { position, position };
 		}
 		else
 		{
@@ -62,7 +71,44 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 			std::cout << "Menu opens here\n";
 		}
 	}
-	//Movement input is all a mess
+	//Cancel
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		if (placingUnit)
+		{
+			placingUnit = false;
+			position = previousPosition;
+			selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
+			focusedUnit = selectedUnit;
+			selectedUnit = nullptr;
+			foundTiles.clear();
+			costs.clear();
+			attackTiles.clear();
+			drawnPath.clear();
+			placingUnit = false;
+		}
+		else if (selectedUnit)
+		{
+			focusedUnit = selectedUnit;
+			selectedUnit = nullptr;
+			foundTiles.clear();
+			costs.clear();
+			attackTiles.clear();
+			position = previousPosition;
+
+		}
+	}
+	
+	if (!placingUnit)
+	{
+		//Movement input is all a mess
+		MovementInput(inputManager, deltaTime);
+	}
+	CheckBounds();
+}
+
+void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
+{
 	if (inputManager.isKeyDown(SDLK_LSHIFT))
 	{
 		fastCursor = true;
@@ -137,8 +183,6 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 		movementDelay = 0.0f;
 		firstMove = true;
 	}
-
-	CheckBounds();
 }
 
 void Cursor::FindUnitMoveRange()
