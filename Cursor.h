@@ -52,6 +52,7 @@ struct Cursor
 	void CheckInput(class InputManager& inputManager, float deltaTime);
 	void MovementInput(InputManager& inputManager, float deltaTime);
 	void FindUnitMoveRange();
+	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
 	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell);
 	void CheckBounds();
 	void Move(int x, int y, bool held = false);

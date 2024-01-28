@@ -142,22 +142,22 @@ void Camera::Follow(glm::vec2 p, float speed, float delta)
 	glm::vec2 pScreen = worldToScreen(p);
 	if (pScreen.x > boxW)
 	{
-		position.x += speed * delta;
+		position.x += (speed * delta) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 	else if (pScreen.x < boxX)
 	{
-		position.x -= speed * delta;
+		position.x -= (speed * delta) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 	if (pScreen.y > boxH)
 	{
-		position.y += speed * delta;
+		position.y += (speed * delta) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 	else if (pScreen.y < boxY)
 	{
-		position.y -= speed * delta;
+		position.y -= (speed * delta) / cameraScale;
 		needsMatrixUpdate = true;
 	}
 }

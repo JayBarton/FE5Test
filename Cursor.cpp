@@ -20,6 +20,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 				selectedUnit->placeUnit(position.x, position.y);
 				selectedUnit = nullptr;
 				drawnPath.clear();
+				path.clear();
 				placingUnit = false;
 			}
 			else if (unitCurrentPosition == position)
@@ -218,21 +219,62 @@ void Cursor::FindUnitMoveRange()
 		int cost = current.moveCost;
 		glm::vec2 checkPosition = current.position;
 
-		//if (!checked[checkPosition.x][checkPosition.y])
-		{
-			glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
-			glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
-			glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
-			glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
-			checked[checkPosition.x][checkPosition.y] = true;
+		glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+		glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+		glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+		glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+		checked[checkPosition.x][checkPosition.y] = true;
 
-			CheckAdjacentTiles(up, checked, checking, current);
-			CheckAdjacentTiles(down, checked, checking, current);
-			CheckAdjacentTiles(right, checked, checking, current);
-			CheckAdjacentTiles(left, checked, checking, current);
-			checking[0] = checking.back();
-			checking.pop_back();
-			std::sort(checking.begin(), checking.end(), compareMoveCost);
+		CheckAdjacentTiles(up, checked, checking, current);
+		CheckAdjacentTiles(down, checked, checking, current);
+		CheckAdjacentTiles(right, checked, checking, current);
+		CheckAdjacentTiles(left, checked, checking, current);
+		checking[0] = checking.back();
+		checking.pop_back();
+		std::sort(checking.begin(), checking.end(), compareMoveCost);
+
+	}
+	//if attack range is > 1
+	checked.clear();
+	checked.resize(TileManager::tileManager.levelWidth);
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	{
+		checked[i].resize(TileManager::tileManager.levelHeight);
+	}
+	for (int i = 0; i < attackTiles.size(); i++)
+	{
+		auto current = attackTiles[i] / TileManager::TILE_SIZE;
+		checked[current.x][current.y] = true;
+	}
+	std::vector<glm::ivec2> searchingAttacks = attackTiles;
+	int range = 3;
+	for (int i = 0; i < searchingAttacks.size(); i++)
+	{
+		auto current = searchingAttacks[i] / TileManager::TILE_SIZE;
+	//	checked[current.x][current.y] = true;
+		for (int c = 1; c < range; c++)
+		{
+			glm::ivec2 up = glm::ivec2(current.x, current.y - c);
+			glm::ivec2 down = glm::ivec2(current.x, current.y + c);
+			glm::ivec2 left = glm::ivec2(current.x - c, current.y) ;
+			glm::ivec2 right = glm::ivec2(current.x + c, current.y);
+			CheckExtraRange(up, checked);
+			CheckExtraRange(down, checked);
+			CheckExtraRange(left, checked);
+			CheckExtraRange(right, checked);
+		}
+	}
+}
+
+void Cursor::CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked)
+{
+	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+	{
+		if (path.find(tilePosition) == path.end() && checked[checkingTile.x][checkingTile.y] == false)
+		{
+			checked[checkingTile.x][checkingTile.y] = true;
+			attackTiles.push_back(tilePosition);
 		}
 	}
 }
