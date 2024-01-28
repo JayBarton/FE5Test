@@ -221,10 +221,18 @@ int main(int argc, char** argv)
 			}
 		}
 
-		cursor.CheckInput(inputManager, deltaTime);
+		//if (!camera.moving)
+		cursor.CheckInput(inputManager, deltaTime, camera);
 
-		//camera.setPosition(cursor.position);
-		camera.Follow(cursor.position);
+		if (!camera.moving)
+		{
+			camera.Follow(cursor.position);
+		}
+		else
+		{
+			camera.MoveTo(deltaTime, 5.0f);
+		}
+		
 		camera.update();
 
 		Draw();

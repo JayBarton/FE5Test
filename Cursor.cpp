@@ -1,13 +1,14 @@
 #include "Cursor.h"
 #include "TileManager.h"
 #include "InputManager.h"
+#include "Camera.h"
 #include <SDL.h>
 #include <iostream>
 #include <algorithm>
 bool compareMoveCost(const searchCell& a, const searchCell& b) {
 	return a.moveCost < b.moveCost;
 }
-void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
+void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
@@ -86,6 +87,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 			costs.clear();
 			attackTiles.clear();
 			drawnPath.clear();
+			path.clear();
 			placingUnit = false;
 		}
 		else if (selectedUnit)
@@ -95,8 +97,10 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime)
 			foundTiles.clear();
 			costs.clear();
 			attackTiles.clear();
+			path.clear();
 			position = previousPosition;
-
+			camera.moving = true;
+			camera.SetMove(position);
 		}
 	}
 	
@@ -358,9 +362,9 @@ void Cursor::Move(int x, int y, bool held)
 		position = moveTo;
 		if (!selectedUnit)
 		{
-			if (auto unit = TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
+			if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
 			{
-				focusedUnit = unit;
+				focusedUnit = tile->occupiedBy;
 			}
 			else
 			{

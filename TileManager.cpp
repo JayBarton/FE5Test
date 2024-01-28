@@ -162,6 +162,10 @@ int TileManager::yPositionToIndex(int y)
 //Need error checking here
 Tile * TileManager::getTile(int x, int y)
 {
+    if (outOfBounds(x, y))
+    {
+        return nullptr;
+    }
     return &tiles[xPositionToIndex(x) + yPositionToIndex(y) * rowTiles];
 }
 

@@ -65,9 +65,16 @@ public:
 
 	void Follow(glm::vec2 p, float speed, float delta);
 	void Follow(glm::vec2 p);
+    void SetMove(glm::vec2 p);
+    void MoveTo(float delta, float speed);
 
     int screenWidth;
     int screenHeight;
+
+    //Hate all of this, I'm sure there's a better way
+    glm::vec2 movePosition;
+    glm::vec2 startPosition;
+    bool moving = false;
 
 protected:
 private:

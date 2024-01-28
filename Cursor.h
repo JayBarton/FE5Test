@@ -45,11 +45,10 @@ struct Cursor
 	//Hopefully temporary, I expect managing different states will get more complicated over time
 	bool placingUnit = false;
 
+	class Unit* focusedUnit = nullptr;
+	class Unit* selectedUnit = nullptr;
 
-	class Unit* focusedUnit;
-	class Unit* selectedUnit;
-
-	void CheckInput(class InputManager& inputManager, float deltaTime);
+	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera);
 	void MovementInput(InputManager& inputManager, float deltaTime);
 	void FindUnitMoveRange();
 	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);

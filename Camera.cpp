@@ -3,8 +3,10 @@ Code modified from https://github.com/Barnold1953/GraphicsTutorials/tree/master/
 */
 
 #include "Camera.h"
+#include <gtc/epsilon.hpp>
+#include <gtx/norm.hpp>
 #include <math.h>
-
+#include <iostream>
 Camera::Camera(int screenW, int screenH, int levelW, int levelH) : screenWidth(screenW),
     screenHeight(screenH), levelWidth(levelW), levelHeight(levelH), cameraScale(1.0f), position(0.0f, 0.0f),
     cameraMatrix(1.0f), needsMatrixUpdate(true)
@@ -185,4 +187,69 @@ void Camera::Follow(glm::vec2 p)
 		position.y -= (border.y - pScreen.y) / cameraScale;
 		needsMatrixUpdate = true;
 	}
+}
+
+void Camera::SetMove(glm::vec2 p)
+{
+	glm::vec2 pScreen = worldToScreen(p);
+	startPosition = position;
+	movePosition = position;
+	if (pScreen.x > border.z)
+	{
+		movePosition.x += (pScreen.x - border.z) / cameraScale;
+	}
+	else if (pScreen.x < border.x)
+	{
+		movePosition.x -= (border.x - pScreen.x) / cameraScale;
+	}
+	if (pScreen.y > border.w)
+	{
+		movePosition.y += (pScreen.y - border.w) / cameraScale;
+	}
+	else if (pScreen.y < border.y)
+	{
+		movePosition.y -= (border.y - pScreen.y) / cameraScale;
+	}
+
+	if (movePosition.x - (halfWidth / cameraScale) < 0)
+	{
+		movePosition.x = (halfWidth / cameraScale);
+	}
+	if (movePosition.x + (halfWidth / cameraScale) > levelWidth)
+	{
+		movePosition.x = (levelWidth - halfWidth / cameraScale);
+	}
+
+	if (movePosition.y - (halfHeight / cameraScale) < 0)
+	{
+		movePosition.y = (halfHeight / cameraScale);
+	}
+	if (movePosition.y + (halfHeight / cameraScale) > levelHeight)
+	{
+		movePosition.y = (levelHeight - halfHeight / cameraScale);
+	}
+	if (startPosition == movePosition)
+	{
+		moving = false;
+	}
+}
+
+void Camera::MoveTo(float delta, float speed)
+{
+	auto direction = glm::normalize(movePosition - startPosition);
+	auto L1 = glm::length(position);
+	auto L2 = glm::length(movePosition);
+	auto moveScale = L1 / L2;
+	if (moveScale < 1)
+	{
+		moveScale = 1;
+	}
+	position += direction * speed * moveScale;
+
+	if (glm::length(position - movePosition) <= speed)
+	{
+		moving = false;
+		position = movePosition;
+	}
+	needsMatrixUpdate = true;
 }
