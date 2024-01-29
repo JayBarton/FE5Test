@@ -71,6 +71,10 @@ int main(int argc, char** argv)
 {
 	init();
 
+	std::mt19937 gen;
+	//gen.seed(1);
+	std::uniform_int_distribution<int> distribution(0, 99);
+
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastFrame = 0.0f;
 
@@ -159,15 +163,27 @@ int main(int argc, char** argv)
 	Text->Load("fonts/Teko-Light.TTF", 30);
 
 	loadMap("1.map");
-	unit.init();
+	unit.init(&gen, &distribution);
 	unit.name = "Leif";
 	unit.maxHP = 22;
 	unit.currentHP = 22;
+	unit.strength = 4;
+	unit.magic = 0;
+	unit.skill = 2;
+	unit.speed = 5;
+	unit.luck = 6;
+	unit.defense = 3;
+	unit.build = 5;
 	unit.move = 6;
-	//unit.sprite.SetPosition(glm::vec2(48, 96));
+	unit.growths = { 70, 35, 10, 35, 40, 40, 25, 15, 3 };
 	unit.placeUnit(48, 96);
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 	unit.sprite.uv = &playerUVs;
+	unit.AddExperience(50);
+	unit.AddExperience(100);
+	//unit.LevelUp();
+	//unit.LevelUp();
+	//unit.LevelUp();
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
