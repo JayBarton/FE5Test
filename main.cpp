@@ -16,6 +16,7 @@
 #include "Unit.h"
 
 #include <vector>
+#include <algorithm>
 #include <map>
 #include <cmath>
 #include <SDL.h>
@@ -28,7 +29,6 @@
 #include <sstream>
 #include <fstream>
 
-#include <algorithm>
 #include <random>
 #include <ctime>
 
@@ -64,8 +64,24 @@ int levelHeight;
 
 Cursor cursor;
 Unit unit;
+Unit unit2;
 
 InputManager inputManager;
+
+Unit leveledUnit;
+bool leveling = false;
+float levelUpTimer;
+float levelUpTime = 2.5f;
+
+struct UnitEvents : public Observer
+{
+	virtual void onNotify(const Unit& lUnit)
+	{
+		leveledUnit = lUnit;
+		std::cout << "Level up!!!\n";
+		leveling = true;
+	}
+};
 
 int main(int argc, char** argv)
 {
@@ -179,8 +195,29 @@ int main(int argc, char** argv)
 	unit.placeUnit(48, 96);
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 	unit.sprite.uv = &playerUVs;
-	unit.AddExperience(50);
-	unit.AddExperience(100);
+
+	//just have this guy to test leveling on multiple units
+	unit2.init(&gen, &distribution);
+	unit2.name = "hhhh";
+	unit2.maxHP = 20;
+	unit2.currentHP = 20;
+	unit2.strength = 3;
+	unit2.magic = 5;
+	unit2.skill = 3;
+	unit2.speed = 5;
+	unit2.luck = 0;
+	unit2.defense = 2;
+	unit2.build = 5;
+	unit2.move = 6;
+	unit2.growths = { 50, 55, 50, 55, 50, 50, 55, 55, 3 };
+	unit2.placeUnit(96, 96);
+	unit2.sprite.uv = &playerUVs;
+
+	UnitEvents* unitEvents = new UnitEvents();
+	unit.subject.addObserver(unitEvents);
+	unit2.subject.addObserver(unitEvents);
+
+	//unit.subject.removeObserver(unitEvents);
 	//unit.LevelUp();
 	//unit.LevelUp();
 	//unit.LevelUp();
@@ -237,16 +274,36 @@ int main(int argc, char** argv)
 			}
 		}
 
-		//if (!camera.moving)
-		cursor.CheckInput(inputManager, deltaTime, camera);
-
-		if (!camera.moving)
+		if (!leveling)
 		{
-			camera.Follow(cursor.position);
+			if (inputManager.isKeyPressed(SDLK_l))
+			{
+				if (auto thisUnit = cursor.focusedUnit)
+				{
+					thisUnit->AddExperience(50);
+				}
+			}
+			//if (!camera.moving)
+			cursor.CheckInput(inputManager, deltaTime, camera);
+
+			if (!camera.moving)
+			{
+				camera.Follow(cursor.position);
+			}
+			else
+			{
+				camera.MoveTo(deltaTime, 5.0f);
+			}
 		}
 		else
 		{
-			camera.MoveTo(deltaTime, 5.0f);
+			levelUpTimer += deltaTime;
+			if (levelUpTimer > 5.0f)
+			{
+				levelUpTimer = 0;
+				leveling = false;
+			}
+			//timer here
 		}
 		
 		camera.update();
@@ -266,6 +323,8 @@ int main(int argc, char** argv)
 			soundEffects[i][c] = nullptr;
 		}
 	}*/
+	delete unitEvents;
+	unit.subject.observers.clear();
 
 	SDL_DestroyWindow(window);
 	window = nullptr;
@@ -384,6 +443,7 @@ void Draw()
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
 	unit.Draw(Renderer);
+	unit2.Draw(Renderer);
 
 	Renderer->setUVs(cursor.uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
@@ -451,7 +511,76 @@ void DrawUnitRanges()
 
 void DrawText()
 {
-	if (!cursor.fastCursor)
+	if (leveling)
+	{
+		int x = SCREEN_WIDTH * 0.5f;
+		int y = SCREEN_HEIGHT * 0.5f;
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(80, 96, 0.0f));
+
+		model = glm::scale(model, glm::vec3(100, 50, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		Text->RenderText("HP", x - 130, y - 30, 1);
+		Text->RenderText("STR", x - 130, y - 5, 1);
+		Text->RenderText("MAG", x - 130, y + 20, 1);
+		Text->RenderText("SKL", x - 130, y + 45, 1);
+		Text->RenderText("SPD", x - 10, y - 30, 1);
+		Text->RenderText("LCK", x - 10, y - 5, 1);
+		Text->RenderText("DEF", x - 10, y + 20, 1);
+		Text->RenderText("BLD", x - 10, y + 45, 1);
+		auto unit = cursor.focusedUnit;
+		Text->RenderText(intToString(leveledUnit.maxHP), x - 90, y - 30, 1);
+		if (unit->maxHP > leveledUnit.maxHP)
+		{
+			Text->RenderText(intToString(1), x - 65, y - 30, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.strength), x - 90, y - 5, 1);
+		if (unit->strength > leveledUnit.strength)
+		{
+			Text->RenderText(intToString(1), x - 65, y - 5, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.magic), x - 90, y + 20, 1);
+		if (unit->magic > leveledUnit.magic)
+		{
+			Text->RenderText(intToString(1), x - 65, y + 20, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.skill), x - 90, y + 45, 1);
+		if (unit->skill > leveledUnit.skill)
+		{
+			Text->RenderText(intToString(1), x - 65, y + 45, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.speed), x + 30, y - 30, 1);
+		if (unit->speed > leveledUnit.speed)
+		{
+			Text->RenderText(intToString(1), x + 55, y - 30, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.luck), x + 30, y - 5, 1);
+		if (unit->luck > leveledUnit.luck)
+		{
+			Text->RenderText(intToString(1), x + 55, y - 5, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.defense), x + 30, y + 20, 1);
+		if (unit->defense > leveledUnit.defense)
+		{
+			Text->RenderText(intToString(1), x + 55, y + 20, 1);
+		}
+		Text->RenderText(intToString(leveledUnit.build), x + 30, y + 45, 1);
+		if (unit->build > leveledUnit.build)
+		{
+			Text->RenderText(intToString(1), x + 55, y + 45, 1);
+		}
+
+	}
+	else if (!cursor.fastCursor)
 	{
 		auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 

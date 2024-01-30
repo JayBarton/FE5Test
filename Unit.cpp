@@ -39,6 +39,8 @@ void Unit::Draw(SpriteRenderer* Renderer)
 
 void Unit::LevelUp()
 {
+    subject.notify(*this);
+
     std::cout << "level up\n";
     level++;
     int roll[9];

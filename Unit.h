@@ -7,6 +7,40 @@
 #include "Sprite.h"
 class SpriteRenderer;
 
+
+struct Observer
+{
+	virtual ~Observer() {}
+	virtual void onNotify(const class Unit& unit) = 0;
+};
+
+struct Subject
+{
+	std::vector<Observer*> observers;
+
+	void addObserver(Observer* observer)
+	{
+		observers.push_back(observer);
+	}
+	void removeObserver(Observer* observer)
+	{
+		auto it = std::find(observers.begin(), observers.end(), observer);
+		if (it != observers.end())
+		{
+			delete* it;
+			*it = observers.back();
+			observers.pop_back();
+		}
+	}
+	void notify(const class Unit& unit)
+	{
+		for (int i = 0; i < observers.size(); i++)
+		{
+			observers[i]->onNotify(unit);
+		}
+	}
+};
+
 struct StatGrowths
 {
 	int maxHP;
@@ -49,6 +83,8 @@ struct Unit
 
 	Sprite sprite;
 	StatGrowths growths;
+
+	Subject subject;
 
 	std::mt19937 *gen = nullptr;
 	std::uniform_int_distribution<int> *distribution = nullptr;
