@@ -61,12 +61,19 @@ void Shader::SetFloat(const GLchar *name, GLfloat value, GLboolean useShader)
         this->Use();
     glUniform1f(glGetUniformLocation(this->ID, name), value);
 }
-void Shader::SetInteger(const GLchar *name, GLint value, GLboolean useShader)
+void Shader::SetInteger(const GLchar* name, GLint value, GLboolean useShader)
 {
     if (useShader)
         this->Use();
+
     glUniform1i(glGetUniformLocation(this->ID, name), value);
 }
+
+void Shader::SetInteger2(const GLchar* name, GLint value, GLboolean useShader, int numberOfItems)
+{
+    glUniform1iv(glGetUniformLocation(this->ID, name), numberOfItems, &value);
+}
+
 void Shader::SetVector2f(const GLchar *name, GLfloat x, GLfloat y, GLboolean useShader)
 {
     if (useShader)
@@ -113,11 +120,11 @@ void Shader::SetVector4f(const GLchar *name, const glm::vec4 &value, GLboolean u
     glUniform4f(glGetUniformLocation(this->ID, name), value.x, value.y, value.z, value.w);
 }
 
-void Shader::SetMatrix4(const GLchar *name, const glm::mat4 &matrix, GLboolean useShader)
+void Shader::SetMatrix4(const GLchar *name, const glm::mat4 &matrix, GLboolean useShader, int numberOfItems)
 {
     if (useShader)
         this->Use();
-    glUniformMatrix4fv(glGetUniformLocation(this->ID, name), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(this->ID, name), numberOfItems, GL_FALSE, glm::value_ptr(matrix));
 }
 
 

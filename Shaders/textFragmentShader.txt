@@ -1,13 +1,19 @@
 #version 330 core
-in vec2 TextureCoordinates;
 out vec4 color;
 
-uniform sampler2D text;
+in VS_OUT{
+	vec2 TextureCoordinates;
+	flat int index;
+}fs_in;
+
+
+uniform sampler2DArray text;
+uniform int letterMap[200];
 uniform vec3 textColor;
 
 void main()
 {    
-    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TextureCoordinates).r);
+    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, vec3(fs_in.TextureCoordinates.xy,  letterMap[fs_in.index])).r);
     color = vec4(textColor, 1.0) * sampled;
 }  
 
