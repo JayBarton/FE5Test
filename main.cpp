@@ -529,51 +529,51 @@ void DrawText()
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
-		Text->RenderText("HP", x - 130, y - 30, 1);
-		Text->RenderText("STR", x - 130, y - 5, 1);
-		Text->RenderText("MAG", x - 130, y + 20, 1);
-		Text->RenderText("SKL", x - 130, y + 45, 1);
-		Text->RenderText("SPD", x - 10, y - 30, 1);
-		Text->RenderText("LCK", x - 10, y - 5, 1);
-		Text->RenderText("DEF", x - 10, y + 20, 1);
-		Text->RenderText("BLD", x - 10, y + 45, 1);
+		Text->RenderTextRight("HP", x - 130, y - 30, 1, 25);
+		Text->RenderTextRight("STR", x - 130, y - 5, 1, 25);
+		Text->RenderTextRight("MAG", x - 130, y + 20, 1, 25);
+		Text->RenderTextRight("SKL", x - 130, y + 45, 1, 25);
+		Text->RenderTextRight("SPD", x - 10, y - 30, 1, 25);
+		Text->RenderTextRight("LCK", x - 10, y - 5, 1, 25);
+		Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
+		Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
 		auto unit = cursor.focusedUnit;
-		Text->RenderText(intToString(leveledUnit.maxHP), x - 90, y - 30, 1);
+		Text->RenderTextRight(intToString(leveledUnit.maxHP), x - 90, y - 30, 1, 14);
 		if (unit->maxHP > leveledUnit.maxHP)
 		{
 			Text->RenderText(intToString(1), x - 65, y - 30, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.strength), x - 90, y - 5, 1);
+		Text->RenderTextRight(intToString(leveledUnit.strength), x - 90, y - 5, 1, 14);
 		if (unit->strength > leveledUnit.strength)
 		{
 			Text->RenderText(intToString(1), x - 65, y - 5, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.magic), x - 90, y + 20, 1);
+		Text->RenderTextRight(intToString(leveledUnit.magic), x - 90, y + 20, 1, 14);
 		if (unit->magic > leveledUnit.magic)
 		{
 			Text->RenderText(intToString(1), x - 65, y + 20, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.skill), x - 90, y + 45, 1);
+		Text->RenderTextRight(intToString(leveledUnit.skill), x - 90, y + 45, 1, 14);
 		if (unit->skill > leveledUnit.skill)
 		{
 			Text->RenderText(intToString(1), x - 65, y + 45, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.speed), x + 30, y - 30, 1);
+		Text->RenderTextRight(intToString(leveledUnit.speed), x + 30, y - 30, 1, 14);
 		if (unit->speed > leveledUnit.speed)
 		{
 			Text->RenderText(intToString(1), x + 55, y - 30, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.luck), x + 30, y - 5, 1);
+		Text->RenderTextRight(intToString(leveledUnit.luck), x + 30, y - 5, 1, 14);
 		if (unit->luck > leveledUnit.luck)
 		{
 			Text->RenderText(intToString(1), x + 55, y - 5, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.defense), x + 30, y + 20, 1);
+		Text->RenderTextRight(intToString(leveledUnit.defense), x + 30, y + 20, 1, 14);
 		if (unit->defense > leveledUnit.defense)
 		{
 			Text->RenderText(intToString(1), x + 55, y + 20, 1);
 		}
-		Text->RenderText(intToString(leveledUnit.build), x + 30, y + 45, 1);
+		Text->RenderTextRight(intToString(leveledUnit.build), x + 30, y + 45, 1, 14);
 		if (unit->build > leveledUnit.build)
 		{
 			Text->RenderText(intToString(1), x + 55, y + 45, 1);

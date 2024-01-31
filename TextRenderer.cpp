@@ -120,7 +120,7 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
         GLfloat ypos = y + (this->Characters['H'].Bearing.y - ch.Bearing.y) * scale;
 
         GLfloat w = ch.Size.x * scale;
-             GLfloat h = ch.Size.y * scale;
+        GLfloat h = ch.Size.y * scale;
         // Update VBO for each character
         GLfloat verticies[6][4] = {
             { xpos,     ypos + h,   0.0, 1.0 },
@@ -146,4 +146,24 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
 
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void TextRenderer::RenderTextRight(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color)
+{
+    GLfloat startX = x  + (containerWidth - GetTextWidth(text, scale));
+    RenderText(text, startX, y, scale, color);
+}
+int TextRenderer::GetTextWidth(std::string text, GLfloat scale)
+{
+    int width = 0;
+    std::string::const_iterator c;
+    for (c = text.begin(); c != text.end(); c++)
+    {
+        Character ch = Characters[*c];
+
+        GLfloat w = ch.Size.x * scale;
+        GLfloat h = ch.Size.y * scale;
+        width += w;
+    }
+    return width;
 }
