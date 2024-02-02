@@ -27,6 +27,7 @@ struct Cursor
 
 	std::vector<glm::ivec2> foundTiles;
 	std::vector<glm::ivec2> attackTiles;
+	std::vector<int> costTile;
 
 	//This can probably be a map of vec2s rather than this pathPoint thing
 	std::unordered_map<glm::vec2, pathPoint, vec2Hash> path;
@@ -55,4 +56,8 @@ struct Cursor
 	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell);
 	void CheckBounds();
 	void Move(int x, int y, bool held = false);
+
+
+	void addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked);
+	void removeFromOpenList(std::vector<searchCell>& checking);
 };

@@ -465,8 +465,8 @@ void DrawUnitRanges()
 		model = glm::translate(model, glm::vec3(cursor.foundTiles[i], 0.0f));
 
 		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+		float cost = float(cursor.costTile[i]) / 6.0f;
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0, 0.5f, 1.0f));
 
 		ResourceManager::GetShader("shape").SetMatrix4("model", model);
 		glBindVertexArray(shapeVAO);

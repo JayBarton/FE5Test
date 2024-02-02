@@ -30,6 +30,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				std::cout << "Unit options here\n";
 				placingUnit = true;
 				foundTiles.clear();
+				costTile.clear();
 				costs.clear();
 				attackTiles.clear();
 			}
@@ -52,6 +53,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 					placingUnit = true;
 					foundTiles.clear();
+					costTile.clear();
 					costs.clear();
 					attackTiles.clear();
 					//Will be bringing up unit options here once those are implemented
@@ -84,10 +86,11 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			focusedUnit = selectedUnit;
 			selectedUnit = nullptr;
 			foundTiles.clear();
+			costTile.clear();
 			costs.clear();
 			attackTiles.clear();
-			drawnPath.clear();
 			path.clear();
+			drawnPath.clear();
 			placingUnit = false;
 		}
 		else if (selectedUnit)
@@ -95,6 +98,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			focusedUnit = selectedUnit;
 			selectedUnit = nullptr;
 			foundTiles.clear();
+			costTile.clear();
 			costs.clear();
 			attackTiles.clear();
 			path.clear();
@@ -215,11 +219,13 @@ void Cursor::FindUnitMoveRange()
 	glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
 	costs[normalPosition.x][normalPosition.y] = 0;
 	searchCell first = { normalPosition, 0 };
-	checking.push_back(first);
+	addToOpenSet(first, checking, checked);
 	foundTiles.push_back(position);
+	costTile.push_back(0);
 	while (checking.size() > 0)
 	{
 		auto current = checking[0];
+		removeFromOpenList(checking);
 		int cost = current.moveCost;
 		glm::vec2 checkPosition = current.position;
 
@@ -227,15 +233,12 @@ void Cursor::FindUnitMoveRange()
 		glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
 		glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
 		glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
-		checked[checkPosition.x][checkPosition.y] = true;
 
 		CheckAdjacentTiles(up, checked, checking, current);
 		CheckAdjacentTiles(down, checked, checking, current);
 		CheckAdjacentTiles(right, checked, checking, current);
 		CheckAdjacentTiles(left, checked, checking, current);
-		checking[0] = checking.back();
-		checking.pop_back();
-		std::sort(checking.begin(), checking.end(), compareMoveCost);
+		
 
 	}
 	//if attack range is > 1
@@ -255,7 +258,6 @@ void Cursor::FindUnitMoveRange()
 	for (int i = 0; i < searchingAttacks.size(); i++)
 	{
 		auto current = searchingAttacks[i] / TileManager::TILE_SIZE;
-	//	checked[current.x][current.y] = true;
 		for (int c = 1; c < range; c++)
 		{
 			glm::ivec2 up = glm::ivec2(current.x, current.y - c);
@@ -288,34 +290,29 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
 	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
 	{
+		int mCost = startCell.moveCost;
+		auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+		int movementCost = mCost + thisTile->properties.movementCost;
+
+		auto distance = costs[checkingTile.x][checkingTile.y];
 		if (!checked[checkingTile.x][checkingTile.y])
 		{
-			int mCost = startCell.moveCost;
-			auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
-			int movementCost = mCost + thisTile->properties.movementCost;
-
-			auto distance = costs[checkingTile.x][checkingTile.y];
-			if (movementCost < costs[checkingTile.x][checkingTile.y])
+			//This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
+			if (movementCost < distance)
 			{
 				costs[checkingTile.x][checkingTile.y] = movementCost;
-				if (movementCost <= selectedUnit->move)
-				{
-					path[tilePosition] = { tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
-				}
 			}
 			if (movementCost <= selectedUnit->move)
 			{
-				 //This sucks but I'm checking if we have checked this tile yet
-				 if (distance == 50)
-				 {
-					 searchCell newCell{ checkingTile, movementCost };
-					 checking.push_back(newCell);
-					 foundTiles.push_back(tilePosition);
-					 path[tilePosition] = {tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
-				 }
+				searchCell newCell{ checkingTile, movementCost };
+				addToOpenSet(newCell, checking, checked);
+				foundTiles.push_back(tilePosition);
+				costTile.push_back(movementCost);
+				path[tilePosition] = { tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
 			}
 			else
 			{
+				//U G H
 				if (distance == 50)
 				{
 					attackTiles.push_back(tilePosition);
@@ -324,6 +321,77 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 		}
 	}
 }
+
+
+
+void Cursor::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked)
+{
+	int position;
+	checking.push_back(newCell);
+	checked[newCell.position.x][newCell.position.y] = true;
+	costs[newCell.position.x][newCell.position.y] = newCell.moveCost;
+
+	position = checking.size() - 1;
+	while (position != 0)
+	{
+		if (checking[position].moveCost < checking[position / 2].moveCost)
+		{
+			searchCell tempNode = checking[position];
+			checking[position] = checking[position / 2];
+			checking[position / 2] = tempNode;
+			position /= 2;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+void Cursor::removeFromOpenList(std::vector<searchCell>& checking)
+{
+	int position = 1;
+	int position2;
+	searchCell temp;
+	std::vector<searchCell>::iterator it = checking.end() - 1;
+	checking[0] = checking[checking.size() - 1];
+	checking.erase(it);
+	while (position < checking.size())
+	{
+		position2 = position;
+		if (2 * position2 + 1 <= checking.size())
+		{
+			if (checking[position2 - 1].moveCost > checking[2 * position2 - 1].moveCost)
+			{
+				position = 2 * position2;
+			}
+			if (checking[position - 1].moveCost > checking[(2 * position2 + 1) - 1].moveCost)
+			{
+				position = 2 * position2 + 1;
+			}
+		}
+		else if (2 * position2 <= checking.size())
+		{
+			if (checking[position2 - 1].moveCost > checking[(2 * position2) - 1].moveCost)
+			{
+				position = 2 * position2;
+			}
+		}
+		if (position2 != position)
+		{
+			temp = checking[position2 - 1];
+			checking[position2 - 1] = checking[position - 1];
+			checking[position - 1] = temp;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+
+
 
 void Cursor::CheckBounds()
 {
