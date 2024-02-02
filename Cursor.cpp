@@ -31,7 +31,6 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				placingUnit = true;
 				foundTiles.clear();
 				costTile.clear();
-				costs.clear();
 				attackTiles.clear();
 			}
 			//Can't move to an already occupied tile
@@ -53,9 +52,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 					placingUnit = true;
 					foundTiles.clear();
-					costTile.clear();
-					costs.clear();
 					attackTiles.clear();
+					costTile.clear();
 					//Will be bringing up unit options here once those are implemented
 				}
 			}
@@ -86,10 +84,9 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			focusedUnit = selectedUnit;
 			selectedUnit = nullptr;
 			foundTiles.clear();
-			costTile.clear();
-			costs.clear();
 			attackTiles.clear();
 			path.clear();
+			costTile.clear();
 			drawnPath.clear();
 			placingUnit = false;
 		}
@@ -98,10 +95,9 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			focusedUnit = selectedUnit;
 			selectedUnit = nullptr;
 			foundTiles.clear();
-			costTile.clear();
-			costs.clear();
 			attackTiles.clear();
 			path.clear();
+			costTile.clear();
 			position = previousPosition;
 			camera.moving = true;
 			camera.SetMove(position);
@@ -204,6 +200,8 @@ void Cursor::FindUnitMoveRange()
 	{
 		checked[i].resize(TileManager::tileManager.levelHeight);
 	}
+	//TODO consider making this a map
+	std::vector<std::vector<int>> costs;
 	costs.resize(TileManager::tileManager.levelWidth);
 	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
 	{
@@ -219,7 +217,7 @@ void Cursor::FindUnitMoveRange()
 	glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
 	costs[normalPosition.x][normalPosition.y] = 0;
 	searchCell first = { normalPosition, 0 };
-	addToOpenSet(first, checking, checked);
+	addToOpenSet(first, checking, checked, costs);
 	foundTiles.push_back(position);
 	costTile.push_back(0);
 	while (checking.size() > 0)
@@ -234,14 +232,13 @@ void Cursor::FindUnitMoveRange()
 		glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
 		glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
 
-		CheckAdjacentTiles(up, checked, checking, current);
-		CheckAdjacentTiles(down, checked, checking, current);
-		CheckAdjacentTiles(right, checked, checking, current);
-		CheckAdjacentTiles(left, checked, checking, current);
-		
-
+		CheckAdjacentTiles(up, checked, checking, current, costs);
+		CheckAdjacentTiles(down, checked, checking, current, costs);
+		CheckAdjacentTiles(right, checked, checking, current, costs);
+		CheckAdjacentTiles(left, checked, checking, current, costs);
 	}
-	//if attack range is > 1
+	//if unit attack range is > 1
+	//Attack range not implemented yet, hardsetting here to test
 	checked.clear();
 	checked.resize(TileManager::tileManager.levelWidth);
 	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
@@ -285,7 +282,7 @@ void Cursor::CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<b
 	}
 }
 
-void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell)
+void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs)
 {
 	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
 	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
@@ -305,7 +302,7 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 			if (movementCost <= selectedUnit->move)
 			{
 				searchCell newCell{ checkingTile, movementCost };
-				addToOpenSet(newCell, checking, checked);
+				addToOpenSet(newCell, checking, checked, costs);
 				foundTiles.push_back(tilePosition);
 				costTile.push_back(movementCost);
 				path[tilePosition] = { tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
@@ -324,7 +321,7 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 
 
 
-void Cursor::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked)
+void Cursor::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs)
 {
 	int position;
 	checking.push_back(newCell);
