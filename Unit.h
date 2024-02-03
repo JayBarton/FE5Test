@@ -78,8 +78,11 @@ struct Unit
 	//Also need skills, no idea how to implement yet.
 
 	int currentHP;
-	//Not a huge deal, but I wonder if this is needed here, since enemies don't use it.
 	int experience = 0;
+
+	//0 = player
+	//1 = enemy
+	int team = 0;
 
 	Sprite sprite;
 	StatGrowths growths;

@@ -8,53 +8,96 @@
 bool compareMoveCost(const searchCell& a, const searchCell& b) {
 	return a.moveCost < b.moveCost;
 }
-void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
+void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera, Unit& enemy)
 {
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
-		if (selectedUnit)
+
+		if (unitOptions)
 		{
-			glm::vec2 unitCurrentPosition = selectedUnit->sprite.getPosition();
-			if (placingUnit)
+			switch (optionsVector[currentOption])
 			{
+			case ATTACK:
+				std::cout << "Attack here eventually\n";
+				break;
+			case ITEMS:
+				std::cout << "Items here eventually\n";
+				break;
+			case DISMOUNT:
+				std::cout << "Dismount here eventually\n";
+				break;
+				//Wait
+			default:
 				TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
 				selectedUnit->placeUnit(position.x, position.y);
 				selectedUnit = nullptr;
 				drawnPath.clear();
 				path.clear();
 				placingUnit = false;
+				unitOptions = false;
+				break;
 			}
-			else if (unitCurrentPosition == position)
+		}
+		else if (selectedUnit)
+		{
+			if (selectedUnit->team == 1)
 			{
-				//Can't move to where you already are, this will bring up unit options once those are implemented
-				std::cout << "Unit options here\n";
-				placingUnit = true;
+				selectedUnit = nullptr;
 				foundTiles.clear();
-				costTile.clear();
 				attackTiles.clear();
-			}
-			//Can't move to an already occupied tile
-			else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
-			{
-				if (path.find(position) != path.end())
+				path.clear();
+				costTile.clear();
+				if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
 				{
-					glm::vec2 pathPoint = position;
+					focusedUnit = tile->occupiedBy;
+				}
+			}
+			else
+			{
+				glm::vec2 unitCurrentPosition = selectedUnit->sprite.getPosition();
+				if (placingUnit)
+				{
+					TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
+					selectedUnit->placeUnit(position.x, position.y);
+					selectedUnit = nullptr;
 					drawnPath.clear();
-					drawnPath.push_back(pathPoint);
-					//This is just to make sure I can find a path to follow once I begin animating the units
-					while (pathPoint != unitCurrentPosition)
-					{
-						auto previous = path[pathPoint].previousPosition;
-						drawnPath.push_back(previous);
-						pathPoint = previous;
-					}
-
-					selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
+					path.clear();
+					placingUnit = false;
+				}
+				else if (unitCurrentPosition == position)
+				{
+					//Can't move to where you already are, this will bring up unit options once those are implemented
+					std::cout << "Unit options here\n";
 					placingUnit = true;
 					foundTiles.clear();
-					attackTiles.clear();
 					costTile.clear();
-					//Will be bringing up unit options here once those are implemented
+					attackTiles.clear();
+					GetUnitOptions(enemy);
+				}
+				//Can't move to an already occupied tile
+				else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
+				{
+					if (path.find(position) != path.end())
+					{
+						glm::vec2 pathPoint = position;
+						drawnPath.clear();
+						drawnPath.push_back(pathPoint);
+						//This is just to make sure I can find a path to follow once I begin animating the units
+						while (pathPoint != unitCurrentPosition)
+						{
+							auto previous = path[pathPoint].previousPosition;
+							drawnPath.push_back(previous);
+							pathPoint = previous;
+						}
+
+						selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
+						placingUnit = true;
+						foundTiles.clear();
+						attackTiles.clear();
+						costTile.clear();
+						//Will be bringing up unit options here once those are implemented
+						GetUnitOptions(enemy);
+					}
 				}
 			}
 		}
@@ -63,9 +106,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			previousPosition = position;
 			selectedUnit = focusedUnit;
 			focusedUnit = nullptr;
-
-			FindUnitMoveRange();
 			path[position] = { position, position };
+			FindUnitMoveRange();
 		}
 		else
 		{
@@ -88,7 +130,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			path.clear();
 			costTile.clear();
 			drawnPath.clear();
-			placingUnit = false;
+			unitOptions = false;
 		}
 		else if (selectedUnit)
 		{
@@ -103,8 +145,28 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			camera.SetMove(position);
 		}
 	}
-	
-	if (!placingUnit)
+	if (unitOptions)
+	{
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			currentOption--;
+			if (currentOption < 0)
+			{
+				currentOption = optionsVector.size() - 1;
+			}
+			std::cout << currentOption << std::endl;
+		}
+		if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			currentOption++;
+			if (currentOption >= optionsVector.size())
+			{
+				currentOption = 0;
+			}
+			std::cout << currentOption << std::endl;
+		}
+	}
+	else if (!placingUnit)
 	{
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
@@ -294,6 +356,14 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 		auto distance = costs[checkingTile.x][checkingTile.y];
 		if (!checked[checkingTile.x][checkingTile.y])
 		{
+			auto otherUnit = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y)->occupiedBy;
+			//This is horrid
+			if (otherUnit && otherUnit != selectedUnit && otherUnit->team != selectedUnit->team)
+			{
+				movementCost = 100;
+				costs[checkingTile.x][checkingTile.y] = movementCost;
+				checked[checkingTile.x][checkingTile.y] = true;
+			}
 			//This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
 			if (movementCost < distance)
 			{
@@ -309,7 +379,7 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 			}
 			else
 			{
-				//U G H
+				//U G H. Doing this to prevent it from adding dupes to the vector
 				if (distance == 50)
 				{
 					attackTiles.push_back(tilePosition);
@@ -387,8 +457,28 @@ void Cursor::removeFromOpenList(std::vector<searchCell>& checking)
 	}
 }
 
-
-
+void Cursor::GetUnitOptions(Unit& enemy)
+{
+	currentOption = 0;
+	unitOptions = true;
+	canAttack = false;
+	canDismount = false;
+	optionsVector.clear();
+	optionsVector.reserve(5);
+	glm::ivec2 unitPosition = selectedUnit->sprite.getPosition() / float(TileManager::TILE_SIZE);
+	glm::ivec2 enemyTilePosition = enemy.sprite.getPosition() / float(TileManager::TILE_SIZE);
+	int distance = abs(unitPosition.x - enemyTilePosition.x) + abs(unitPosition.y - enemyTilePosition.y);
+	if(distance <= 3) // attack range
+	{
+		canAttack = true;
+		optionsVector.push_back(ATTACK);
+	}
+	optionsVector.push_back(ITEMS);
+	//if can dismount
+	canDismount = true;
+	optionsVector.push_back(DISMOUNT);
+	optionsVector.push_back(WAIT);
+}
 
 void Cursor::CheckBounds()
 {

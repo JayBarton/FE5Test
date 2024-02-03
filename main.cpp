@@ -212,6 +212,7 @@ int main(int argc, char** argv)
 	unit2.growths = { 50, 55, 50, 55, 50, 50, 55, 55, 3 };
 	unit2.placeUnit(96, 96);
 	unit2.sprite.uv = &playerUVs;
+	unit2.team = 1;
 
 	UnitEvents* unitEvents = new UnitEvents();
 	unit.subject.addObserver(unitEvents);
@@ -284,7 +285,7 @@ int main(int argc, char** argv)
 				}
 			}
 			//if (!camera.moving)
-			cursor.CheckInput(inputManager, deltaTime, camera);
+			cursor.CheckInput(inputManager, deltaTime, camera, unit2);
 
 			if (!camera.moving)
 			{
@@ -515,7 +516,7 @@ void DrawText()
 	{
 		int x = SCREEN_WIDTH * 0.5f;
 		int y = SCREEN_HEIGHT * 0.5f;
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 		glm::mat4 model = glm::mat4();
 		model = glm::translate(model, glm::vec3(80, 96, 0.0f));
@@ -578,9 +579,53 @@ void DrawText()
 		{
 			Text->RenderText(intToString(1), x + 55, y + 45, 1);
 		}
+	}
+	else if (cursor.unitOptions)
+	{
+		int xStart = SCREEN_WIDTH;
+		int yOffset = 100;
+		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
+		if (fixedPosition.x >= camera.screenWidth * 0.5f)
+		{
+		//	xStart = 178;
+		}
+		//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(176, 32 + (12 * cursor.currentOption), 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		//Just a little test with new line
+		std::string commands = "";
+		if (cursor.canAttack)
+		{
+			commands += "Attack\n";
+			Text->RenderText("Attack", xStart - 200, yOffset, 1);
+			yOffset += 30;
+		}
+		commands += "Items\n";
+		Text->RenderText("Items", xStart - 200, yOffset, 1);
+		yOffset += 30;
+		if (cursor.canDismount)
+		{
+			commands += "Dismount\n";
+			Text->RenderText("Dismount", xStart - 200, yOffset, 1);
+			yOffset += 30;
+		}
+		commands += "Wait";
+		Text->RenderText("Wait", xStart - 200, yOffset, 1);
+		//Text->RenderText(commands, xStart - 200, 100, 1);
 
 	}
-	else if (!cursor.fastCursor)
+	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr)
 	{
 		auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 
