@@ -21,13 +21,6 @@ struct vec2Hash
 
 struct Cursor
 {
-	const static int ITEMS = 0;
-	const static int WAIT = 1;
-	const static int DISMOUNT = 2;
-	const static int ATTACK = 3;
-	int currentOption = 0;
-	std::vector<int> optionsVector;
-
 	glm::vec2 position;
 	glm::vec2 dimensions = glm::vec2(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
 	std::vector<glm::vec4> uvs;
@@ -52,10 +45,6 @@ struct Cursor
 
 	bool firstMove = true; //Not sure how to handle this. I want a slightly longer delay the first time the player moves, unless they are moving fast
 	bool fastCursor = false;
-	//Wonder if unitOption stuff should be within the unit.
-	bool unitOptions = false;
-	bool canAttack = false;
-	bool canDismount = false;
 	//Hopefully temporary, I expect managing different states will get more complicated over time
 	bool placingUnit = false;
 
@@ -70,10 +59,11 @@ struct Cursor
 	void CheckBounds();
 	void Move(int x, int y, bool held = false);
 
+	void Wait();
+	void UndoMove();
+
 	void addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs);
 	void removeFromOpenList(std::vector<searchCell>& checking);
 
-	//I am not sure how I'll handle find out if an enemy is in range. Passing in this enemy is entirely temporary.
-	//My plan currently is to just look through every enemy and return the ones within range, not sure if there is a better way.
-	void GetUnitOptions(Unit& enemy);
+	void GetUnitOptions();
 };

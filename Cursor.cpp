@@ -2,44 +2,21 @@
 #include "TileManager.h"
 #include "InputManager.h"
 #include "Camera.h"
+#include "MenuManager.h"
 #include <SDL.h>
 #include <iostream>
 #include <algorithm>
 bool compareMoveCost(const searchCell& a, const searchCell& b) {
 	return a.moveCost < b.moveCost;
 }
+//Cursor should have a reference to menumanager
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera, Unit& enemy)
 {
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
-
-		if (unitOptions)
+		if (selectedUnit)
 		{
-			switch (optionsVector[currentOption])
-			{
-			case ATTACK:
-				std::cout << "Attack here eventually\n";
-				break;
-			case ITEMS:
-				std::cout << "Items here eventually\n";
-				break;
-			case DISMOUNT:
-				std::cout << "Dismount here eventually\n";
-				break;
-				//Wait
-			default:
-				TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
-				selectedUnit->placeUnit(position.x, position.y);
-				selectedUnit = nullptr;
-				drawnPath.clear();
-				path.clear();
-				placingUnit = false;
-				unitOptions = false;
-				break;
-			}
-		}
-		else if (selectedUnit)
-		{
+			//If this is an enemy unit, stop drawing its range, and if over another unit focus on it
 			if (selectedUnit->team == 1)
 			{
 				selectedUnit = nullptr;
@@ -64,19 +41,20 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					path.clear();
 					placingUnit = false;
 				}
+				//Can't move to where you already are, so just treat as a movement of 0 and open options
 				else if (unitCurrentPosition == position)
 				{
-					//Can't move to where you already are, this will bring up unit options once those are implemented
 					std::cout << "Unit options here\n";
 					placingUnit = true;
 					foundTiles.clear();
 					costTile.clear();
 					attackTiles.clear();
-					GetUnitOptions(enemy);
+					GetUnitOptions();
 				}
 				//Can't move to an already occupied tile
 				else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
 				{
+					//If clicking on a valid position, move the selected unit there
 					if (path.find(position) != path.end())
 					{
 						glm::vec2 pathPoint = position;
@@ -96,7 +74,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 						attackTiles.clear();
 						costTile.clear();
 						//Will be bringing up unit options here once those are implemented
-						GetUnitOptions(enemy);
+						GetUnitOptions();
 					}
 				}
 			}
@@ -112,7 +90,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		else
 		{
 			//Open menu
-			std::cout << "Menu opens here\n";
+			std::cout << "Main Menu opens here\n";
 		}
 	}
 	//Cancel
@@ -120,17 +98,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 	{
 		if (placingUnit)
 		{
-			placingUnit = false;
-			position = previousPosition;
-			selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
-			focusedUnit = selectedUnit;
-			selectedUnit = nullptr;
-			foundTiles.clear();
-			attackTiles.clear();
-			path.clear();
-			costTile.clear();
-			drawnPath.clear();
-			unitOptions = false;
+			UndoMove();
 		}
 		else if (selectedUnit)
 		{
@@ -145,28 +113,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			camera.SetMove(position);
 		}
 	}
-	if (unitOptions)
-	{
-		if (inputManager.isKeyPressed(SDLK_UP))
-		{
-			currentOption--;
-			if (currentOption < 0)
-			{
-				currentOption = optionsVector.size() - 1;
-			}
-			std::cout << currentOption << std::endl;
-		}
-		if (inputManager.isKeyPressed(SDLK_DOWN))
-		{
-			currentOption++;
-			if (currentOption >= optionsVector.size())
-			{
-				currentOption = 0;
-			}
-			std::cout << currentOption << std::endl;
-		}
-	}
-	else if (!placingUnit)
+	if (!placingUnit)
 	{
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
@@ -457,27 +404,9 @@ void Cursor::removeFromOpenList(std::vector<searchCell>& checking)
 	}
 }
 
-void Cursor::GetUnitOptions(Unit& enemy)
+void Cursor::GetUnitOptions()
 {
-	currentOption = 0;
-	unitOptions = true;
-	canAttack = false;
-	canDismount = false;
-	optionsVector.clear();
-	optionsVector.reserve(5);
-	glm::ivec2 unitPosition = selectedUnit->sprite.getPosition() / float(TileManager::TILE_SIZE);
-	glm::ivec2 enemyTilePosition = enemy.sprite.getPosition() / float(TileManager::TILE_SIZE);
-	int distance = abs(unitPosition.x - enemyTilePosition.x) + abs(unitPosition.y - enemyTilePosition.y);
-	if(distance <= 3) // attack range
-	{
-		canAttack = true;
-		optionsVector.push_back(ATTACK);
-	}
-	optionsVector.push_back(ITEMS);
-	//if can dismount
-	canDismount = true;
-	optionsVector.push_back(DISMOUNT);
-	optionsVector.push_back(WAIT);
+	MenuManager::menuManager.AddMenu(0);
 }
 
 void Cursor::CheckBounds()
@@ -527,4 +456,28 @@ void Cursor::Move(int x, int y, bool held)
 			}
 		}
 	}
+}
+
+void Cursor::Wait()
+{
+	TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
+	selectedUnit->placeUnit(position.x, position.y);
+	selectedUnit = nullptr;
+	drawnPath.clear();
+	path.clear();
+	placingUnit = false;
+}
+
+void Cursor::UndoMove()
+{
+	placingUnit = false;
+	position = previousPosition;
+	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
+	focusedUnit = selectedUnit;
+	selectedUnit = nullptr;
+	foundTiles.clear();
+	attackTiles.clear();
+	path.clear();
+	costTile.clear();
+	drawnPath.clear();
 }
