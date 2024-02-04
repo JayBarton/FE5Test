@@ -66,4 +66,6 @@ struct Cursor
 	void removeFromOpenList(std::vector<searchCell>& checking);
 
 	void GetUnitOptions();
+
+	std::vector<Unit*> inRangeUnits();
 };

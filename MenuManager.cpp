@@ -136,10 +136,8 @@ void UnitOptionsMenu::GetUnitOptions()
 	canDismount = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
-	//glm::ivec2 unitPosition = selectedUnit->sprite.getPosition() / float(TileManager::TILE_SIZE);
-	//glm::ivec2 enemyTilePosition = enemy.sprite.getPosition() / float(TileManager::TILE_SIZE);
-	//int distance = abs(unitPosition.x - enemyTilePosition.x) + abs(unitPosition.y - enemyTilePosition.y);
-	//if (distance <= 3) // attack range
+	auto units = cursor->inRangeUnits();
+	if (units.size() > 0)
 	{
 		canAttack = true;
 		optionsVector.push_back(ATTACK);

@@ -169,6 +169,25 @@ Tile * TileManager::getTile(int x, int y)
     return &tiles[xPositionToIndex(x) + yPositionToIndex(y) * rowTiles];
 }
 
+Unit* TileManager::getUnit(int x, int y)
+{
+    if (Tile* tile = getTile(x, y))
+    {
+        return tile->occupiedBy;
+    }
+    return nullptr;
+}
+
+Unit* TileManager::getUnitOnTeam(int x, int y, int team)
+{
+    Unit* unit = getUnit(x, y);
+    if (unit && unit->team == team)
+    {
+        return unit;
+    }
+    return nullptr;
+}
+
 //Not sure if this function is even neccessary
 glm::vec4 TileManager::getTileBox(int xPosition, int yPosition)
 {

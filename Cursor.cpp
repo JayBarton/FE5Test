@@ -409,6 +409,68 @@ void Cursor::GetUnitOptions()
 	MenuManager::menuManager.AddMenu(0);
 }
 
+//Not sure about passing the team here. Not sure how finding healable units should work, 
+//since healing and attack range could be different, so I can't really reuse this without copying the code.
+std::vector<Unit*> Cursor::inRangeUnits()
+{
+	std::vector<Unit*> units;
+	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
+
+	int range = 3;
+
+	for (int i = 1; i < range + 1; i++)
+	{
+		glm::ivec2 up = glm::ivec2(position.x, position.y - i * TileManager::TILE_SIZE);
+		glm::ivec2 down = glm::ivec2(position.x, position.y + i * TileManager::TILE_SIZE);
+		glm::ivec2 left = glm::ivec2(position.x - i * TileManager::TILE_SIZE, position.y);
+		glm::ivec2 right = glm::ivec2(position.x + i * TileManager::TILE_SIZE, position.y);
+		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(up.x, up.y, 1))
+		{
+			units.push_back(unit);
+		}
+		for (int c = 1; c < range + 1 - i; c++)
+		{
+			glm::ivec2 upLeft = glm::ivec2(up.x - c * TileManager::TILE_SIZE, up.y);
+			glm::ivec2 upRight = glm::ivec2(up.x + c * TileManager::TILE_SIZE, up.y);
+			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(upLeft.x, upLeft.y, 1))
+			{
+				units.push_back(unit);
+			}
+			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(upRight.x, upRight.y, 1))
+			{
+				units.push_back(unit);
+			}
+		}
+		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(down.x, down.y, 1))
+		{
+			units.push_back(unit);
+		}
+		for (int c = 1; c < range + 1 - i; c++)
+		{
+			glm::ivec2 downLeft = glm::ivec2(down.x - c * TileManager::TILE_SIZE, down.y);
+			glm::ivec2 downRight = glm::ivec2(down.x + c * TileManager::TILE_SIZE, down.y);
+			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(downLeft.x, downLeft.y, 1))
+			{
+				units.push_back(unit);
+			}
+			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(downRight.x, downRight.y, 1))
+			{
+				units.push_back(unit);
+			}
+		}
+		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(left.x, left.y, 1))
+		{
+			units.push_back(unit);
+		}
+		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(right.x, right.y, 1))
+		{
+			units.push_back(unit);
+		}
+	}
+
+	return units;
+}
+
 void Cursor::CheckBounds()
 {
 	if (position.x < 0)

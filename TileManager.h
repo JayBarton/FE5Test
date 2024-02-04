@@ -60,6 +60,8 @@ public :
 	int getType(int x, int y);
 
 	Tile * getTile(int x, int y);
+    Unit* getUnit(int x, int y);
+    Unit* getUnitOnTeam(int x, int y, int team);
     glm::vec4 getTileBox(int xPosition, int yPosition);
 
     void PositionToTile(int &x, int &y);
