@@ -2,9 +2,19 @@
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
 #include "TileManager.h"
+#include "Items.h"
+
 Unit::Unit()
 {
 
+}
+
+Unit::~Unit()
+{
+    for (int i = 0; i < inventory.size(); i++)
+    {
+        delete inventory[i];
+    }
 }
 
 void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
@@ -105,4 +115,105 @@ void Unit::AddExperience(int exp)
         experience -= 100;
         LevelUp();
     }
+}
+
+void Unit::addItem(int ID)
+{
+    if (inventory.size() < INVENTORY_SLOTS)
+    {
+        auto newItem = new Item (ItemManager::itemManager.items[ID]);
+        inventory.push_back(newItem);
+        
+        if (newItem->isWeapon)
+        {
+            auto weapon = ItemManager::itemManager.weaponData[ID];
+            if (weapon.maxRange > maxRange)
+            {
+                maxRange = weapon.maxRange;
+            }
+            if (weapon.minRange < minRange)
+            {
+                minRange = weapon.minRange;
+            }
+            weapons.push_back(newItem);
+        }
+    }
+}
+
+void Unit::dropItem(int index)
+{
+    for (int i = 0; i < weapons.size(); i++)
+    {
+        if (inventory[index] == weapons[i])
+        {
+            weapons.erase(weapons.begin() + i);
+            break;
+        }
+    }
+    Item* i = inventory[index];
+    inventory.erase(inventory.begin() + index);
+    delete i;
+
+    //Check if the range needs to be reset
+    //This is a bit clumsy, but it works for now
+    maxRange = 0;
+    minRange = 5;
+    for (int i = 0; i < weapons.size(); i++)
+    {
+        auto weapon = ItemManager::itemManager.weaponData[weapons[i]->ID];
+        if (weapon.maxRange > maxRange)
+        {
+            maxRange = weapon.maxRange;
+        }
+        if (weapon.minRange < minRange)
+        {
+            minRange = weapon.minRange;
+        }
+    }
+}
+
+void Unit::equipWeapon(int index)
+{
+    //Equipped weapon will always be in the first slot
+    auto temp = inventory[0];
+    inventory[0] = inventory[index];
+    inventory[index] = temp;
+    equippedWeapon = inventory[0]->ID;
+}
+
+BattleStats Unit::CalculateBattleStats(int weaponID)
+{
+    BattleStats stats;
+    if (weaponID == -1)
+    {
+        weaponID = equippedWeapon;
+    }
+    if (weaponID == -1)
+    {
+        stats.attackDamage = 0;
+        stats.attackSpeed = 0;
+        stats.hitAccuracy = 0;
+        stats.hitAvoid = 0;
+        stats.hitCrit = 0;
+    }
+    else if (weaponID >= 0)
+    {
+        auto weapon = ItemManager::itemManager.weaponData[weaponID];
+        stats.attackDamage = weapon.might + strength; //+ mag if the weapon is magic
+        stats.hitAccuracy = weapon.hit + skill * 2 + luck;
+        stats.hitCrit = weapon.crit + skill;
+        int weight = weapon.weight - build; //No build included if the weapon is magic
+        if (weight < 0)
+        {
+            weight = 0;
+        }
+        stats.attackSpeed = speed - weight;
+        stats.hitAvoid = stats.attackSpeed * 2 + luck;
+    }
+    return stats;
+}
+
+WeaponData Unit::GetWeaponData(Item* item)
+{
+    return ItemManager::itemManager.weaponData[item->ID];
 }

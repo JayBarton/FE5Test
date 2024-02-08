@@ -248,32 +248,34 @@ void Cursor::FindUnitMoveRange()
 	}
 	//if unit attack range is > 1
 	//Attack range not implemented yet, hardsetting here to test
-	checked.clear();
-	checked.resize(TileManager::tileManager.levelWidth);
-	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	if (selectedUnit->maxRange > 0)
 	{
-		checked[i].resize(TileManager::tileManager.levelHeight);
-	}
-	for (int i = 0; i < attackTiles.size(); i++)
-	{
-		auto current = attackTiles[i] / TileManager::TILE_SIZE;
-		checked[current.x][current.y] = true;
-	}
-	std::vector<glm::ivec2> searchingAttacks = attackTiles;
-	int range = 3;
-	for (int i = 0; i < searchingAttacks.size(); i++)
-	{
-		auto current = searchingAttacks[i] / TileManager::TILE_SIZE;
-		for (int c = 1; c < range; c++)
+		checked.clear();
+		checked.resize(TileManager::tileManager.levelWidth);
+		for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
 		{
-			glm::ivec2 up = glm::ivec2(current.x, current.y - c);
-			glm::ivec2 down = glm::ivec2(current.x, current.y + c);
-			glm::ivec2 left = glm::ivec2(current.x - c, current.y) ;
-			glm::ivec2 right = glm::ivec2(current.x + c, current.y);
-			CheckExtraRange(up, checked);
-			CheckExtraRange(down, checked);
-			CheckExtraRange(left, checked);
-			CheckExtraRange(right, checked);
+			checked[i].resize(TileManager::tileManager.levelHeight);
+		}
+		for (int i = 0; i < attackTiles.size(); i++)
+		{
+			auto current = attackTiles[i] / TileManager::TILE_SIZE;
+			checked[current.x][current.y] = true;
+		}
+		std::vector<glm::ivec2> searchingAttacks = attackTiles;
+		for (int i = 0; i < searchingAttacks.size(); i++)
+		{
+			auto current = searchingAttacks[i] / TileManager::TILE_SIZE;
+			for (int c = 1; c < selectedUnit->maxRange; c++)
+			{
+				glm::ivec2 up = glm::ivec2(current.x, current.y - c);
+				glm::ivec2 down = glm::ivec2(current.x, current.y + c);
+				glm::ivec2 left = glm::ivec2(current.x - c, current.y);
+				glm::ivec2 right = glm::ivec2(current.x + c, current.y);
+				CheckExtraRange(up, checked);
+				CheckExtraRange(down, checked);
+				CheckExtraRange(left, checked);
+				CheckExtraRange(right, checked);
+			}
 		}
 	}
 }
@@ -326,10 +328,13 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 			}
 			else
 			{
-				//U G H. Doing this to prevent it from adding dupes to the vector
-				if (distance == 50)
+				if (selectedUnit->maxRange > 0)
 				{
-					attackTiles.push_back(tilePosition);
+					//U G H. Doing this to prevent it from adding dupes to the vector
+					if (distance == 50)
+					{
+						attackTiles.push_back(tilePosition);
+					}
 				}
 			}
 		}
@@ -416,9 +421,9 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	std::vector<Unit*> units;
 	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
 
-	int range = 3;
-
-	for (int i = 1; i < range + 1; i++)
+	int range = selectedUnit->maxRange;
+	int minRange = selectedUnit->minRange;
+	for (int i = minRange; i < range + 1; i++)
 	{
 		glm::ivec2 up = glm::ivec2(position.x, position.y - i * TileManager::TILE_SIZE);
 		glm::ivec2 down = glm::ivec2(position.x, position.y + i * TileManager::TILE_SIZE);
@@ -428,7 +433,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 		{
 			units.push_back(unit);
 		}
-		for (int c = 1; c < range + 1 - i; c++)
+		for (int c = minRange; c < range + 1 - i; c++)
 		{
 			glm::ivec2 upLeft = glm::ivec2(up.x - c * TileManager::TILE_SIZE, up.y);
 			glm::ivec2 upRight = glm::ivec2(up.x + c * TileManager::TILE_SIZE, up.y);
@@ -445,7 +450,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 		{
 			units.push_back(unit);
 		}
-		for (int c = 1; c < range + 1 - i; c++)
+		for (int c = minRange; c < range + 1 - i; c++)
 		{
 			glm::ivec2 downLeft = glm::ivec2(down.x - c * TileManager::TILE_SIZE, down.y);
 			glm::ivec2 downRight = glm::ivec2(down.x + c * TileManager::TILE_SIZE, down.y);

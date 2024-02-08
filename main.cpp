@@ -15,6 +15,7 @@
 #include "Cursor.h"
 #include "Unit.h"
 #include "MenuManager.h"
+#include "Items.h"
 
 #include <vector>
 #include <algorithm>
@@ -66,6 +67,7 @@ int levelHeight;
 Cursor cursor;
 Unit unit;
 Unit unit2;
+Unit unit3;
 
 MenuManager menuManager;
 
@@ -185,7 +187,7 @@ int main(int argc, char** argv)
 	unit.init(&gen, &distribution);
 	unit.name = "Leif";
 	unit.maxHP = 22;
-	unit.currentHP = 22;
+	unit.currentHP = 14;
 	unit.strength = 4;
 	unit.magic = 0;
 	unit.skill = 2;
@@ -198,6 +200,13 @@ int main(int argc, char** argv)
 	unit.placeUnit(48, 96);
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 	unit.sprite.uv = &playerUVs;
+	unit.equippedWeapon = 1;
+
+	ItemManager::itemManager.SetUpItems();
+	unit.addItem(1);
+	unit.addItem(2);
+	unit.addItem(3);
+	unit.addItem(0);
 
 	//just have this guy to test leveling on multiple units
 	unit2.init(&gen, &distribution);
@@ -216,6 +225,23 @@ int main(int argc, char** argv)
 	unit2.placeUnit(96, 96);
 	unit2.sprite.uv = &playerUVs;
 	unit2.team = 1;
+
+	unit3.init(&gen, &distribution);
+	unit3.name = "hhfffhh";
+	unit3.maxHP = 20;
+	unit3.currentHP = 20;
+	unit3.strength = 3;
+	unit3.magic = 5;
+	unit3.skill = 3;
+	unit3.speed = 5;
+	unit3.luck = 0;
+	unit3.defense = 2;
+	unit3.build = 5;
+	unit3.move = 6;
+	unit3.growths = { 50, 55, 50, 55, 50, 50, 55, 55, 3 };
+	unit3.placeUnit(128, 80);
+	unit3.sprite.uv = &playerUVs;
+	unit3.team = 1;
 
 	UnitEvents* unitEvents = new UnitEvents();
 	unit.subject.addObserver(unitEvents);
@@ -322,7 +348,7 @@ int main(int argc, char** argv)
 	}
 
 	delete Renderer;
-
+	delete Text;
 	/*for (int i = 0; i < soundEffects.size(); i++)
 	{
 		for (int c = 0; c < soundEffects[i].size(); c++)
@@ -455,6 +481,7 @@ void Draw()
 
 	unit.Draw(Renderer);
 	unit2.Draw(Renderer);
+	unit3.Draw(Renderer);
 
 	Renderer->setUVs(cursor.uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
@@ -626,7 +653,7 @@ void DrawText()
 			drawPosition.y += 22.0f;
 			Text->RenderText("HP", drawPosition.x, drawPosition.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
 			drawPosition.x += 25;
-			Text->RenderText(intToString(unit->maxHP) + "/" + intToString(unit->currentHP), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
+			Text->RenderText(intToString(unit->currentHP) + "/" + intToString(unit->maxHP), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
 		}
 	}
 }
