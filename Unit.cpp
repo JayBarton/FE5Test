@@ -175,10 +175,12 @@ void Unit::dropItem(int index)
 void Unit::equipWeapon(int index)
 {
     //Equipped weapon will always be in the first slot
-    auto temp = inventory[0];
-    inventory[0] = inventory[index];
-    inventory[index] = temp;
-    equippedWeapon = inventory[0]->ID;
+    if (inventory.size() > 1)
+    {
+        auto temp = inventory[0];
+        inventory[0] = inventory[index];
+        inventory[index] = temp;
+    }
 }
 
 BattleStats Unit::CalculateBattleStats(int weaponID)
@@ -186,15 +188,11 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
     BattleStats stats;
     if (weaponID == -1)
     {
-        weaponID = equippedWeapon;
+        weaponID = inventory[0]->ID;
     }
     if (weaponID == -1)
     {
-        stats.attackDamage = 0;
-        stats.attackSpeed = 0;
-        stats.hitAccuracy = 0;
-        stats.hitAvoid = 0;
-        stats.hitCrit = 0;
+        return BattleStats();
     }
     else if (weaponID >= 0)
     {

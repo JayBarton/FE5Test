@@ -200,31 +200,33 @@ int main(int argc, char** argv)
 	unit.placeUnit(48, 96);
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 	unit.sprite.uv = &playerUVs;
-	unit.equippedWeapon = 1;
 
 	ItemManager::itemManager.SetUpItems();
 	unit.addItem(1);
 	unit.addItem(2);
 	unit.addItem(3);
 	unit.addItem(0);
+	unit.equipWeapon(1);
 
 	//just have this guy to test leveling on multiple units
 	unit2.init(&gen, &distribution);
-	unit2.name = "hhhh";
-	unit2.maxHP = 20;
-	unit2.currentHP = 20;
-	unit2.strength = 3;
-	unit2.magic = 5;
-	unit2.skill = 3;
-	unit2.speed = 5;
-	unit2.luck = 0;
-	unit2.defense = 2;
-	unit2.build = 5;
-	unit2.move = 6;
+	unit2.name = "Archer";
+	unit2.maxHP = 23;
+	unit2.currentHP = 23;
+	unit2.strength = 6;
+	unit2.magic = 0;
+	unit2.skill = 0;
+	unit2.speed = 3;
+	unit2.luck = 3;
+	unit2.defense = 1;
+	unit2.build = 6;
+	unit2.move = 5;
 	unit2.growths = { 50, 55, 50, 55, 50, 50, 55, 55, 3 };
 	unit2.placeUnit(96, 96);
 	unit2.sprite.uv = &playerUVs;
 	unit2.team = 1;
+	unit2.addItem(4);
+	unit2.equipWeapon(0);
 
 	unit3.init(&gen, &distribution);
 	unit3.name = "hhfffhh";
@@ -242,12 +244,14 @@ int main(int argc, char** argv)
 	unit3.placeUnit(128, 80);
 	unit3.sprite.uv = &playerUVs;
 	unit3.team = 1;
+	unit3.addItem(1);
+	unit3.equipWeapon(0);
 
 	UnitEvents* unitEvents = new UnitEvents();
 	unit.subject.addObserver(unitEvents);
 	unit2.subject.addObserver(unitEvents);
 
-	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO);
+	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer);
 
 	while (isRunning)
 	{

@@ -6,6 +6,7 @@ class TextRenderer;
 class Camera;
 class Item;
 class BattleStats;
+class SpriteRenderer;
 struct Menu
 {
 	Menu() {}
@@ -53,11 +54,12 @@ struct ItemOptionsMenu : public Menu
 {
 	ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
 	virtual void Draw() override;
+	void DrawWeaponComparison(std::vector<Item*>& inventory);
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
-	void GetBattleStats();
+	virtual void GetBattleStats();
 
 	BattleStats currentStats;
 	BattleStats selectedStats;
@@ -82,29 +84,54 @@ struct ItemUseMenu : public Menu
 	bool canEquip = false;
 };
 
-struct SelectWeaponMenu : public Menu
+struct SelectWeaponMenu : public ItemOptionsMenu
 {
-	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons);
+	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
-
 	virtual void GetOptions() override;
-
-	std::vector<Item*> weapons;
-
-	//Evil code duplication
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
-	void GetBattleStats();
+	std::vector<Item*> weapons;
+	std::vector<std::vector<Unit*>> unitsToAttack;
 
-	BattleStats currentStats;
-	BattleStats selectedStats;
+	virtual void GetBattleStats() override;
 
+};
+
+struct DisplayedBattleStats
+{
+	std::string lvl;
+	std::string hP;
+	std::string atk;
+	std::string def;
+	std::string hit;
+	std::string crit;
+	std::string attackSpeed;
+};
+
+struct SelectEnemyMenu : public Menu
+{
+	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	void CanEnemyCounter();
+	//Using these so I can handle formatting once rather than doing it repeatedly in draw
+	//I think I am still going to need the normal battle stats for actual combat calculations
+	DisplayedBattleStats enemyStats;
+	DisplayedBattleStats playerStats;
+
+	std::vector<Unit*> unitsToAttack;
+	SpriteRenderer* renderer = nullptr;
+	bool enemyCanCounter = false;
 };
 
 struct MenuManager
 {
-	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 
 	void AddMenu(int menuID);
 
@@ -116,6 +143,7 @@ struct MenuManager
 	Cursor* cursor = nullptr;
 	TextRenderer* text = nullptr;
 	Camera* camera = nullptr;
+	SpriteRenderer* renderer = nullptr;
 
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 

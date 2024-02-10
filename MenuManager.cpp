@@ -23,7 +23,6 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			currentOption = optionsVector.size() - 1;
 		}
-		std::cout << currentOption << std::endl;
 	}
 	if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
@@ -32,7 +31,6 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			currentOption = 0;
 		}
-		std::cout << currentOption << std::endl;
 	}
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
@@ -67,38 +65,39 @@ void UnitOptionsMenu::SelectOption()
 	case ATTACK:
 	{
 		std::vector<Item*> validWeapons;
-		for (int i = 0; i < unitsInRange.size(); i++)
+		std::vector<std::vector<Unit*>> unitsToAttack;
+		auto playerUnit = cursor->selectedUnit;
+		//unitsToAttack.resize(validWeapons.size());
+		for (int i = 0; i < playerUnit->weapons.size(); i++)
 		{
-			auto currentUnit = unitsInRange[i];
-			auto playerUnit = cursor->selectedUnit;
-			float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
-			distance /= TileManager::TILE_SIZE;
-			for (int c = 0; c < playerUnit->weapons.size(); c++)
+
+			bool weaponInRange = false;
+			auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[i]);
+			for (int c = 0; c < unitsInRange.size(); c++)
 			{
-				auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[c]);
+				auto currentUnit = unitsInRange[c];
+
+				float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
+				distance /= TileManager::TILE_SIZE;
 				if (distance <= weapon.maxRange && distance >= weapon.minRange)
 				{
-					//Really hate this, but need to make sure weapons don't get added more than once.
-					//Want a better way of doing this.
-					bool dupe = false;
-					for (int j = 0; j < validWeapons.size(); j++)
+					if (!weaponInRange)
 					{
-						if (validWeapons[j] == playerUnit->weapons[c])
-						{
-							dupe = true;
-							break;
-						}
+						weaponInRange = true;
+						std::vector<Unit*> fuck;
+						unitsToAttack.push_back(fuck);
+						validWeapons.push_back(playerUnit->weapons[i]);
+						unitsToAttack.back().push_back(currentUnit);
 					}
-					if (!dupe)
+					else
 					{
-						validWeapons.push_back(playerUnit->weapons[c]);
+						unitsToAttack.back().push_back(currentUnit);
 					}
 				}
 			}
 		}
-			Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons);
-			MenuManager::menuManager.menus.push_back(newMenu);
-		std::cout << "Attack here eventually\n";
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack);
+		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case ITEMS:
@@ -225,46 +224,51 @@ void ItemOptionsMenu::Draw()
 	}
 	if (inventory[currentOption]->isWeapon)
 	{
-		int offSet = 30;
-		int yPosition = 100;
-		auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
-		
-		int xStatName = 620;
-		int xStatValue = 660;
-		text->RenderText("Type", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString2(weaponData.type), xStatValue, yPosition, 1, 14);
-		yPosition += offSet;
-		text->RenderText("Atk", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString2(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
-		if (selectedStats.attackDamage > currentStats.attackDamage)
-		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-		}
-		yPosition += offSet;
-		text->RenderText("Hit", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString2(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
-		if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
-		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-		}
-		yPosition += offSet;
-		text->RenderText("Crit", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString2(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
-		if (selectedStats.hitCrit > currentStats.hitCrit)
-		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-		}
-		yPosition += offSet;
-		text->RenderText("Avo", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString2(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
-		if (selectedStats.hitAvoid > currentStats.hitAvoid)
-		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-		}
+		DrawWeaponComparison(inventory);
 	}
 	else
 	{
 		text->RenderText(inventory[currentOption]->description, 620, 100, 1);
+	}
+}
+
+void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
+{
+	int offSet = 30;
+	int yPosition = 100;
+	auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
+
+	int xStatName = 620;
+	int xStatValue = 660;
+	text->RenderText("Type", xStatName, yPosition, 1);
+	text->RenderTextRight(intToString2(weaponData.type), xStatValue, yPosition, 1, 14);
+	yPosition += offSet;
+	text->RenderText("Atk", xStatName, yPosition, 1);
+	text->RenderTextRight(intToString2(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
+	if (selectedStats.attackDamage > currentStats.attackDamage)
+	{
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+	}
+	yPosition += offSet;
+	text->RenderText("Hit", xStatName, yPosition, 1);
+	text->RenderTextRight(intToString2(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+	if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
+	{
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+	}
+	yPosition += offSet;
+	text->RenderText("Crit", xStatName, yPosition, 1);
+	text->RenderTextRight(intToString2(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
+	if (selectedStats.hitCrit > currentStats.hitCrit)
+	{
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+	}
+	yPosition += offSet;
+	text->RenderText("Avo", xStatName, yPosition, 1);
+	text->RenderTextRight(intToString2(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
+	if (selectedStats.hitAvoid > currentStats.hitAvoid)
+	{
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
 	}
 }
 
@@ -299,8 +303,9 @@ void ItemOptionsMenu::GetBattleStats()
 }
 
 MenuManager MenuManager::menuManager;
-void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO)
+void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer)
 {
+	renderer = Renderer;
 	cursor = Cursor;
 	text = Text;
 	camera = Camera;
@@ -433,15 +438,19 @@ void ItemUseMenu::GetOptions()
 	optionsVector.push_back(DROP);
 }
 
-SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons) : Menu(Cursor, Text, camera, shapeVAO)
+SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units)
+	: ItemOptionsMenu(Cursor, Text, camera, shapeVAO)
 {
 	weapons = validWeapons;
+	unitsToAttack = units;
 	GetOptions();
 	GetBattleStats();
 }
 
 void SelectWeaponMenu::Draw()
 {
+	auto inventory = weapons;
+
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
@@ -457,7 +466,6 @@ void SelectWeaponMenu::Draw()
 	glBindVertexArray(0);
 
 	Unit* unit = cursor->selectedUnit;
-	auto inventory = weapons;
 	for (int i = 0; i < inventory.size(); i++)
 	{
 		int yPosition = 100 + i * 30;
@@ -465,53 +473,32 @@ void SelectWeaponMenu::Draw()
 		text->RenderTextRight(intToString2(inventory[i]->remainingUses), 200, yPosition, 1, 14);
 	}
 
-	int offSet = 30;
-	int yPosition = 100;
-	auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
-
-	int xStatName = 620;
-	int xStatValue = 660;
-	text->RenderText("Type", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(weaponData.type), xStatValue, yPosition, 1, 14);
-	yPosition += offSet;
-	text->RenderText("Atk", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
-	if (selectedStats.attackDamage > currentStats.attackDamage)
-	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-	}
-	yPosition += offSet;
-	text->RenderText("Hit", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
-	if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
-	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-	}
-	yPosition += offSet;
-	text->RenderText("Crit", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
-	if (selectedStats.hitCrit > currentStats.hitCrit)
-	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-	}
-	yPosition += offSet;
-	text->RenderText("Avo", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
-	if (selectedStats.hitAvoid > currentStats.hitAvoid)
-	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
-	}
+	DrawWeaponComparison(weapons);
 }
 
 void SelectWeaponMenu::SelectOption()
 {
 	Unit* unit = cursor->selectedUnit;
-	std::cout << weapons[currentOption]->name << std::endl;
+	for (int i = 0; i < unit->inventory.size(); i++)
+	{
+		if (weapons[currentOption] == unit->inventory[i])
+		{
+			unit->equipWeapon(i);
+			break;
+		}
+	}
+	auto enemyUnits = unitsToAttack[currentOption];
+	for (int i = 0; i < unitsToAttack[currentOption].size(); i++)
+	{
+		std::cout << enemyUnits[i]->name << std::endl;
+	}
+	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, enemyUnits, MenuManager::menuManager.renderer);
+	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
 void SelectWeaponMenu::GetOptions()
 {
-	optionsVector.resize(cursor->selectedUnit->weapons.size());
+	optionsVector.resize(weapons.size());
 }
 
 void SelectWeaponMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -531,4 +518,140 @@ void SelectWeaponMenu::GetBattleStats()
 
 	currentStats = unit->CalculateBattleStats();
 	selectedStats = unit->CalculateBattleStats(weaponData.ID);
+}
+
+SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	renderer = Renderer;
+	unitsToAttack = units;
+	CanEnemyCounter();
+
+	GetOptions();
+}
+
+void SelectEnemyMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(169, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(80, 209, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.2f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	auto enemy = unitsToAttack[currentOption];
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, enemy->sprite.getPosition(), 0.0f, cursor->dimensions);
+
+	int enemyStatsX = 536;
+
+	text->RenderText(enemy->name, enemyStatsX, 100, 1);
+	text->RenderText(enemy->inventory[0]->name, enemyStatsX, 130, 1); //need error checking here
+
+	int statsY = 180;
+	text->RenderTextRight(intToString2(enemy->level), enemyStatsX, statsY, 1, 14);
+	text->RenderText("LV", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(intToString2(unit->level), enemyStatsX + 160, statsY, 1, 14);
+
+	statsY += 30;
+	text->RenderTextRight(intToString2(enemy->currentHP), enemyStatsX, statsY, 1, 14);
+	text->RenderText("HP", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(intToString2(unit->currentHP), enemyStatsX + 160, statsY, 1, 14);
+
+	statsY += 30;
+	text->RenderTextRight(enemyStats.atk, enemyStatsX, statsY, 1, 14);
+	text->RenderText("Atk", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.atk, enemyStatsX + 160, statsY, 1, 14);
+
+	statsY += 30;
+	text->RenderTextRight(enemyStats.def, enemyStatsX, statsY, 1, 14);
+	text->RenderText("Def", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.def, enemyStatsX + 160, statsY, 1, 14);
+
+	statsY += 30;
+	text->RenderTextRight(enemyStats.hit, enemyStatsX, statsY, 1, 14);
+	text->RenderText("Hit", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.hit, enemyStatsX + 160, statsY, 1, 14);
+
+	statsY += 30;
+	text->RenderTextRight(enemyStats.crit, enemyStatsX, statsY, 1, 14);
+	text->RenderText("Crit", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.crit, enemyStatsX + 160, statsY, 1, 14);
+
+	statsY += 30;
+	text->RenderTextRight(enemyStats.attackSpeed, enemyStatsX, statsY, 1, 14);
+	text->RenderText("AS", enemyStatsX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.attackSpeed, enemyStatsX + 160, statsY, 1, 14);
+
+	text->RenderText(unit->name, enemyStatsX + 160, 500, 1);
+}
+
+void SelectEnemyMenu::SelectOption()
+{
+	std::cout << unitsToAttack[currentOption]->name << std::endl;
+}
+
+void SelectEnemyMenu::GetOptions()
+{
+	optionsVector.resize(unitsToAttack.size());
+}
+
+void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = optionsVector.size() - 1;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentOption++;
+		if (currentOption >= optionsVector.size())
+		{
+			currentOption = 0;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_UP) || inputManager.isKeyPressed(SDLK_DOWN) || inputManager.isKeyPressed(SDLK_RIGHT) || inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		CanEnemyCounter();
+	}
+}
+
+void SelectEnemyMenu::CanEnemyCounter()
+{
+	auto enemy = unitsToAttack[currentOption];
+	auto unit = cursor->selectedUnit;
+	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
+	attackDistance /= TileManager::TILE_SIZE;
+	auto enemyWeapon = enemy->GetWeaponData(enemy->inventory[0]);
+	if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
+	{
+		enemyCanCounter = true;
+	}
+
+	auto enemyNormalStats = enemy->CalculateBattleStats();
+	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemy->defense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
+	if (!enemyCanCounter)
+	{
+		enemyStats.hit = "--";
+		enemyStats.atk = "--";
+		enemyStats.crit = "--";
+	}
+
+	auto unitNormalStats = unit->CalculateBattleStats();
+
+	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(unit->defense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
+
 }

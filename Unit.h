@@ -57,6 +57,10 @@ struct StatGrowths
 
 struct BattleStats
 {
+	BattleStats()
+	{
+
+	}
 	//Values calculated based on unit stats and equipped weapon
 	int attackDamage;
 	int hitAccuracy;
@@ -103,7 +107,6 @@ struct Unit
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
 
-	int equippedWeapon = -1;
 	BattleStats battleStats;
 
 	Sprite sprite;
