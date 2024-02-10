@@ -7,6 +7,44 @@ class Camera;
 class Item;
 class BattleStats;
 class SpriteRenderer;
+class BattleManager;
+
+//Code duplication from Unit.h here. I don't have a generic messaging system, so this will have to do for now.
+//I just need to commincate to main that a battle has started. Perhaps I could make some sort of GameManager class that main handles but is otherwise
+//independent of it. But that's later.
+struct BattleObserver
+{
+	virtual ~BattleObserver() {}
+	virtual void onNotify(class Unit* attacker, class Unit* defender) = 0;
+};
+
+struct BattleSubject
+{
+	std::vector<BattleObserver*> observers;
+
+	void addObserver(BattleObserver* observer)
+	{
+		observers.push_back(observer);
+	}
+	void removeObserver(BattleObserver* observer)
+	{
+		auto it = std::find(observers.begin(), observers.end(), observer);
+		if (it != observers.end())
+		{
+			delete* it;
+			*it = observers.back();
+			observers.pop_back();
+		}
+	}
+	void notify(class Unit* attacker, class Unit* defender)
+	{
+		for (int i = 0; i < observers.size(); i++)
+		{
+			observers[i]->onNotify(attacker, defender);
+		}
+	}
+};
+
 struct Menu
 {
 	Menu() {}
@@ -121,6 +159,8 @@ struct SelectEnemyMenu : public Menu
 	void CanEnemyCounter();
 	//Using these so I can handle formatting once rather than doing it repeatedly in draw
 	//I think I am still going to need the normal battle stats for actual combat calculations
+	BattleStats enemyNormalStats;
+	BattleStats unitNormalStats;
 	DisplayedBattleStats enemyStats;
 	DisplayedBattleStats playerStats;
 
@@ -131,7 +171,7 @@ struct SelectEnemyMenu : public Menu
 
 struct MenuManager
 {
-	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
+	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager);
 
 	void AddMenu(int menuID);
 
@@ -144,6 +184,9 @@ struct MenuManager
 	TextRenderer* text = nullptr;
 	Camera* camera = nullptr;
 	SpriteRenderer* renderer = nullptr;
+	BattleManager* battleManager = nullptr;
+
+	BattleSubject subject;
 
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 

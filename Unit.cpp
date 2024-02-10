@@ -56,6 +56,7 @@ void Unit::LevelUp()
     int roll[9];
     for (int i = 0; i < 9; i++)
     {
+        auto fdafaf = (*distribution)(*gen);
         roll[i] = (*distribution)(*gen);
     }
     //roll should be a random number, rerolled for each stat

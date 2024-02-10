@@ -37,7 +37,13 @@ void ItemManager::Heal(Unit* unit, int index)
 	item->remainingUses--;
 	if (item->remainingUses == 0)
 	{
-		unit->inventory.erase(unit->inventory.begin() + index);
-		//remove item from inventory
+		if (item->isWeapon)
+		{
+			//break weapon
+		}
+		else
+		{
+			unit->inventory.erase(unit->inventory.begin() + index);
+		}
 	}
 }

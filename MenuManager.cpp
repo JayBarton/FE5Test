@@ -4,7 +4,7 @@
 #include "Camera.h"
 #include "InputManager.h"
 #include "Items.h"
-
+#include "BattleManager.h"
 #include <SDL.h>
 
 
@@ -303,12 +303,13 @@ void ItemOptionsMenu::GetBattleStats()
 }
 
 MenuManager MenuManager::menuManager;
-void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer)
+void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager)
 {
 	renderer = Renderer;
 	cursor = Cursor;
 	text = Text;
 	camera = Camera;
+	this->battleManager = battleManager;
 	this->shapeVAO = shapeVAO;
 }
 
@@ -597,6 +598,10 @@ void SelectEnemyMenu::Draw()
 void SelectEnemyMenu::SelectOption()
 {
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
+	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter);
+	cursor->Wait();
+//	MenuManager::menuManager.camera->SetMove(cursor->position); Not sure about this, need to have the camera move so it centers the units
+	ClearMenu();
 }
 
 void SelectEnemyMenu::GetOptions()
@@ -641,7 +646,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 		enemyCanCounter = true;
 	}
 
-	auto enemyNormalStats = enemy->CalculateBattleStats();
+	enemyNormalStats = enemy->CalculateBattleStats();
 	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemy->defense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
 	if (!enemyCanCounter)
 	{
@@ -650,7 +655,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 		enemyStats.crit = "--";
 	}
 
-	auto unitNormalStats = unit->CalculateBattleStats();
+	unitNormalStats = unit->CalculateBattleStats();
 
 	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(unit->defense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
 

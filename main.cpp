@@ -16,6 +16,7 @@
 #include "Unit.h"
 #include "MenuManager.h"
 #include "Items.h"
+#include "BattleManager.h"
 
 #include <vector>
 #include <algorithm>
@@ -69,9 +70,9 @@ Unit unit;
 Unit unit2;
 Unit unit3;
 
-MenuManager menuManager;
-
 InputManager inputManager;
+
+BattleManager battleManager;
 
 Unit leveledUnit;
 bool leveling = false;
@@ -216,7 +217,7 @@ int main(int argc, char** argv)
 	unit2.strength = 6;
 	unit2.magic = 0;
 	unit2.skill = 0;
-	unit2.speed = 3;
+	unit2.speed = 0;
 	unit2.luck = 3;
 	unit2.defense = 1;
 	unit2.build = 6;
@@ -251,7 +252,7 @@ int main(int argc, char** argv)
 	unit.subject.addObserver(unitEvents);
 	unit2.subject.addObserver(unitEvents);
 
-	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer);
+	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 
 	while (isRunning)
 	{
@@ -308,25 +309,35 @@ int main(int argc, char** argv)
 
 		if (MenuManager::menuManager.menus.size() == 0)
 		{
-			if (!leveling) //This will presumably be part of a menu at some point
+			if (!leveling)
 			{
-				if (inputManager.isKeyPressed(SDLK_l))
+				//if in battle, handle battle, don't check input
+				//Should be able to level up while in the battle state, need to figure that out
+				if(battleManager.battleActive)
 				{
-					if (auto thisUnit = cursor.focusedUnit)
-					{
-						thisUnit->AddExperience(50);
-					}
-				}
-				//if (!camera.moving)
-				cursor.CheckInput(inputManager, deltaTime, camera, unit2);
-
-				if (!camera.moving)
-				{
-					camera.Follow(cursor.position);
+					battleManager.Update(deltaTime, &gen, &distribution);
 				}
 				else
 				{
-					camera.MoveTo(deltaTime, 5.0f);
+					//nesting getting a little deep here
+					if (inputManager.isKeyPressed(SDLK_l))
+					{
+						if (auto thisUnit = cursor.focusedUnit)
+						{
+							thisUnit->AddExperience(50);
+						}
+					}
+					//if (!camera.moving)
+					cursor.CheckInput(inputManager, deltaTime, camera, unit2);
+
+					if (!camera.moving)
+					{
+						camera.Follow(cursor.position);
+					}
+					else
+					{
+						camera.MoveTo(deltaTime, 5.0f);
+					}
 				}
 			}
 			else
@@ -625,6 +636,38 @@ void DrawText()
 		{
 			Text->RenderText(intToString(1), x + 55, y + 45, 1);
 		}
+	}
+	else if (battleManager.battleActive)
+	{
+		int yOffset = 150;
+		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa
+		glm::vec2 attackerDraw;
+		glm::vec2 defenderDraw;
+		if (battleManager.attacker->sprite.getPosition().x < battleManager.defender->sprite.getPosition().x)
+		{
+			attackerDraw = glm::vec2(200, yOffset);
+			defenderDraw = glm::vec2(500, yOffset);
+		}
+		else
+		{
+			defenderDraw = glm::vec2(200, yOffset);
+			attackerDraw = glm::vec2(500, yOffset);
+		}
+		glm::vec2 drawPosition = glm::vec2(battleManager.attacker->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
+		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		Text->RenderText(battleManager.attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
+		attackerDraw.y += 22.0f;
+		Text->RenderText("HP", attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+		attackerDraw.x += 25;
+		Text->RenderText(intToString(battleManager.attacker->currentHP) + "/" + intToString(battleManager.attacker->maxHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
+
+		drawPosition = glm::vec2(battleManager.defender->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
+		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		Text->RenderText(battleManager.defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+		defenderDraw.y += 22.0f;
+		Text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+		defenderDraw.x += 25;
+		Text->RenderText(intToString(battleManager.defender->currentHP) + "/" + intToString(battleManager.defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
 	}
 	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr)
 	{

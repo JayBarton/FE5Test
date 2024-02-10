@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BattleManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="InputManager.h" />
@@ -156,6 +157,7 @@
     <ClInclude Include="Unit.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BattleManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="InputManager.cpp" />
