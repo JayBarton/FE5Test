@@ -67,6 +67,7 @@ int levelHeight;
 
 Cursor cursor;
 Unit unit;
+Unit allyUnit;
 Unit unit2;
 Unit unit3;
 
@@ -208,6 +209,24 @@ int main(int argc, char** argv)
 	unit.addItem(3);
 	unit.addItem(0);
 	unit.equipWeapon(1);
+
+	allyUnit.init(&gen, &distribution);
+	allyUnit.name = "Ally";
+	allyUnit.maxHP = 22;
+	allyUnit.currentHP = 14;
+	allyUnit.strength = 4;
+	allyUnit.magic = 0;
+	allyUnit.skill = 2;
+	allyUnit.speed = 5;
+	allyUnit.luck = 6;
+	allyUnit.defense = 3;
+	allyUnit.build = 5;
+	allyUnit.move = 6;
+	allyUnit.growths = { 70, 35, 10, 35, 40, 40, 25, 15, 3 };
+	allyUnit.placeUnit(96, 128);
+	allyUnit.sprite.uv = &playerUVs;
+
+	allyUnit.addItem(0);
 
 	//just have this guy to test leveling on multiple units
 	unit2.init(&gen, &distribution);
@@ -497,6 +516,7 @@ void Draw()
 	unit.Draw(Renderer);
 	unit2.Draw(Renderer);
 	unit3.Draw(Renderer);
+	allyUnit.Draw(Renderer);
 
 	Renderer->setUVs(cursor.uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");

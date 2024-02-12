@@ -68,4 +68,5 @@ struct Cursor
 	void GetUnitOptions();
 
 	std::vector<Unit*> inRangeUnits();
+	std::vector<Unit*> tradeRangeUnits();
 };

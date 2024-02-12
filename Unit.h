@@ -126,6 +126,7 @@ struct Unit
 
 	void addItem(int ID);
 	void dropItem(int index);
+	void swapItem(std::vector<Item*>& otherInventory, int otherIndex, int thisIndex);
 	//This will only work for equipping from the menu, if I wanted a unit to equip something they picked up this is no good.
 	//Also won't handle trading, need to come back to that
 	void equipWeapon(int index);

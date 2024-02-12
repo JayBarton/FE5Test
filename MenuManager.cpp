@@ -21,13 +21,13 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 		currentOption--;
 		if (currentOption < 0)
 		{
-			currentOption = optionsVector.size() - 1;
+			currentOption = numberOfOptions - 1;
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
 		currentOption++;
-		if (currentOption >= optionsVector.size())
+		if (currentOption >= numberOfOptions)
 		{
 			currentOption = 0;
 		}
@@ -100,6 +100,12 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
+	case TRADE:
+	{
+		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, tradeUnits);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		break;
+	}
 	case ITEMS:
 		MenuManager::menuManager.AddMenu(1);
 		break;
@@ -152,6 +158,11 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Attack", xStart - 200, yOffset, 1);
 		yOffset += 30;
 	}
+	if (canTrade)
+	{
+		text->RenderText("Trade", xStart - 200, yOffset, 1);
+		yOffset += 30;
+	}
 	commands += "Items\n";
 	text->RenderText("Items", xStart - 200, yOffset, 1);
 	yOffset += 30;
@@ -179,11 +190,18 @@ void UnitOptionsMenu::GetOptions()
 		canAttack = true;
 		optionsVector.push_back(ATTACK);
 	}
+	tradeUnits = cursor->tradeRangeUnits();
+	if (tradeUnits.size() > 0)
+	{
+		canTrade = true;
+		optionsVector.push_back(TRADE);
+	}
 	optionsVector.push_back(ITEMS);
 	//if can dismount
 	canDismount = true;
 	optionsVector.push_back(DISMOUNT);
 	optionsVector.push_back(WAIT);
+	numberOfOptions = optionsVector.size();
 }
 
 ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : Menu(Cursor, Text, Camera, shapeVAO)
@@ -279,7 +297,7 @@ void ItemOptionsMenu::SelectOption()
 
 void ItemOptionsMenu::GetOptions()
 {
-	optionsVector.resize(cursor->selectedUnit->inventory.size());
+	numberOfOptions = cursor->selectedUnit->inventory.size();
 }
 
 void ItemOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -437,6 +455,7 @@ void ItemUseMenu::GetOptions()
 		canEquip = true;
 	}
 	optionsVector.push_back(DROP);
+	numberOfOptions = optionsVector.size();
 }
 
 SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units)
@@ -499,7 +518,7 @@ void SelectWeaponMenu::SelectOption()
 
 void SelectWeaponMenu::GetOptions()
 {
-	optionsVector.resize(weapons.size());
+	numberOfOptions = weapons.size();
 }
 
 void SelectWeaponMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -606,7 +625,7 @@ void SelectEnemyMenu::SelectOption()
 
 void SelectEnemyMenu::GetOptions()
 {
-	optionsVector.resize(unitsToAttack.size());
+	numberOfOptions = unitsToAttack.size();
 }
 
 void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -617,13 +636,13 @@ void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		currentOption--;
 		if (currentOption < 0)
 		{
-			currentOption = optionsVector.size() - 1;
+			currentOption = numberOfOptions - 1;
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
 		currentOption++;
-		if (currentOption >= optionsVector.size())
+		if (currentOption >= numberOfOptions)
 		{
 			currentOption = 0;
 		}
@@ -659,4 +678,301 @@ void SelectEnemyMenu::CanEnemyCounter()
 
 	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(unit->defense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
 
+}
+
+SelectTradeUnit::SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	tradeUnits = units;
+	GetOptions();
+}
+
+void SelectTradeUnit::Draw()
+{
+	auto tradeUnit = tradeUnits[currentOption];
+	int inventorySize = tradeUnit->inventory.size();
+	int boxHeight = 30;
+	if (inventorySize > 0)
+	{
+		boxHeight += (inventorySize + 1) * 30;
+	}
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(169, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(80, boxHeight, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	int textHeight = 100;
+	text->RenderText(tradeUnit->name, 500, textHeight, 1);
+	textHeight += 60;
+	for (int i = 0; i < inventorySize; i++)
+	{
+		text->RenderText(tradeUnit->inventory[i]->name, 500, textHeight, 1);
+		text->RenderTextRight(intToString2(tradeUnit->inventory[i]->remainingUses), 600, textHeight, 1, 14);
+		textHeight += 30;
+	}
+}
+
+void SelectTradeUnit::SelectOption()
+{
+	Menu* newMenu = new TradeMenu(cursor, text, camera, shapeVAO, tradeUnits[currentOption]);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void SelectTradeUnit::GetOptions()
+{
+	numberOfOptions = tradeUnits.size();
+}
+
+void SelectTradeUnit::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+}
+
+TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	tradeUnit = unit;
+	GetOptions();
+}
+
+void TradeMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	int x = 0;
+	if (firstInventory)
+	{
+		x = 32;
+	}
+	else
+	{
+		x = 208;
+	}
+	model = glm::translate(model, glm::vec3(x, 64 + (12 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	if (moving)
+	{
+		model = glm::mat4();
+		if (moveFromFirst)
+		{
+			x = 32;
+		}
+		else
+		{
+			x = 208;
+		}
+		model = glm::translate(model, glm::vec3(x, 64 + (12 * itemToMove), 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+	auto firstUnit = cursor->selectedUnit;
+	text->RenderText(firstUnit->name, 100, 30, 1);
+	text->RenderText(tradeUnit->name, 700, 30, 1);
+
+
+	for (int i = 0; i < firstUnit->inventory.size(); i++)
+	{
+		text->RenderText(firstUnit->inventory[i]->name, 130, 180 + i * 30, 1);
+		text->RenderTextRight(intToString2(firstUnit->inventory[i]->remainingUses), 230, 180 + i * 30, 1, 14);
+	}
+
+	for (int i = 0; i < tradeUnit->inventory.size(); i++)
+	{
+		text->RenderText(tradeUnit->inventory[i]->name, 670, 180 + i * 30, 1);
+		text->RenderTextRight(intToString2(tradeUnit->inventory[i]->remainingUses), 770, 180 + i * 30, 1, 14);
+	}
+}
+
+void TradeMenu::SelectOption()
+{
+	if (moving == false)
+	{
+		if (firstInventory)
+		{
+			moveFromFirst = true;
+			firstInventory = false;
+		}
+		else
+		{
+			firstInventory = true;
+			moveFromFirst = false;
+		}
+		moving = true;
+		itemToMove = currentOption;		
+		GetOptions();
+		currentOption = numberOfOptions - 1;
+	}
+	else
+	{
+		moving = false;
+		bool emptyInventory = false;
+		auto firstUnit = cursor->selectedUnit;
+		if (moveFromFirst && !firstInventory)
+		{
+			tradeUnit->swapItem(firstUnit->inventory, itemToMove, currentOption);
+			if (firstUnit->inventory.size() > 0)
+			{
+				firstInventory = true;
+			}
+			else
+			{
+				emptyInventory = true;
+			}
+		}
+		else if (moveFromFirst && firstInventory)
+		{
+			firstUnit->swapItem(firstUnit->inventory, itemToMove, currentOption);
+		}
+		else if (!moveFromFirst && firstInventory)
+		{
+			firstUnit->swapItem(tradeUnit->inventory, itemToMove, currentOption);
+			if (tradeUnit->inventory.size() > 0)
+			{
+				firstInventory = false;
+			}
+			else
+			{
+				emptyInventory = true;
+			}
+		}
+		else if (!moveFromFirst && !firstInventory)
+		{
+			tradeUnit->swapItem(tradeUnit->inventory, itemToMove, currentOption);
+		}
+		GetOptions();
+		if (emptyInventory)
+		{
+			currentOption = 0;
+		}
+		else
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+}
+
+void TradeMenu::GetOptions()
+{
+	if (firstInventory)
+	{
+		numberOfOptions = cursor->selectedUnit->inventory.size();
+		if (moving && !moveFromFirst)
+		{
+			if (numberOfOptions < 8)
+			{
+				numberOfOptions++;
+			}
+		}
+	}
+	else
+	{
+		numberOfOptions = tradeUnit->inventory.size();
+		if (moving && moveFromFirst)
+		{
+			if (numberOfOptions < 8)
+			{
+				numberOfOptions++;
+			}
+		}
+	}
+}
+
+void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT) && !firstInventory)
+	{
+		firstInventory = true;
+		auto firstInv = cursor->selectedUnit->inventory;
+		if (tradeUnit->inventory.size() > firstInv.size())
+		{
+			currentOption = firstInv.size() - 1;
+		}
+		GetOptions();
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT) && firstInventory)
+	{
+		auto firstInv = cursor->selectedUnit->inventory;
+		firstInventory = false;
+		if (firstInv.size() > tradeUnit->inventory.size())
+		{
+			currentOption = tradeUnit->inventory.size() - 1;
+		}
+		GetOptions();
+	}
+}
+
+void TradeMenu::CancelOption()
+{
+	if (moving)
+	{
+		moving = false;
+		if (moveFromFirst)
+		{
+			firstInventory = true;
+		}
+		else
+		{
+			firstInventory = false;
+		}
+		GetOptions();
+		currentOption = itemToMove; //This doesn't work properly right now
+	}
+	else
+	{
+		MenuManager::menuManager.PreviousMenu();
+		MenuManager::menuManager.PreviousMenu();
+	}
 }

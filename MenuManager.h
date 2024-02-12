@@ -64,6 +64,7 @@ struct Menu
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 
 	int currentOption = 0;
+	int numberOfOptions = 0;
 	std::vector<int> optionsVector;
 
 };
@@ -81,11 +82,14 @@ struct UnitOptionsMenu : public Menu
 	const static int WAIT = 1;
 	const static int DISMOUNT = 2;
 	const static int ATTACK = 3;
+	const static int TRADE = 4;
 
 	std::vector<Unit*> unitsInRange;
+	std::vector<Unit*> tradeUnits;
 
 	bool canAttack = false;
 	bool canDismount = false;
+	bool canTrade = false;
 };
 
 struct ItemOptionsMenu : public Menu
@@ -167,6 +171,37 @@ struct SelectEnemyMenu : public Menu
 	std::vector<Unit*> unitsToAttack;
 	SpriteRenderer* renderer = nullptr;
 	bool enemyCanCounter = false;
+};
+
+struct SelectTradeUnit : public Menu
+{
+	SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units);
+
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	std::vector<Unit*> tradeUnits;
+
+};
+
+struct TradeMenu : public Menu
+{
+	TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit);
+
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+	virtual void CancelOption() override;
+
+	Unit* tradeUnit = nullptr;
+	int itemToMove;
+
+	bool moving = false;
+	bool firstInventory = true;
+	bool moveFromFirst = true;
 };
 
 struct MenuManager

@@ -173,6 +173,22 @@ void Unit::dropItem(int index)
     }
 }
 
+void Unit::swapItem(std::vector<Item*>& otherInventory, int otherIndex, int thisIndex)
+{
+    auto otherItem = otherInventory[otherIndex];
+    if (thisIndex < inventory.size())
+    {
+        auto thisItem = inventory[thisIndex];
+        otherInventory[otherIndex] = thisItem;
+        inventory[thisIndex] = otherItem;
+    }
+    else
+    {
+        inventory.push_back(otherItem);
+        otherInventory.erase(otherInventory.begin() + otherIndex);
+    }
+}
+
 void Unit::equipWeapon(int index)
 {
     //Equipped weapon will always be in the first slot

@@ -476,6 +476,34 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	return units;
 }
 
+std::vector<Unit*> Cursor::tradeRangeUnits()
+{
+	std::vector<Unit*> units;
+	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
+
+	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
+	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
+	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
+	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
+	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(up.x, up.y, 0))
+	{
+		units.push_back(unit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(down.x, down.y, 0))
+	{
+		units.push_back(unit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(left.x, left.y, 0))
+	{
+		units.push_back(unit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(right.x, right.y, 0))
+	{
+		units.push_back(unit);
+	}
+	return units;
+}
+
 void Cursor::CheckBounds()
 {
 	if (position.x < 0)
