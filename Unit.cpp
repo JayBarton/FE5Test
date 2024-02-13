@@ -215,14 +215,21 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
     {
         auto weapon = ItemManager::itemManager.weaponData[weaponID];
         stats.attackDamage = weapon.might + strength; //+ mag if the weapon is magic
+        auto help = (!weapon.isMagic) ? strength : magic;
+        stats.attackDamage = weapon.might + (!weapon.isMagic ? strength : magic); //+ mag if the weapon is magic
+
         stats.hitAccuracy = weapon.hit + skill * 2 + luck;
         stats.hitCrit = weapon.crit + skill;
-        int weight = weapon.weight - build; //No build included if the weapon is magic
+        int weight = weapon.weight - (!weapon.isMagic ? build : 0); //No build included if the weapon is magic
         if (weight < 0)
         {
             weight = 0;
         }
         stats.attackSpeed = speed - weight;
+        if (stats.attackSpeed < 0)
+        {
+            stats.attackSpeed = 0;
+        }
         stats.hitAvoid = stats.attackSpeed * 2 + luck;
     }
     return stats;

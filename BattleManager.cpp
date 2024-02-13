@@ -10,9 +10,25 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	this->attacker = attacker;
 	this->defender = defender;
 	this->canDefenderAttack = canDefenderAttack;
-
 	attackerDamage = attackerStats.attackDamage - defender->defense;
+
+	if (!attacker->GetWeaponData(attacker->inventory[0]).isTome)
+	{
+		attackerDamage = attackerStats.attackDamage - defender->defense;
+	}
+	else
+	{
+		attackerDamage = attackerStats.attackDamage - defender->magic;
+	}
 	defenderDamage = defenderStats.attackDamage - attacker->defense;
+	if (!defender->GetWeaponData(defender->inventory[0]).isTome)
+	{
+		defenderDamage = defenderStats.attackDamage - attacker->defense;
+	}
+	else
+	{
+		defenderDamage = defenderStats.attackDamage - attacker->magic;
+	}
 	this->attackerStats = attackerStats;
 	this->defenderStats = defenderStats;
 	attackerTurn = true;

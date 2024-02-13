@@ -314,10 +314,9 @@ void ItemOptionsMenu::GetBattleStats()
 {
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
-	auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
 
 	currentStats = unit->CalculateBattleStats();
-	selectedStats = unit->CalculateBattleStats(weaponData.ID);
+	selectedStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
 }
 
 MenuManager MenuManager::menuManager;
@@ -534,10 +533,9 @@ void SelectWeaponMenu::CheckInput(InputManager& inputManager, float deltaTime)
 void SelectWeaponMenu::GetBattleStats()
 {
 	Unit* unit = cursor->selectedUnit;
-	auto weaponData = ItemManager::itemManager.weaponData[weapons[currentOption]->ID];
 
 	currentStats = unit->CalculateBattleStats();
-	selectedStats = unit->CalculateBattleStats(weaponData.ID);
+	selectedStats = unit->CalculateBattleStats(weapons[currentOption]->ID);
 }
 
 SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
@@ -666,18 +664,45 @@ void SelectEnemyMenu::CanEnemyCounter()
 	}
 
 	enemyNormalStats = enemy->CalculateBattleStats();
-	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemy->defense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
+
+
+	unitNormalStats = unit->CalculateBattleStats();
+	auto unitWeapon = unit->GetWeaponData(unit->inventory[0]);
+	int playerDefense = unit->defense;
+	int enemyDefense = enemy->defense;
+	if (unitWeapon.isMagic)
+	{
+		if (attackDistance == 1 && !unitWeapon.isTome)
+		{
+			unitNormalStats.attackDamage += unit->strength;
+		}
+		else
+		{
+			enemyDefense = enemy->magic;
+		}
+	}
+
+	if (enemyWeapon.isMagic)
+	{
+		if (attackDistance == 1 && !enemyWeapon.isTome)
+		{
+			enemyNormalStats.attackDamage += enemy->strength;
+		}
+		else
+		{
+			playerDefense = unit->magic;
+		}
+	}
+
+	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(playerDefense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
+
+	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemyDefense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
 	if (!enemyCanCounter)
 	{
 		enemyStats.hit = "--";
 		enemyStats.atk = "--";
 		enemyStats.crit = "--";
 	}
-
-	unitNormalStats = unit->CalculateBattleStats();
-
-	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(unit->defense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
-
 }
 
 SelectTradeUnit::SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units) : Menu(Cursor, Text, camera, shapeVAO)

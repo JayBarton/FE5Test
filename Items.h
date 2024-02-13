@@ -18,7 +18,7 @@ struct Item
 
 struct WeaponData
 {
-	int ID;
+	//int ID; Not sure I need this
 	int type;
 	int rank;
 	int hit;
@@ -27,6 +27,8 @@ struct WeaponData
 	int maxRange;
 	int minRange;
 	int weight;
+	bool isMagic;
+	bool isTome;
 	int bonus; //No idea how this is going to work
 };
 
@@ -37,6 +39,10 @@ struct ItemManager
 	std::unordered_map<int, WeaponData> weaponData;
 
 	void SetUpItems();
+
+	void LoadWeaponData();
+
+	void LoadItems();
 
 	void UseItem(Unit* unit, int index, int ID);
 	void Heal(Unit* unit, int index);
