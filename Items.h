@@ -5,11 +5,6 @@
 
 const static int HEAL = 0;
 
-const static int TYPE_SWORD = 1;
-const static int TYPE_BOW = 2;
-const static int TYPE_AXE = 3;
-const static int TYPE_LANCE = 4;
-
 struct Item
 {
 	int ID = -1;
@@ -24,6 +19,11 @@ struct Item
 
 struct WeaponData
 {
+	const static int TYPE_SWORD = 1;
+	const static int TYPE_BOW = 2;
+	const static int TYPE_AXE = 3;
+	const static int TYPE_LANCE = 4;
+
 	//int ID; Not sure I need this
 	int type;
 	int rank;

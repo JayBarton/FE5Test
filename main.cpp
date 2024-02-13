@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 	unit2.placeUnit(96, 96);
 	unit2.sprite.uv = &playerUVs;
 	unit2.team = 1;
-	unit2.addItem(4);
+	unit2.addItem(8);
 	unit2.equipWeapon(0);
 
 	unit3.init(&gen, &distribution);

@@ -665,13 +665,17 @@ void SelectEnemyMenu::CanEnemyCounter()
 
 	enemyNormalStats = enemy->CalculateBattleStats();
 
-
 	unitNormalStats = unit->CalculateBattleStats();
 	auto unitWeapon = unit->GetWeaponData(unit->inventory[0]);
 	int playerDefense = unit->defense;
 	int enemyDefense = enemy->defense;
+
+	//Magic resistance stat is just the unit's magic stat
 	if (unitWeapon.isMagic)
 	{
+		//Magic swords such as the Light Brand do physical damage when used in close range
+		//This is actually being done wrong here, it only works in my tests because Leif's mag stat is zero
+		//Need to rework a lot of these calculations
 		if (attackDistance == 1 && !unitWeapon.isTome)
 		{
 			unitNormalStats.attackDamage += unit->strength;
@@ -691,6 +695,47 @@ void SelectEnemyMenu::CanEnemyCounter()
 		else
 		{
 			playerDefense = unit->magic;
+		}
+	}
+
+	//Physical weapon triangle bonus
+	if (unitWeapon.type == WeaponData::TYPE_SWORD)
+	{
+		if (enemyWeapon.type == WeaponData::TYPE_AXE)
+		{
+			unitNormalStats.hitAccuracy += 5;
+			enemyNormalStats.hitAccuracy -= 5;
+		}
+		else if (enemyWeapon.type == WeaponData::TYPE_LANCE)
+		{
+			unitNormalStats.hitAccuracy -= 5;
+			enemyNormalStats.hitAccuracy += 5;
+		}
+	}
+	else if (unitWeapon.type == WeaponData::TYPE_AXE)
+	{
+		if (enemyWeapon.type == WeaponData::TYPE_LANCE)
+		{
+			unitNormalStats.hitAccuracy += 5;
+			enemyNormalStats.hitAccuracy -= 5;
+		}
+		else if (enemyWeapon.type == WeaponData::TYPE_SWORD)
+		{
+			unitNormalStats.hitAccuracy -= 5;
+			enemyNormalStats.hitAccuracy += 5;
+		}
+	}
+	else if (unitWeapon.type == WeaponData::TYPE_LANCE)
+	{
+		if (enemyWeapon.type == WeaponData::TYPE_SWORD)
+		{
+			unitNormalStats.hitAccuracy += 5;
+			enemyNormalStats.hitAccuracy -= 5;
+		}
+		else if (enemyWeapon.type == WeaponData::TYPE_AXE)
+		{
+			unitNormalStats.hitAccuracy -= 5;
+			enemyNormalStats.hitAccuracy += 5;
 		}
 	}
 
