@@ -40,6 +40,8 @@ void editInput(SDL_Event& event, bool& isRunning);
 void switchMode();
 std::string intToString(int i);
 void Draw();
+void resizeWindow(int width, int height);
+
 
 enum State { MAIN_MENU, NEW_MAP, EDITING, SET_BACKGROUND, RESIZE_MAP, SET_WIDTH };
 
@@ -153,6 +155,12 @@ const GLuint SCREEN_HEIGHT = 600;
 
 const int CAMERA_WIDTH = 256;
 const int CAMERA_HEIGHT = 224;
+
+int currentWidth = 800;
+int currentHeight = 600;
+
+int currentVPX;
+int currentVPY;
 
 SDL_Window* window;
 SpriteRenderer* Renderer;
@@ -290,6 +298,13 @@ int main(int argc, char** argv)
             if (event.type == SDL_QUIT)
             {
                 isRunning = false;
+            }
+            else if (event.type == SDL_WINDOWEVENT)
+            {
+                if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+                {
+                    resizeWindow(event.window.data1, event.window.data2);
+                }
             }
             if (typing)
             {
@@ -447,7 +462,7 @@ int main(int argc, char** argv)
 
             mousePosition = glm::vec2(x - TILE_SIZE * 0.5f, y - TILE_SIZE * 0.5f);
 
-            mousePosition = camera.screenToWorld(mousePosition);
+            mousePosition = camera.screenToWorld(mousePosition, currentWidth, currentHeight, currentVPX, currentVPY);
 
             mousePosition.x = round(float(mousePosition.x) / TILE_SIZE) * TILE_SIZE;
             mousePosition.y = round(float(mousePosition.y) / TILE_SIZE) * TILE_SIZE;
@@ -487,7 +502,7 @@ int main(int argc, char** argv)
 
 void init()
 {
-    int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+    int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
     SDL_Init(SDL_INIT_EVERYTHING);
 
     int imgFlags = IMG_INIT_PNG;
@@ -533,8 +548,9 @@ void init()
     }
 
     SDL_GL_SetSwapInterval(1);
+  //  glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    resizeWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
@@ -878,4 +894,33 @@ void Draw()
     }
 
     SDL_GL_SwapWindow(window);
+}
+
+
+void resizeWindow(int width, int height)
+{
+    if (width < 256)
+    {
+        width = 256;
+    }
+    if (height < 224)
+    {
+        height = 224;
+    }
+    SDL_SetWindowSize(window, width, height);
+    float ratio = 8.0f / 7.0f;
+    int aspectWidth = width;
+    int aspectHeight = float(aspectWidth) / ratio;
+    if (aspectHeight > height)
+    {
+        aspectHeight = height;
+        aspectWidth = float(aspectHeight) * ratio;
+    }
+    int vpx = float(width) / 2.0f - float(aspectWidth) / 2.0f;
+    int vpy = float(height) / 2.0f - float(aspectHeight) / 2.0f;
+    currentVPX = vpx;
+    currentVPY = vpy;
+    currentWidth = aspectWidth;
+    currentHeight = aspectHeight;
+    glViewport(vpx, vpy, aspectWidth, aspectHeight);
 }

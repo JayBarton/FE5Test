@@ -120,19 +120,10 @@ glm::vec2 Camera::worldToRealScreen(glm::vec2 screenCoords, int width, int heigh
 	//Translate with the camera position
 	screenCoords -= position;
 	//Scale the coordinates
-	screenCoords *= cameraScale;
 	screenCoords.x *= cameraScale * (width / static_cast<float>(256));
 	screenCoords.y *= cameraScale * (height / static_cast<float>(224));
 	float cameraAspect = 8.0f / 7.0f;
 	float windowAspect = float(width) / float(height);
-	/*if (cameraAspect > windowAspect)
-	{
-		screenCoords.x *= windowAspect / cameraAspect;
-	}
-	else
-	{
-		screenCoords.y *= cameraAspect / windowAspect;
-	}*/
 	//Make it so the zero is the center
 	screenCoords += glm::vec2(width * 0.5f, height * 0.5f);
 

@@ -92,13 +92,11 @@ bool Camera::onScreen(glm::vec2 p, glm::vec2 size, glm::vec2 offset /*= glm::vec
 }
 
 
-glm::vec2 Camera::screenToWorld(glm::vec2 screenCoords)
+glm::vec2 Camera::screenToWorld(glm::vec2 screenCoords, int width, int height, int vpx, int vpy)
 {
-	int width = 800;
-	int height = 600;
-	screenCoords -= glm::vec2(800 * 0.5f, 600 * 0.5f);
+	screenCoords -= glm::vec2(width * 0.5f, height * 0.5f);
+	screenCoords -= glm::ivec2(vpx, vpy);
 	//Scale the coordinates
-	screenCoords /= cameraScale;
 	screenCoords.x /= cameraScale * (width / float(256));
 	screenCoords.y /= cameraScale * (height / float(224));
 	//Translate with the camera position
@@ -124,7 +122,6 @@ glm::vec2 Camera::worldToRealScreen(glm::vec2 screenCoords, int width, int heigh
 	//Translate with the camera position
 	screenCoords -= position;
 	//Scale the coordinates
-	screenCoords *= cameraScale;
 	screenCoords.x *= cameraScale * (width / static_cast<float>(256));
 	screenCoords.y *= cameraScale * (height / static_cast<float>(224));
 	//Make it so the zero is the center
