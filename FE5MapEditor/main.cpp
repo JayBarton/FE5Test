@@ -151,6 +151,9 @@ const GLuint SCREEN_WIDTH = 800;
 // The height of the screen
 const GLuint SCREEN_HEIGHT = 600;
 
+const int CAMERA_WIDTH = 256;
+const int CAMERA_HEIGHT = 224;
+
 SDL_Window* window;
 SpriteRenderer* Renderer;
 TextRenderer* Text;
@@ -315,7 +318,7 @@ int main(int argc, char** argv)
                             {
                                 if (loadMap())
                                 {
-                                    camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
+                                    camera = Camera(256, 224, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
                                     state = State::EDITING;
                                     typing = false;
                                     SDL_StopTextInput();
@@ -340,7 +343,7 @@ int main(int argc, char** argv)
                                 levelHeight = atoi(inputText[LEVEL_HEIGHT_STRING].c_str());
 
                                 TileManager::tileManager.newMap(levelWidth, levelHeight);
-                                camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
+                                camera = Camera(256, 224, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
                             }
                             else if (state == RESIZE_MAP)
                             {
@@ -369,7 +372,7 @@ int main(int argc, char** argv)
                                 //Only know how to shift in Y direction right now. Might be all I need?
 
                                 TileManager::tileManager.resizeMap(levelWidth, levelHeight);
-                                camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
+                                camera = Camera(256, 224, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
                             }
                             else if (state == SET_BACKGROUND)
                             {
@@ -797,7 +800,7 @@ void Draw()
             Renderer->setUVs(TileManager::tileManager.uvs[displayObject.type]);
             Texture2D displayTexture = ResourceManager::GetTexture("tiles");
             Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
-            Text->RenderText("Tile Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+            Text->RenderText("Tile Mode", CAMERA_WIDTH * 0.5f - TILE_SIZE, 0, 1);
 
             TileMode* edit = static_cast<TileMode*>(editMode);
 
@@ -813,7 +816,7 @@ void Draw()
                 layer = "Background";
             }
 
-            Text->RenderText("Layer: " + layer, SCREEN_WIDTH * 0.5f - TILE_SIZE, TILE_SIZE, 1);
+            Text->RenderText("Layer: " + layer, CAMERA_WIDTH * 0.5f - TILE_SIZE, TILE_SIZE, 1);
         }
       /*  else
         {
@@ -822,30 +825,30 @@ void Draw()
             Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
         }*/
 
-        Text->RenderText("Current " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
-        Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
+        Text->RenderText("Current " + intToString(editMode->currentElement), CAMERA_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+        Text->RenderText("Max " + intToString(editMode->maxElement), CAMERA_WIDTH * 0.5f + 128, 64, 1);
 
-        Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
-        Text->RenderText(intToString(displayObject.position.y), SCREEN_WIDTH * 0.5f + 256, 96, 1);
+        Text->RenderText("Position " + intToString(displayObject.position.x), CAMERA_WIDTH * 0.5f + 128, 96, 1);
+        Text->RenderText(intToString(displayObject.position.y), CAMERA_WIDTH * 0.5f + 256, 96, 1);
 
 
         if (saveDisplay)
         {
-            Text->RenderText(mapName + " saved", SCREEN_WIDTH - 200, SCREEN_HEIGHT - TILE_SIZE, 1);
+            Text->RenderText(mapName + " saved", CAMERA_WIDTH - 200, CAMERA_HEIGHT - TILE_SIZE, 1);
         }
 
         else if (state == RESIZE_MAP)
         {
-            Text->RenderText("X Tiles " + intToString(levelWidth), SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText("Y Tiles " + intToString(levelHeight), SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("X Tiles " + intToString(levelWidth), CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("Y Tiles " + intToString(levelHeight), CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f - 64, 1);
 
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
-            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_WIDTH_STRING], CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f, 1);
         }
         else if (state == SET_WIDTH)
         {
-            Text->RenderText("Tiles wide ", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
+            Text->RenderText("Tiles wide ", CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText(inputText[LEVEL_WIDTH_STRING], CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f, 1);
         }
     }
     else
@@ -861,16 +864,16 @@ void Draw()
             {
                 action = "New Map";
             }
-            Text->RenderText(action, SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText(inputText[0], SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.5f, 1);
+            Text->RenderText(action, CAMERA_WIDTH * 0.5f, CAMERA_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText(inputText[0], CAMERA_WIDTH * 0.5f, CAMERA_HEIGHT * 0.5f, 1);
         }
         else
         {
-            Text->RenderText("X Tiles", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText("Y Tiles", SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("X Tiles", CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("Y Tiles", CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f - 64, 1);
 
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
-            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_WIDTH_STRING], CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f, 1);
         }
     }
 

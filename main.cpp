@@ -487,7 +487,6 @@ void loadMap(std::string nextMap)
 
 		levelWidth = xTiles * TileManager::TILE_SIZE;
 		levelHeight = yTiles * TileManager::TILE_SIZE;
-		camera = Camera(800, 600, levelWidth, levelHeight);
 		camera = Camera(256, 224, levelWidth, levelHeight);
 
 		camera.setPosition(glm::vec2(0, 0));

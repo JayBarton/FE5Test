@@ -1,0 +1,49 @@
+#version 330 core
+layout (location = 0) in vec4 vertex;
+
+out vec2 TextureCoordinates;
+
+uniform mat4 projection;
+
+uniform samplerBuffer model_matrix_tbo;
+uniform samplerBuffer uv_tbo;
+
+void main()
+{
+	const vec2 position [6] = vec2[]
+	(
+	    vec2(0.0f, 1.0f),
+        vec2(1.0f, 0.0f),
+        vec2(0.0f, 0.0f),
+
+        vec2(0.0f, 1.0f),
+        vec2(1.0f, 1.0f),
+        vec2(1.0f, 0.0f)
+	);
+	
+	vec4 uv = texelFetch(uv_tbo, gl_InstanceID);
+	
+	vec2 uvCoords[6] = vec2[]
+	(
+		vec2(uv.x, 1.0f),
+		vec2(uv.y, 0.0f),
+		vec2(uv.x, 0.0f),
+		
+		vec2(uv.x, 1.0f),
+		vec2(uv.y, 1.0f),
+		vec2(uv.y, 0.0f)
+	);
+	
+	
+	vec4 col1 = texelFetch(model_matrix_tbo, gl_InstanceID * 4);
+	vec4 col2 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 1);
+	vec4 col3 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 2);
+	vec4 col4 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 3);
+
+	// Now assemble the four columns into a matrix.
+	mat4 model = mat4(col1, col2, col3, col4);
+	//gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0);
+	gl_Position = projection * model * vec4(position[gl_VertexID], 0.0, 1.0);
+		
+	TextureCoordinates = uvCoords[gl_VertexID].xy;
+}
