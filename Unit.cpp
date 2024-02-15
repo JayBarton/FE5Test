@@ -49,14 +49,15 @@ void Unit::Draw(SpriteRenderer* Renderer)
 
 void Unit::LevelUp()
 {
-    subject.notify(*this);
+    if (team == 0)
+    {
+        subject.notify(*this);
+    }
 
-    std::cout << "level up\n";
     level++;
     int roll[9];
     for (int i = 0; i < 9; i++)
     {
-        auto fdafaf = (*distribution)(*gen);
         roll[i] = (*distribution)(*gen);
     }
     //roll should be a random number, rerolled for each stat
@@ -64,47 +65,38 @@ void Unit::LevelUp()
     {
         maxHP++;
         currentHP++;
-        std::cout << "HP up\n";
     }
     if (roll[1] <= growths.strength)
     {
         strength++;
-        std::cout << "str up\n";
     }
     if (roll[2] <= growths.magic)
     {
         magic++;
-        std::cout << "mag up\n";
     }
     if (roll[3] <= growths.skill)
     {
         skill++;
-        std::cout << "skl up\n";
     }
     if (roll[4] <= growths.speed)
     {
         speed++;
-        std::cout << "spd up\n";
     }
     if (roll[5] <= growths.defense)
     {
         defense++;
-        std::cout << "def up\n";
     }
     if (roll[6] <= growths.build)
     {
         build++;
-        std::cout << "bld up\n";
     }
     if (roll[7] <= growths.move)
     {
         move++;
-        std::cout << "mov up\n";
     }
     if (roll[8] <= growths.luck)
     {
         luck++;
-        std::cout << "lck up\n";
     }
 }
 
@@ -114,6 +106,37 @@ void Unit::AddExperience(int exp)
     if (experience >= 100)
     {
         experience -= 100;
+        LevelUp();
+    }
+}
+
+void Unit::LevelEnemy(int level)
+{
+    //According to https://serenesforest.net/thracia-776/miscellaneous/calculations/ Enemies recieve these bonuses. I do not believe these bonuses are
+    //per level, as that would be absurd, so I am simply calculating them once here.
+    std::uniform_int_distribution<int> enemyBonus(1, 4);
+
+    int roll[9];
+    for (int i = 0; i < 8; i++)
+    {
+        roll[i] = enemyBonus(*gen);
+    }
+    roll[8] = (*distribution)(*gen);
+    maxHP += 4 - roll[0];
+    currentHP = maxHP;
+    strength += 4 - roll[1];
+    magic += 4 - roll[2];
+    skill += 4 - roll[3];
+    speed += 4 - roll[4];
+    defense += 4 - roll[5];
+    build += 4 - roll[6];
+    luck += 4 - roll[7];
+    if (roll[8] <= 10)
+    {
+        move++;
+    }
+    for (int i = 0; i < level; i++)
+    {
         LevelUp();
     }
 }

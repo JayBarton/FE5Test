@@ -72,6 +72,11 @@ struct BattleStats
 struct Unit
 {
 	Unit();
+	Unit(int Class, std::string Name, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
+		unitClass(Class), name(Name), maxHP(HP), strength(str), magic(mag), skill(skl), speed(spd), luck(lck), defense(def), build(bld), move(mov)
+	{
+		currentHP = maxHP;
+	}
 	~Unit();
 
 	//Not really sure where I'm passing this in, but the units should have a reference to the generator I think
@@ -123,6 +128,7 @@ struct Unit
 
 	void LevelUp();
 	void AddExperience(int exp);
+	void LevelEnemy(int level);
 
 	void addItem(int ID);
 	void dropItem(int index);

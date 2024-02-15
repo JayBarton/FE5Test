@@ -10,7 +10,7 @@ bool compareMoveCost(const searchCell& a, const searchCell& b) {
 	return a.moveCost < b.moveCost;
 }
 //Cursor should have a reference to menumanager
-void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera, Unit& enemy)
+void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{

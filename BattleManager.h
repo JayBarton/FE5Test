@@ -8,7 +8,7 @@ struct BattleManager
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 
-	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int damage, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void Draw(TextRenderer* text);
 

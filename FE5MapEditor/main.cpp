@@ -54,6 +54,8 @@ bool rightHeld = false;
 std::string bg;
 
 const static int TILE_SIZE = 16;
+const static int NUMBER_OF_ENEMIES = 2;
+const static int ENEMY_WRITE = 1;
 
 struct Object
 {
@@ -75,7 +77,7 @@ std::unordered_map<glm::vec2, Object, vec2Hash> objects;
 std::unordered_map<glm::vec2, std::string, vec2Hash> objectStrings;
 std::unordered_map<glm::vec2, int, vec2Hash> objectWriteTypes;
 
-std::unordered_map<glm::vec2, std::vector<glm::vec2>, vec2Hash> flyerPaths;
+std::vector<glm::vec4> enemyUVs;
 
 Object displayObject;
 
@@ -121,10 +123,6 @@ struct EditMode
 
 struct TileMode : public EditMode
 {
-    //most tiles will be impassable and in the foreground(0)
-    int attribute = 1;
-    int layer = 0;
-
     TileMode()
     {
         maxElement = 5;
@@ -144,6 +142,97 @@ struct TileMode : public EditMode
     }
 
     ~TileMode()
+    {
+    }
+};
+
+
+struct EnemyMode : public EditMode
+{
+    //1 when facing right, 2 when facing left
+    //will double the type for uvs
+    int facing;
+    const static int RIGHT = 0;
+    const static int LEFT = 1;
+
+    const static int WALKER = 0;
+    const static int CHARGER = 1;
+    const static int ARMOR_CHARGER = 2;
+    const static int SHOOTER = 3;
+    const static int ARMOR_SHOOTER = 4;
+    const static int FLYER = 5;
+
+    EnemyMode()
+    {
+        facing = RIGHT;
+        maxElement = NUMBER_OF_ENEMIES - 1;
+        updateDisplay();
+        type = ENEMY;
+    }
+
+    void rightClick(int x, int y)
+    {
+        glm::vec2 mousePosition(x, y);
+        if (objects.count(mousePosition) == 1)
+        {
+            objects.erase(mousePosition);
+            objectStrings.erase(mousePosition);
+            objectWriteTypes.erase(mousePosition);
+            numberOfEnemies--;
+        }
+    }
+
+    void leftClick(int x, int y)
+    {
+        glm::vec2 mousePosition(x, y);
+
+
+        if (objects.count(mousePosition) == 0)
+        {
+            glm::vec2 	startPosition = displayObject.position;
+            objects[startPosition] = displayObject;
+            objects[startPosition].position = startPosition;
+
+            std::stringstream objectStream;
+            objectStream << displayObject.type << " " << startPosition.x << " " << startPosition.y;
+
+            objectWriteTypes[startPosition] = ENEMY_WRITE; //not sure which of these I'm using
+
+            numberOfEnemies++;
+
+            objectStrings[startPosition] = objectStream.str();
+
+            std::cout << objectStrings[startPosition] << std::endl;
+        }
+    }
+
+    void switchElement(int next)
+    {
+        EditMode::switchElement(next);
+        updateDisplay();
+    }
+
+    void swapFacing()
+    {
+        if (facing == RIGHT)
+        {
+            facing = LEFT;
+        }
+        else
+        {
+            facing = RIGHT;
+        }
+        updateDisplay();
+    }
+
+    void updateDisplay()
+    {
+        displayObject.uvs = enemyUVs[currentElement];
+
+        displayObject.dimensions = glm::vec2(16, 16);
+    }
+
+    ~EnemyMode()
     {
     }
 };
@@ -255,7 +344,7 @@ int main(int argc, char** argv)
 
    // ResourceManager::LoadTexture("spritesheet.png", "sprites");
     ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheettest.png", "tiles");
- //   ResourceManager::LoadTexture("E:/Damon/dev stuff/ArcherGame/Textures/tilesheet.png", "tiles");
+    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 
     ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
     ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
@@ -266,6 +355,8 @@ int main(int argc, char** argv)
     Shader myShader;
     myShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(myShader);
+
+    enemyUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 
     editMode = new TileMode();
 
@@ -372,13 +463,6 @@ int main(int argc, char** argv)
                                     for (auto& iter : objects)
                                     {
                                         iter.second.position.y += (levelHeight - oldHeight) * TILE_SIZE;
-                                    }
-                                    for (auto& iter : flyerPaths)
-                                    {
-                                        for (int i = 0; i < iter.second.size(); i++)
-                                        {
-                                            iter.second[i].y += (levelHeight - oldHeight) * TILE_SIZE;
-                                        }
                                     }
                                 }
 
@@ -574,17 +658,28 @@ bool loadMap()
             map >> levelWidth >> levelHeight;
             TileManager::tileManager.setTiles(map, levelWidth, levelHeight);
         }
-        else if (thing == "Background")
+        else if (thing == "Enemies")
         {
-            map >> bg;
-            if (bg == "")
+            map >> numberOfEnemies;
+            for (size_t i = 0; i < numberOfEnemies; i++)
             {
-                ResourceManager::LoadTexture("hub.png", "bg");
-            }
-            else
-            {
-                std::string background = bg + ".png";
-                ResourceManager::LoadTexture(background.c_str(), "bg");
+                std::string str;
+                glm::vec2 position;
+                int type;
+
+                map >> type >> position.x >> position.y;
+
+                Object tObject;
+                tObject.position = position;
+                tObject.type = type;
+                tObject.uvs = enemyUVs[type];
+
+                std::stringstream stream;
+                stream << type << " " << position.x << " " << position.y;
+
+                objects[position] = tObject;
+                objectWriteTypes[position] = ENEMY_WRITE;
+                objectStrings[position] = stream.str();
             }
         }
 
@@ -600,11 +695,29 @@ void saveMap()
     map << "Level\n";
     map << TileManager::tileManager.saveTiles();
     map << "\n";
+    std::string enemies = "Enemies\n";
+    std::stringstream stream;
+    stream << numberOfEnemies;
+    enemies += stream.str();
+
+    for (auto& iter : objectWriteTypes)
+    {
+        if (iter.second == ENEMY_WRITE)
+        {
+            enemies += "\n" + objectStrings[iter.first];
+        }
+    }
+
+    map << enemies << "\n";
+
+    map.close();
 
     //save to game folder
     std::ofstream mapP("E:\\Damon\\dev stuff\\FE5Test\\Levels\\" + mapName);
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
+    mapP << "\n";
+    mapP << enemies << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);
@@ -720,34 +833,19 @@ void editInput(SDL_Event& event, bool& isRunning)
 
 void switchMode()
 {
-    /*EditMode* newMode;
+    EditMode* newMode;
     if (editMode->type == EditMode::TILE)
     {
-        newMode = new PickupMode();
-    }
-    else if (editMode->type == EditMode::PICKUP)
-    {
         newMode = new EnemyMode();
-    }
-    else if (editMode->type == EditMode::ENEMY)
-    {
-        newMode = new DoorMode();
-    }
-    else if (editMode->type == EditMode::DOOR)
-    {
-        newMode = new MovablesMode();
-    }
-    else if (editMode->type == EditMode::MOVE)
-    {
-        newMode = new TargetMode();
     }
     else
     {
         newMode = new TileMode();
     }
+
     delete editMode;
     editMode = newMode;
-    displayObject.dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);*/
+    displayObject.dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);
 }
 
 std::string intToString(int i)
@@ -762,109 +860,62 @@ void Draw()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-    Texture2D texture = ResourceManager::GetTexture("bg");
-    Renderer->setUVs();
-
-    float halfWidth = SCREEN_WIDTH * 0.5f;
-    float halfHeight = SCREEN_HEIGHT * 0.5f;
-    float progress = camera.getPosition().x - halfWidth;
-    std::cout << progress << std::endl;
-
-    int endPosition = levelWidth * TILE_SIZE - SCREEN_WIDTH;
-    if (endPosition > 0)
-    {
-        progress /= (endPosition);
-    }
-    else
-    {
-        progress = 1.0f;
-    }
-
-    std::cout << progress << std::endl;
-
-    //std::cout << levelWidth*TILE_SIZE - halfWidth << std::endl;
-
-    int textureOffset = SCREEN_WIDTH - texture.Width;
-    Renderer->DrawSprite(texture, glm::vec2((camera.getPosition().x - halfWidth) +
-        (textureOffset * progress), camera.getPosition().y - halfHeight), 0, glm::vec2(texture.Width, texture.Height));
-
-    ResourceManager::GetShader("shape").Use();
-
-    ResourceManager::GetShader("shape").SetMatrix4("projection", camera.getCameraMatrix());
-
-    ResourceManager::GetShader("shape").SetFloat("alpha", 1.0);
-    ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 1.0f, 1.0f));
-
-    //TileManager::tileManager.showTiles(ResourceManager::GetShader("shape"), shapeVAO);
-
     if (state != State::NEW_MAP && state != State::MAIN_MENU)
     {
         TileManager::tileManager.showTiles(Renderer, camera);
 
         ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
-       /* Texture2D texture = ResourceManager::GetTexture("sprites");
+        Texture2D texture = ResourceManager::GetTexture("sprites");
         for (auto& iter : objects)
         {
             Renderer->setUVs(iter.second.uvs);
             Renderer->DrawSprite(texture, iter.second.position, 0.0f, iter.second.dimensions);
-        }*/
+        }
 
         if (editMode->type == EditMode::TILE)
         {
             Renderer->setUVs(TileManager::tileManager.uvs[displayObject.type]);
             Texture2D displayTexture = ResourceManager::GetTexture("tiles");
             Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
-            Text->RenderText("Tile Mode", CAMERA_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+            Text->RenderText("Tile Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
 
-            TileMode* edit = static_cast<TileMode*>(editMode);
-
-            std::string layer = "";
-            std::string pass = "";
-
-            if (edit->layer == 0)
-            {
-                layer = "Foreground";
-            }
-            else
-            {
-                layer = "Background";
-            }
-
-            Text->RenderText("Layer: " + layer, CAMERA_WIDTH * 0.5f - TILE_SIZE, TILE_SIZE, 1);
         }
-      /*  else
+        else
         {
             Renderer->setUVs(displayObject.uvs);
             Texture2D displayTexture = ResourceManager::GetTexture("sprites");
             Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
-        }*/
+            if (editMode->type == EditMode::ENEMY)
+            {
+                Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
+            }
+        }
 
-        Text->RenderText("Current " + intToString(editMode->currentElement), CAMERA_WIDTH * 0.5f + 128, TILE_SIZE, 1);
-        Text->RenderText("Max " + intToString(editMode->maxElement), CAMERA_WIDTH * 0.5f + 128, 64, 1);
+        Text->RenderText("Current " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+        Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
 
-        Text->RenderText("Position " + intToString(displayObject.position.x), CAMERA_WIDTH * 0.5f + 128, 96, 1);
-        Text->RenderText(intToString(displayObject.position.y), CAMERA_WIDTH * 0.5f + 256, 96, 1);
+        Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
+        Text->RenderText(intToString(displayObject.position.y), SCREEN_WIDTH * 0.5f + 256, 96, 1);
 
 
         if (saveDisplay)
         {
-            Text->RenderText(mapName + " saved", CAMERA_WIDTH - 200, CAMERA_HEIGHT - TILE_SIZE, 1);
+            Text->RenderText(mapName + " saved", SCREEN_WIDTH - 200, SCREEN_HEIGHT - TILE_SIZE, 1);
         }
 
         else if (state == RESIZE_MAP)
         {
-            Text->RenderText("X Tiles " + intToString(levelWidth), CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText("Y Tiles " + intToString(levelHeight), CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("X Tiles " + intToString(levelWidth), SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("Y Tiles " + intToString(levelHeight), SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f - 64, 1);
 
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f, 1);
-            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f, 1);
         }
         else if (state == SET_WIDTH)
         {
-            Text->RenderText("Tiles wide ", CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f, 1);
+            Text->RenderText("Tiles wide ", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
         }
     }
     else
@@ -880,16 +931,16 @@ void Draw()
             {
                 action = "New Map";
             }
-            Text->RenderText(action, CAMERA_WIDTH * 0.5f, CAMERA_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText(inputText[0], CAMERA_WIDTH * 0.5f, CAMERA_HEIGHT * 0.5f, 1);
+            Text->RenderText(action, SCREEN_WIDTH * 0.5f, SCREEN_WIDTH * 0.5f - 64, 1);
+            Text->RenderText(inputText[0], SCREEN_WIDTH * 0.5f, SCREEN_WIDTH * 0.5f, 1);
         }
         else
         {
-            Text->RenderText("X Tiles", CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText("Y Tiles", CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("X Tiles", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+            Text->RenderText("Y Tiles", SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f - 64, 1);
 
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], CAMERA_WIDTH * 0.5f - 64, CAMERA_HEIGHT * 0.5f, 1);
-            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], CAMERA_WIDTH * 0.5f + 64, CAMERA_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
+            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f, 1);
         }
     }
 

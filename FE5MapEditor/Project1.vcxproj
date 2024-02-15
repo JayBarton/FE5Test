@@ -137,32 +137,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Camera.h" />
-    <ClInclude Include="..\resource.h" />
-    <ClInclude Include="..\ResourceManager.h" />
-    <ClInclude Include="..\SATCollision.h" />
-    <ClInclude Include="..\Shader.h" />
-    <ClInclude Include="..\Sprite.h" />
-    <ClInclude Include="..\SpriteRenderer.h" />
-    <ClInclude Include="..\TextRenderer.h" />
-    <ClInclude Include="..\Texture.h" />
-    <ClInclude Include="..\Tile.h" />
-    <ClInclude Include="..\TileManager.h" />
-    <ClInclude Include="..\Timing.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="SATCollision.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Sprite.h" />
+    <ClInclude Include="SpriteRenderer.h" />
+    <ClInclude Include="TextRenderer.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="Tile.h" />
+    <ClInclude Include="TileManager.h" />
+    <ClInclude Include="Timing.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Camera.cpp" />
-    <ClCompile Include="..\main.cpp" />
-    <ClCompile Include="..\ResourceManager.cpp" />
-    <ClCompile Include="..\SATCollision.cpp" />
-    <ClCompile Include="..\Shader.cpp" />
-    <ClCompile Include="..\Sprite.cpp" />
-    <ClCompile Include="..\SpriteRenderer.cpp" />
-    <ClCompile Include="..\TextRenderer.cpp" />
-    <ClCompile Include="..\Texture.cpp" />
-    <ClCompile Include="..\Tile.cpp" />
-    <ClCompile Include="..\TileManager.cpp" />
-    <ClCompile Include="..\Timing.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="SATCollision.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Sprite.cpp" />
+    <ClCompile Include="SpriteRenderer.cpp" />
+    <ClCompile Include="TextRenderer.cpp" />
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Tile.cpp" />
+    <ClCompile Include="TileManager.cpp" />
+    <ClCompile Include="Timing.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

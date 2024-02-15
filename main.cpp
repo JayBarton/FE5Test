@@ -18,6 +18,8 @@
 #include "Items.h"
 #include "BattleManager.h"
 
+#include "csv.h"
+
 #include <vector>
 #include <algorithm>
 #include <map>
@@ -40,6 +42,7 @@ void Draw();
 void DrawUnitRanges();
 void DrawText();
 void loadMap(std::string nextMap);
+void SetupEnemies(std::ifstream& map);
 std::string intToString(int i);
 void resizeWindow(int width, int height);
 
@@ -68,8 +71,8 @@ int levelHeight;
 Cursor cursor;
 Unit unit;
 Unit allyUnit;
-Unit unit2;
-Unit unit3;
+
+std::vector<Unit*> enemies;
 
 InputManager inputManager;
 
@@ -228,48 +231,19 @@ int main(int argc, char** argv)
 
 	allyUnit.addItem(0);
 
-	//just have this guy to test leveling on multiple units
-	unit2.init(&gen, &distribution);
-	unit2.name = "Archer";
-	unit2.maxHP = 23;
-	unit2.currentHP = 23;
-	unit2.strength = 6;
-	unit2.magic = 0;
-	unit2.skill = 0;
-	unit2.speed = 0;
-	unit2.luck = 3;
-	unit2.defense = 1;
-	unit2.build = 6;
-	unit2.move = 5;
-	unit2.growths = { 50, 55, 50, 55, 50, 50, 55, 55, 3 };
-	unit2.placeUnit(96, 96);
-	unit2.sprite.uv = &playerUVs;
-	unit2.team = 1;
-	unit2.addItem(8);
-	unit2.equipWeapon(0);
+	enemies[0]->init(&gen, &distribution);
+	enemies[0]->sprite.uv = &playerUVs;
+	enemies[0]->addItem(8);
+	enemies[0]->equipWeapon(0);
 
-	unit3.init(&gen, &distribution);
-	unit3.name = "hhfffhh";
-	unit3.maxHP = 20;
-	unit3.currentHP = 20;
-	unit3.strength = 3;
-	unit3.magic = 5;
-	unit3.skill = 3;
-	unit3.speed = 5;
-	unit3.luck = 0;
-	unit3.defense = 2;
-	unit3.build = 5;
-	unit3.move = 6;
-	unit3.growths = { 50, 55, 50, 55, 50, 50, 55, 55, 3 };
-	unit3.placeUnit(128, 80);
-	unit3.sprite.uv = &playerUVs;
-	unit3.team = 1;
-	unit3.addItem(1);
-	unit3.equipWeapon(0);
+	enemies[1]->init(&gen, &distribution);
+	enemies[1]->sprite.uv = &playerUVs;
+	enemies[1]->addItem(1);
+	enemies[1]->equipWeapon(0);
+
+	//enemies[0]->LevelEnemy(9);
 
 	UnitEvents* unitEvents = new UnitEvents();
-	unit.subject.addObserver(unitEvents);
-	unit2.subject.addObserver(unitEvents);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 
@@ -347,7 +321,7 @@ int main(int argc, char** argv)
 						}
 					}
 					//if (!camera.moving)
-					cursor.CheckInput(inputManager, deltaTime, camera, unit2);
+					cursor.CheckInput(inputManager, deltaTime, camera);
 
 					if (!camera.moving)
 					{
@@ -383,6 +357,11 @@ int main(int argc, char** argv)
 
 	delete Renderer;
 	delete Text;
+	for (int i = 0; i < enemies.size(); i++)
+	{
+		delete enemies[i];
+	}
+	enemies.clear();
 	/*for (int i = 0; i < soundEffects.size(); i++)
 	{
 		for (int c = 0; c < soundEffects[i].size(); c++)
@@ -482,17 +461,73 @@ void loadMap(std::string nextMap)
 			map >> xTiles >> yTiles;
 			TileManager::tileManager.setTiles(map, xTiles, yTiles);
 		}
-
-		map.close();
-
-		levelWidth = xTiles * TileManager::TILE_SIZE;
-		levelHeight = yTiles * TileManager::TILE_SIZE;
-		camera = Camera(256, 224, levelWidth, levelHeight);
-
-		camera.setPosition(glm::vec2(0, 0));
-	//	camera.setScale(2.0f);
-		camera.update();
+		else if (thing == "Enemies")
+		{
+			SetupEnemies(map);
+		}
 	}
+
+	map.close();
+
+	levelWidth = xTiles * TileManager::TILE_SIZE;
+	levelHeight = yTiles * TileManager::TILE_SIZE;
+	camera = Camera(256, 224, levelWidth, levelHeight);
+
+	camera.setPosition(glm::vec2(0, 0));
+	//	camera.setScale(2.0f);
+	camera.update();
+
+}
+
+void SetupEnemies(std::ifstream& map)
+{
+	std::vector<Unit> unitBases;
+	unitBases.resize(3);
+	io::CSVReader<11, io::trim_chars<' '>, io::no_quote_escape<':'>> in("EnemyBaseStats.csv");
+	in.read_header(io::ignore_extra_column, "ID", "Name", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld", "Mov");
+	int ID;
+	std::string name;
+	int HP;
+	int str;
+	int mag;
+	int skl;
+	int spd;
+	int lck;
+	int def;
+	int bld;
+	int mov;
+	int currentUnit = 0;
+	while (in.read_row(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov)) {
+		unitBases[currentUnit] = Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+		currentUnit++;
+	}
+
+	io::CSVReader<9, io::trim_chars<' '>, io::no_quote_escape<':'>> in2("EnemyGrowths.csv");
+	in2.read_header(io::ignore_extra_column, "ID", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld");
+	currentUnit = 0;
+	std::vector<StatGrowths> unitGrowths;
+	unitGrowths.resize(6);
+	while (in2.read_row(ID, HP, str, mag, skl, spd, lck, def, bld)) {
+		unitGrowths[currentUnit] = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, 0 };
+		currentUnit++;
+	}
+
+	int numberOfEnemies;
+	map >> numberOfEnemies;
+	enemies.resize(numberOfEnemies);
+	for (int i = 0; i < numberOfEnemies; i++)
+	{
+		glm::vec2 position;
+		int type;
+		map >> type >> position.x >> position.y;
+
+		enemies[i] = new Unit(unitBases[type]);
+		enemies[i]->team = 1;
+		enemies[i]->placeUnit(position.x, position.y);
+	}
+	//Will be loaded from the map later
+	enemies[0]->growths = unitGrowths[0];
+	enemies[1]->growths = unitGrowths[0];
 }
 
 void Draw()
@@ -513,9 +548,12 @@ void Draw()
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
 	unit.Draw(Renderer);
-	unit2.Draw(Renderer);
-	unit3.Draw(Renderer);
 	allyUnit.Draw(Renderer);
+
+	for (int i = 0; i < enemies.size(); i++)
+	{
+		enemies[i]->Draw(Renderer);
+	}
 
 	Renderer->setUVs(cursor.uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");

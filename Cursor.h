@@ -51,7 +51,7 @@ struct Cursor
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;
 	
-	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera, Unit& enemy);
+	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera);
 	void MovementInput(InputManager& inputManager, float deltaTime);
 	void FindUnitMoveRange();
 	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
