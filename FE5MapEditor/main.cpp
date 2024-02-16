@@ -13,6 +13,10 @@
 
 #include "TileManager.h"
 
+#include "../InputManager.h"
+#include "MenuManager.h"
+#include "PlacementModes.h"
+
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -47,6 +51,8 @@ enum State { MAIN_MENU, NEW_MAP, EDITING, SET_BACKGROUND, RESIZE_MAP, SET_WIDTH 
 
 State state = MAIN_MENU;
 
+InputManager inputManager;
+
 bool typing = true;
 bool leftHeld = false;
 bool rightHeld = false;
@@ -54,24 +60,7 @@ bool rightHeld = false;
 std::string bg;
 
 const static int TILE_SIZE = 16;
-const static int NUMBER_OF_ENEMIES = 2;
 const static int ENEMY_WRITE = 1;
-
-struct Object
-{
-    int type;
-    glm::vec2 position;
-    glm::vec2 dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);
-    glm::vec4 uvs;
-};
-
-struct vec2Hash
-{
-    size_t operator()(const glm::vec2& vec) const
-    {
-        return ((std::hash<float>()(vec.x) ^ (std::hash<float>()(vec.y) << 1)) >> 1);
-    }
-};
 
 std::unordered_map<glm::vec2, Object, vec2Hash> objects;
 std::unordered_map<glm::vec2, std::string, vec2Hash> objectStrings;
@@ -81,161 +70,7 @@ std::vector<glm::vec4> enemyUVs;
 
 Object displayObject;
 
-int numberOfPickups = 0;
 int numberOfEnemies = 0;
-
-struct EditMode
-{
-    const static int TILE = 0;
-    const static int PICKUP = 1;
-    const static int ENEMY = 2;
-    int currentElement;
-    int maxElement;
-    //The current edit mode
-    int type = -1;
-
-    EditMode()
-    {
-        currentElement = 0;
-        displayObject.type = currentElement;
-    }
-
-    virtual void rightClick(int x, int y) {}
-    virtual void leftClick(int x, int y) {}
-    virtual void switchElement(int next)
-    {
-        currentElement += next;
-        if (currentElement < 0)
-        {
-            currentElement = maxElement;
-        }
-        if (currentElement > maxElement)
-        {
-            currentElement = 0;
-        }
-
-        displayObject.type = currentElement;
-    }
-
-    virtual ~EditMode() {}
-    //texture to use
-};
-
-struct TileMode : public EditMode
-{
-    TileMode()
-    {
-        maxElement = 5;
-        type = TILE;
-    }
-
-    void rightClick(int x, int y)
-    {
-        //Remove tile
-        TileManager::tileManager.placeTile(x, y, -1);
-    }
-
-    //TODO need a method to set a tile and attribute
-    void leftClick(int x, int y)
-    {
-        TileManager::tileManager.placeTile(x, y, displayObject.type);
-    }
-
-    ~TileMode()
-    {
-    }
-};
-
-
-struct EnemyMode : public EditMode
-{
-    //1 when facing right, 2 when facing left
-    //will double the type for uvs
-    int facing;
-    const static int RIGHT = 0;
-    const static int LEFT = 1;
-
-    const static int WALKER = 0;
-    const static int CHARGER = 1;
-    const static int ARMOR_CHARGER = 2;
-    const static int SHOOTER = 3;
-    const static int ARMOR_SHOOTER = 4;
-    const static int FLYER = 5;
-
-    EnemyMode()
-    {
-        facing = RIGHT;
-        maxElement = NUMBER_OF_ENEMIES - 1;
-        updateDisplay();
-        type = ENEMY;
-    }
-
-    void rightClick(int x, int y)
-    {
-        glm::vec2 mousePosition(x, y);
-        if (objects.count(mousePosition) == 1)
-        {
-            objects.erase(mousePosition);
-            objectStrings.erase(mousePosition);
-            objectWriteTypes.erase(mousePosition);
-            numberOfEnemies--;
-        }
-    }
-
-    void leftClick(int x, int y)
-    {
-        glm::vec2 mousePosition(x, y);
-
-
-        if (objects.count(mousePosition) == 0)
-        {
-            glm::vec2 	startPosition = displayObject.position;
-            objects[startPosition] = displayObject;
-            objects[startPosition].position = startPosition;
-
-            std::stringstream objectStream;
-            objectStream << displayObject.type << " " << startPosition.x << " " << startPosition.y;
-
-            objectWriteTypes[startPosition] = ENEMY_WRITE; //not sure which of these I'm using
-
-            numberOfEnemies++;
-
-            objectStrings[startPosition] = objectStream.str();
-
-            std::cout << objectStrings[startPosition] << std::endl;
-        }
-    }
-
-    void switchElement(int next)
-    {
-        EditMode::switchElement(next);
-        updateDisplay();
-    }
-
-    void swapFacing()
-    {
-        if (facing == RIGHT)
-        {
-            facing = LEFT;
-        }
-        else
-        {
-            facing = RIGHT;
-        }
-        updateDisplay();
-    }
-
-    void updateDisplay()
-    {
-        displayObject.uvs = enemyUVs[currentElement];
-
-        displayObject.dimensions = glm::vec2(16, 16);
-    }
-
-    ~EnemyMode()
-    {
-    }
-};
 
 // The Width of the screen
 const GLuint SCREEN_WIDTH = 800;
@@ -358,10 +193,11 @@ int main(int argc, char** argv)
 
     enemyUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 
-    editMode = new TileMode();
+    editMode = new TileMode(&displayObject);
 
     Text = new TextRenderer(800, 600);
     Text->Load("fonts\\Teko-Light.TTF", 30);
+    MenuManager::menuManager.SetUp(Text, &camera, shapeVAO, Renderer);
 
     while (isRunning)
     {
@@ -383,12 +219,22 @@ int main(int argc, char** argv)
         //Handle events on queue
 
         SDL_StartTextInput();
+        inputManager.update(deltaTime);
+
         while (SDL_PollEvent(&event) != 0)
         {
             //User requests quit
             if (event.type == SDL_QUIT)
             {
                 isRunning = false;
+            }
+            else if (event.type == SDL_KEYDOWN)
+            {
+                inputManager.pressKey(event.key.keysym.sym);
+            }                      
+            else if (event.type == SDL_KEYUP)
+            {
+                inputManager.releaseKey(event.key.keysym.sym);
             }
             else if (event.type == SDL_WINDOWEVENT)
             {
@@ -473,12 +319,6 @@ int main(int argc, char** argv)
                                 TileManager::tileManager.resizeMap(levelWidth, levelHeight);
                                 camera = Camera(256, 224, levelWidth * TILE_SIZE, levelHeight * TILE_SIZE);
                             }
-                            else if (state == SET_BACKGROUND)
-                            {
-                                bg = inputText[0];
-                                std::string newBackground = bg + ".png";
-                                ResourceManager::LoadTexture(newBackground.c_str(), "bg");
-                            }
                             else if (state == SET_WIDTH)
                             {
                                 displayObject.dimensions.x = atoi(inputText[0].c_str()) * TILE_SIZE;
@@ -513,9 +353,11 @@ int main(int argc, char** argv)
                 editInput(event, isRunning);
             }
         }
-        camera.update();
-
-        if (!typing)
+        if (MenuManager::menuManager.menus.size() > 0)
+        {
+            MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
+        }
+        else if (!typing)
         {
             const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
 
@@ -535,7 +377,6 @@ int main(int argc, char** argv)
             {
                 camera.setPosition(camera.getPosition() + glm::vec2(0.0f, 25.0f));
             }
-            camera.update();
 
             //Mouse offsets
             int x = 0;
@@ -564,6 +405,7 @@ int main(int argc, char** argv)
             }
         }
 
+        camera.update();
         Draw();
         fps = fpsLimiter.end();
     }
@@ -666,8 +508,10 @@ bool loadMap()
                 std::string str;
                 glm::vec2 position;
                 int type;
+                int level;
+                int growthID;
 
-                map >> type >> position.x >> position.y;
+                map >> type >> position.x >> position.y >> level >> growthID;
 
                 Object tObject;
                 tObject.position = position;
@@ -675,7 +519,7 @@ bool loadMap()
                 tObject.uvs = enemyUVs[type];
 
                 std::stringstream stream;
-                stream << type << " " << position.x << " " << position.y;
+                stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID;
 
                 objects[position] = tObject;
                 objectWriteTypes[position] = ENEMY_WRITE;
@@ -732,100 +576,104 @@ void saveMap()
     saveDisplay = true;
 }
 
+//Use input manager for this later
 void editInput(SDL_Event& event, bool& isRunning)
 {
-    if (event.type == SDL_KEYDOWN)
+    if (MenuManager::menuManager.menus.size() == 0)
     {
-        if (event.key.keysym.sym == SDLK_ESCAPE)
+        if (event.type == SDL_KEYDOWN)
         {
-            isRunning = false;
-        }
-        else if (event.key.keysym.sym == SDLK_1)
-        {
-            if (editMode->type != EditMode::TILE)
+            if (event.key.keysym.sym == SDLK_ESCAPE)
             {
-                EditMode* newMode = new TileMode();
-                delete editMode;
-                editMode = newMode;
+                isRunning = false;
             }
-        }
-        else if (event.key.keysym.sym == SDLK_TAB)
-        {
-            switchMode();
-        }
-        else if (event.key.keysym.sym == SDLK_RETURN)
-        {
-            //save map
-            saveMap();
-        }
-        else if (editMode->type == EditMode::TILE)
-        {
+            else if (event.key.keysym.sym == SDLK_1)
+            {
+                if (editMode->type != EditMode::TILE)
+                {
+                    EditMode* newMode = new TileMode(&displayObject);
+                    delete editMode;
+                    editMode = newMode;
+                }
+            }
+            else if (event.key.keysym.sym == SDLK_TAB)
+            {
+                switchMode();
+            }
+            else if (event.key.keysym.sym == SDLK_RETURN)
+            {
+                //save map
+                saveMap();
+            }
+            else if (editMode->type == EditMode::TILE)
+            {
 
-            if (event.key.keysym.sym == SDLK_c)
-            {
-                TileManager::tileManager.replaceTile(0, 5);
+                if (event.key.keysym.sym == SDLK_c)
+                {
+                    TileManager::tileManager.replaceTile(0, 5);
+                }
             }
-        }
 
-        if (state == EDITING)
-        {
-            if (event.key.keysym.sym == SDLK_r)
+            if (state == EDITING)
             {
-                state = RESIZE_MAP;
-                typing = true;
+                if (event.key.keysym.sym == SDLK_r)
+                {
+                    state = RESIZE_MAP;
+                    typing = true;
+                }
             }
         }
-    }
-    if (event.type == SDL_MOUSEBUTTONDOWN)
-    {
+        if (event.type == SDL_MOUSEBUTTONDOWN)
+        {
+            if (editMode->type == EditMode::TILE)
+            {
+                if (event.button.button == SDL_BUTTON_LEFT)
+                {
+                    leftHeld = true;
+                }
+                else if (event.button.button == SDL_BUTTON_RIGHT)
+                {
+                    rightHeld = true;
+                }
+            }
+            else
+            {
+                if (event.button.button == SDL_BUTTON_LEFT)
+                {
+                    editMode->leftClick(mousePosition.x, mousePosition.y);
+                }
+
+                if (event.button.button == SDL_BUTTON_RIGHT)
+                {
+                    editMode->rightClick(mousePosition.x, mousePosition.y);
+                }
+            }
+        }
+        else if (event.type == SDL_MOUSEBUTTONUP)
+        {
+            if (event.button.button == SDL_BUTTON_LEFT)
+            {
+                leftHeld = false;
+            }
+            if (event.button.button == SDL_BUTTON_RIGHT)
+            {
+                rightHeld = false;
+            }
+        }
+        if (event.type == SDL_MOUSEWHEEL)
+        {
+            editMode->switchElement(event.wheel.y);
+        }
         if (editMode->type == EditMode::TILE)
         {
-            if (event.button.button == SDL_BUTTON_LEFT)
-            {
-                leftHeld = true;
-            }
-            else if (event.button.button == SDL_BUTTON_RIGHT)
-            {
-                rightHeld = true;
-            }
-        }
-        else
-        {
-            if (event.button.button == SDL_BUTTON_LEFT)
+            if (leftHeld)
             {
                 editMode->leftClick(mousePosition.x, mousePosition.y);
             }
-
-            if (event.button.button == SDL_BUTTON_RIGHT)
+            else if (rightHeld)
             {
                 editMode->rightClick(mousePosition.x, mousePosition.y);
             }
-        }
-    }
-    else if (event.type == SDL_MOUSEBUTTONUP)
-    {
-        if (event.button.button == SDL_BUTTON_LEFT)
-        {
-            leftHeld = false;
-        }
-        if (event.button.button == SDL_BUTTON_RIGHT)
-        {
-            rightHeld = false;
-        }
-    }
-    if (event.type == SDL_MOUSEWHEEL)
-    {
-        editMode->switchElement(event.wheel.y);
-    }
-    if (editMode->type == EditMode::TILE)
-    {
-        if (leftHeld)
-        {
-            editMode->leftClick(mousePosition.x, mousePosition.y);
-        }
-        else if (rightHeld)
-        {
-            editMode->rightClick(mousePosition.x, mousePosition.y);
         }
     }
 }
@@ -836,11 +684,11 @@ void switchMode()
     EditMode* newMode;
     if (editMode->type == EditMode::TILE)
     {
-        newMode = new EnemyMode();
+        newMode = new EnemyMode(&displayObject, &objects, &objectStrings, &objectWriteTypes, numberOfEnemies, enemyUVs);
     }
     else
     {
-        newMode = new TileMode();
+        newMode = new TileMode(&displayObject);
     }
 
     delete editMode;
@@ -916,6 +764,11 @@ void Draw()
         {
             Text->RenderText("Tiles wide ", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
             Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
+        }
+        if (MenuManager::menuManager.menus.size() > 0)
+        {
+            auto menu = MenuManager::menuManager.menus.back();
+            menu->Draw();
         }
     }
     else

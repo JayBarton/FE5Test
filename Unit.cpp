@@ -115,7 +115,6 @@ void Unit::LevelEnemy(int level)
     //According to https://serenesforest.net/thracia-776/miscellaneous/calculations/ Enemies recieve these bonuses. I do not believe these bonuses are
     //per level, as that would be absurd, so I am simply calculating them once here.
     std::uniform_int_distribution<int> enemyBonus(1, 4);
-
     int roll[9];
     for (int i = 0; i < 8; i++)
     {

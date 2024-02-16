@@ -92,14 +92,12 @@ struct UnitEvents : public Observer
 		leveling = true;
 	}
 };
-
+std::mt19937 gen;
+//gen.seed(1);
+std::uniform_int_distribution<int> distribution(0, 99);
 int main(int argc, char** argv)
 {
 	init();
-
-	std::mt19937 gen;
-	//gen.seed(1);
-	std::uniform_int_distribution<int> distribution(0, 99);
 
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastFrame = 0.0f;
@@ -231,15 +229,15 @@ int main(int argc, char** argv)
 
 	allyUnit.addItem(0);
 
-	enemies[0]->init(&gen, &distribution);
+//	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
 	enemies[0]->addItem(8);
 	enemies[0]->equipWeapon(0);
 
-	enemies[1]->init(&gen, &distribution);
+	/*enemies[1]->init(&gen, &distribution);
 	enemies[1]->sprite.uv = &playerUVs;
 	enemies[1]->addItem(1);
-	enemies[1]->equipWeapon(0);
+	enemies[1]->equipWeapon(0);*/
 
 	//enemies[0]->LevelEnemy(9);
 
@@ -519,15 +517,17 @@ void SetupEnemies(std::ifstream& map)
 	{
 		glm::vec2 position;
 		int type;
-		map >> type >> position.x >> position.y;
+		int level;
+		int growthID;
+		map >> type >> position.x >> position.y >> level >> growthID;
 
 		enemies[i] = new Unit(unitBases[type]);
 		enemies[i]->team = 1;
+		enemies[i]->growths = unitGrowths[growthID];
+		enemies[i]->init(&gen, &distribution);
+		enemies[i]->LevelEnemy(level - 1);
 		enemies[i]->placeUnit(position.x, position.y);
 	}
-	//Will be loaded from the map later
-	enemies[0]->growths = unitGrowths[0];
-	enemies[1]->growths = unitGrowths[0];
 }
 
 void Draw()
