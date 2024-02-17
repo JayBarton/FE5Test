@@ -353,6 +353,10 @@ int main(int argc, char** argv)
                 editInput(event, isRunning);
             }
         }
+        if (inputManager.isKeyPressed(SDLK_ESCAPE))
+        {
+            isRunning = false;
+        }
         if (MenuManager::menuManager.menus.size() > 0)
         {
             MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
@@ -510,16 +514,30 @@ bool loadMap()
                 int type;
                 int level;
                 int growthID;
-
-                map >> type >> position.x >> position.y >> level >> growthID;
+                int inventorySize;
+                std::vector<int> inventory;
+                map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
 
                 Object tObject;
                 tObject.position = position;
                 tObject.type = type;
                 tObject.uvs = enemyUVs[type];
+                tObject.level = level;
+                tObject.growthRateID = growthID;
+
+                inventory.resize(inventorySize);
+                for (int i = 0; i < inventorySize; i++)
+                {
+                    map >> inventory[i];
+                }
+                tObject.inventory = inventory;
 
                 std::stringstream stream;
-                stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID;
+                stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID << " " << inventorySize;
+                for (int i = 0; i < inventorySize; i++)
+                {
+                    stream << " " << inventory[i];
+                }
 
                 objects[position] = tObject;
                 objectWriteTypes[position] = ENEMY_WRITE;
@@ -583,11 +601,7 @@ void editInput(SDL_Event& event, bool& isRunning)
     {
         if (event.type == SDL_KEYDOWN)
         {
-            if (event.key.keysym.sym == SDLK_ESCAPE)
-            {
-                isRunning = false;
-            }
-            else if (event.key.keysym.sym == SDLK_1)
+            if (event.key.keysym.sym == SDLK_1)
             {
                 if (editMode->type != EditMode::TILE)
                 {
@@ -684,7 +698,7 @@ void switchMode()
     EditMode* newMode;
     if (editMode->type == EditMode::TILE)
     {
-        newMode = new EnemyMode(&displayObject, &objects, &objectStrings, &objectWriteTypes, numberOfEnemies, enemyUVs);
+        newMode = new EnemyMode(&displayObject, objects, objectStrings, objectWriteTypes, numberOfEnemies, enemyUVs);
     }
     else
     {

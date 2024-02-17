@@ -185,6 +185,7 @@ int main(int argc, char** argv)
 
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
+	ItemManager::itemManager.SetUpItems();
 
 	loadMap("1.map");
 	unit.init(&gen, &distribution);
@@ -204,7 +205,6 @@ int main(int argc, char** argv)
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 	unit.sprite.uv = &playerUVs;
 
-	ItemManager::itemManager.SetUpItems();
 	unit.addItem(1);
 	unit.addItem(2);
 	unit.addItem(3);
@@ -231,13 +231,8 @@ int main(int argc, char** argv)
 
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
-	enemies[0]->addItem(8);
-	enemies[0]->equipWeapon(0);
-
-	/*enemies[1]->init(&gen, &distribution);
-	enemies[1]->sprite.uv = &playerUVs;
-	enemies[1]->addItem(1);
-	enemies[1]->equipWeapon(0);*/
+//	enemies[0]->addItem(8);
+//	enemies[0]->equipWeapon(0);
 
 	//enemies[0]->LevelEnemy(9);
 
@@ -519,11 +514,18 @@ void SetupEnemies(std::ifstream& map)
 		int type;
 		int level;
 		int growthID;
-		map >> type >> position.x >> position.y >> level >> growthID;
-
+		int inventorySize;
+		map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
 		enemies[i] = new Unit(unitBases[type]);
 		enemies[i]->team = 1;
 		enemies[i]->growths = unitGrowths[growthID];
+		for (int i = 0; i < inventorySize; i++)
+		{
+			int itemID;
+			map >> itemID;
+			enemies[i]->addItem(itemID);
+		}
+
 		enemies[i]->init(&gen, &distribution);
 		enemies[i]->LevelEnemy(level - 1);
 		enemies[i]->placeUnit(position.x, position.y);

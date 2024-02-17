@@ -5,10 +5,15 @@ void EnemyMode::leftClick(int x, int y)
 {
     glm::vec2 mousePosition(x, y);
 
-    if (objects->count(mousePosition) == 0)
+    if (objects.count(mousePosition) == 0)
     {
         //Open menu here
-        MenuManager::menuManager.AddEnemyMenu(this);
+        MenuManager::menuManager.AddEnemyMenu(this, nullptr);
+    }
+    else
+    {
+        MenuManager::menuManager.AddEnemyMenu(this, &objects[mousePosition]);
+
     }
 }
 

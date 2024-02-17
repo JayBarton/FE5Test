@@ -1,5 +1,6 @@
 #include <vector>
 #include "../Unit.h"
+#include "../Items.h"
 
 class TextRenderer;
 class Camera;
@@ -34,7 +35,8 @@ struct MenuManager
 
     void AddMenu(int menuID);
 
-    void AddEnemyMenu(class EnemyMode* mode);
+    void AddEnemyMenu(class EnemyMode* mode, class Object* obj);
+    void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
 
     void PreviousMenu();
     void ClearMenu();
@@ -52,19 +54,40 @@ struct MenuManager
 
 struct EnemyMenu : public Menu
 {
-    EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, class EnemyMode* mode);
+    EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, class EnemyMode* mode, class Object* object);
     virtual void Draw() override;
     virtual void SelectOption() override;
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
-    EnemyMode* mode = nullptr;
+    const static int CHANGE_LEVEL = 0;
+    const static int CHANGE_GROWTH = 1;
+    const static int OPEN_INVENTORY = 2;
 
-    bool updatingLevel = true;
+    EnemyMode* mode = nullptr;
+    Object* object = nullptr;
 
     int level = 1;
     int growthRateID = 0;
     std::vector<StatGrowths> unitGrowths;
+    std::vector<int> inventory;
+    std::vector<Item> items;
+
+    bool inInventory = false;
 
     std::string growthNames[6];
 
+};
+
+struct InventoryMenu : public Menu
+{
+    InventoryMenu(TextRenderer* Text, Camera* camera, int shapeVAO, class EnemyMode* mode, class Object* object, std::vector<int>& inventory, std::vector<Item>& items);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+    virtual void CancelOption() override;
+
+    std::vector<int>& inventory;
+    std::vector<Item>& items;
+    int currentSlot = -1;
+    int currentItem = -1;
 };
