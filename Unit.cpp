@@ -159,6 +159,11 @@ void Unit::addItem(int ID)
                 minRange = weapon.minRange;
             }
             weapons.push_back(newItem);
+
+            if (equippedWeapon < 0)
+            {
+                equippedWeapon = inventory.size() - 1;
+            }
         }
     }
 }
@@ -193,21 +198,67 @@ void Unit::dropItem(int index)
             minRange = weapon.minRange;
         }
     }
+    if (index == equippedWeapon)
+    {
+        equippedWeapon = -1;
+        findWeapon();
+    }
+    else if (index < equippedWeapon)
+    {
+        equippedWeapon--;
+    }
 }
 
-void Unit::swapItem(std::vector<Item*>& otherInventory, int otherIndex, int thisIndex)
+void Unit::swapItem(Unit* otherUnit, int otherIndex, int thisIndex)
 {
-    auto otherItem = otherInventory[otherIndex];
+    auto otherInventory = &otherUnit->inventory;
+    auto otherItem = (*otherInventory)[otherIndex];
+
     if (thisIndex < inventory.size())
     {
         auto thisItem = inventory[thisIndex];
-        otherInventory[otherIndex] = thisItem;
+        (*otherInventory)[otherIndex] = thisItem;
         inventory[thisIndex] = otherItem;
     }
     else
     {
         inventory.push_back(otherItem);
-        otherInventory.erase(otherInventory.begin() + otherIndex);
+        otherInventory->erase(otherInventory->begin() + otherIndex);
+    }
+    if (otherUnit != this)
+    {
+        if (thisIndex == equippedWeapon)
+        {
+            equippedWeapon = -1;
+        }
+        if (otherIndex == otherUnit->equippedWeapon)
+        {
+            otherUnit->equippedWeapon = -1;
+        }
+        findWeapon();
+        otherUnit->findWeapon();
+    }
+    else
+    {
+        if (otherIndex == equippedWeapon)
+        {
+            equippedWeapon = thisIndex;
+        }
+    }
+}
+
+void Unit::findWeapon()
+{
+    if (equippedWeapon == -1)
+    {
+        for (int i = 0; i < inventory.size(); i++)
+        {
+            if (inventory[i]->isWeapon)
+            {
+                equippedWeapon = i;
+                break;
+            }
+        }
     }
 }
 
@@ -219,6 +270,7 @@ void Unit::equipWeapon(int index)
         auto temp = inventory[0];
         inventory[0] = inventory[index];
         inventory[index] = temp;
+        equippedWeapon = 0;
     }
 }
 
@@ -227,7 +279,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
     BattleStats stats;
     if (weaponID == -1)
     {
-        weaponID = inventory[0]->ID;
+        weaponID = inventory[equippedWeapon]->ID;
     }
     if (weaponID == -1)
     {

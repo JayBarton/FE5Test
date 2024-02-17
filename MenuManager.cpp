@@ -503,6 +503,7 @@ void SelectWeaponMenu::SelectOption()
 		if (weapons[currentOption] == unit->inventory[i])
 		{
 			unit->equipWeapon(i);
+			GetBattleStats();
 			break;
 		}
 	}
@@ -572,7 +573,7 @@ void SelectEnemyMenu::Draw()
 	int enemyStatsX = 536;
 
 	text->RenderText(enemy->name, enemyStatsX, 100, 1);
-	text->RenderText(enemy->inventory[0]->name, enemyStatsX, 130, 1); //need error checking here
+	text->RenderText(enemy->inventory[enemy->equippedWeapon]->name, enemyStatsX, 130, 1); //need error checking here
 
 	int statsY = 180;
 	text->RenderTextRight(intToString2(enemy->level), enemyStatsX, statsY, 1, 14);
@@ -657,7 +658,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 	auto unit = cursor->selectedUnit;
 	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
 	attackDistance /= TileManager::TILE_SIZE;
-	auto enemyWeapon = enemy->GetWeaponData(enemy->inventory[0]);
+	auto enemyWeapon = enemy->GetWeaponData(enemy->inventory[enemy->equippedWeapon]);
 	if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
 	{
 		enemyCanCounter = true;
@@ -666,7 +667,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 	enemyNormalStats = enemy->CalculateBattleStats();
 
 	unitNormalStats = unit->CalculateBattleStats();
-	auto unitWeapon = unit->GetWeaponData(unit->inventory[0]);
+	auto unitWeapon = unit->GetWeaponData(unit->inventory[unit->equippedWeapon]);
 	int playerDefense = unit->defense;
 	int enemyDefense = enemy->defense;
 
@@ -931,7 +932,7 @@ void TradeMenu::SelectOption()
 		auto firstUnit = cursor->selectedUnit;
 		if (moveFromFirst && !firstInventory)
 		{
-			tradeUnit->swapItem(firstUnit->inventory, itemToMove, currentOption);
+			tradeUnit->swapItem(firstUnit, itemToMove, currentOption);
 			if (firstUnit->inventory.size() > 0)
 			{
 				firstInventory = true;
@@ -943,11 +944,11 @@ void TradeMenu::SelectOption()
 		}
 		else if (moveFromFirst && firstInventory)
 		{
-			firstUnit->swapItem(firstUnit->inventory, itemToMove, currentOption);
+			firstUnit->swapItem(firstUnit, itemToMove, currentOption);
 		}
 		else if (!moveFromFirst && firstInventory)
 		{
-			firstUnit->swapItem(tradeUnit->inventory, itemToMove, currentOption);
+			firstUnit->swapItem(tradeUnit, itemToMove, currentOption);
 			if (tradeUnit->inventory.size() > 0)
 			{
 				firstInventory = false;
@@ -959,7 +960,7 @@ void TradeMenu::SelectOption()
 		}
 		else if (!moveFromFirst && !firstInventory)
 		{
-			tradeUnit->swapItem(tradeUnit->inventory, itemToMove, currentOption);
+			tradeUnit->swapItem(tradeUnit, itemToMove, currentOption);
 		}
 		GetOptions();
 		if (emptyInventory)

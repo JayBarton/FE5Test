@@ -206,10 +206,11 @@ int main(int argc, char** argv)
 	unit.sprite.uv = &playerUVs;
 
 	unit.addItem(1);
+	unit.addItem(0);
+
 	unit.addItem(2);
 	unit.addItem(3);
-	unit.addItem(0);
-	unit.equipWeapon(1);
+	//unit.equipWeapon(1);
 
 	allyUnit.init(&gen, &distribution);
 	allyUnit.name = "Ally";

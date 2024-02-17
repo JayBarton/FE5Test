@@ -104,6 +104,8 @@ struct Unit
 	int maxRange = 0;
 	int minRange = 5;
 
+	int equippedWeapon = -1;
+
 	//0 = player
 	//1 = enemy
 	int team = 0;
@@ -132,7 +134,9 @@ struct Unit
 
 	void addItem(int ID);
 	void dropItem(int index);
-	void swapItem(std::vector<Item*>& otherInventory, int otherIndex, int thisIndex);
+	void swapItem(Unit* otherUnit, int otherIndex, int thisIndex);
+
+	void findWeapon();
 	//This will only work for equipping from the menu, if I wanted a unit to equip something they picked up this is no good.
 	//Also won't handle trading, need to come back to that
 	void equipWeapon(int index);
