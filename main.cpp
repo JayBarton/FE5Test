@@ -232,6 +232,7 @@ int main(int argc, char** argv)
 
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
+	enemies[1]->sprite.uv = &playerUVs;
 //	enemies[0]->addItem(8);
 //	enemies[0]->equipWeapon(0);
 
@@ -520,7 +521,7 @@ void SetupEnemies(std::ifstream& map)
 		enemies[i] = new Unit(unitBases[type]);
 		enemies[i]->team = 1;
 		enemies[i]->growths = unitGrowths[growthID];
-		for (int i = 0; i < inventorySize; i++)
+		for (int c = 0; c < inventorySize; c++)
 		{
 			int itemID;
 			map >> itemID;
