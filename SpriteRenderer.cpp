@@ -23,7 +23,7 @@ SpriteRenderer::~SpriteRenderer()
     glDeleteVertexArrays(1, &this->quadVAO);
 }
 
-void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color)
+void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color, bool grey)
 {
 	// Prepare transformations
 	this->shader.Use();
@@ -40,7 +40,7 @@ void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float ro
 	model = glm::scale(model, glm::vec3(size, 0.0f)); // Last scale
 
 	this->shader.SetMatrix4("model", model);
-
+    this->shader.SetFloat("u_colorFactor", grey);
 	// Render textured quad
 	this->shader.SetVector4f("spriteColor", color);
 

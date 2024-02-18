@@ -44,7 +44,7 @@ void Unit::Draw(SpriteRenderer* Renderer)
     Renderer->setUVs(sprite.getUV());
     Texture2D texture = ResourceManager::GetTexture("sprites");
 
-    Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha);
+    Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, false);
 }
 
 void Unit::LevelUp()
