@@ -19,23 +19,29 @@ struct Item
 
 struct WeaponData
 {
-	const static int TYPE_SWORD = 1;
-	const static int TYPE_BOW = 2;
-	const static int TYPE_AXE = 3;
-	const static int TYPE_LANCE = 4;
+	const static int TYPE_SWORD = 0;
+	const static int TYPE_AXE = 1;
+	const static int TYPE_LANCE = 2;
+	const static int TYPE_BOW = 3;
+	const static int TYPE_FIRE = 4;
+	const static int TYPE_THUNDER = 5;
+	const static int TYPE_WIND = 6;
+	const static int TYPE_LIGHT = 7;
+	const static int TYPE_DARK = 8;
+	const static int TYPE_STAFF = 9;
 
 	//int ID; Not sure I need this
-	int type;
-	int rank;
-	int hit;
-	int might;
-	int crit;
-	int maxRange;
-	int minRange;
-	int weight;
-	bool isMagic;
-	bool isTome;
-	int bonus; //No idea how this is going to work
+	int type = -1;
+	int rank = 0;
+	int hit = 0;
+	int might = 0;
+	int crit = 0;
+	int maxRange = 0;
+	int minRange = 0;
+	int weight = 0;
+	bool isMagic = false;
+	bool isTome = false;
+	int bonus = 0; //No idea how this is going to work
 };
 
 class Unit;

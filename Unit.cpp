@@ -149,20 +149,24 @@ void Unit::addItem(int ID)
         
         if (newItem->isWeapon)
         {
-            auto weapon = ItemManager::itemManager.weaponData[ID];
-            if (weapon.maxRange > maxRange)
+            auto weapon = GetWeaponData(newItem);
+            if (canUse(weapon))
             {
-                maxRange = weapon.maxRange;
-            }
-            if (weapon.minRange < minRange)
-            {
-                minRange = weapon.minRange;
-            }
-            weapons.push_back(newItem);
+                if (weapon.maxRange > maxRange)
+                {
+                    maxRange = weapon.maxRange;
+                }
+                if (weapon.minRange < minRange)
+                {
+                    minRange = weapon.minRange;
+                }
+                weapons.push_back(newItem);
 
-            if (equippedWeapon < 0)
-            {
-                equippedWeapon = inventory.size() - 1;
+                if (equippedWeapon < 0)
+                {
+                    equippedWeapon = inventory.size() - 1;
+                 //   tryEquip(inventory.size() - 1);
+                }
             }
         }
     }
@@ -184,20 +188,7 @@ void Unit::dropItem(int index)
 
     //Check if the range needs to be reset
     //This is a bit clumsy, but it works for now
-    maxRange = 0;
-    minRange = 5;
-    for (int i = 0; i < weapons.size(); i++)
-    {
-        auto weapon = ItemManager::itemManager.weaponData[weapons[i]->ID];
-        if (weapon.maxRange > maxRange)
-        {
-            maxRange = weapon.maxRange;
-        }
-        if (weapon.minRange < minRange)
-        {
-            minRange = weapon.minRange;
-        }
-    }
+    CalculateUnitRange();
     if (index == equippedWeapon)
     {
         equippedWeapon = -1;
@@ -209,14 +200,36 @@ void Unit::dropItem(int index)
     }
 }
 
+void Unit::CalculateUnitRange()
+{
+    maxRange = 0;
+    minRange = 5;
+    for (int i = 0; i < weapons.size(); i++)
+    {
+        auto weapon = GetWeaponData(weapons[i]);
+        if (canUse(weapon))
+        {
+            if (weapon.maxRange > maxRange)
+            {
+                maxRange = weapon.maxRange;
+            }
+            if (weapon.minRange < minRange)
+            {
+                minRange = weapon.minRange;
+            }
+        }
+    }
+}
+
 void Unit::swapItem(Unit* otherUnit, int otherIndex, int thisIndex)
 {
     auto otherInventory = &otherUnit->inventory;
     auto otherItem = (*otherInventory)[otherIndex];
-
+    Item* thisItem = nullptr;
     if (thisIndex < inventory.size())
     {
-        auto thisItem = inventory[thisIndex];
+        thisItem = inventory[thisIndex];
+
         (*otherInventory)[otherIndex] = thisItem;
         inventory[thisIndex] = otherItem;
     }
@@ -227,6 +240,38 @@ void Unit::swapItem(Unit* otherUnit, int otherIndex, int thisIndex)
     }
     if (otherUnit != this)
     {
+        bool recalculateRange = false;
+        if (thisItem && thisItem->isWeapon)
+        {
+            for (int i = 0; i < weapons.size(); i++)
+            {
+                if (thisItem == weapons[i])
+                {
+                    weapons.erase(weapons.begin() + i);
+                    break;
+                }
+            }
+            otherUnit->weapons.push_back(thisItem);
+            recalculateRange = true;
+        }
+        if (otherItem->isWeapon)
+        {
+            for (int i = 0; i < otherUnit->weapons.size(); i++)
+            {
+                if (otherItem == otherUnit->weapons[i])
+                {
+                    otherUnit->weapons.erase(otherUnit->weapons.begin() + i);
+                    break;
+                }
+            }
+            weapons.push_back(otherItem);
+            recalculateRange = true;
+        }
+        if (recalculateRange)
+        {
+            CalculateUnitRange();
+            otherUnit->CalculateUnitRange();
+        }
         if (thisIndex == equippedWeapon)
         {
             equippedWeapon = -1;
@@ -238,13 +283,6 @@ void Unit::swapItem(Unit* otherUnit, int otherIndex, int thisIndex)
         findWeapon();
         otherUnit->findWeapon();
     }
-    else
-    {
-        if (otherIndex == equippedWeapon)
-        {
-            equippedWeapon = thisIndex;
-        }
-    }
 }
 
 void Unit::findWeapon()
@@ -255,8 +293,10 @@ void Unit::findWeapon()
         {
             if (inventory[i]->isWeapon)
             {
-                equippedWeapon = i;
-                break;
+                if (tryEquip(i))
+                {
+                    break;
+                }
             }
         }
     }
@@ -274,18 +314,50 @@ void Unit::equipWeapon(int index)
     }
 }
 
+bool Unit::tryEquip(int index)
+{
+    auto weapon = GetWeaponData(inventory[index]);
+    if (canUse(weapon))
+    {
+        equippedWeapon = index;
+        return true;
+    }
+    return false;
+}
+
+bool Unit::canUse(WeaponData& weapon)
+{
+    return weapon.rank <= weaponProficiencies[weapon.type] || weapon.rank > 5;
+}
+
+Item* Unit::GetEquippedItem()
+{
+    if (equippedWeapon >= 0)
+    {
+        return inventory[equippedWeapon];
+    }
+    return nullptr;
+}
+
 BattleStats Unit::CalculateBattleStats(int weaponID)
 {
     BattleStats stats;
     if (weaponID == -1)
     {
-        weaponID = inventory[equippedWeapon]->ID;
+        if (equippedWeapon >= 0)
+        {
+            weaponID = inventory[equippedWeapon]->ID;
+        }
+        else
+        {
+            stats.attackDamage = 0;
+            stats.hitAccuracy = 0;
+            stats.hitCrit = 0;
+            stats.attackSpeed = speed;
+            stats.hitAvoid = stats.hitAvoid = stats.attackSpeed * 2 + luck;
+        }
     }
-    if (weaponID == -1)
-    {
-        return BattleStats();
-    }
-    else if (weaponID >= 0)
+    if (weaponID >= 0)
     {
         auto weapon = ItemManager::itemManager.weaponData[weaponID];
         stats.attackDamage = weapon.might + strength; //+ mag if the weapon is magic
@@ -310,5 +382,9 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
 
 WeaponData Unit::GetWeaponData(Item* item)
 {
-    return ItemManager::itemManager.weaponData[item->ID];
+    if (item)
+    {
+        return ItemManager::itemManager.weaponData[item->ID];
+    }
+    return WeaponData();
 }

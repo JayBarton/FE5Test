@@ -190,7 +190,7 @@ void EnemyMenu::SelectOption()
 {
 	if (object)
 	{
-		mode->updateEnemy(level, growthRateID, inventory);
+		mode->updateEnemy(level, growthRateID, inventory, object->type);
 	}
 	else
 	{

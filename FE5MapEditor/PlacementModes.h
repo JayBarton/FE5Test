@@ -162,7 +162,7 @@ struct EnemyMode : public EditMode
         std::cout << objectStrings[startPosition] << std::endl;
     }
 
-    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory)
+    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type)
     {
         glm::vec2 startPosition = dObject->position;
         dObject->inventory = inventory;
@@ -170,7 +170,7 @@ struct EnemyMode : public EditMode
         dObject->growthRateID = growthRateID;
         objects[startPosition] = *dObject;
         std::stringstream objectStream;
-        objectStream << dObject->type << " " << startPosition.x << " " << startPosition.y << " " << level << " " << growthRateID << " " << inventory.size();
+        objectStream << type << " " << startPosition.x << " " << startPosition.y << " " << level << " " << growthRateID << " " << inventory.size();
         for (int i = 0; i < inventory.size(); i++)
         {
             objectStream << " " << inventory[i];

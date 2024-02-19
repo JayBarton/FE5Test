@@ -67,31 +67,33 @@ void UnitOptionsMenu::SelectOption()
 		std::vector<Item*> validWeapons;
 		std::vector<std::vector<Unit*>> unitsToAttack;
 		auto playerUnit = cursor->selectedUnit;
-		//unitsToAttack.resize(validWeapons.size());
 		for (int i = 0; i < playerUnit->weapons.size(); i++)
 		{
 
 			bool weaponInRange = false;
 			auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[i]);
-			for (int c = 0; c < unitsInRange.size(); c++)
+			if (playerUnit->canUse(weapon))
 			{
-				auto currentUnit = unitsInRange[c];
-
-				float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
-				distance /= TileManager::TILE_SIZE;
-				if (distance <= weapon.maxRange && distance >= weapon.minRange)
+				for (int c = 0; c < unitsInRange.size(); c++)
 				{
-					if (!weaponInRange)
+					auto currentUnit = unitsInRange[c];
+
+					float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
+					distance /= TileManager::TILE_SIZE;
+					if (distance <= weapon.maxRange && distance >= weapon.minRange)
 					{
-						weaponInRange = true;
-						std::vector<Unit*> fuck;
-						unitsToAttack.push_back(fuck);
-						validWeapons.push_back(playerUnit->weapons[i]);
-						unitsToAttack.back().push_back(currentUnit);
-					}
-					else
-					{
-						unitsToAttack.back().push_back(currentUnit);
+						if (!weaponInRange)
+						{
+							weaponInRange = true;
+							std::vector<Unit*> fuck;
+							unitsToAttack.push_back(fuck);
+							validWeapons.push_back(playerUnit->weapons[i]);
+							unitsToAttack.back().push_back(currentUnit);
+						}
+						else
+						{
+							unitsToAttack.back().push_back(currentUnit);
+						}
 					}
 				}
 			}
@@ -429,6 +431,7 @@ void ItemUseMenu::SelectOption()
 		//Going back to the main selection menu is how FE5 does it, not sure if I want to keep that.
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.PreviousMenu();
+		MenuManager::menuManager.menus.back()->GetOptions();
 		break;
 	default:
 		break;
@@ -573,7 +576,10 @@ void SelectEnemyMenu::Draw()
 	int enemyStatsX = 536;
 
 	text->RenderText(enemy->name, enemyStatsX, 100, 1);
-	text->RenderText(enemy->inventory[enemy->equippedWeapon]->name, enemyStatsX, 130, 1); //need error checking here
+	if (auto enemyWeapon = enemy->GetEquippedItem())
+	{
+		text->RenderText(enemyWeapon->name, enemyStatsX, 130, 1); //need error checking here
+	}
 
 	int statsY = 180;
 	text->RenderTextRight(intToString2(enemy->level), enemyStatsX, statsY, 1, 14);
@@ -658,7 +664,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 	auto unit = cursor->selectedUnit;
 	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
 	attackDistance /= TileManager::TILE_SIZE;
-	auto enemyWeapon = enemy->GetWeaponData(enemy->inventory[enemy->equippedWeapon]);
+	auto enemyWeapon = enemy->GetWeaponData(enemy->GetEquippedItem());
 	if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
 	{
 		enemyCanCounter = true;
@@ -739,7 +745,9 @@ void SelectEnemyMenu::CanEnemyCounter()
 			enemyNormalStats.hitAccuracy += 5;
 		}
 	}
-
+	unitNormalStats.hitAccuracy -= enemyNormalStats.hitAvoid;
+	enemyNormalStats.hitAccuracy -= unitNormalStats.hitAvoid;
+	//Hit actually needs to be subtracted from the enemy's avoid
 	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(playerDefense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
 
 	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemyDefense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
@@ -945,6 +953,14 @@ void TradeMenu::SelectOption()
 		else if (moveFromFirst && firstInventory)
 		{
 			firstUnit->swapItem(firstUnit, itemToMove, currentOption);
+			if (itemToMove == firstUnit->equippedWeapon)
+			{
+				firstUnit->equippedWeapon = currentOption;
+			}
+			else if (currentOption == firstUnit->equippedWeapon)
+			{
+				firstUnit->equippedWeapon = itemToMove;
+			}
 		}
 		else if (!moveFromFirst && firstInventory)
 		{
@@ -961,6 +977,14 @@ void TradeMenu::SelectOption()
 		else if (!moveFromFirst && !firstInventory)
 		{
 			tradeUnit->swapItem(tradeUnit, itemToMove, currentOption);
+			if (itemToMove == tradeUnit->equippedWeapon)
+			{
+				tradeUnit->equippedWeapon = currentOption;
+			}
+			else if (currentOption == tradeUnit->equippedWeapon)
+			{
+				tradeUnit->equippedWeapon = itemToMove;
+			}
 		}
 		GetOptions();
 		if (emptyInventory)
@@ -1045,5 +1069,6 @@ void TradeMenu::CancelOption()
 	{
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.PreviousMenu();
+		MenuManager::menuManager.menus.back()->GetOptions();
 	}
 }

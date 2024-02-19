@@ -57,10 +57,6 @@ struct StatGrowths
 
 struct BattleStats
 {
-	BattleStats()
-	{
-
-	}
 	//Values calculated based on unit stats and equipped weapon
 	int attackDamage;
 	int hitAccuracy;
@@ -68,7 +64,7 @@ struct BattleStats
 	int hitCrit;
 	int attackSpeed;
 };
-
+class WeaponData;
 struct Unit
 {
 	Unit();
@@ -95,7 +91,7 @@ struct Unit
 	int build;
 	int move;
 	int level = 1;
-	//Also need weapon ranks. I'm thinking this might be some sort of array
+	int weaponProficiencies[10];
 	//Also need skills, no idea how to implement yet.
 
 	int currentHP;
@@ -134,14 +130,19 @@ struct Unit
 
 	void addItem(int ID);
 	void dropItem(int index);
+	void CalculateUnitRange();
 	void swapItem(Unit* otherUnit, int otherIndex, int thisIndex);
 
 	void findWeapon();
 	//This will only work for equipping from the menu, if I wanted a unit to equip something they picked up this is no good.
 	//Also won't handle trading, need to come back to that
 	void equipWeapon(int index);
+	bool tryEquip(int index);
+	bool canUse(WeaponData& weapon);
+
+	Item* GetEquippedItem();
 
 	BattleStats CalculateBattleStats(int weaponID = -1);
 
-	class WeaponData GetWeaponData(Item* item);
+	WeaponData GetWeaponData(Item* item);
 };

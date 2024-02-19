@@ -205,9 +205,10 @@ int main(int argc, char** argv)
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 	unit.sprite.uv = &playerUVs;
 
+	unit.weaponProficiencies[0] = 1;
+
 	unit.addItem(1);
 	unit.addItem(0);
-
 	unit.addItem(2);
 	unit.addItem(3);
 	//unit.equipWeapon(1);
@@ -225,8 +226,9 @@ int main(int argc, char** argv)
 	allyUnit.build = 5;
 	allyUnit.move = 6;
 	allyUnit.growths = { 70, 35, 10, 35, 40, 40, 25, 15, 3 };
-	allyUnit.placeUnit(96, 128);
+	allyUnit.placeUnit(96, 112);
 	allyUnit.sprite.uv = &playerUVs;
+	allyUnit.weaponProficiencies[0] = 1;
 
 	allyUnit.addItem(0);
 
@@ -478,8 +480,8 @@ void SetupEnemies(std::ifstream& map)
 {
 	std::vector<Unit> unitBases;
 	unitBases.resize(3);
-	io::CSVReader<11, io::trim_chars<' '>, io::no_quote_escape<':'>> in("EnemyBaseStats.csv");
-	in.read_header(io::ignore_extra_column, "ID", "Name", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld", "Mov");
+	io::CSVReader<21, io::trim_chars<' '>, io::no_quote_escape<':'>> in("EnemyBaseStats.csv");
+	in.read_header(io::ignore_extra_column, "ID", "Name", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld", "Mov", "SwordProf", "AxeProf", "LanceProf", "BowProf", "FireProf", "ThunderProf", "WindProf", "DarkProf", "LightProf", "StaffProf");
 	int ID;
 	std::string name;
 	int HP;
@@ -491,9 +493,30 @@ void SetupEnemies(std::ifstream& map)
 	int def;
 	int bld;
 	int mov;
+	int swordProf;
+	int axeProf;
+	int lanceProf;
+	int bowProf;
+	int fireProf;
+	int thunderProf;
+	int windProf;
+	int darkProf;
+	int lightProf;
+	int staffProf;
 	int currentUnit = 0;
-	while (in.read_row(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov)) {
+	while (in.read_row(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov, swordProf, axeProf, lanceProf, bowProf, fireProf, thunderProf, windProf, darkProf, lightProf, staffProf)) {
 		unitBases[currentUnit] = Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+		int profs[10];
+		unitBases[currentUnit].weaponProficiencies[0] = swordProf;
+		unitBases[currentUnit].weaponProficiencies[1] = axeProf;
+		unitBases[currentUnit].weaponProficiencies[2] = lanceProf;
+		unitBases[currentUnit].weaponProficiencies[3] = bowProf;
+		unitBases[currentUnit].weaponProficiencies[4] = fireProf;
+		unitBases[currentUnit].weaponProficiencies[5] = thunderProf;
+		unitBases[currentUnit].weaponProficiencies[6] = windProf;
+		unitBases[currentUnit].weaponProficiencies[7] = darkProf;
+		unitBases[currentUnit].weaponProficiencies[8] = lightProf;
+		unitBases[currentUnit].weaponProficiencies[9] = staffProf;
 		currentUnit++;
 	}
 

@@ -11,7 +11,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	this->defender = defender;
 	this->canDefenderAttack = canDefenderAttack;
 
-	if (!attacker->GetWeaponData(attacker->inventory[attacker->equippedWeapon]).isTome)
+	if (!attacker->GetWeaponData(attacker->GetEquippedItem()).isTome)
 	{
 		attackerDamage = attackerStats.attackDamage - defender->defense;
 	}
@@ -19,7 +19,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	{
 		attackerDamage = attackerStats.attackDamage - defender->magic;
 	}
-	if (!defender->GetWeaponData(defender->inventory[defender->equippedWeapon]).isTome)
+	if (!defender->GetWeaponData(defender->GetEquippedItem()).isTome)
 	{
 		defenderDamage = defenderStats.attackDamage - attacker->defense;
 	}
@@ -92,7 +92,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	//Do roll to determine if hit
 	if (roll <= accuracy)
 	{
-		thisUnit->inventory[thisUnit->equippedWeapon]->remainingUses--;
+		thisUnit->GetEquippedItem()->remainingUses--;
 		//if the hit lands, do another roll to determine if it is a critical hit. I don't know this for a fact, but I am assuming if crit rate is zero, we don't bother
 		otherUnit->currentHP -= damage;
 		if (otherUnit->currentHP <= 0)
