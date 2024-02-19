@@ -209,7 +209,6 @@ void UnitOptionsMenu::GetOptions()
 ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : Menu(Cursor, Text, Camera, shapeVAO)
 {
 	GetOptions();
-	GetBattleStats();
 }
 //Here for now aaaa
 std::string intToString2(int i)
@@ -234,13 +233,21 @@ void ItemOptionsMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	//Duplicated this down in ItemUseMenu's Draw.
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
+	glm::vec3 color = glm::vec3(1);
+	glm::vec3 grey = glm::vec3(0.64f);
 	for (int i = 0; i < inventory.size(); i++)
 	{
 		int yPosition = 100 + i * 30;
-		text->RenderText(inventory[i]->name, 96, yPosition, 1);
-		text->RenderTextRight(intToString2(inventory[i]->remainingUses), 200, yPosition, 1, 14);
+		auto item = inventory[i];
+		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
+		{
+			color = grey;
+		}
+		text->RenderText(item->name, 96, yPosition, 1, color);
+		text->RenderTextRight(intToString2(item->remainingUses), 200, yPosition, 1, 14, color);
 	}
 	if (inventory[currentOption]->isWeapon)
 	{
@@ -300,6 +307,7 @@ void ItemOptionsMenu::SelectOption()
 void ItemOptionsMenu::GetOptions()
 {
 	numberOfOptions = cursor->selectedUnit->inventory.size();
+	GetBattleStats();
 }
 
 void ItemOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -393,11 +401,18 @@ void ItemUseMenu::Draw()
 
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
+	glm::vec3 color = glm::vec3(1);
+	glm::vec3 grey = glm::vec3(0.64f);
 	for (int i = 0; i < inventory.size(); i++)
 	{
 		int yPosition = 100 + i * 30;
-		text->RenderText(inventory[i]->name, 96, yPosition, 1);
-		text->RenderTextRight(intToString2(inventory[i]->remainingUses), 200, yPosition, 1, 14);
+		auto item = inventory[i];
+		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
+		{
+			color = grey;
+		}
+		text->RenderText(item->name, 96, yPosition, 1, color);
+		text->RenderTextRight(intToString2(item->remainingUses), 200, yPosition, 1, 14, color);
 	}
 	int yOffset = 100;
 	if (canUse)
@@ -410,7 +425,12 @@ void ItemUseMenu::Draw()
 		text->RenderText("Equip", 600, yOffset, 1);
 		yOffset += 30;
 	}
-	text->RenderText("Drop", 600, yOffset, 1);
+	color = glm::vec3(1);
+	if (!item->canDrop)
+	{
+		color = grey;
+	}
+	text->RenderText("Drop", 600, yOffset, 1, color);
 }
 
 void ItemUseMenu::SelectOption()
@@ -427,11 +447,14 @@ void ItemUseMenu::SelectOption()
 		//swap equipment
 		break;
 	case DROP:
-		cursor->selectedUnit->dropItem(inventoryIndex);
-		//Going back to the main selection menu is how FE5 does it, not sure if I want to keep that.
-		MenuManager::menuManager.PreviousMenu();
-		MenuManager::menuManager.PreviousMenu();
-		MenuManager::menuManager.menus.back()->GetOptions();
+		if (item->canDrop)
+		{
+			cursor->selectedUnit->dropItem(inventoryIndex);
+			//Going back to the main selection menu is how FE5 does it, not sure if I want to keep that.
+			MenuManager::menuManager.PreviousMenu();
+			MenuManager::menuManager.PreviousMenu();
+			MenuManager::menuManager.menus.back()->GetOptions();
+		}
 		break;
 	default:
 		break;
@@ -453,8 +476,12 @@ void ItemUseMenu::GetOptions()
 	}
 	if (item->isWeapon)
 	{
-		optionsVector.push_back(EQUIP);
-		canEquip = true;
+		auto unit = cursor->selectedUnit;
+		if (unit->canUse(unit->GetWeaponData(item)))
+		{
+			optionsVector.push_back(EQUIP);
+			canEquip = true;
+		}
 	}
 	optionsVector.push_back(DROP);
 	numberOfOptions = optionsVector.size();

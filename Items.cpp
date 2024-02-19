@@ -15,16 +15,17 @@ void ItemManager::SetUpItems()
 
 void ItemManager::LoadItems()
 {
-	io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<':'>> in("items.csv");
-	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "description");
+	io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<':'>> in("items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description");
 	int ID;
 	std::string name;
 	int maxUses;
 	int useID;
 	int isWeapon;
+	int canDrop;
 	std::string description;
-	while (in.read_row(ID, name, maxUses, useID, isWeapon, description)) {
-		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), description });
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description)) {
+		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
 	}
 }
 

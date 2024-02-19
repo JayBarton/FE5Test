@@ -13,6 +13,7 @@ struct Item
 	int remainingUses;
 	int useID;
 	bool isWeapon;
+	bool canDrop = true;
 	std::string description;
 	//Also need a use action for things that can do it, not sure what that will look like
 };

@@ -139,7 +139,7 @@ struct Unit
 	//Also won't handle trading, need to come back to that
 	void equipWeapon(int index);
 	bool tryEquip(int index);
-	bool canUse(WeaponData& weapon);
+	bool canUse(const WeaponData& weapon);
 
 	Item* GetEquippedItem();
 

@@ -325,7 +325,7 @@ bool Unit::tryEquip(int index)
     return false;
 }
 
-bool Unit::canUse(WeaponData& weapon)
+bool Unit::canUse(const WeaponData& weapon)
 {
     if (weapon.rank > 5)
     {
