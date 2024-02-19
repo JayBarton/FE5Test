@@ -8,7 +8,7 @@ struct BattleManager
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 
-	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int damage, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int firstDamage, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void Draw(TextRenderer* text);
 
@@ -18,8 +18,8 @@ struct BattleManager
 	BattleStats attackerStats;
 	BattleStats defenderStats;
 
-	int attackerDamage = 0;
-	int defenderDamage = 0;
+//	int attackerDamage = 0;
+//	int defenderDamage = 0;
 
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;

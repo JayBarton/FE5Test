@@ -9,7 +9,7 @@
 
 
 #include <sstream>
-
+#include <algorithm> 
 
 Menu::Menu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : cursor(Cursor), text(Text), camera(Camera), shapeVAO(shapeVAO)
 {
@@ -708,10 +708,10 @@ void SelectEnemyMenu::CanEnemyCounter()
 	if (unitWeapon.isMagic)
 	{
 		//Magic swords such as the Light Brand do physical damage when used in close range
-		//This is actually being done wrong here, it only works in my tests because Leif's mag stat is zero
-		//Need to rework a lot of these calculations
+		//so what I'm doing is just negating the previous damage calculation and using strength instead
 		if (attackDistance == 1 && !unitWeapon.isTome)
 		{
+			unitNormalStats.attackDamage -= unit->magic;
 			unitNormalStats.attackDamage += unit->strength;
 		}
 		else
@@ -724,6 +724,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 	{
 		if (attackDistance == 1 && !enemyWeapon.isTome)
 		{
+			enemyNormalStats.attackDamage -= enemy->magic;
 			enemyNormalStats.attackDamage += enemy->strength;
 		}
 		else
@@ -731,6 +732,15 @@ void SelectEnemyMenu::CanEnemyCounter()
 			playerDefense = unit->magic;
 		}
 	}
+
+	auto playerPosition = unit->sprite.getPosition();
+	auto playerTile = TileManager::tileManager.getTile(playerPosition.x, playerPosition.y);
+	playerDefense += playerTile->properties.defense;
+	unitNormalStats.hitAvoid += playerTile->properties.avoid;
+	auto enemyPosition = enemy->sprite.getPosition();
+	auto enemyTile = TileManager::tileManager.getTile(enemyPosition.x, enemyPosition.y);
+	enemyDefense += enemyTile->properties.defense;
+	enemyNormalStats.hitAvoid += enemyTile->properties.avoid;
 
 	//Physical weapon triangle bonus
 	if (unitWeapon.type == WeaponData::TYPE_SWORD)
@@ -774,7 +784,24 @@ void SelectEnemyMenu::CanEnemyCounter()
 	}
 	unitNormalStats.hitAccuracy -= enemyNormalStats.hitAvoid;
 	enemyNormalStats.hitAccuracy -= unitNormalStats.hitAvoid;
-	//Hit actually needs to be subtracted from the enemy's avoid
+
+	unitNormalStats.hitAccuracy = std::min(unitNormalStats.hitAccuracy, 100);
+	unitNormalStats.hitAccuracy = std::max(0, unitNormalStats.hitAccuracy);
+
+	enemyNormalStats.hitAccuracy = std::min(enemyNormalStats.hitAccuracy, 100);
+	enemyNormalStats.hitAccuracy = std::max(0, enemyNormalStats.hitAccuracy);
+
+	int unitCritEvade = unit->luck / 2;
+	int enemyCritEvade = enemy->luck / 2;
+
+	unitNormalStats.hitCrit -= enemyCritEvade;
+	enemyNormalStats.hitCrit -= unitCritEvade;
+	unitNormalStats.hitCrit = std::min(unitNormalStats.hitCrit, 25);
+	unitNormalStats.hitCrit = std::max(0, unitNormalStats.hitCrit);
+
+	enemyNormalStats.hitCrit = std::min(enemyNormalStats.hitCrit, 25);
+	enemyNormalStats.hitCrit = std::max(0, enemyNormalStats.hitCrit);
+
 	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(playerDefense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
 
 	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemyDefense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
