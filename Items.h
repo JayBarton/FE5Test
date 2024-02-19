@@ -30,6 +30,10 @@ struct WeaponData
 	const static int TYPE_DARK = 8;
 	const static int TYPE_STAFF = 9;
 
+	//IDs for unique weapons
+	const static int LIGHT_BRAND = 6;
+	const static int BRAVE_LANCE = 7;
+
 	//int ID; Not sure I need this
 	int type = -1;
 	int rank = 0;

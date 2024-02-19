@@ -92,6 +92,7 @@ struct Unit
 	int move;
 	int level = 1;
 	int weaponProficiencies[10];
+	std::vector<int> uniqueWeapons;
 	//Also need skills, no idea how to implement yet.
 
 	int currentHP;

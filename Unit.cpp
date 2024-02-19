@@ -327,7 +327,15 @@ bool Unit::tryEquip(int index)
 
 bool Unit::canUse(WeaponData& weapon)
 {
-    return weapon.rank <= weaponProficiencies[weapon.type] || weapon.rank > 5;
+    if (weapon.rank > 5)
+    {
+        auto it = std::find(uniqueWeapons.begin(), uniqueWeapons.end(), weapon.rank);
+        if (it != uniqueWeapons.end())
+        {
+            return true;
+        }
+    }
+    return weapon.rank <= weaponProficiencies[weapon.type];
 }
 
 Item* Unit::GetEquippedItem()

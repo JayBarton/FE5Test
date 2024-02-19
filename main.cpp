@@ -206,6 +206,7 @@ int main(int argc, char** argv)
 	unit.sprite.uv = &playerUVs;
 
 	unit.weaponProficiencies[0] = 1;
+	unit.uniqueWeapons.push_back(WeaponData::LIGHT_BRAND);
 
 	unit.addItem(1);
 	unit.addItem(0);
