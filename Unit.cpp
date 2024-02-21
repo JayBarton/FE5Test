@@ -140,6 +140,67 @@ void Unit::LevelEnemy(int level)
     }
 }
 
+//I don't know, this is duplicated from Cursor, I need it to check Charisma
+//I'm wondering if it might be easier to just record every unit who has Charisma in the battle, and then just check if they are nearby
+std::vector<Unit*> Unit::inRangeUnits(int minRange, int maxRange, int team)
+{
+    std::vector<Unit*> units;
+    
+    glm::ivec2 position = glm::ivec2(sprite.getPosition());
+
+    for (int i = minRange; i < maxRange + 1; i++)
+    {
+        glm::ivec2 up = glm::ivec2(position.x, position.y - i * TileManager::TILE_SIZE);
+        glm::ivec2 down = glm::ivec2(position.x, position.y + i * TileManager::TILE_SIZE);
+        glm::ivec2 left = glm::ivec2(position.x - i * TileManager::TILE_SIZE, position.y);
+        glm::ivec2 right = glm::ivec2(position.x + i * TileManager::TILE_SIZE, position.y);
+        if (Unit* unit = TileManager::tileManager.getUnitOnTeam(up.x, up.y, team))
+        {
+            units.push_back(unit);
+        }
+        for (int c = minRange; c < maxRange + 1 - i; c++)
+        {
+            glm::ivec2 upLeft = glm::ivec2(up.x - c * TileManager::TILE_SIZE, up.y);
+            glm::ivec2 upRight = glm::ivec2(up.x + c * TileManager::TILE_SIZE, up.y);
+            if (Unit* unit = TileManager::tileManager.getUnitOnTeam(upLeft.x, upLeft.y, team))
+            {
+                units.push_back(unit);
+            }
+            if (Unit* unit = TileManager::tileManager.getUnitOnTeam(upRight.x, upRight.y, team))
+            {
+                units.push_back(unit);
+            }
+        }
+        if (Unit* unit = TileManager::tileManager.getUnitOnTeam(down.x, down.y, team))
+        {
+            units.push_back(unit);
+        }
+        for (int c = minRange; c < maxRange + 1 - i; c++)
+        {
+            glm::ivec2 downLeft = glm::ivec2(down.x - c * TileManager::TILE_SIZE, down.y);
+            glm::ivec2 downRight = glm::ivec2(down.x + c * TileManager::TILE_SIZE, down.y);
+            if (Unit* unit = TileManager::tileManager.getUnitOnTeam(downLeft.x, downLeft.y, team))
+            {
+                units.push_back(unit);
+            }
+            if (Unit* unit = TileManager::tileManager.getUnitOnTeam(downRight.x, downRight.y, team))
+            {
+                units.push_back(unit);
+            }
+        }
+        if (Unit* unit = TileManager::tileManager.getUnitOnTeam(left.x, left.y, team))
+        {
+            units.push_back(unit);
+        }
+        if (Unit* unit = TileManager::tileManager.getUnitOnTeam(right.x, right.y, team))
+        {
+            units.push_back(unit);
+        }
+    }
+
+    return units;
+}
+
 void Unit::addItem(int ID)
 {
     if (inventory.size() < INVENTORY_SLOTS)
@@ -338,6 +399,16 @@ bool Unit::canUse(const WeaponData& weapon)
     return weapon.rank <= weaponProficiencies[weapon.type];
 }
 
+bool Unit::hasSkill(int ID)
+{
+    auto it = std::find(skills.begin(), skills.end(), ID);
+    if (it != skills.end())
+    {
+        return true;
+    }
+    return false;
+}
+
 Item* Unit::GetEquippedItem()
 {
     if (equippedWeapon >= 0)
@@ -350,6 +421,23 @@ Item* Unit::GetEquippedItem()
 BattleStats Unit::CalculateBattleStats(int weaponID)
 {
     BattleStats stats;
+    int charismaBonus = 0;
+    if (hasSkill(CHARISMA))
+    {
+        charismaBonus = 10;
+    }
+    else
+    {
+        auto nearbyUnits = inRangeUnits(0, 3, team);
+        for (int i = 0; i < nearbyUnits.size(); i++)
+        {
+            if (nearbyUnits[i]->hasSkill(CHARISMA))
+            {
+                charismaBonus = 10;
+                break;
+            }
+        }
+    }
     if (weaponID == -1)
     {
         if (equippedWeapon >= 0)
@@ -362,7 +450,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
             stats.hitAccuracy = 0;
             stats.hitCrit = 0;
             stats.attackSpeed = speed;
-            stats.hitAvoid = stats.hitAvoid = stats.attackSpeed * 2 + luck;
+            stats.hitAvoid = stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
         }
     }
     if (weaponID >= 0)
@@ -370,7 +458,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
         auto weapon = ItemManager::itemManager.weaponData[weaponID];
         stats.attackDamage = weapon.might + (!weapon.isMagic ? strength : magic); //+ mag if the weapon is magic
 
-        stats.hitAccuracy = weapon.hit + skill * 2 + luck;
+        stats.hitAccuracy = weapon.hit + skill * 2 + luck + charismaBonus;
         stats.hitCrit = weapon.crit + skill;
         int weight = weapon.weight - (!weapon.isMagic ? build : 0); //No build included if the weapon is magic
         if (weight < 0)
@@ -382,7 +470,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
         {
             stats.attackSpeed = 0;
         }
-        stats.hitAvoid = stats.attackSpeed * 2 + luck;
+        stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
     }
     return stats;
 }

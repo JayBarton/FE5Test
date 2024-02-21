@@ -421,9 +421,9 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	std::vector<Unit*> units;
 	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
 
-	int range = selectedUnit->maxRange;
+	int maxRange = selectedUnit->maxRange;
 	int minRange = selectedUnit->minRange;
-	for (int i = minRange; i < range + 1; i++)
+	for (int i = minRange; i < maxRange + 1; i++)
 	{
 		glm::ivec2 up = glm::ivec2(position.x, position.y - i * TileManager::TILE_SIZE);
 		glm::ivec2 down = glm::ivec2(position.x, position.y + i * TileManager::TILE_SIZE);
@@ -433,7 +433,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 		{
 			units.push_back(unit);
 		}
-		for (int c = minRange; c < range + 1 - i; c++)
+		for (int c = minRange; c < maxRange + 1 - i; c++)
 		{
 			glm::ivec2 upLeft = glm::ivec2(up.x - c * TileManager::TILE_SIZE, up.y);
 			glm::ivec2 upRight = glm::ivec2(up.x + c * TileManager::TILE_SIZE, up.y);
@@ -450,7 +450,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 		{
 			units.push_back(unit);
 		}
-		for (int c = minRange; c < range + 1 - i; c++)
+		for (int c = minRange; c < maxRange + 1 - i; c++)
 		{
 			glm::ivec2 downLeft = glm::ivec2(down.x - c * TileManager::TILE_SIZE, down.y);
 			glm::ivec2 downRight = glm::ivec2(down.x + c * TileManager::TILE_SIZE, down.y);

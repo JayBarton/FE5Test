@@ -67,6 +67,14 @@ struct BattleStats
 class WeaponData;
 struct Unit
 {
+	const static int PRAYER = 0;
+	const static int CONTINUE = 1;
+	const static int WRATH = 2;
+	const static int VANTAGE = 3;
+	const static int ACCOST = 4;
+	const static int CHARISMA = 5;
+
+
 	Unit();
 	Unit(int Class, std::string Name, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
 		unitClass(Class), name(Name), maxHP(HP), strength(str), magic(mag), skill(skl), speed(spd), luck(lck), defense(def), build(bld), move(mov)
@@ -93,7 +101,7 @@ struct Unit
 	int level = 1;
 	int weaponProficiencies[10];
 	std::vector<int> uniqueWeapons;
-	//Also need skills, no idea how to implement yet.
+	std::vector<int> skills;
 
 	int currentHP;
 	int experience = 0;
@@ -129,6 +137,8 @@ struct Unit
 	void AddExperience(int exp);
 	void LevelEnemy(int level);
 
+	std::vector<Unit*> inRangeUnits(int minRange, int maxRange, int team);
+
 	void addItem(int ID);
 	void dropItem(int index);
 	void CalculateUnitRange();
@@ -140,6 +150,8 @@ struct Unit
 	void equipWeapon(int index);
 	bool tryEquip(int index);
 	bool canUse(const WeaponData& weapon);
+
+	bool hasSkill(int ID);
 
 	Item* GetEquippedItem();
 

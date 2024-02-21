@@ -785,10 +785,8 @@ void SelectEnemyMenu::CanEnemyCounter()
 	unitNormalStats.hitAccuracy -= enemyNormalStats.hitAvoid;
 	enemyNormalStats.hitAccuracy -= unitNormalStats.hitAvoid;
 
-	unitNormalStats.hitAccuracy = std::min(unitNormalStats.hitAccuracy, 100);
 	unitNormalStats.hitAccuracy = std::max(0, unitNormalStats.hitAccuracy);
 
-	enemyNormalStats.hitAccuracy = std::min(enemyNormalStats.hitAccuracy, 100);
 	enemyNormalStats.hitAccuracy = std::max(0, enemyNormalStats.hitAccuracy);
 
 	int unitCritEvade = unit->luck / 2;

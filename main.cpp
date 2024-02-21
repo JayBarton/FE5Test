@@ -191,11 +191,11 @@ int main(int argc, char** argv)
 	unit.init(&gen, &distribution);
 	unit.name = "Leif";
 	unit.maxHP = 22;
-	unit.currentHP = 14;
+	unit.currentHP = 22;
 	unit.strength = 4;
 	unit.magic = 0;
 	unit.skill = 2;
-	unit.speed = 5;
+	unit.speed = 15;
 	unit.luck = 6;
 	unit.defense = 3;
 	unit.build = 5;
@@ -207,6 +207,7 @@ int main(int argc, char** argv)
 
 	unit.weaponProficiencies[0] = 1;
 	unit.uniqueWeapons.push_back(WeaponData::LIGHT_BRAND);
+	unit.skills.push_back(Unit::ACCOST);
 
 	unit.addItem(1);
 	unit.addItem(0);
@@ -230,12 +231,15 @@ int main(int argc, char** argv)
 	allyUnit.placeUnit(96, 112);
 	allyUnit.sprite.uv = &playerUVs;
 	allyUnit.weaponProficiencies[0] = 1;
+	allyUnit.skills.push_back(Unit::CHARISMA);
 
 	allyUnit.addItem(0);
 
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
 	enemies[1]->sprite.uv = &playerUVs;
+	//enemies[0]->skills.push_back(Unit::PRAYER);
+
 //	enemies[0]->addItem(8);
 //	enemies[0]->equipWeapon(0);
 
