@@ -99,7 +99,7 @@ struct Unit
 	int build;
 	int move;
 	int level = 1;
-	int weaponProficiencies[10];
+	int weaponProficiencies[10] = { 0 };
 	std::vector<int> uniqueWeapons;
 	std::vector<int> skills;
 

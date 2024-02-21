@@ -1,0 +1,58 @@
+{
+  "enemies": [
+    {
+      "ID": 0,
+      "Name": "Soldier",
+      "Stats": {
+        "HP": 20,
+        "Str": 3,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 1,
+        "Bld": 6,
+        "Mov": 5
+      },
+      "WeaponProf": {
+        "Lance": 1
+      }
+    },
+    {
+      "ID": 1,
+      "Name": "Archer",
+      "Stats": {
+        "HP": 20,
+        "Str": 3,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 1,
+        "Bld": 6,
+        "Mov": 5
+      },
+      "WeaponProf": {
+        "Bow": 1
+      }
+    },
+    {
+      "ID": 2,
+      "Name": "Sword Armour",
+      "Stats": {
+        "HP": 20,
+        "Str": 4,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 8,
+        "Bld": 9,
+        "Mov": 5
+      },
+      "WeaponProf": {
+        "Sword": 1
+      }
+    }
+  ]
+}

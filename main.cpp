@@ -19,6 +19,10 @@
 #include "BattleManager.h"
 
 #include "csv.h"
+#include <nlohmann/json.hpp>
+
+// for convenience
+using json = nlohmann::json;
 
 #include <vector>
 #include <algorithm>
@@ -483,13 +487,50 @@ void loadMap(std::string nextMap)
 }
 
 void SetupEnemies(std::ifstream& map)
-{
+{	
 	std::vector<Unit> unitBases;
 	unitBases.resize(3);
-	io::CSVReader<21, io::trim_chars<' '>, io::no_quote_escape<':'>> in("EnemyBaseStats.csv");
-	in.read_header(io::ignore_extra_column, "ID", "Name", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld", "Mov", "SwordProf", "AxeProf", "LanceProf", "BowProf", "FireProf", "ThunderProf", "WindProf", "DarkProf", "LightProf", "StaffProf");
+
+	std::ifstream f("EnemyBaseStats.json");
+	json data = json::parse(f);
+	json bases = data["enemies"];
+	int currentUnit = 0;
+	std::unordered_map<std::string, int> weaponNameMap;
+	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
+	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
+	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
+	weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
+	weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
+	weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
+	weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
+	weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
+	weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
+	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
+
+	for (const auto& enemy : bases) {
+		int ID = enemy["ID"];
+		std::string name = enemy["Name"];
+		json stats = enemy["Stats"];
+		int HP = stats["HP"];
+		int str = stats["Str"];
+		int mag = stats["Mag"];
+		int skl = stats["Skl"];
+		int spd = stats["Spd"];
+		int lck = stats["Lck"];
+		int def = stats["Def"];
+		int bld = stats["Bld"];
+		int mov = stats["Mov"];
+		unitBases[currentUnit] = Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+
+		json weaponProf = enemy["WeaponProf"];
+		for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it) 
+		{
+			unitBases[currentUnit].weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+		}
+		currentUnit++;
+	}
+
 	int ID;
-	std::string name;
 	int HP;
 	int str;
 	int mag;
@@ -498,33 +539,6 @@ void SetupEnemies(std::ifstream& map)
 	int lck;
 	int def;
 	int bld;
-	int mov;
-	int swordProf;
-	int axeProf;
-	int lanceProf;
-	int bowProf;
-	int fireProf;
-	int thunderProf;
-	int windProf;
-	int darkProf;
-	int lightProf;
-	int staffProf;
-	int currentUnit = 0;
-	while (in.read_row(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov, swordProf, axeProf, lanceProf, bowProf, fireProf, thunderProf, windProf, darkProf, lightProf, staffProf)) {
-		unitBases[currentUnit] = Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
-		int profs[10];
-		unitBases[currentUnit].weaponProficiencies[0] = swordProf;
-		unitBases[currentUnit].weaponProficiencies[1] = axeProf;
-		unitBases[currentUnit].weaponProficiencies[2] = lanceProf;
-		unitBases[currentUnit].weaponProficiencies[3] = bowProf;
-		unitBases[currentUnit].weaponProficiencies[4] = fireProf;
-		unitBases[currentUnit].weaponProficiencies[5] = thunderProf;
-		unitBases[currentUnit].weaponProficiencies[6] = windProf;
-		unitBases[currentUnit].weaponProficiencies[7] = darkProf;
-		unitBases[currentUnit].weaponProficiencies[8] = lightProf;
-		unitBases[currentUnit].weaponProficiencies[9] = staffProf;
-		currentUnit++;
-	}
 
 	io::CSVReader<9, io::trim_chars<' '>, io::no_quote_escape<':'>> in2("EnemyGrowths.csv");
 	in2.read_header(io::ignore_extra_column, "ID", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld");
