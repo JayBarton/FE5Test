@@ -476,6 +476,8 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	return units;
 }
 
+//There is a bug here caused by the fact that the selected unit does not actually move tiles until the move has been confirmed,
+//which means the selected unit can actually show up as an in range trade unit if it only moves one space.
 std::vector<Unit*> Cursor::tradeRangeUnits()
 {
 	std::vector<Unit*> units;

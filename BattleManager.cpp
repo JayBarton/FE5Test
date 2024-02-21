@@ -23,17 +23,34 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	if (canDefenderAttack)
 	{
 		Attack defenderAttack{ 0 };
-		if (defender->hasSkill(Unit::WRATH))
-		{
-			defenderAttack.wrathAttack = true;
-		}
+
 		if (defender->hasSkill(Unit::VANTAGE))
 		{
 			defenderAttack.vantageAttack = true;
-			battleQueue.insert(battleQueue.begin(), defenderAttack);
+			if (attacker->hasSkill(Unit::VANTAGE))
+			{
+				battleQueue[0].vantageAttack = true;
+				if (defender->hasSkill(Unit::WRATH))
+				{
+					defenderAttack.wrathAttack = true;
+				}
+				battleQueue.push_back(defenderAttack);
+			}
+			else
+			{
+				if (attacker->hasSkill(Unit::WRATH))
+				{
+					battleQueue[0].wrathAttack = true;
+				}
+				battleQueue.insert(battleQueue.begin(), defenderAttack);
+			}
 		}
 		else
 		{
+			if (defender->hasSkill(Unit::WRATH))
+			{
+				defenderAttack.wrathAttack = true;
+			}
 			battleQueue.push_back(defenderAttack);
 		}
 	}
@@ -46,11 +63,13 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		battleQueue.push_back(Attack{ 0, 0 });
 	}
 	accostQueue = battleQueue;
+	for (int i = 0; i < accostQueue.size(); i++)
+	{
+		accostQueue[i].wrathAttack = false;
+		accostQueue[i].vantageAttack = false;
+	}
 }
-
-//Wrath is still wrong. According to https://fireemblemwiki.org/wiki/Wrath
-//Will not activate if the user has Vantage and the foe does not, as it would cause the user to strike first. 
-//If the foe has Vantage and the user does not, the user's Wrath activates even if the user initiates combat on the foe, as the foe strikes first. 
+ 
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
 {
 	if (battleActive)
@@ -66,99 +85,11 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				battleQueue.erase(battleQueue.begin());
 				if (attack.firstAttacker)
 				{
-					if (attack.vantageAttack)
-					{
-						std::cout << attacker->name << " activates vantage\n";
-					}
-					if (defender->hasSkill(Unit::PRAYER))
-					{
-						int dealtDamage = attackerStats.attackDamage;
-						if (!attacker->GetWeaponData(attacker->GetEquippedItem()).isMagic)
-						{
-							dealtDamage -= defender->defense;
-						}
-						else
-						{
-							dealtDamage -= defender->magic;
-						}
-						int remainingHealth = defender->currentHP - dealtDamage;
-						if (remainingHealth <= 0 && attackerStats.hitAccuracy > 0)
-						{
-							//prayer roll
-							auto roll = (*distribution)(*gen);
-							std::cout << "Prayer roll" << roll << std::endl;
-							if (roll <= defender->luck * 3)
-							{
-								attackerStats.hitAccuracy = 0;
-							}
-						}
-					}
-					DoBattleAction(attacker, defender, attackerStats.hitAccuracy, attackerStats.hitCrit, attackerStats.attackDamage, distribution, gen);
-					if (attacker->hasSkill(Unit::CONTINUE) && !attack.continuedAttack)
-					{
-						auto roll = (*distribution)(*gen);
-						std::cout << "continue roll " << roll << std::endl;
-						if (roll <= attackerStats.attackSpeed * 2)
-						{
-							std::cout << attacker->name << " continues " << std::endl;
-
-							battleQueue.insert(battleQueue.begin(), Attack{ 1, 1 });
-						}
-					}
+					PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
 				}
 				else
 				{
-					if (attack.vantageAttack)
-					{
-						std::cout << defender->name << " activates vantage\n";
-					}
-					auto crit = defenderStats.hitCrit;
-					auto accuracy = defenderStats.hitAccuracy;
-					if (attack.wrathAttack)
-					{
-						std::cout << defender->name << " activates wrath\n";
-						crit = 100;
-						accuracy = 100;
-					}
-					else
-					{
-						if (attacker->hasSkill(Unit::PRAYER))
-						{
-							int dealtDamage = attackerStats.attackDamage;
-							if (!defender->GetWeaponData(defender->GetEquippedItem()).isMagic)
-							{
-								dealtDamage -= attacker->defense;
-							}
-							else
-							{
-								dealtDamage -= attacker->magic;
-							}
-							int remainingHealth = attacker->currentHP - dealtDamage;
-							if (remainingHealth <= 0 && defenderStats.hitAccuracy > 0)
-							{
-								//prayer roll
-								auto roll = (*distribution)(*gen);
-								std::cout << "Prayer roll" << roll << std::endl;
-								if (roll <= attacker->luck * 3)
-								{
-									defenderStats.hitAccuracy = 0;
-									accuracy = 0;
-								}
-							}
-						}
-					}
-					DoBattleAction(defender, attacker, accuracy, crit, defenderStats.attackDamage, distribution, gen);
-					if (defender->hasSkill(Unit::CONTINUE) && !attack.continuedAttack)
-					{
-						auto roll = (*distribution)(*gen);
-						std::cout << "continue roll " << roll << std::endl;
-						if (roll <= defenderStats.attackSpeed * 2)
-						{
-							std::cout << defender->name << " continues " << std::endl;
-
-							battleQueue.insert(battleQueue.begin(), Attack{ 1, 1 });
-						}
-					}
+					PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
 				}
 			}
 			else
@@ -197,6 +128,65 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					battleActive = false;
 				}
 			}
+		}
+	}
+}
+
+void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
+{
+	if (attack.vantageAttack)
+	{
+		//Check if the next attack in the queue is also vantage
+		//Sort of clumsy
+		//I want some sort of notification to say both units activated Vantage, and the first cancelled the second
+		if (battleQueue[0].vantageAttack)
+		{
+			battleQueue[0].vantageAttack = false;
+			std::cout << foe->name << " activates vantage\n";
+		}
+		std::cout << thisUnit->name << " activates vantage\n";
+	}
+	auto crit = theseStats.hitCrit;
+	auto accuracy = theseStats.hitAccuracy;
+	if (attack.wrathAttack)
+	{
+		std::cout << thisUnit->name << " activates wrath\n";
+		crit = 100;
+		accuracy = 100;
+	}
+	else if (foe->hasSkill(Unit::PRAYER))
+	{
+		int dealtDamage = theseStats.attackDamage;
+		if (!thisUnit->GetWeaponData(thisUnit->GetEquippedItem()).isMagic)
+		{
+			dealtDamage -= foe->defense;
+		}
+		else
+		{
+			dealtDamage -= foe->magic;
+		}
+		int remainingHealth = foe->currentHP - dealtDamage;
+		if (remainingHealth <= 0 && theseStats.hitAccuracy > 0)
+		{
+			//prayer roll
+			auto roll = (*distribution)(*gen);
+			std::cout << "Prayer roll" << roll << std::endl;
+			if (roll <= foe->luck * 3)
+			{
+				theseStats.hitAccuracy = 0;
+			}
+		}
+	}
+	DoBattleAction(thisUnit, foe, accuracy, crit, theseStats.attackDamage, distribution, gen);
+	if (thisUnit->hasSkill(Unit::CONTINUE) && !attack.continuedAttack)
+	{
+		auto roll = (*distribution)(*gen);
+		std::cout << "continue roll " << roll << std::endl;
+		if (roll <= theseStats.attackSpeed * 2)
+		{
+			std::cout << thisUnit->name << " continues " << std::endl;
+
+			battleQueue.insert(battleQueue.begin(), Attack{ attack.firstAttacker, 1 });
 		}
 	}
 }

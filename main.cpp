@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 
 	unit.weaponProficiencies[0] = 1;
 	unit.uniqueWeapons.push_back(WeaponData::LIGHT_BRAND);
-	unit.skills.push_back(Unit::ACCOST);
+	unit.skills.push_back(Unit::VANTAGE);
 
 	unit.addItem(1);
 	unit.addItem(0);
@@ -238,7 +238,8 @@ int main(int argc, char** argv)
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
 	enemies[1]->sprite.uv = &playerUVs;
-	//enemies[0]->skills.push_back(Unit::PRAYER);
+	enemies[0]->skills.push_back(Unit::VANTAGE);
+//	enemies[0]->skills.push_back(Unit::WRATH);
 
 //	enemies[0]->addItem(8);
 //	enemies[0]->equipWeapon(0);

@@ -142,6 +142,8 @@ void Unit::LevelEnemy(int level)
 
 //I don't know, this is duplicated from Cursor, I need it to check Charisma
 //I'm wondering if it might be easier to just record every unit who has Charisma in the battle, and then just check if they are nearby
+//This has the same bug found in the cursor's trade range function, in that it can pick up the unit I am checking nearby units for because
+//The unit has technically not moved tiles until a move has been confirmed.
 std::vector<Unit*> Unit::inRangeUnits(int minRange, int maxRange, int team)
 {
     std::vector<Unit*> units;
@@ -422,22 +424,16 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
 {
     BattleStats stats;
     int charismaBonus = 0;
-    if (hasSkill(CHARISMA))
-    {
-        charismaBonus = 10;
-    }
-    else
-    {
-        auto nearbyUnits = inRangeUnits(0, 3, team);
+
+        auto nearbyUnits = inRangeUnits(1, 3, team);
         for (int i = 0; i < nearbyUnits.size(); i++)
         {
             if (nearbyUnits[i]->hasSkill(CHARISMA))
             {
-                charismaBonus = 10;
-                break;
+                charismaBonus += 10;
             }
         }
-    }
+    
     if (weaponID == -1)
     {
         if (equippedWeapon >= 0)
