@@ -51,7 +51,7 @@ void Unit::LevelUp()
 {
     if (team == 0)
     {
-        subject.notify(*this);
+        subject.notify(this);
     }
 
     level++;

@@ -67,6 +67,10 @@ struct Menu
 	int numberOfOptions = 0;
 	std::vector<int> optionsVector;
 
+	//If this menu covers the whole screen
+	//Used in the main draw call, if it is true, we don't need to draw anything else but the menu
+	bool fullScreen = false;
+
 };
 
 struct UnitOptionsMenu : public Menu
@@ -204,11 +208,28 @@ struct TradeMenu : public Menu
 	bool moveFromFirst = true;
 };
 
+struct UnitStatsViewMenu : public Menu
+{
+	UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	Unit* unit;
+	BattleStats battleStats;
+	SpriteRenderer* renderer;
+
+	bool firstPage = true;
+	bool examining = false;
+};
+
 struct MenuManager
 {
 	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager);
 
 	void AddMenu(int menuID);
+
+	void AddUnitStatMenu(Unit* unit);
 
 	void PreviousMenu();
 	void ClearMenu();

@@ -12,7 +12,7 @@ class SpriteRenderer;
 struct Observer
 {
 	virtual ~Observer() {}
-	virtual void onNotify(const class Unit& unit) = 0;
+	virtual void onNotify(class Unit* unit) = 0;
 };
 
 struct Subject
@@ -33,7 +33,7 @@ struct Subject
 			observers.pop_back();
 		}
 	}
-	void notify(const class Unit& unit)
+	void notify(class Unit* unit)
 	{
 		for (int i = 0; i < observers.size(); i++)
 		{

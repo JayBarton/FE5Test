@@ -361,6 +361,12 @@ void MenuManager::AddMenu(int ID)
 	}
 }
 
+void MenuManager::AddUnitStatMenu(Unit* unit)
+{
+	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, unit, renderer);
+	menus.push_back(newMenu);
+}
+
 void MenuManager::PreviousMenu()
 {
 	Menu* p = menus.back();
@@ -1122,5 +1128,249 @@ void TradeMenu::CancelOption()
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.menus.back()->GetOptions();
+	}
+}
+
+UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	this->unit = unit;
+	renderer = Renderer;
+	battleStats = unit->CalculateBattleStats();
+	fullScreen = true;
+}
+
+void UnitStatsViewMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+
+	renderer->setUVs(unit->sprite.getUV());
+	Texture2D displayTexture = ResourceManager::GetTexture("sprites");
+	renderer->DrawSprite(displayTexture, glm::vec2(16), 0.0f, cursor->dimensions);
+
+	text->RenderText(unit->name, 110, 64, 1);
+	//text->RenderText(unit->name, 48, 64, 1); class
+	text->RenderText("Lv", 48, 96, 1);
+	text->RenderText("HP", 48, 128, 1);
+
+	text->RenderTextRight(intToString2(unit->level), 90, 96, 1, 14);
+	text->RenderTextRight(intToString2(unit->currentHP), 90, 128, 1, 14);
+
+	text->RenderText("E", 110, 96, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("/", 110, 128, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+
+	text->RenderTextRight(intToString2(unit->experience), 130, 96, 1, 14);
+	text->RenderTextRight(intToString2(unit->maxHP), 130, 128, 1, 14);
+
+	text->RenderText("ATK", 500, 64, 1);
+	text->RenderText("HIT", 500, 96, 1);
+	text->RenderText("RNG", 500, 128, 1);
+	if (unit->equippedWeapon >= 0)
+	{
+		text->RenderTextRight(intToString2(battleStats.attackDamage), 542, 64, 1, 14);
+		text->RenderTextRight(intToString2(battleStats.hitAccuracy), 542, 96, 1, 14);
+		auto weapon = unit->GetWeaponData(unit->GetEquippedItem());
+		if (weapon.maxRange == weapon.minRange)
+		{
+			text->RenderTextRight(intToString2(weapon.maxRange), 542, 128, 1, 14);
+		}
+		else
+		{
+			text->RenderTextRight(intToString2(weapon.minRange) + " ~ " + intToString2(weapon.maxRange), 542, 128, 1, 30);
+		}
+	}
+	else
+	{
+		text->RenderText("--", 542, 64, 1);
+		text->RenderText("--", 542, 96, 1);
+		text->RenderText("--", 542, 128, 1);
+
+	}
+	text->RenderText("CRT", 600, 64, 1);
+	text->RenderTextRight(intToString2(battleStats.hitCrit), 642, 64, 1, 14);
+	text->RenderText("AVO", 600, 96, 1);
+	text->RenderTextRight(intToString2(battleStats.hitAvoid), 642, 96, 1, 14);
+
+	//page 1
+	if (firstPage)
+	{
+		text->RenderText("Inventory", 500, 180, 1);
+
+		auto inventory = unit->inventory;
+		glm::vec3 color = glm::vec3(1);
+		glm::vec3 grey = glm::vec3(0.64f);
+		for (int i = 0; i < inventory.size(); i++)
+		{
+			int yPosition = 220 + i * 30;
+			auto item = inventory[i];
+			if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
+			{
+				color = grey;
+			}
+			text->RenderText(item->name, 480, yPosition, 1, color);
+			text->RenderTextRight(intToString2(item->remainingUses), 680, yPosition, 1, 14, color);
+			if (i == unit->equippedWeapon)
+			{
+				text->RenderText("E", 700, yPosition, 1);
+			}
+		}
+		if (!examining)
+		{
+			text->RenderText("Combat Stats", 54, 180, 1);
+			text->RenderText("STR", 48, 220, 0.8f);
+			text->RenderTextRight(intToString2(unit->strength), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("MAG", 48, 252, 0.8f);
+			text->RenderTextRight(intToString2(unit->magic), 148, 252, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("SKL", 48, 284, 0.8f);
+			text->RenderTextRight(intToString2(unit->skill), 148, 284, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("SPD", 48, 316, 0.8f);
+			text->RenderTextRight(intToString2(unit->speed), 148, 316, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("LCK", 48, 348, 0.8f);
+			text->RenderTextRight(intToString2(unit->luck), 148, 348, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("DEF", 48, 380, 0.8f);
+			text->RenderTextRight(intToString2(unit->defense), 148, 380, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("CON", 48, 412, 0.8f);
+			text->RenderTextRight(intToString2(unit->build), 148, 412, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+		}
+		else
+		{
+			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(128, 75 + (12 * currentOption), 0.0f));
+
+			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+			int yPosition = 220;
+
+			if (inventory[currentOption]->isWeapon)
+			{
+				int offSet = 30;
+				auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
+
+				int xStatName = 48;
+				int xStatValue = 88;
+				text->RenderText("Type", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString2(weaponData.type), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Atk", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString2(battleStats.attackDamage), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Hit", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString2(battleStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Crit", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString2(battleStats.hitCrit), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Avo", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString2(battleStats.hitAvoid), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+			}
+			if (true)
+			{
+				int a = 2;
+			}
+			text->RenderText(inventory[currentOption]->description, 48, yPosition, 1);
+
+		}
+
+	}
+	else
+	{
+		text->RenderText("COMING SOON", 700, 0, 1);
+
+	}
+
+}
+
+void UnitStatsViewMenu::SelectOption()
+{
+}
+
+void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+
+	if (!examining)
+	{
+		if (firstPage)
+		{
+			if (inputManager.isKeyPressed(SDLK_DOWN))
+			{
+				firstPage = false;
+			}
+		}
+		else
+		{
+			if (inputManager.isKeyPressed(SDLK_UP))
+			{
+				firstPage = true;
+			}
+		}
+		if (inputManager.isKeyPressed(SDLK_SPACE))
+		{
+			if (firstPage)
+			{
+				if (unit->inventory.size() > 0)
+				{
+					examining = true;
+					currentOption = 0;
+					numberOfOptions = unit->inventory.size();
+				}
+			}
+			else
+			{
+				if (unit->skills.size() > 0)
+				{
+					examining = true;
+					currentOption = 0;
+					numberOfOptions = unit->skills.size();
+				}
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_z))
+		{
+			CancelOption();
+		}
+	}
+	else
+	{
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			currentOption--;
+			if (currentOption < 0)
+			{
+				currentOption = numberOfOptions - 1;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			currentOption++;
+			if (currentOption >= numberOfOptions)
+			{
+				currentOption = 0;
+			}
+		}
+		if (inputManager.isKeyPressed(SDLK_z))
+		{
+			examining = false;
+		}
 	}
 }

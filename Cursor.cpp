@@ -93,6 +93,13 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			std::cout << "Main Menu opens here\n";
 		}
 	}
+	else if (inputManager.isKeyPressed(SDLK_SPACE))
+	{
+		if (focusedUnit)
+		{
+			MenuManager::menuManager.AddUnitStatMenu(focusedUnit);
+		}
+	}
 	//Cancel
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{

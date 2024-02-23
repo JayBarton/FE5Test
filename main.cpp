@@ -82,16 +82,19 @@ InputManager inputManager;
 
 BattleManager battleManager;
 
-Unit leveledUnit;
+Unit* leveledUnit = nullptr;
+StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
 bool leveling = false;
 float levelUpTimer;
 float levelUpTime = 2.5f;
 
 struct UnitEvents : public Observer
 {
-	virtual void onNotify(const Unit& lUnit)
+	virtual void onNotify(Unit* lUnit)
 	{
 		leveledUnit = lUnit;
+		preLevelStats = new StatGrowths{ leveledUnit->maxHP, leveledUnit->strength, leveledUnit->magic,
+			leveledUnit->skill, leveledUnit->speed, leveledUnit->luck,leveledUnit->defense,leveledUnit->build,leveledUnit->move };
 		std::cout << "Level up!!!\n";
 		leveling = true;
 	}
@@ -199,7 +202,7 @@ int main(int argc, char** argv)
 	unit.strength = 4;
 	unit.magic = 0;
 	unit.skill = 2;
-	unit.speed = 15;
+	unit.speed = 5;
 	unit.luck = 6;
 	unit.defense = 3;
 	unit.build = 5;
@@ -251,6 +254,7 @@ int main(int argc, char** argv)
 	//enemies[0]->LevelEnemy(9);
 
 	UnitEvents* unitEvents = new UnitEvents();
+	unit.subject.addObserver(unitEvents);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 
@@ -343,10 +347,12 @@ int main(int argc, char** argv)
 			else
 			{
 				levelUpTimer += deltaTime;
-				if (levelUpTimer > 5.0f)
+				if (levelUpTimer > 2.0f)
 				{
 					levelUpTimer = 0;
 					leveling = false;
+					delete preLevelStats;
+					leveledUnit = nullptr;
 				}
 			}
 		}
@@ -582,32 +588,46 @@ void Draw()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-	Texture2D texture = ResourceManager::GetTexture("bg");
-	Renderer->setUVs();
-
-	ResourceManager::GetShader("instance").Use();
-	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
-	TileManager::tileManager.showTiles(Renderer, camera);
-
-	DrawUnitRanges();
-
-	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-
-	unit.Draw(Renderer);
-	allyUnit.Draw(Renderer);
-
-	for (int i = 0; i < enemies.size(); i++)
+	bool fullScreenMenu = false;
+	bool drawingMenu = false;
+	if (MenuManager::menuManager.menus.size() > 0)
 	{
-		enemies[i]->Draw(Renderer);
+		drawingMenu = true;
+		auto menu = MenuManager::menuManager.menus.back();
+		fullScreenMenu = menu->fullScreen;
 	}
 
-	Renderer->setUVs(cursor.uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-	Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+	if (!fullScreenMenu)
+	{
+		ResourceManager::GetShader("instance").Use();
+		ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
+		TileManager::tileManager.showTiles(Renderer, camera);
 
-	DrawText();
-	
+		DrawUnitRanges();
+
+		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
+		unit.Draw(Renderer);
+		allyUnit.Draw(Renderer);
+
+		for (int i = 0; i < enemies.size(); i++)
+		{
+			enemies[i]->Draw(Renderer);
+		}
+
+		Renderer->setUVs(cursor.uvs[1]);
+		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+		Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+	}
+	if (drawingMenu)
+	{
+		auto menu = MenuManager::menuManager.menus.back();
+		menu->Draw();
+	}
+	if (!fullScreenMenu)
+	{
+		DrawText();
+	}
 	SDL_GL_SwapWindow(window);
 
 }
@@ -668,11 +688,6 @@ void DrawUnitRanges()
 
 void DrawText()
 {
-	if (MenuManager::menuManager.menus.size() > 0)
-	{
-		auto menu = MenuManager::menuManager.menus.back();
-		menu->Draw();
-	}
 	if (leveling)
 	{
 		int x = SCREEN_WIDTH * 0.5f;
@@ -699,44 +714,45 @@ void DrawText()
 		Text->RenderTextRight("LCK", x - 10, y - 5, 1, 25);
 		Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
 		Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
-		auto unit = cursor.focusedUnit;
-		Text->RenderTextRight(intToString(leveledUnit.maxHP), x - 90, y - 30, 1, 14);
-		if (unit->maxHP > leveledUnit.maxHP)
+		//This needs to be redone, need the leveled unit, not the focused unit
+		auto unit = leveledUnit;
+		Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 14);
+		if (unit->maxHP > preLevelStats->maxHP)
 		{
 			Text->RenderText(intToString(1), x - 65, y - 30, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.strength), x - 90, y - 5, 1, 14);
-		if (unit->strength > leveledUnit.strength)
+		Text->RenderTextRight(intToString(preLevelStats->strength), x - 90, y - 5, 1, 14);
+		if (unit->strength > preLevelStats->strength)
 		{
 			Text->RenderText(intToString(1), x - 65, y - 5, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.magic), x - 90, y + 20, 1, 14);
-		if (unit->magic > leveledUnit.magic)
+		Text->RenderTextRight(intToString(preLevelStats->magic), x - 90, y + 20, 1, 14);
+		if (unit->magic > preLevelStats->magic)
 		{
 			Text->RenderText(intToString(1), x - 65, y + 20, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.skill), x - 90, y + 45, 1, 14);
-		if (unit->skill > leveledUnit.skill)
+		Text->RenderTextRight(intToString(preLevelStats->skill), x - 90, y + 45, 1, 14);
+		if (unit->skill > preLevelStats->skill)
 		{
 			Text->RenderText(intToString(1), x - 65, y + 45, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.speed), x + 30, y - 30, 1, 14);
-		if (unit->speed > leveledUnit.speed)
+		Text->RenderTextRight(intToString(preLevelStats->speed), x + 30, y - 30, 1, 14);
+		if (unit->speed > preLevelStats->speed)
 		{
 			Text->RenderText(intToString(1), x + 55, y - 30, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.luck), x + 30, y - 5, 1, 14);
-		if (unit->luck > leveledUnit.luck)
+		Text->RenderTextRight(intToString(preLevelStats->luck), x + 30, y - 5, 1, 14);
+		if (unit->luck > preLevelStats->luck)
 		{
 			Text->RenderText(intToString(1), x + 55, y - 5, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.defense), x + 30, y + 20, 1, 14);
-		if (unit->defense > leveledUnit.defense)
+		Text->RenderTextRight(intToString(preLevelStats->defense), x + 30, y + 20, 1, 14);
+		if (unit->defense > preLevelStats->defense)
 		{
 			Text->RenderText(intToString(1), x + 55, y + 20, 1);
 		}
-		Text->RenderTextRight(intToString(leveledUnit.build), x + 30, y + 45, 1, 14);
-		if (unit->build > leveledUnit.build)
+		Text->RenderTextRight(intToString(preLevelStats->build), x + 30, y + 45, 1, 14);
+		if (unit->build > preLevelStats->build)
 		{
 			Text->RenderText(intToString(1), x + 55, y + 45, 1);
 		}

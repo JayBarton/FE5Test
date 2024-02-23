@@ -24,7 +24,15 @@ void ItemManager::LoadItems()
 	int isWeapon;
 	int canDrop;
 	std::string description;
-	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description)) {
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description)) 
+	{
+		//csv reader reads in new lines wrong for whatever reason, this fixes it.
+		size_t found = description.find("\\n");
+		while (found != std::string::npos) 
+		{
+			description.replace(found, 2, "\n");
+			found = description.find("\\n", found + 1);
+		}
 		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
 	}
 }
