@@ -73,9 +73,9 @@ int levelWidth;
 int levelHeight;
 
 Cursor cursor;
-Unit unit;
-Unit allyUnit;
-
+//Unit unit;
+//Unit allyUnit;
+std::vector<Unit*> playerUnits;
 std::vector<Unit*> enemies;
 
 InputManager inputManager;
@@ -193,54 +193,88 @@ int main(int argc, char** argv)
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
 	ItemManager::itemManager.SetUpItems();
+	UnitEvents* unitEvents = new UnitEvents();
 
 	loadMap("1.map");
-	unit.init(&gen, &distribution);
-	unit.name = "Leif";
-	unit.maxHP = 22;
-	unit.currentHP = 22;
-	unit.strength = 4;
-	unit.magic = 0;
-	unit.skill = 2;
-	unit.speed = 5;
-	unit.luck = 6;
-	unit.defense = 3;
-	unit.build = 5;
-	unit.move = 6;
-	unit.growths = { 70, 35, 10, 35, 40, 40, 25, 15, 3 };
-	unit.placeUnit(48, 96);
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
-	unit.sprite.uv = &playerUVs;
 
-	unit.weaponProficiencies[0] = 1;
-	unit.uniqueWeapons.push_back(WeaponData::LIGHT_BRAND);
-	unit.skills.push_back(Unit::VANTAGE);
+	std::ifstream f("BaseStats.json");
+	json data = json::parse(f);
+	json bases = data["PlayerUnits"];
+	int currentUnit = 0;
+	std::unordered_map<std::string, int> weaponNameMap;
+	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
+	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
+	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
+	weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
+	weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
+	weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
+	weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
+	weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
+	weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
+	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
+	playerUnits.resize(bases.size());
+	for (const auto& unit : bases) {
+		int ID = unit["ID"];
+		std::string name = unit["Name"];
+		json stats = unit["Stats"];
+		int HP = stats["HP"];
+		int str = stats["Str"];
+		int mag = stats["Mag"];
+		int skl = stats["Skl"];
+		int spd = stats["Spd"];
+		int lck = stats["Lck"];
+		int def = stats["Def"];
+		int bld = stats["Bld"];
+		int mov = stats["Mov"];
+		Unit* newUnit = new Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
 
-	unit.addItem(1);
-	unit.addItem(0);
-	unit.addItem(2);
-	unit.addItem(3);
-	//unit.equipWeapon(1);
+		json growths = unit["GrowthRates"];
+		HP = growths["HP"];
+		str = growths["Str"];
+		mag = growths["Mag"];
+		skl = growths["Skl"];
+		spd = growths["Spd"];
+		lck = growths["Lck"];
+		def = growths["Def"];
+		bld = growths["Bld"];
+		mov = growths["Mov"];
 
-	allyUnit.init(&gen, &distribution);
-	allyUnit.name = "Ally";
-	allyUnit.maxHP = 22;
-	allyUnit.currentHP = 14;
-	allyUnit.strength = 4;
-	allyUnit.magic = 0;
-	allyUnit.skill = 2;
-	allyUnit.speed = 5;
-	allyUnit.luck = 6;
-	allyUnit.defense = 3;
-	allyUnit.build = 5;
-	allyUnit.move = 6;
-	allyUnit.growths = { 70, 35, 10, 35, 40, 40, 25, 15, 3 };
-	allyUnit.placeUnit(96, 112);
-	allyUnit.sprite.uv = &playerUVs;
-	allyUnit.weaponProficiencies[0] = 1;
-	allyUnit.skills.push_back(Unit::CHARISMA);
+		newUnit->growths = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, mov };
+		json weaponProf = unit["WeaponProf"];
+		for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+		{
+			newUnit->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+		}
+		if (unit.find("SpecialWeapons") != unit.end()) {
+			auto specialWeapons = unit["SpecialWeapons"];
+			for (const auto& weapon : specialWeapons)
+			{
+				newUnit->uniqueWeapons.push_back(int(weapon));
+			}
+		}
 
-	allyUnit.addItem(0);
+		if (unit.find("Skills") != unit.end()) {
+			auto skills = unit["Skills"];
+			for (const auto& skill : skills)
+			{
+				newUnit->skills.push_back(int(skill));
+			}
+		}
+		json inventory = unit["Inventory"];
+		for (const auto& item : inventory) 
+		{
+			newUnit->addItem(int(item));
+		}
+
+		newUnit->subject.addObserver(unitEvents);
+		newUnit->init(&gen, &distribution);
+		newUnit->sprite.uv = &playerUVs;
+		playerUnits[currentUnit] = newUnit;
+		currentUnit++;
+	}
+	playerUnits[0]->placeUnit(48, 96);
+	playerUnits[1]->placeUnit(96, 112);
 
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
@@ -252,9 +286,6 @@ int main(int argc, char** argv)
 //	enemies[0]->equipWeapon(0);
 
 	//enemies[0]->LevelEnemy(9);
-
-	UnitEvents* unitEvents = new UnitEvents();
-	unit.subject.addObserver(unitEvents);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 
@@ -375,6 +406,11 @@ int main(int argc, char** argv)
 		delete enemies[i];
 	}
 	enemies.clear();
+	for (int i = 0; i < playerUnits.size(); i++)
+	{
+		delete playerUnits[i];
+	}
+	playerUnits.clear();
 	/*for (int i = 0; i < soundEffects.size(); i++)
 	{
 		for (int c = 0; c < soundEffects[i].size(); c++)
@@ -384,7 +420,7 @@ int main(int argc, char** argv)
 		}
 	}*/
 	delete unitEvents;
-	unit.subject.observers.clear();
+//	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();
 	TileManager::tileManager.clearTiles();
@@ -497,7 +533,7 @@ void SetupEnemies(std::ifstream& map)
 	std::vector<Unit> unitBases;
 	unitBases.resize(3);
 
-	std::ifstream f("EnemyBaseStats.json");
+	std::ifstream f("BaseStats.json");
 	json data = json::parse(f);
 	json bases = data["enemies"];
 	int currentUnit = 0;
@@ -606,9 +642,10 @@ void Draw()
 		DrawUnitRanges();
 
 		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-
-		unit.Draw(Renderer);
-		allyUnit.Draw(Renderer);
+		for (int i = 0; i < playerUnits.size(); i++)
+		{
+			playerUnits[i]->Draw(Renderer);
+		}
 
 		for (int i = 0; i < enemies.size(); i++)
 		{

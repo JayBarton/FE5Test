@@ -1,0 +1,135 @@
+{
+  "enemies": [
+    {
+      "ID": 0,
+      "Name": "Soldier",
+      "Stats": {
+        "HP": 20,
+        "Str": 3,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 1,
+        "Bld": 6,
+        "Mov": 5
+      },
+      "WeaponProf": {
+        "Lance": 1
+      }
+    },
+    {
+      "ID": 1,
+      "Name": "Archer",
+      "Stats": {
+        "HP": 20,
+        "Str": 3,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 1,
+        "Bld": 6,
+        "Mov": 5
+      },
+      "WeaponProf": {
+        "Bow": 1
+      }
+    },
+    {
+      "ID": 2,
+      "Name": "Sword Armour",
+      "Stats": {
+        "HP": 20,
+        "Str": 4,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 8,
+        "Bld": 9,
+        "Mov": 5
+      },
+      "WeaponProf": {
+        "Sword": 1
+      }
+    }
+  ],
+  "PlayerUnits": [
+    {
+      "ID": 0,
+      "Name": "Leif",
+      "Class": "Lord",
+      "Stats": {
+        "Level": 1,
+        "HP": 22,
+        "Str": 4,
+        "Mag": 0,
+        "Skl": 2,
+        "Spd": 5,
+        "Lck": 6,
+        "Def": 3,
+        "Bld": 5,
+        "Mov": 6,
+        "Lead": 0,
+        "MS": 1,
+        "PC": 2
+      },
+      "GrowthRates": {
+        "HP": 70,
+        "Str": 35,
+        "Mag": 10,
+        "Skl": 35,
+        "Spd": 40,
+        "Lck": 40,
+        "Def": 25,
+        "Bld": 15,
+        "Mov": 3
+      },
+      "Inventory": [ 2, 1 ],
+      "WeaponProf": {
+        "Sword": 3
+      },
+      "SpecialWeapons": [ 6 ],
+      "Skills": [ 1 ]
+    },
+    {
+      "ID": 0,
+      "Name": "Finn",
+      "Class": "Lance Knight",
+      "Stats": {
+        "Level": 7,
+        "HP": 28,
+        "Str": 8,
+        "Mag": 1,
+        "Skl": 8,
+        "Spd": 11,
+        "Lck": 5,
+        "Def": 7,
+        "Bld": 9,
+        "Mov": 8,
+        "Lead": 1,
+        "MS": 0,
+        "PC": 1
+      },
+      "GrowthRates": {
+        "HP": 60,
+        "Str": 35,
+        "Mag": 5,
+        "Skl": 30,
+        "Spd": 35,
+        "Lck": 45,
+        "Def": 30,
+        "Bld": 10,
+        "Mov": 1
+      },
+      "Inventory": [ 9, 1 ],
+      "WeaponProf": {
+        "Lance": 4,
+        "Sword": 2
+      },
+      "SpecialWeapons": [ 7 ],
+      "Skills": [ 0 ]
+    }
+  ]
+}

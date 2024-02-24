@@ -240,6 +240,7 @@ void ItemOptionsMenu::Draw()
 	glm::vec3 grey = glm::vec3(0.64f);
 	for (int i = 0; i < inventory.size(); i++)
 	{
+		color = glm::vec3(1);
 		int yPosition = 100 + i * 30;
 		auto item = inventory[i];
 		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
@@ -411,6 +412,7 @@ void ItemUseMenu::Draw()
 	glm::vec3 grey = glm::vec3(0.64f);
 	for (int i = 0; i < inventory.size(); i++)
 	{
+		color = glm::vec3(1);
 		int yPosition = 100 + i * 30;
 		auto item = inventory[i];
 		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
@@ -1213,6 +1215,7 @@ void UnitStatsViewMenu::Draw()
 		glm::vec3 grey = glm::vec3(0.64f);
 		for (int i = 0; i < inventory.size(); i++)
 		{
+			color = glm::vec3(1);
 			int yPosition = 220 + i * 30;
 			auto item = inventory[i];
 			if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
