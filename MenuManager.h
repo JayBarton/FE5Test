@@ -87,12 +87,14 @@ struct UnitOptionsMenu : public Menu
 	const static int DISMOUNT = 2;
 	const static int ATTACK = 3;
 	const static int TRADE = 4;
+	const static int MOUNT = 5;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> tradeUnits;
 
 	bool canAttack = false;
 	bool canDismount = false;
+	bool canMount = false;
 	bool canTrade = false;
 };
 

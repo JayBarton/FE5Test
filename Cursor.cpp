@@ -253,8 +253,6 @@ void Cursor::FindUnitMoveRange()
 		CheckAdjacentTiles(right, checked, checking, current, costs);
 		CheckAdjacentTiles(left, checked, checking, current, costs);
 	}
-	//if unit attack range is > 1
-	//Attack range not implemented yet, hardsetting here to test
 	if (selectedUnit->maxRange > 0)
 	{
 		checked.clear();
@@ -308,6 +306,11 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 		int mCost = startCell.moveCost;
 		auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
 		int movementCost = mCost + thisTile->properties.movementCost;
+		//This is just a test, will not be keeping long term
+		if (selectedUnit->getMovementType() == Unit::FLYING)
+		{
+			movementCost = mCost + 1;
+		}
 
 		auto distance = costs[checkingTile.x][checkingTile.y];
 		if (!checked[checkingTile.x][checkingTile.y])
@@ -325,7 +328,7 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 			{
 				costs[checkingTile.x][checkingTile.y] = movementCost;
 			}
-			if (movementCost <= selectedUnit->move)
+			if (movementCost <= selectedUnit->getMovement())
 			{
 				searchCell newCell{ checkingTile, movementCost };
 				addToOpenSet(newCell, checking, checked, costs);

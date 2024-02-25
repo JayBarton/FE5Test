@@ -64,6 +64,21 @@ struct BattleStats
 	int hitCrit;
 	int attackSpeed;
 };
+
+struct Mount
+{
+	Mount(int movementType, int str, int skl, int spd, int def, int mov) : movementType(movementType), str(str), skl(skl), spd(spd), def(def), mov(mov)
+	{
+	}
+	int movementType;
+	int str;
+	int skl;
+	int spd;
+	int def;
+	int mov;
+	bool mounted = true;
+};
+
 class WeaponData;
 struct Unit
 {
@@ -74,12 +89,16 @@ struct Unit
 	const static int ACCOST = 4;
 	const static int CHARISMA = 5;
 
+	const static int FOOT = 0;
+	const static int HORSE = 1;
+	const static int FLYING = 2;
 
 	Unit();
-	Unit(int Class, std::string Name, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
+	Unit(std::string Class, std::string Name, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
 		unitClass(Class), name(Name), maxHP(HP), strength(str), magic(mag), skill(skl), speed(spd), luck(lck), defense(def), build(bld), move(mov)
 	{
 		currentHP = maxHP;
+		movementType = FOOT;
 	}
 	~Unit();
 
@@ -88,7 +107,7 @@ struct Unit
 
 	//Unit properties
 	std::string name;
-	int unitClass; //This will determine the growths I think
+	std::string unitClass; //Not really sure what I'm doing with this
 	int maxHP;
 	int strength;
 	int magic;
@@ -115,6 +134,8 @@ struct Unit
 	//1 = enemy
 	int team = 0;
 
+	int movementType;
+
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
@@ -125,6 +146,8 @@ struct Unit
 	StatGrowths growths;
 
 	Subject subject;
+
+	Mount* mount = nullptr;
 
 	std::mt19937 *gen = nullptr;
 	std::uniform_int_distribution<int> *distribution = nullptr;
@@ -152,6 +175,9 @@ struct Unit
 	bool canUse(const WeaponData& weapon);
 
 	bool hasSkill(int ID);
+
+	int getMovement();
+	int getMovementType();
 
 	Item* GetEquippedItem();
 

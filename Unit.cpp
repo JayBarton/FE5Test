@@ -15,6 +15,10 @@ Unit::~Unit()
     {
         delete inventory[i];
     }
+    if (mount)
+    {
+        delete mount;
+    }
 }
 
 void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
@@ -409,6 +413,24 @@ bool Unit::hasSkill(int ID)
         return true;
     }
     return false;
+}
+//Nobody likes this
+int Unit::getMovement()
+{
+    if (mount && !mount->mounted)
+    {
+        return move - mount->mov;
+    }
+    return move;
+}
+
+int Unit::getMovementType()
+{
+    if (mount && mount->mounted)
+    {
+        return mount->movementType;
+    }
+    return movementType;
 }
 
 Item* Unit::GetEquippedItem()

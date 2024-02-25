@@ -217,6 +217,7 @@ int main(int argc, char** argv)
 	for (const auto& unit : bases) {
 		int ID = unit["ID"];
 		std::string name = unit["Name"];
+		std::string unitClass = unit["Class"];
 		json stats = unit["Stats"];
 		int HP = stats["HP"];
 		int str = stats["Str"];
@@ -227,7 +228,7 @@ int main(int argc, char** argv)
 		int def = stats["Def"];
 		int bld = stats["Bld"];
 		int mov = stats["Mov"];
-		Unit* newUnit = new Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+		Unit* newUnit = new Unit(unitClass, name, HP, str, mag, skl, spd, lck, def, bld, mov);
 
 		json growths = unit["GrowthRates"];
 		HP = growths["HP"];
@@ -275,6 +276,8 @@ int main(int argc, char** argv)
 	}
 	playerUnits[0]->placeUnit(48, 96);
 	playerUnits[1]->placeUnit(96, 112);
+	playerUnits[1]->movementType = Unit::FOOT;
+	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
@@ -562,7 +565,7 @@ void SetupEnemies(std::ifstream& map)
 		int def = stats["Def"];
 		int bld = stats["Bld"];
 		int mov = stats["Mov"];
-		unitBases[currentUnit] = Unit(ID, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+		unitBases[currentUnit] = Unit(name, name, HP, str, mag, skl, spd, lck, def, bld, mov);
 
 		json weaponProf = enemy["WeaponProf"];
 		for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it) 

@@ -112,8 +112,21 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.AddMenu(1);
 		break;
 	case DISMOUNT:
-		std::cout << "Dismount here eventually\n";
+	{
+		auto unit = cursor->selectedUnit;
+		unit->mount->mounted = false;
+		canDismount = false;
+		optionsVector.erase(optionsVector.begin() + currentOption);
 		break;
+	}
+	case MOUNT:
+	{
+		auto unit = cursor->selectedUnit;
+		unit->mount->mounted = true;
+		canMount = false;
+		optionsVector.erase(optionsVector.begin() + currentOption);
+		break;
+	}
 		//Wait
 	default:
 		cursor->Wait();
@@ -174,6 +187,12 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Dismount", xStart - 200, yOffset, 1);
 		yOffset += 30;
 	}
+	else if (canMount)
+	{
+		commands += "Mount\n";
+		text->RenderText("Mount", xStart - 200, yOffset, 1);
+		yOffset += 30;
+	}
 	commands += "Wait";
 	text->RenderText("Wait", xStart - 200, yOffset, 1);
 	//Text->RenderText(commands, xStart - 200, 100, 1);
@@ -200,8 +219,21 @@ void UnitOptionsMenu::GetOptions()
 	}
 	optionsVector.push_back(ITEMS);
 	//if can dismount
-	canDismount = true;
-	optionsVector.push_back(DISMOUNT);
+	auto unit = cursor->selectedUnit;
+	if (unit->mount)
+	{
+		if (unit->mount->mounted)
+		{
+			canDismount = true;
+			optionsVector.push_back(DISMOUNT);
+		}
+		else
+		{
+			canMount = true;
+			optionsVector.push_back(MOUNT);
+
+		}
+	}
 	optionsVector.push_back(WAIT);
 	numberOfOptions = optionsVector.size();
 }
@@ -1163,18 +1195,18 @@ void UnitStatsViewMenu::Draw()
 	renderer->DrawSprite(displayTexture, glm::vec2(16), 0.0f, cursor->dimensions);
 
 	text->RenderText(unit->name, 110, 64, 1);
-	//text->RenderText(unit->name, 48, 64, 1); class
-	text->RenderText("Lv", 48, 96, 1);
-	text->RenderText("HP", 48, 128, 1);
+	text->RenderText(unit->unitClass, 48, 96, 1); 
+	text->RenderText("Lv", 48, 128, 1);
+	text->RenderText("HP", 48, 160, 1);
 
-	text->RenderTextRight(intToString2(unit->level), 90, 96, 1, 14);
-	text->RenderTextRight(intToString2(unit->currentHP), 90, 128, 1, 14);
+	text->RenderTextRight(intToString2(unit->level), 90, 128, 1, 14);
+	text->RenderTextRight(intToString2(unit->currentHP), 90, 160, 1, 14);
 
-	text->RenderText("E", 110, 96, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText("/", 110, 128, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("E", 110, 128, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("/", 110, 160, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 
-	text->RenderTextRight(intToString2(unit->experience), 130, 96, 1, 14);
-	text->RenderTextRight(intToString2(unit->maxHP), 130, 128, 1, 14);
+	text->RenderTextRight(intToString2(unit->experience), 130, 128, 1, 14);
+	text->RenderTextRight(intToString2(unit->maxHP), 130, 160, 1, 14);
 
 	text->RenderText("ATK", 500, 64, 1);
 	text->RenderText("HIT", 500, 96, 1);
@@ -1231,7 +1263,7 @@ void UnitStatsViewMenu::Draw()
 		}
 		if (!examining)
 		{
-			text->RenderText("Combat Stats", 54, 180, 1);
+			text->RenderText("Combat Stats", 54, 190, 1);
 			text->RenderText("STR", 48, 220, 0.8f);
 			text->RenderTextRight(intToString2(unit->strength), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("MAG", 48, 252, 0.8f);
