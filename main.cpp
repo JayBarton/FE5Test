@@ -99,6 +99,17 @@ struct UnitEvents : public Observer
 		leveling = true;
 	}
 };
+
+struct TurnEvents : public TurnObserver
+{
+	virtual void onNotify()
+	{
+		for (int i = 0; i < playerUnits.size(); i++)
+		{
+			playerUnits[i]->hasMoved = false;
+		}
+	}
+};
 std::mt19937 gen;
 //gen.seed(1);
 std::uniform_int_distribution<int> distribution(0, 99);
@@ -194,7 +205,7 @@ int main(int argc, char** argv)
 	Text->Load("fonts/Teko-Light.TTF", 30);
 	ItemManager::itemManager.SetUpItems();
 	UnitEvents* unitEvents = new UnitEvents();
-
+	TurnEvents* turnEvents = new TurnEvents();
 	loadMap("1.map");
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 
@@ -291,7 +302,7 @@ int main(int argc, char** argv)
 	//enemies[0]->LevelEnemy(9);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
-
+	MenuManager::menuManager.subject.addObserver(turnEvents);
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
@@ -394,7 +405,10 @@ int main(int argc, char** argv)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 		}
-		
+		for (int i = 0; i < playerUnits.size(); i++)
+		{
+			playerUnits[i]->Update(deltaTime);
+		}
 		camera.update();
 
 		Draw();
@@ -423,6 +437,7 @@ int main(int argc, char** argv)
 		}
 	}*/
 	delete unitEvents;
+	delete turnEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();
@@ -829,7 +844,7 @@ void DrawText()
 		defenderDraw.x += 25;
 		Text->RenderText(intToString(battleManager.defender->currentHP) + "/" + intToString(battleManager.defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
 	}
-	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr)
+	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
 	{
 		auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 

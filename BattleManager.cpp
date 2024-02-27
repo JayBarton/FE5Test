@@ -120,12 +120,13 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					else
 					{
 						battleActive = false;
-
+						attacker->hasMoved = true;
 					}
 				}
 				else
 				{
 					battleActive = false;
+					attacker->hasMoved = true;
 				}
 			}
 		}
@@ -233,6 +234,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		if (otherUnit->currentHP <= 0)
 		{
 			battleActive = false;
+			attacker->hasMoved = true;
 		}
 		std::cout << thisUnit->name << " Attacks\n";
 	}

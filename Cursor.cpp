@@ -9,123 +9,118 @@
 bool compareMoveCost(const searchCell& a, const searchCell& b) {
 	return a.moveCost < b.moveCost;
 }
+
 //Cursor should have a reference to menumanager
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
-	if (inputManager.isKeyPressed(SDLK_RETURN))
+	if (movingUnit)
 	{
-		if (selectedUnit)
+		if (!selectedUnit->movementComponent.moving)
 		{
-			//If this is an enemy unit, stop drawing its range, and if over another unit focus on it
-			if (selectedUnit->team == 1)
+			movingUnit = false;
+			GetUnitOptions();
+		}
+	}
+	else
+	{
+		if (inputManager.isKeyPressed(SDLK_RETURN))
+		{
+			if (selectedUnit)
 			{
+				//If this is an enemy unit, stop drawing its range, and if over another unit focus on it
+				if (selectedUnit->team == 1)
+				{
+					selectedUnit = nullptr;
+					foundTiles.clear();
+					attackTiles.clear();
+					path.clear();
+					costTile.clear();
+					if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
+					{
+						focusedUnit = tile->occupiedBy;
+					}
+				}
+				else
+				{
+					glm::vec2 unitCurrentPosition = selectedUnit->sprite.getPosition();
+					//Can't move to where you already are, so just treat as a movement of 0 and open options
+					if (unitCurrentPosition == position)
+					{
+						std::cout << "Unit options here\n";
+						foundTiles.clear();
+						costTile.clear();
+						attackTiles.clear();
+						GetUnitOptions();
+					}
+					//Can't move to an already occupied tile
+					else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
+					{
+						//If clicking on a valid position, move the selected unit there
+						if (path.find(position) != path.end())
+						{
+							glm::vec2 pathPoint = position;
+							drawnPath.clear();
+							drawnPath.push_back(pathPoint);
+							//This is just to make sure I can find a path to follow once I begin animating the units
+							while (pathPoint != unitCurrentPosition)
+							{
+								auto previous = path[pathPoint].previousPosition;
+								drawnPath.push_back(previous);
+								pathPoint = previous;
+							}
+							foundTiles.clear();
+							attackTiles.clear();
+							costTile.clear();
+							movingUnit = true;
+
+							selectedUnit->movementComponent.startMovement(drawnPath);
+						}
+					}
+				}
+			}
+			else if (focusedUnit && !focusedUnit->hasMoved)
+			{
+				previousPosition = position;
+				selectedUnit = focusedUnit;
+				focusedUnit = nullptr;
+				path[position] = { position, position };
+				FindUnitMoveRange();
+			}
+			else
+			{
+				//Open menu
+				MenuManager::menuManager.AddMenu(3);
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_SPACE))
+		{
+			if (focusedUnit)
+			{
+				MenuManager::menuManager.AddUnitStatMenu(focusedUnit);
+			}
+		}
+		//Cancel
+		else if (inputManager.isKeyPressed(SDLK_z))
+		{
+			if (selectedUnit)
+			{
+				focusedUnit = selectedUnit;
 				selectedUnit = nullptr;
 				foundTiles.clear();
 				attackTiles.clear();
 				path.clear();
 				costTile.clear();
-				if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
-				{
-					focusedUnit = tile->occupiedBy;
-				}
+				position = previousPosition;
+				camera.moving = true;
+				camera.SetMove(position);
 			}
-			else
-			{
-				glm::vec2 unitCurrentPosition = selectedUnit->sprite.getPosition();
-				if (placingUnit)
-				{
-					TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
-					selectedUnit->placeUnit(position.x, position.y);
-					selectedUnit = nullptr;
-					drawnPath.clear();
-					path.clear();
-					placingUnit = false;
-				}
-				//Can't move to where you already are, so just treat as a movement of 0 and open options
-				else if (unitCurrentPosition == position)
-				{
-					std::cout << "Unit options here\n";
-					placingUnit = true;
-					foundTiles.clear();
-					costTile.clear();
-					attackTiles.clear();
-					GetUnitOptions();
-				}
-				//Can't move to an already occupied tile
-				else if (!TileManager::tileManager.getTile(position.x, position.y)->occupiedBy)
-				{
-					//If clicking on a valid position, move the selected unit there
-					if (path.find(position) != path.end())
-					{
-						glm::vec2 pathPoint = position;
-						drawnPath.clear();
-						drawnPath.push_back(pathPoint);
-						//This is just to make sure I can find a path to follow once I begin animating the units
-						while (pathPoint != unitCurrentPosition)
-						{
-							auto previous = path[pathPoint].previousPosition;
-							drawnPath.push_back(previous);
-							pathPoint = previous;
-						}
+		}
 
-						selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
-						placingUnit = true;
-						foundTiles.clear();
-						attackTiles.clear();
-						costTile.clear();
-						//Will be bringing up unit options here once those are implemented
-						GetUnitOptions();
-					}
-				}
-			}
-		}
-		else if (focusedUnit)
-		{
-			previousPosition = position;
-			selectedUnit = focusedUnit;
-			focusedUnit = nullptr;
-			path[position] = { position, position };
-			FindUnitMoveRange();
-		}
-		else
-		{
-			//Open menu
-			std::cout << "Main Menu opens here\n";
-		}
-	}
-	else if (inputManager.isKeyPressed(SDLK_SPACE))
-	{
-		if (focusedUnit)
-		{
-			MenuManager::menuManager.AddUnitStatMenu(focusedUnit);
-		}
-	}
-	//Cancel
-	else if (inputManager.isKeyPressed(SDLK_z))
-	{
-		if (placingUnit)
-		{
-			UndoMove();
-		}
-		else if (selectedUnit)
-		{
-			focusedUnit = selectedUnit;
-			selectedUnit = nullptr;
-			foundTiles.clear();
-			attackTiles.clear();
-			path.clear();
-			costTile.clear();
-			position = previousPosition;
-			camera.moving = true;
-			camera.SetMove(position);
-		}
-	}
-	if (!placingUnit)
-	{
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
+
+		CheckBounds();
 	}
-	CheckBounds();
 }
 
 void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
@@ -328,7 +323,7 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 			{
 				costs[checkingTile.x][checkingTile.y] = movementCost;
 			}
-			if (movementCost <= selectedUnit->getMovement())
+			if (movementCost <= selectedUnit->move)
 			{
 				searchCell newCell{ checkingTile, movementCost };
 				addToOpenSet(newCell, checking, checked, costs);
@@ -569,15 +564,14 @@ void Cursor::Wait()
 {
 	TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
 	selectedUnit->placeUnit(position.x, position.y);
+	focusedUnit = selectedUnit;
 	selectedUnit = nullptr;
 	drawnPath.clear();
 	path.clear();
-	placingUnit = false;
 }
 
 void Cursor::UndoMove()
 {
-	placingUnit = false;
 	position = previousPosition;
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 	focusedUnit = selectedUnit;

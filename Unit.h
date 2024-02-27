@@ -79,6 +79,23 @@ struct Mount
 	bool mounted = true;
 };
 
+//I am not sure this needs to be a component of the unit. Since only one unit will ever be moving at a time,
+//and all of them will move in the same way, I wonder if I can't just have this be a stand alone struct that
+//is used to move any unit.
+struct MovementComponent
+{
+	Unit* owner = nullptr;
+	glm::vec2 nextNode;
+	glm::vec2 direction;
+	std::vector<glm::ivec2> path;
+	int current;
+	int end;
+	bool moving;
+	void startMovement(const std::vector<glm::ivec2>& path);
+	void getNewDirection();
+	void Update(float deltaTime);
+};
+
 class WeaponData;
 struct Unit
 {
@@ -99,6 +116,7 @@ struct Unit
 	{
 		currentHP = maxHP;
 		movementType = FOOT;
+		movementComponent.owner = this;
 	}
 	~Unit();
 
@@ -136,6 +154,8 @@ struct Unit
 
 	int movementType;
 
+	bool hasMoved = false;
+
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
@@ -143,6 +163,7 @@ struct Unit
 	BattleStats battleStats;
 
 	Sprite sprite;
+	MovementComponent movementComponent;
 	StatGrowths growths;
 
 	Subject subject;
@@ -176,8 +197,9 @@ struct Unit
 
 	bool hasSkill(int ID);
 
-	int getMovement();
 	int getMovementType();
+
+	void MountAction(bool on);
 
 	Item* GetEquippedItem();
 

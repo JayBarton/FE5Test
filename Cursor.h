@@ -45,8 +45,7 @@ struct Cursor
 
 	bool firstMove = true; //Not sure how to handle this. I want a slightly longer delay the first time the player moves, unless they are moving fast
 	bool fastCursor = false;
-	//Hopefully temporary, I expect managing different states will get more complicated over time
-	bool placingUnit = false;
+	bool movingUnit = false;
 
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;

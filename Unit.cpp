@@ -36,6 +36,10 @@ void Unit::placeUnit(int x, int y)
 
 void Unit::Update(float deltaTime)
 {
+    if (movementComponent.moving)
+    {
+        movementComponent.Update(deltaTime);
+    }
 }
 
 void Unit::Draw(SpriteRenderer* Renderer)
@@ -48,7 +52,7 @@ void Unit::Draw(SpriteRenderer* Renderer)
     Renderer->setUVs(sprite.getUV());
     Texture2D texture = ResourceManager::GetTexture("sprites");
 
-    Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, false);
+    Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, hasMoved);
 }
 
 void Unit::LevelUp()
@@ -414,15 +418,6 @@ bool Unit::hasSkill(int ID)
     }
     return false;
 }
-//Nobody likes this
-int Unit::getMovement()
-{
-    if (mount && !mount->mounted)
-    {
-        return move - mount->mov;
-    }
-    return move;
-}
 
 int Unit::getMovementType()
 {
@@ -431,6 +426,31 @@ int Unit::getMovementType()
         return mount->movementType;
     }
     return movementType;
+}
+
+void Unit::MountAction(bool on)
+{
+    if (mount)
+    {
+        if (on)
+        {
+            mount->mounted = true;
+            strength += mount->str;
+            skill += mount->skl;
+            speed += mount->spd;
+            defense += mount->def;
+            move += mount->mov;
+        }
+        else
+        {
+            mount->mounted = false;
+            strength -= mount->str;
+            skill -= mount->skl;
+            speed -= mount->spd;
+            defense -= mount->def;
+            move -= mount->mov;
+        }
+    }
 }
 
 Item* Unit::GetEquippedItem()
@@ -447,15 +467,15 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
     BattleStats stats;
     int charismaBonus = 0;
 
-        auto nearbyUnits = inRangeUnits(1, 3, team);
-        for (int i = 0; i < nearbyUnits.size(); i++)
+    auto nearbyUnits = inRangeUnits(1, 3, team);
+    for (int i = 0; i < nearbyUnits.size(); i++)
+    {
+        if (nearbyUnits[i]->hasSkill(CHARISMA))
         {
-            if (nearbyUnits[i]->hasSkill(CHARISMA))
-            {
-                charismaBonus += 10;
-            }
+            charismaBonus += 10;
         }
-    
+    }
+
     if (weaponID == -1)
     {
         if (equippedWeapon >= 0)
@@ -468,7 +488,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
             stats.hitAccuracy = 0;
             stats.hitCrit = 0;
             stats.attackSpeed = speed;
-            stats.hitAvoid = stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
+            stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
         }
     }
     if (weaponID >= 0)
@@ -500,4 +520,73 @@ WeaponData Unit::GetWeaponData(Item* item)
         return ItemManager::itemManager.weaponData[item->ID];
     }
     return WeaponData();
+}
+
+void MovementComponent::startMovement(const std::vector<glm::ivec2>& path)
+{
+    this->path = path;
+    end = 0;
+    current = path.size() - 1;
+    moving = true;
+    getNewDirection();
+}
+
+void MovementComponent::getNewDirection()
+{
+    if (current == end)
+    {
+        owner->sprite.SetPosition(path[current]);
+        moving = false;
+    }
+    else
+    {
+        glm::vec2 previousNode = path[current];
+        current--;
+        nextNode = path[current];
+
+        glm::vec2 toNext = nextNode - previousNode;
+        //need to check for 0, normalizing 0 returns NAN
+        if (toNext.x == 0 && toNext.y == 0)
+        {
+            direction = glm::vec2(0);
+        }
+        else
+        {
+            direction = glm::normalize(nextNode - previousNode);
+        }
+    }
+}
+
+void MovementComponent::Update(float deltaTime)
+{
+    glm::vec2 newPosition = owner->sprite.getPosition() + direction * 5.0f;
+
+    glm::vec2 toNextNode = newPosition - nextNode;
+    if (toNextNode == glm::vec2(0))
+    {
+        owner->sprite.SetPosition(newPosition);
+        getNewDirection();
+    }
+    else
+    {
+        glm::vec2 directionDifference = toNextNode * direction;
+        //If the direction to the next node and the current direction are the same signs, object has overshot the next node
+        if (directionDifference.x > 0 || directionDifference.y > 0)
+        {
+            //Snap object to next node's position
+            owner->sprite.SetPosition(nextNode);
+            getNewDirection();
+            if (moving)
+            {
+                //Move the object along towards the new next node by the distance that it overshot
+                //This is to insure that the object moves the same amount each frame
+                float remainingDistance = glm::abs(toNextNode.x) + glm::abs(toNextNode.y);
+                owner->sprite.Move(direction * remainingDistance);
+            }
+        }
+        else
+        {
+            owner->sprite.SetPosition(newPosition);
+        }
+    }
 }

@@ -114,21 +114,26 @@ void UnitOptionsMenu::SelectOption()
 	case DISMOUNT:
 	{
 		auto unit = cursor->selectedUnit;
-		unit->mount->mounted = false;
+		unit->MountAction(false);
 		canDismount = false;
 		optionsVector.erase(optionsVector.begin() + currentOption);
+		numberOfOptions--;
+		MenuManager::menuManager.mustWait = true;
 		break;
 	}
 	case MOUNT:
 	{
 		auto unit = cursor->selectedUnit;
-		unit->mount->mounted = true;
+		unit->MountAction(true);
 		canMount = false;
 		optionsVector.erase(optionsVector.begin() + currentOption);
+		numberOfOptions--;
+		MenuManager::menuManager.mustWait = true;
 		break;
 	}
 		//Wait
 	default:
+		cursor->selectedUnit->hasMoved = true;
 		cursor->Wait();
 		ClearMenu();
 		break;
@@ -137,8 +142,17 @@ void UnitOptionsMenu::SelectOption()
 
 void UnitOptionsMenu::CancelOption()
 {
-	cursor->UndoMove();
-	Menu::CancelOption();
+	if (MenuManager::menuManager.mustWait)
+	{
+		cursor->selectedUnit->hasMoved = true;
+		cursor->Wait();
+		Menu::ClearMenu();
+	}
+	else
+	{
+		cursor->UndoMove();
+		Menu::CancelOption();
+	}
 }
 
 void UnitOptionsMenu::Draw()
@@ -392,6 +406,11 @@ void MenuManager::AddMenu(int ID)
 		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, cursor->selectedUnit->inventory[currentOption], currentOption);
 		menus.push_back(newMenu);
 	}
+	else if (ID == 3)
+	{
+		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
 }
 
 void MenuManager::AddUnitStatMenu(Unit* unit)
@@ -409,6 +428,7 @@ void MenuManager::PreviousMenu()
 
 void MenuManager::ClearMenu()
 {
+	mustWait = false;
 	while (menus.size() > 0)
 	{
 		PreviousMenu();
@@ -479,6 +499,7 @@ void ItemUseMenu::SelectOption()
 	{
 	case USE:
 		ItemManager::itemManager.UseItem(cursor->selectedUnit, inventoryIndex, item->useID);
+		cursor->selectedUnit->hasMoved = true;
 		cursor->Wait();
 		ClearMenu();
 		break;
@@ -1027,6 +1048,7 @@ void TradeMenu::SelectOption()
 	}
 	else
 	{
+		MenuManager::menuManager.mustWait = true;
 		moving = false;
 		bool emptyInventory = false;
 		auto firstUnit = cursor->selectedUnit;
@@ -1407,5 +1429,68 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			examining = false;
 		}
+	}
+}
+
+ExtraMenu::ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	numberOfOptions = 5;
+}
+
+void ExtraMenu::Draw()
+{
+	int xStart = 800;
+	int yOffset = 100;
+	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		//	xStart = 178;
+	}
+	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(176, 32 + (12 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	
+	text->RenderText("Unit", 600, 100, 1);
+	text->RenderText("Status", 600, 130, 1);
+	text->RenderText("Options", 600, 160, 1);
+	text->RenderText("Suspend", 600, 190, 1);
+	text->RenderText("End", 600, 220, 1);
+}
+
+void ExtraMenu::SelectOption()
+{
+	switch (currentOption)
+	{
+	case UNIT:
+		std::cout << "Unit menu\n";
+		break;
+	case STATUS:
+		std::cout << "Status menu\n";
+
+		break;
+	case OPTIONS:
+		std::cout << "Options menu\n";
+
+		break;
+	case SUSPEND:
+		std::cout << "Suspend menu\n";
+
+		break;
+	case END:
+		std::cout << "End turn menu\n";
+		MenuManager::menuManager.subject.notify();
+		ClearMenu();
+		break;
 	}
 }

@@ -9,6 +9,40 @@ class BattleStats;
 class SpriteRenderer;
 class BattleManager;
 
+struct TurnObserver
+{
+	virtual ~TurnObserver() {}
+	virtual void onNotify() = 0;
+};
+
+struct TurnSubject
+{
+	std::vector<TurnObserver*> observers;
+
+	void addObserver(TurnObserver* observer)
+	{
+		observers.push_back(observer);
+	}
+	void removeObserver(TurnObserver* observer)
+	{
+		auto it = std::find(observers.begin(), observers.end(), observer);
+		if (it != observers.end())
+		{
+			delete* it;
+			*it = observers.back();
+			observers.pop_back();
+		}
+	}
+	void notify()
+	{
+		for (int i = 0; i < observers.size(); i++)
+		{
+			observers[i]->onNotify();
+		}
+	}
+};
+
+//Not even using this
 //Code duplication from Unit.h here. I don't have a generic messaging system, so this will have to do for now.
 //I just need to commincate to main that a battle has started. Perhaps I could make some sort of GameManager class that main handles but is otherwise
 //independent of it. But that's later.
@@ -225,6 +259,19 @@ struct UnitStatsViewMenu : public Menu
 	bool examining = false;
 };
 
+//No idea what to call this one
+struct ExtraMenu : public Menu
+{
+	const static int UNIT = 0;
+	const static int STATUS = 1;
+	const static int OPTIONS = 2;
+	const static int SUSPEND = 3;
+	const static int END = 4;
+	ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+};
+
 struct MenuManager
 {
 	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager);
@@ -244,7 +291,10 @@ struct MenuManager
 	SpriteRenderer* renderer = nullptr;
 	BattleManager* battleManager = nullptr;
 
-	BattleSubject subject;
+	TurnSubject subject;
+
+	//Some actions, such as trading or dismounting will allow the menu to stay open but will force the unit to stay where they have been moved too
+	bool mustWait = false;
 
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 
