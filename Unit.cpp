@@ -527,7 +527,7 @@ std::unordered_map<glm::vec2, pathPoint, vec2Hash> Unit::FindUnitMoveRange()
     ClearPathData();
     auto position = sprite.getPosition();
 
-    path[position] = { position, position };
+    path[position] = { position, position }; // pretty sure this is also wrong
     std::vector<searchCell> checking;
     std::vector<std::vector<bool>> checked;
 

@@ -218,61 +218,92 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	std::vector<Unit*> units;
 	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
 
-	int maxRange = selectedUnit->maxRange;
-	int minRange = selectedUnit->minRange;
-	for (int i = minRange; i < maxRange + 1; i++)
+	std::vector<glm::vec2> foundTiles2;
+	std::vector<glm::vec2> rangeTiles;
+	std::vector<searchCell> checking;
+	std::vector<std::vector<bool>> checked;
+
+	checked.resize(TileManager::tileManager.levelWidth);
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
 	{
-		glm::ivec2 up = glm::ivec2(position.x, position.y - i * TileManager::TILE_SIZE);
-		glm::ivec2 down = glm::ivec2(position.x, position.y + i * TileManager::TILE_SIZE);
-		glm::ivec2 left = glm::ivec2(position.x - i * TileManager::TILE_SIZE, position.y);
-		glm::ivec2 right = glm::ivec2(position.x + i * TileManager::TILE_SIZE, position.y);
-		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(up.x, up.y, 1))
+		checked[i].resize(TileManager::tileManager.levelHeight);
+	}
+	std::vector<std::vector<int>> costs;
+	costs.resize(TileManager::tileManager.levelWidth);
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	{
+		costs[i].resize(TileManager::tileManager.levelHeight);
+	}
+	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+	{
+		for (int c = 0; c < TileManager::tileManager.levelHeight; c++)
 		{
-			units.push_back(unit);
-		}
-		for (int c = minRange; c < maxRange + 1 - i; c++)
-		{
-			glm::ivec2 upLeft = glm::ivec2(up.x - c * TileManager::TILE_SIZE, up.y);
-			glm::ivec2 upRight = glm::ivec2(up.x + c * TileManager::TILE_SIZE, up.y);
-			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(upLeft.x, upLeft.y, 1))
-			{
-				units.push_back(unit);
-			}
-			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(upRight.x, upRight.y, 1))
-			{
-				units.push_back(unit);
-			}
-		}
-		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(down.x, down.y, 1))
-		{
-			units.push_back(unit);
-		}
-		for (int c = minRange; c < maxRange + 1 - i; c++)
-		{
-			glm::ivec2 downLeft = glm::ivec2(down.x - c * TileManager::TILE_SIZE, down.y);
-			glm::ivec2 downRight = glm::ivec2(down.x + c * TileManager::TILE_SIZE, down.y);
-			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(downLeft.x, downLeft.y, 1))
-			{
-				units.push_back(unit);
-			}
-			if (Unit* unit = TileManager::tileManager.getUnitOnTeam(downRight.x, downRight.y, 1))
-			{
-				units.push_back(unit);
-			}
-		}
-		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(left.x, left.y, 1))
-		{
-			units.push_back(unit);
-		}
-		if (Unit* unit = TileManager::tileManager.getUnitOnTeam(right.x, right.y, 1))
-		{
-			units.push_back(unit);
+			costs[i][c] = 50;
 		}
 	}
+	glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
+	costs[normalPosition.x][normalPosition.y] = 0;
+	searchCell first = { normalPosition, 0 };
+	selectedUnit->addToOpenSet(first, checking, checked, costs);
+	while (checking.size() > 0)
+	{
+		auto current = checking[0];
+		selectedUnit->removeFromOpenList(checking);
+		int cost = current.moveCost;
+		glm::vec2 checkPosition = current.position;
 
+		glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+		glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+		glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+		glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+
+		CheckAdjacentTiles(up, checked, checking, current, costs, foundTiles2, units);
+		CheckAdjacentTiles(down, checked, checking, current, costs, foundTiles2, units);
+		CheckAdjacentTiles(right, checked, checking, current, costs, foundTiles2, units);
+		CheckAdjacentTiles(left, checked, checking, current, costs, foundTiles2, units);
+	}
 	return units;
 }
 
+void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units)
+{
+	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+	{
+		int mCost = startCell.moveCost;
+		auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+		int movementCost = mCost + 1;
+
+		auto distance = costs[checkingTile.x][checkingTile.y];
+		if (!checked[checkingTile.x][checkingTile.y])
+		{
+			//This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
+			//No idea if this is even needed here, this is what happens when you have the exact same code pasted in three locations!!!
+			if (movementCost < distance)
+			{
+				costs[checkingTile.x][checkingTile.y] = movementCost;
+			}
+			if (movementCost <= selectedUnit->maxRange)
+			{
+				//If the attack range goes from 1-2, we need to add every unit that is within 2 tiles. However,
+				//if the attack range is just 2, such as with bows, we only want to add units that are exactly 2 tiles away
+				//This does NOT account for cases in which the range is not a real range, but is 1, 3. So if you have one weapon with a range of 1-1, and
+				//Another with a range of 3-3, this breaks down. Not sure how to resolve that at this time.
+				if ((selectedUnit->minRange == selectedUnit->maxRange && movementCost == selectedUnit->maxRange) ||
+					(selectedUnit->minRange < selectedUnit->maxRange && movementCost <= selectedUnit->maxRange))
+				{
+					if (Unit * unit = TileManager::tileManager.getUnitOnTeam(tilePosition.x, tilePosition.y, 1))
+					{
+						units.push_back(unit);
+					}
+				}
+				searchCell newCell{ checkingTile, movementCost };
+				selectedUnit->addToOpenSet(newCell, checking, checked, costs);
+				foundTiles.push_back(tilePosition);
+			}
+		}
+	}
+}
 //There is a bug here caused by the fact that the selected unit does not actually move tiles until the move has been confirmed,
 //which means the selected unit can actually show up as an in range trade unit if it only moves one space.
 std::vector<Unit*> Cursor::tradeRangeUnits()
