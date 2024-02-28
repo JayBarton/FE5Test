@@ -141,6 +141,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="csv.h" />
     <ClInclude Include="Cursor.h" />
+    <ClInclude Include="EnemyManager.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Items.h" />
     <ClInclude Include="MenuManager.h" />
@@ -161,6 +162,7 @@
     <ClCompile Include="BattleManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Cursor.cpp" />
+    <ClCompile Include="EnemyManager.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Items.cpp" />
     <ClCompile Include="main.cpp" />
@@ -177,6 +179,9 @@
     <ClCompile Include="TileManager.cpp" />
     <ClCompile Include="Timing.cpp" />
     <ClCompile Include="Unit.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BaseStats.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

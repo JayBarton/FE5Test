@@ -6,9 +6,9 @@
 #include <SDL.h>
 #include <iostream>
 #include <algorithm>
-bool compareMoveCost(const searchCell& a, const searchCell& b) {
+/*/bool compareMoveCost(const searchCell& a, const searchCell& b) {
 	return a.moveCost < b.moveCost;
-}
+}*/
 
 //Cursor should have a reference to menumanager
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
@@ -83,8 +83,12 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				previousPosition = position;
 				selectedUnit = focusedUnit;
 				focusedUnit = nullptr;
-				path[position] = { position, position };
-				FindUnitMoveRange();
+				//path[position] = { position, position };
+				path = selectedUnit->FindUnitMoveRange();
+				foundTiles = selectedUnit->foundTiles;
+				attackTiles = selectedUnit->attackTiles;
+				costTile = selectedUnit->costTile;
+				//FindUnitMoveRange();
 			}
 			else
 			{
@@ -104,6 +108,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		{
 			if (selectedUnit)
 			{
+				selectedUnit->ClearPathData();
 				focusedUnit = selectedUnit;
 				selectedUnit = nullptr;
 				foundTiles.clear();
@@ -198,219 +203,6 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 	{
 		movementDelay = 0.0f;
 		firstMove = true;
-	}
-}
-
-void Cursor::FindUnitMoveRange()
-{
-	std::vector<searchCell> checking;
-	std::vector<std::vector<bool>> checked;
-
-	checked.resize(TileManager::tileManager.levelWidth);
-	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-	{
-		checked[i].resize(TileManager::tileManager.levelHeight);
-	}
-	//TODO consider making this a map
-	std::vector<std::vector<int>> costs;
-	costs.resize(TileManager::tileManager.levelWidth);
-	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-	{
-		costs[i].resize(TileManager::tileManager.levelHeight);
-	}
-	for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-	{
-		for (int c = 0; c < TileManager::tileManager.levelHeight; c++)
-		{
-			costs[i][c] = 50;
-		}
-	}
-	glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
-	costs[normalPosition.x][normalPosition.y] = 0;
-	searchCell first = { normalPosition, 0 };
-	addToOpenSet(first, checking, checked, costs);
-	foundTiles.push_back(position);
-	costTile.push_back(0);
-	while (checking.size() > 0)
-	{
-		auto current = checking[0];
-		removeFromOpenList(checking);
-		int cost = current.moveCost;
-		glm::vec2 checkPosition = current.position;
-
-		glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
-		glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
-		glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
-		glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
-
-		CheckAdjacentTiles(up, checked, checking, current, costs);
-		CheckAdjacentTiles(down, checked, checking, current, costs);
-		CheckAdjacentTiles(right, checked, checking, current, costs);
-		CheckAdjacentTiles(left, checked, checking, current, costs);
-	}
-	if (selectedUnit->maxRange > 0)
-	{
-		checked.clear();
-		checked.resize(TileManager::tileManager.levelWidth);
-		for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-		{
-			checked[i].resize(TileManager::tileManager.levelHeight);
-		}
-		for (int i = 0; i < attackTiles.size(); i++)
-		{
-			auto current = attackTiles[i] / TileManager::TILE_SIZE;
-			checked[current.x][current.y] = true;
-		}
-		std::vector<glm::ivec2> searchingAttacks = attackTiles;
-		for (int i = 0; i < searchingAttacks.size(); i++)
-		{
-			auto current = searchingAttacks[i] / TileManager::TILE_SIZE;
-			for (int c = 1; c < selectedUnit->maxRange; c++)
-			{
-				glm::ivec2 up = glm::ivec2(current.x, current.y - c);
-				glm::ivec2 down = glm::ivec2(current.x, current.y + c);
-				glm::ivec2 left = glm::ivec2(current.x - c, current.y);
-				glm::ivec2 right = glm::ivec2(current.x + c, current.y);
-				CheckExtraRange(up, checked);
-				CheckExtraRange(down, checked);
-				CheckExtraRange(left, checked);
-				CheckExtraRange(right, checked);
-			}
-		}
-	}
-}
-
-void Cursor::CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked)
-{
-	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
-	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
-	{
-		if (path.find(tilePosition) == path.end() && checked[checkingTile.x][checkingTile.y] == false)
-		{
-			checked[checkingTile.x][checkingTile.y] = true;
-			attackTiles.push_back(tilePosition);
-		}
-	}
-}
-
-void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs)
-{
-	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
-	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
-	{
-		int mCost = startCell.moveCost;
-		auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
-		int movementCost = mCost + thisTile->properties.movementCost;
-		//This is just a test, will not be keeping long term
-		if (selectedUnit->getMovementType() == Unit::FLYING)
-		{
-			movementCost = mCost + 1;
-		}
-
-		auto distance = costs[checkingTile.x][checkingTile.y];
-		if (!checked[checkingTile.x][checkingTile.y])
-		{
-			auto otherUnit = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y)->occupiedBy;
-			//This is horrid
-			if (otherUnit && otherUnit != selectedUnit && otherUnit->team != selectedUnit->team)
-			{
-				movementCost = 100;
-				costs[checkingTile.x][checkingTile.y] = movementCost;
-				checked[checkingTile.x][checkingTile.y] = true;
-			}
-			//This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
-			if (movementCost < distance)
-			{
-				costs[checkingTile.x][checkingTile.y] = movementCost;
-			}
-			if (movementCost <= selectedUnit->move)
-			{
-				searchCell newCell{ checkingTile, movementCost };
-				addToOpenSet(newCell, checking, checked, costs);
-				foundTiles.push_back(tilePosition);
-				costTile.push_back(movementCost);
-				path[tilePosition] = { tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
-			}
-			else
-			{
-				if (selectedUnit->maxRange > 0)
-				{
-					//U G H. Doing this to prevent it from adding dupes to the vector
-					if (distance == 50)
-					{
-						attackTiles.push_back(tilePosition);
-					}
-				}
-			}
-		}
-	}
-}
-
-
-
-void Cursor::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs)
-{
-	int position;
-	checking.push_back(newCell);
-	checked[newCell.position.x][newCell.position.y] = true;
-	costs[newCell.position.x][newCell.position.y] = newCell.moveCost;
-
-	position = checking.size() - 1;
-	while (position != 0)
-	{
-		if (checking[position].moveCost < checking[position / 2].moveCost)
-		{
-			searchCell tempNode = checking[position];
-			checking[position] = checking[position / 2];
-			checking[position / 2] = tempNode;
-			position /= 2;
-		}
-		else
-		{
-			break;
-		}
-	}
-}
-
-void Cursor::removeFromOpenList(std::vector<searchCell>& checking)
-{
-	int position = 1;
-	int position2;
-	searchCell temp;
-	std::vector<searchCell>::iterator it = checking.end() - 1;
-	checking[0] = checking[checking.size() - 1];
-	checking.erase(it);
-	while (position < checking.size())
-	{
-		position2 = position;
-		if (2 * position2 + 1 <= checking.size())
-		{
-			if (checking[position2 - 1].moveCost > checking[2 * position2 - 1].moveCost)
-			{
-				position = 2 * position2;
-			}
-			if (checking[position - 1].moveCost > checking[(2 * position2 + 1) - 1].moveCost)
-			{
-				position = 2 * position2 + 1;
-			}
-		}
-		else if (2 * position2 <= checking.size())
-		{
-			if (checking[position2 - 1].moveCost > checking[(2 * position2) - 1].moveCost)
-			{
-				position = 2 * position2;
-			}
-		}
-		if (position2 != position)
-		{
-			temp = checking[position2 - 1];
-			checking[position2 - 1] = checking[position - 1];
-			checking[position - 1] = temp;
-		}
-		else
-		{
-			break;
-		}
 	}
 }
 
@@ -562,6 +354,7 @@ void Cursor::Move(int x, int y, bool held)
 
 void Cursor::Wait()
 {
+	selectedUnit->ClearPathData();
 	TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
 	selectedUnit->placeUnit(position.x, position.y);
 	focusedUnit = selectedUnit;
@@ -572,6 +365,7 @@ void Cursor::Wait()
 
 void Cursor::UndoMove()
 {
+	selectedUnit->ClearPathData();
 	position = previousPosition;
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 	focusedUnit = selectedUnit;

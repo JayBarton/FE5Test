@@ -9,6 +9,24 @@
 #include "Sprite.h"
 class SpriteRenderer;
 
+struct searchCell
+{
+	glm::vec2 position;
+	int moveCost;
+};
+struct pathPoint
+{
+	glm::ivec2 position;
+	glm::ivec2 previousPosition;
+};
+struct vec2Hash
+{
+	size_t operator()(const glm::vec2& vec) const
+	{
+		return ((std::hash<float>()(vec.x) ^ (std::hash<float>()(vec.y) << 1)) >> 1);
+	}
+};
+
 struct Observer
 {
 	virtual ~Observer() {}
@@ -206,4 +224,26 @@ struct Unit
 	BattleStats CalculateBattleStats(int weaponID = -1);
 
 	WeaponData GetWeaponData(Item* item);
+
+	//Feel like I don't really want all of this here but it is working for now
+
+	//Both of these are used to draw the movement and attack range of a unit
+	std::vector<glm::ivec2> foundTiles;
+	std::vector<glm::ivec2> attackTiles;
+	//Temporary, just using to visualize tile costs
+	std::vector<int> costTile;
+
+	//This can probably be a map of vec2s rather than this pathPoint thing
+	std::unordered_map<glm::vec2, pathPoint, vec2Hash> path;
+	//Temporary, just using to visualize the path taken
+	std::vector<glm::ivec2> drawnPath;
+
+	std::unordered_map<glm::vec2, pathPoint, vec2Hash> FindUnitMoveRange();
+	void ClearPathData();
+	void addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs);
+	void removeFromOpenList(std::vector<searchCell>& checking);
+
+	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
+	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs);
+
 };

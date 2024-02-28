@@ -17,6 +17,7 @@
 #include "MenuManager.h"
 #include "Items.h"
 #include "BattleManager.h"
+#include "EnemyManager.h"
 
 #include "csv.h"
 #include <nlohmann/json.hpp>
@@ -81,6 +82,8 @@ std::vector<Unit*> enemies;
 InputManager inputManager;
 
 BattleManager battleManager;
+
+EnemyManager enemyManager;
 
 Unit* leveledUnit = nullptr;
 StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
@@ -300,6 +303,9 @@ int main(int argc, char** argv)
 //	enemies[0]->equipWeapon(0);
 
 	//enemies[0]->LevelEnemy(9);
+
+	enemyManager.enemies = enemies;
+	enemyManager.GetPriority();
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
