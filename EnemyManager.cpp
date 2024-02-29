@@ -3,21 +3,27 @@
 #include "Items.h"
 #include "TileManager.h"
 
+#include <algorithm>
+
+bool compareTargets(const Target& a, const Target& b)
+{
+    return a.priority > b.priority;
+}
+
 void EnemyManager::GetPriority()
 {
+    otherUnit = nullptr;
+    canCounter = true;
     auto enemy = enemies[1];
-    auto weapon = enemy->GetWeaponData(enemy->GetEquippedItem());
-    std::unordered_map<glm::vec2, pathPoint, vec2Hash> path = enemy->FindUnitMoveRange();
+    auto position = enemy->sprite.getPosition();
+    //Assme this unit moves
+    TileManager::tileManager.removeUnit(position.x, position.y);
 
-    /*
-    * 	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
-    attackDistance /= TileManager::TILE_SIZE;
-    auto enemyWeapon = enemy->GetWeaponData(enemy->GetEquippedItem());
-    if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
-    {
-        enemyCanCounter = true;
-    }
-    */
+    BattleStats battleStats;
+    std::unordered_map<glm::vec2, pathPoint, vec2Hash> path = enemy->FindUnitMoveRange();
+    
+    int cannotCounterBonus = 50;
+
     std::vector<Unit*> otherUnits;
     otherUnits.reserve(6);
     for (auto const& it : enemy->attackTiles)
@@ -28,16 +34,184 @@ void EnemyManager::GetPriority()
             otherUnits.push_back(unit);
         }
     }
-    std::vector<Target> targets;
-    targets.resize(otherUnits.size());
-    for (int i = 0; i < otherUnits.size(); i++)
+    if (otherUnits.size() == 0)
     {
-        auto otherUnit = otherUnits[i];
-        auto test = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
-        int a = 2;
-        //	if(otherUnit)
+        enemies[1]->placeUnit(position.x, position.y); 
+        enemies[1]->hasMoved = true;
     }
+    else
+    {
+        std::vector<Target> targets;
+        targets.resize(otherUnits.size());
+        for (int i = 0; i < otherUnits.size(); i++)
+        {
+            auto otherUnit = otherUnits[i];
+            auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+            auto attackPositions = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
 
+            targets[i].ID = i;
+            //First want to determine if the other unit can counter. Very high priority if they cannot
+            if (enemy->maxRange > otherWeapon.maxRange)
+            {
+                //Only worth considering if this unit can actually reach the range being checked
+                //For ranges greater than 1, this would suggest every space around the other unit is occupied
+                bool canReach = false;
+                for (int c = 0; c < attackPositions.size(); c++)
+                {
+                    if (attackPositions[c].distance == enemy->maxRange)
+                    {
+                        canReach = true;
+                        break;
+                    }
+                }
+                if (canReach)
+                {
+                    targets[i].range = enemy->maxRange;
+                    targets[i].priority += cannotCounterBonus;
+                    canCounter = false;
+                }
+            }
+            else if (enemy->minRange < otherWeapon.minRange)
+            {
+                //Same as above, though with a range of 1 it could also suggest the other unit is 2 or more
+                //tiles from the edge of this enemy's movement range
+                bool canReach = false;
+                for (int c = 0; c < attackPositions.size(); c++)
+                {
+                    if (attackPositions[c].distance == enemy->minRange)
+                    {
+                        canReach = true;
+                        break;
+                    }
+                }
+                if (canReach)
+                {
+                    targets[i].range = enemy->minRange;
+                    targets[i].priority += cannotCounterBonus;
+                    canCounter = false;
+                }
+            }
+            //Next want to check how much damage this enemy can do to the other unit
+            //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
+            BattleStats tempStats;
+            int maxDamage = 0;
+            int rangeToUse = 0;
+
+            for (int c = 0; c < enemy->weapons.size(); c++)
+            {
+                auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
+                if (targets[i].priority >= cannotCounterBonus)
+                {
+                    if (weapon.maxRange == targets[i].range || weapon.minRange == targets[i].range)
+                    {
+                        //calculate damage
+                        //for right now just going by other's defense
+                        tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+
+                        int damage = tempStats.attackDamage - otherUnit->defense;
+                        if (damage > maxDamage)
+                        {
+                            maxDamage = damage;
+                            battleStats = tempStats;
+                            targets[i].weaponToUse = enemy->weapons[c];
+                        }
+                    }
+                }
+                else
+                {
+                    auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
+                    bool canReach = false;
+
+                    //Need to confirm we can reach the unit. Don't need to do this above as it has already been handled
+                    //prefer to attack from as far away as possible
+                    for (int j = 0; j < attackPositions.size(); j++)
+                    {
+                        if (attackPositions[j].distance == weaponData.maxRange)
+                        {
+                            canReach = true;
+                            rangeToUse = weaponData.maxRange;
+                            break;
+                        }
+                    }
+                    if (!canReach)
+                    {
+                        for (int j = 0; j < attackPositions.size(); j++)
+                        {
+                            if (attackPositions[j].distance == weaponData.minRange)
+                            {
+                                canReach = true;
+                                rangeToUse = weaponData.minRange;
+                                break;
+                            }
+                        }
+                    }
+                    tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+                    if (canReach)
+                    {
+                        int damage = tempStats.attackDamage - otherUnit->defense;
+                        if (damage > maxDamage)
+                        {
+                            maxDamage = damage;
+                            battleStats = tempStats;
+                            //If we hadn't gotten the range from a unit that cannot counter, get it now
+                            //Not sure if using min or max or what here
+                            targets[i].range = rangeToUse;
+                            targets[i].weaponToUse = enemy->weapons[c];
+                        }
+                    }
+                }
+
+            }
+            targets[i].priority += maxDamage;
+        }
+        std::sort(targets.begin(), targets.end(), compareTargets);
+
+        for (int i = 0; i < enemy->inventory.size(); i++)
+        {
+            if (targets[0].weaponToUse == enemy->inventory[i])
+            {
+                enemy->equipWeapon(i);
+                break;
+            }
+        }
+        //Can probably do this better
+        otherUnit = otherUnits[targets[0].ID];
+        std::cout << "Attack " << otherUnit->name << " with " << enemy->GetEquippedItem()->name;
+        //Definitely don't need to redo this calculation
+        auto attackPositions = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
+        glm::vec2 attackPosition;
+        int minDistance = 1000;
+
+        for (int i = 0; i < attackPositions.size(); i++)
+        {
+            auto aPositionn = attackPositions[i].position;
+            if (i >= 4)
+            {
+                int a = 2;
+            }
+            if (attackPositions[i].distance == targets[0].range)
+            {
+                int distance = abs(position.x - aPositionn.x) + abs(position.y - aPositionn.y);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    attackPosition = attackPositions[i].position;
+                }
+            }
+        }
+        std::vector<glm::ivec2> followPath;
+        glm::vec2 pathPoint = attackPosition;
+        followPath.push_back(pathPoint);
+
+        while (pathPoint != enemy->sprite.getPosition())
+        {
+            auto previous = path[pathPoint].previousPosition;
+            followPath.push_back(previous);
+            pathPoint = previous;
+        }
+
+        enemy->movementComponent.startMovement(followPath);
+    }
 }
 
 void EnemyManager::Draw(SpriteRenderer* renderer)
@@ -48,12 +222,21 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	}
 }
 
-//This can be improved by only checking points that are on the path
-std::vector<glm::vec2> EnemyManager::ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathPoint, vec2Hash>& path, int minRange, int maxRange)
+void EnemyManager::Update(float deltaTime)
+{
+    for (int i = 0; i < enemies.size(); i++)
+    {
+    //    enemies[i]->Update(deltaTime);
+    }
+    enemies[1]->Update(deltaTime);
+
+}
+
+std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathPoint, vec2Hash>& path, int minRange, int maxRange)
 {
     auto position = toAttack->sprite.getPosition();
     std::vector<glm::vec2> foundTiles;
-    std::vector<glm::vec2> rangeTiles;
+    std::vector<AttackPosition> rangeTiles;
     std::vector<searchCell> checking;
     std::vector<std::vector<bool>> checked;
 
@@ -165,11 +348,10 @@ void EnemyManager::removeFromOpenList(std::vector<searchCell>& checking)
     }
 }
 
-void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<glm::vec2>& rangeTiles, const std::unordered_map<glm::vec2, pathPoint, vec2Hash>& path)
+void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles, const std::unordered_map<glm::vec2, pathPoint, vec2Hash>& path)
 {
     glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
-    if (path.find(tilePosition) != path.end())
-  //  if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+    if(!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
     {
         int mCost = startCell.moveCost;
         auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
@@ -186,10 +368,14 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
             auto something = enemies[1];
             if (movementCost <= something->maxRange)
             {
+               // something->minRange = 1;
                 if ((something->minRange == something->maxRange && movementCost == something->maxRange) ||
                     (something->minRange < something->maxRange && movementCost <= something->maxRange))
                 {
-                    rangeTiles.push_back(tilePosition);
+                    if (path.find(tilePosition) != path.end() && !TileManager::tileManager.getUnit(tilePosition.x, tilePosition.y))
+                    {
+                        rangeTiles.push_back({ tilePosition, movementCost });
+                    }
                 }
                 searchCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);

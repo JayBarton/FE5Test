@@ -11,14 +11,14 @@ Unit::Unit()
 
 Unit::~Unit()
 {
-    for (int i = 0; i < inventory.size(); i++)
+  /*  for (int i = 0; i < inventory.size(); i++)
     {
         delete inventory[i];
     }
     if (mount)
     {
         delete mount;
-    }
+    }*/
 }
 
 void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
@@ -26,6 +26,7 @@ void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribut
     this->gen = gen;
     this->distribution = distribution;
     sprite.setSize(glm::vec2(16));
+    movementComponent.owner = this;
 }
 
 void Unit::placeUnit(int x, int y)

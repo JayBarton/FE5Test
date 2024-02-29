@@ -62,9 +62,9 @@ std::string bg;
 const static int TILE_SIZE = 16;
 const static int ENEMY_WRITE = 1;
 
-std::unordered_map<glm::vec2, Object, vec2Hash> objects;
-std::unordered_map<glm::vec2, std::string, vec2Hash> objectStrings;
-std::unordered_map<glm::vec2, int, vec2Hash> objectWriteTypes;
+std::unordered_map<glm::vec2, Object, vec2Hash2> objects;
+std::unordered_map<glm::vec2, std::string, vec2Hash2> objectStrings;
+std::unordered_map<glm::vec2, int, vec2Hash2> objectWriteTypes;
 
 std::vector<glm::vec4> enemyUVs;
 

@@ -12,10 +12,10 @@
         "Lck": 0,
         "Def": 1,
         "Bld": 6,
-        "Mov": 1
+        "Mov": 5
       },
       "WeaponProf": {
-        "Lance": 1
+        "Lance": 2
       }
     },
     {
@@ -94,7 +94,7 @@
       "Skills": [ 1 ]
     },
     {
-      "ID": 0,
+      "ID": 1,
       "Name": "Finn",
       "Class": "Lance Knight",
       "Stats": {
@@ -130,6 +130,41 @@
       },
       "SpecialWeapons": [ 7 ],
       "Skills": [ 0 ]
+    },
+    {
+      "ID": 6,
+      "Name": "Tania",
+      "Class": "Bow Fighter",
+      "Stats": {
+        "Level": 1,
+        "HP": 20,
+        "Str": 3,
+        "Mag": 1,
+        "Skl": 6,
+        "Spd": 10,
+        "Lck": 6,
+        "Def": 2,
+        "Bld": 4,
+        "Mov": 6,
+        "Lead": 0,
+        "MS": 0,
+        "PC": 2
+      },
+      "GrowthRates": {
+        "HP": 60,
+        "Str": 35,
+        "Mag": 15,
+        "Skl": 55,
+        "Spd": 70,
+        "Lck": 60,
+        "Def": 15,
+        "Bld": 5,
+        "Mov": 2
+      },
+      "Inventory": [ 3, 7 ],
+      "WeaponProf": {
+        "Bow": 1
+      }
     }
   ]
 }

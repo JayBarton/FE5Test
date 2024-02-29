@@ -288,10 +288,11 @@ int main(int argc, char** argv)
 		playerUnits[currentUnit] = newUnit;
 		currentUnit++;
 	}
-	playerUnits[0]->placeUnit(48, 96);
-	playerUnits[1]->placeUnit(96, 112);
+	playerUnits[0]->placeUnit(48, 112);
+	playerUnits[1]->placeUnit(112, 112);
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+	playerUnits[2]->placeUnit(32, 96);
 
 //	enemies[0]->init(&gen, &distribution);
 	enemies[0]->sprite.uv = &playerUVs;
@@ -305,7 +306,7 @@ int main(int argc, char** argv)
 	//enemies[0]->LevelEnemy(9);
 
 	enemyManager.enemies = enemies;
-	enemyManager.GetPriority();
+	bool testMoving = false;
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
@@ -368,7 +369,7 @@ int main(int argc, char** argv)
 			{
 				//if in battle, handle battle, don't check input
 				//Should be able to level up while in the battle state, need to figure that out
-				if(battleManager.battleActive)
+				if (battleManager.battleActive)
 				{
 					battleManager.Update(deltaTime, &gen, &distribution);
 				}
@@ -415,6 +416,24 @@ int main(int argc, char** argv)
 		{
 			playerUnits[i]->Update(deltaTime);
 		}
+
+		if (inputManager.isKeyPressed(SDLK_e))
+		{
+			enemyManager.GetPriority();
+			testMoving = true;
+		}
+
+		enemyManager.Update(deltaTime);
+		if (testMoving)
+		{
+			if (!enemies[1]->movementComponent.moving)
+			{
+				battleManager.SetUp(enemies[1], enemyManager.otherUnit, enemies[1]->CalculateBattleStats(), enemyManager.otherUnit->CalculateBattleStats(), enemyManager.canCounter);
+				testMoving = false;
+				enemies[1]->placeUnit(enemies[1]->sprite.getPosition().x, enemies[1]->sprite.getPosition().y); //temp
+			}
+		}
+
 		camera.update();
 
 		Draw();

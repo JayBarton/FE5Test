@@ -122,15 +122,24 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 	growthNames[4] = "Magical 2";
 	growthNames[5] = "Fighter 2";
 
-	io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
-	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "description");
+	io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description");
 	std::string name;
 	int maxUses;
 	int useID;
 	int isWeapon;
+	int canDrop;
 	std::string description;
-	while (in.read_row(ID, name, maxUses, useID, isWeapon, description)) {
-		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), description });
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description))
+	{
+		//csv reader reads in new lines wrong for whatever reason, this fixes it.
+		size_t found = description.find("\\n");
+		while (found != std::string::npos)
+		{
+			description.replace(found, 2, "\n");
+			found = description.find("\\n", found + 1);
+		}
+		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
 	}
 
 	if (object)

@@ -25,7 +25,7 @@ struct Object
     std::vector<int> inventory;
 };
 
-struct vec2Hash
+struct vec2Hash2
 {
     size_t operator()(const glm::vec2& vec) const
     {
@@ -107,9 +107,9 @@ struct EnemyMode : public EditMode
 
     const static int NUMBER_OF_ENEMIES = 2;
 
-    EnemyMode(Object* obj, std::unordered_map<glm::vec2, Object, vec2Hash>& objects,
-    std::unordered_map<glm::vec2, std::string, vec2Hash>& objectStrings,
-    std::unordered_map<glm::vec2, int, vec2Hash>& objectWriteTypes,
+    EnemyMode(Object* obj, std::unordered_map<glm::vec2, Object, vec2Hash2>& objects,
+    std::unordered_map<glm::vec2, std::string, vec2Hash2>& objectStrings,
+    std::unordered_map<glm::vec2, int, vec2Hash2>& objectWriteTypes,
         int& numEnemies, std::vector<glm::vec4>& enemyUVs) : EditMode(obj), numberOfEnemies(numEnemies), uvs(enemyUVs), objects(objects), objectStrings(objectStrings), objectWriteTypes(objectWriteTypes)
     {
         facing = RIGHT;
@@ -118,9 +118,9 @@ struct EnemyMode : public EditMode
         type = ENEMY;
     }
 
-    std::unordered_map<glm::vec2, Object, vec2Hash>& objects;
-    std::unordered_map<glm::vec2, std::string, vec2Hash>& objectStrings;
-    std::unordered_map<glm::vec2, int, vec2Hash>& objectWriteTypes;
+    std::unordered_map<glm::vec2, Object, vec2Hash2>& objects;
+    std::unordered_map<glm::vec2, std::string, vec2Hash2>& objectStrings;
+    std::unordered_map<glm::vec2, int, vec2Hash2>& objectWriteTypes;
     std::vector<glm::vec4>& uvs;
 
     int& numberOfEnemies;

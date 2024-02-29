@@ -108,7 +108,7 @@ struct MovementComponent
 	std::vector<glm::ivec2> path;
 	int current;
 	int end;
-	bool moving;
+	bool moving = false;
 	void startMovement(const std::vector<glm::ivec2>& path);
 	void getNewDirection();
 	void Update(float deltaTime);
@@ -134,7 +134,6 @@ struct Unit
 	{
 		currentHP = maxHP;
 		movementType = FOOT;
-		movementComponent.owner = this;
 	}
 	~Unit();
 

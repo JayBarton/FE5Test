@@ -1409,8 +1409,10 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 	else
 	{
+		bool moved = false;
 		if (inputManager.isKeyPressed(SDLK_UP))
 		{
+			moved = true;
 			currentOption--;
 			if (currentOption < 0)
 			{
@@ -1419,6 +1421,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		else if (inputManager.isKeyPressed(SDLK_DOWN))
 		{
+			moved = true;
 			currentOption++;
 			if (currentOption >= numberOfOptions)
 			{
@@ -1428,6 +1431,15 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		if (inputManager.isKeyPressed(SDLK_z))
 		{
 			examining = false;
+		}
+
+		if (firstPage)
+		{
+			if (moved)
+			{
+				auto inventory = unit->inventory;
+				battleStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
+			}
 		}
 	}
 }

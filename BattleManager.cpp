@@ -60,7 +60,11 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	}
 	else if (defenderStats.attackSpeed >= attackerStats.attackSpeed + 4)
 	{
-		battleQueue.push_back(Attack{ 0, 0 });
+		//Want a better check than this
+		if (canDefenderAttack)
+		{
+			battleQueue.push_back(Attack{ 0, 0 });
+		}
 	}
 	accostQueue = battleQueue;
 	for (int i = 0; i < accostQueue.size(); i++)
