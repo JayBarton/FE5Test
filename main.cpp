@@ -47,7 +47,6 @@ void Draw();
 void DrawUnitRanges();
 void DrawText();
 void loadMap(std::string nextMap);
-void SetupEnemies(std::ifstream& map);
 std::string intToString(int i);
 void resizeWindow(int width, int height);
 
@@ -77,7 +76,7 @@ Cursor cursor;
 //Unit unit;
 //Unit allyUnit;
 std::vector<Unit*> playerUnits;
-std::vector<Unit*> enemies;
+//std::vector<Unit*> enemies;
 
 InputManager inputManager;
 
@@ -90,6 +89,8 @@ StatGrowths* preLevelStats = nullptr; //just using this because it has all the d
 bool leveling = false;
 float levelUpTimer;
 float levelUpTime = 2.5f;
+
+int currentTurn = 0;
 
 struct UnitEvents : public Observer
 {
@@ -105,11 +106,23 @@ struct UnitEvents : public Observer
 
 struct TurnEvents : public TurnObserver
 {
-	virtual void onNotify()
+	virtual void onNotify(int ID)
 	{
-		for (int i = 0; i < playerUnits.size(); i++)
+		if (ID == 0)
 		{
-			playerUnits[i]->hasMoved = false;
+			for (int i = 0; i < playerUnits.size(); i++)
+			{
+				playerUnits[i]->hasMoved = false;
+			}
+			//Whatever enemy manager set up here
+			//Probably going to want to figure out some sort of priority for the order in which enemies act
+			enemyManager.currentEnemy = 0;
+			currentTurn = 1;
+			std::cout << "Enemy Turn Start\n";
+		}
+		else if (ID == 1)
+		{
+			currentTurn = 0;
 		}
 	}
 };
@@ -295,9 +308,9 @@ int main(int argc, char** argv)
 	playerUnits[2]->placeUnit(32, 96);
 
 //	enemies[0]->init(&gen, &distribution);
-	enemies[0]->sprite.uv = &playerUVs;
-	enemies[1]->sprite.uv = &playerUVs;
-	enemies[0]->skills.push_back(Unit::VANTAGE);
+//	enemies[0]->sprite.uv = &playerUVs;
+//	enemies[1]->sprite.uv = &playerUVs;
+//	enemies[0]->skills.push_back(Unit::VANTAGE);
 //	enemies[0]->skills.push_back(Unit::WRATH);
 
 //	enemies[0]->addItem(8);
@@ -305,11 +318,11 @@ int main(int argc, char** argv)
 
 	//enemies[0]->LevelEnemy(9);
 
-	enemyManager.enemies = enemies;
-	bool testMoving = false;
+//	enemyManager.enemies = enemies;
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
+	enemyManager.subject.addObserver(turnEvents);
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
@@ -383,8 +396,16 @@ int main(int argc, char** argv)
 							thisUnit->AddExperience(50);
 						}
 					}
-					//if (!camera.moving)
-					cursor.CheckInput(inputManager, deltaTime, camera);
+					if (currentTurn == 0)
+					{
+						//if (!camera.moving)
+						cursor.CheckInput(inputManager, deltaTime, camera);
+					}
+					else
+					{
+						//enemy management
+						enemyManager.Update(battleManager);
+					}
 
 					if (!camera.moving)
 					{
@@ -416,26 +437,16 @@ int main(int argc, char** argv)
 		{
 			playerUnits[i]->Update(deltaTime);
 		}
+		enemyManager.UpdateEnemies(deltaTime);
 
-		if (inputManager.isKeyPressed(SDLK_e))
+		/*if (inputManager.isKeyPressed(SDLK_e))
 		{
 			enemyManager.GetPriority();
-			if (enemies[1]->movementComponent.moving)
+			//if (enemies[1]->movementComponent.moving)
 			{
 				testMoving = true;
 			}
-		}
-
-		enemyManager.Update(deltaTime);
-		if (testMoving)
-		{
-			if (!enemies[1]->movementComponent.moving)
-			{
-				battleManager.SetUp(enemies[1], enemyManager.otherUnit, enemies[1]->CalculateBattleStats(), enemyManager.otherUnit->CalculateBattleStats(), enemyManager.canCounter);
-				testMoving = false;
-				enemies[1]->placeUnit(enemies[1]->sprite.getPosition().x, enemies[1]->sprite.getPosition().y); //temp
-			}
-		}
+		}*/
 
 		camera.update();
 
@@ -446,11 +457,7 @@ int main(int argc, char** argv)
 
 	delete Renderer;
 	delete Text;
-	for (int i = 0; i < enemies.size(); i++)
-	{
-		delete enemies[i];
-	}
-	enemies.clear();
+	enemyManager.Clear();
 	for (int i = 0; i < playerUnits.size(); i++)
 	{
 		delete playerUnits[i];
@@ -558,7 +565,7 @@ void loadMap(std::string nextMap)
 		}
 		else if (thing == "Enemies")
 		{
-			SetupEnemies(map);
+			enemyManager.SetUp(map, &gen, &distribution);
 		}
 	}
 
@@ -572,97 +579,6 @@ void loadMap(std::string nextMap)
 	//	camera.setScale(2.0f);
 	camera.update();
 
-}
-
-void SetupEnemies(std::ifstream& map)
-{	
-	std::vector<Unit> unitBases;
-	unitBases.resize(3);
-
-	std::ifstream f("BaseStats.json");
-	json data = json::parse(f);
-	json bases = data["enemies"];
-	int currentUnit = 0;
-	std::unordered_map<std::string, int> weaponNameMap;
-	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
-	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
-	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
-	weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
-	weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
-	weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
-	weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
-	weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
-	weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
-	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
-
-	for (const auto& enemy : bases) {
-		int ID = enemy["ID"];
-		std::string name = enemy["Name"];
-		json stats = enemy["Stats"];
-		int HP = stats["HP"];
-		int str = stats["Str"];
-		int mag = stats["Mag"];
-		int skl = stats["Skl"];
-		int spd = stats["Spd"];
-		int lck = stats["Lck"];
-		int def = stats["Def"];
-		int bld = stats["Bld"];
-		int mov = stats["Mov"];
-		unitBases[currentUnit] = Unit(name, name, HP, str, mag, skl, spd, lck, def, bld, mov);
-
-		json weaponProf = enemy["WeaponProf"];
-		for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it) 
-		{
-			unitBases[currentUnit].weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
-		}
-		currentUnit++;
-	}
-
-	int ID;
-	int HP;
-	int str;
-	int mag;
-	int skl;
-	int spd;
-	int lck;
-	int def;
-	int bld;
-
-	io::CSVReader<9, io::trim_chars<' '>, io::no_quote_escape<':'>> in2("EnemyGrowths.csv");
-	in2.read_header(io::ignore_extra_column, "ID", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld");
-	currentUnit = 0;
-	std::vector<StatGrowths> unitGrowths;
-	unitGrowths.resize(6);
-	while (in2.read_row(ID, HP, str, mag, skl, spd, lck, def, bld)) {
-		unitGrowths[currentUnit] = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, 0 };
-		currentUnit++;
-	}
-
-	int numberOfEnemies;
-	map >> numberOfEnemies;
-	enemies.resize(numberOfEnemies);
-	for (int i = 0; i < numberOfEnemies; i++)
-	{
-		glm::vec2 position;
-		int type;
-		int level;
-		int growthID;
-		int inventorySize;
-		map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
-		enemies[i] = new Unit(unitBases[type]);
-		enemies[i]->team = 1;
-		enemies[i]->growths = unitGrowths[growthID];
-		for (int c = 0; c < inventorySize; c++)
-		{
-			int itemID;
-			map >> itemID;
-			enemies[i]->addItem(itemID);
-		}
-
-		enemies[i]->init(&gen, &distribution);
-		enemies[i]->LevelEnemy(level - 1);
-		enemies[i]->placeUnit(position.x, position.y);
-	}
 }
 
 void Draw()
@@ -692,11 +608,7 @@ void Draw()
 		{
 			playerUnits[i]->Draw(Renderer);
 		}
-
-		for (int i = 0; i < enemies.size(); i++)
-		{
-			enemies[i]->Draw(Renderer);
-		}
+		enemyManager.Draw(Renderer);
 
 		Renderer->setUVs(cursor.uvs[1]);
 		Texture2D displayTexture = ResourceManager::GetTexture("cursor");

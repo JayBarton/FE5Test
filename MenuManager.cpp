@@ -505,6 +505,8 @@ void ItemUseMenu::SelectOption()
 		break;
 	case EQUIP:
 		cursor->selectedUnit->equipWeapon(inventoryIndex);
+		MenuManager::menuManager.PreviousMenu();
+		MenuManager::menuManager.PreviousMenu();
 		//swap equipment
 		break;
 	case DROP:
@@ -1501,7 +1503,7 @@ void ExtraMenu::SelectOption()
 		break;
 	case END:
 		std::cout << "End turn menu\n";
-		MenuManager::menuManager.subject.notify();
+		MenuManager::menuManager.subject.notify(0);
 		ClearMenu();
 		break;
 	}

@@ -2,6 +2,8 @@
 #include <vector>
 #include <glm.hpp>
 #include "Unit.h"
+//Want turnsubject, move to it's own file later
+#include "MenuManager.h"
 
 class SpriteRenderer;
 
@@ -20,19 +22,26 @@ struct Target
 	std::vector<AttackPosition> attackPositions;
 };
 
-
-
 struct EnemyManager
 {
 	std::vector<Unit*> enemies;
 	int currentEnemy = 0;
 
 	bool canCounter = true;
+	bool enemyMoving = false;
 	Unit* otherUnit = nullptr;
 
-	void GetPriority();
+	TurnSubject subject;
+
+	std::vector<glm::vec4> UVs;
+
+	void GetPriority(Unit* enemy);
+	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
-	void Update(float deltaTime);
+	void Update(BattleManager& battleManager);
+	void UpdateEnemies(float deltaTime);
+	void EndTurn();
+	void Clear();
 
 	std::vector<AttackPosition> ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange);
 

@@ -2,14 +2,18 @@
 #include "SpriteRenderer.h"
 #include "Items.h"
 #include "TileManager.h"
+#include "BattleManager.h"
 
 #include <algorithm>
+#include <fstream>  
+#include "csv.h"
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
-void EnemyManager::GetPriority()
+void EnemyManager::GetPriority(Unit* enemy)
 {
     otherUnit = nullptr;
     canCounter = true;
-    auto enemy = enemies[1];
     auto position = enemy->sprite.getPosition();
     //Assme this unit moves
     TileManager::tileManager.removeUnit(position.x, position.y);
@@ -32,8 +36,9 @@ void EnemyManager::GetPriority()
     //If not in range of any units, enemy remains where they are
     if (otherUnits.size() == 0)
     {
-        enemies[1]->placeUnit(position.x, position.y); 
-        enemies[1]->hasMoved = true;
+        enemy->placeUnit(position.x, position.y); 
+        enemy->hasMoved = true;
+        currentEnemy++;
     }
     else
     {
@@ -166,8 +171,9 @@ void EnemyManager::GetPriority()
         //In range of units but cannot reach any of them, stay where you are
         if (finalTarget.priority == 0)
         {
-            enemies[1]->placeUnit(position.x, position.y);
-            enemies[1]->hasMoved = true;
+            enemy->placeUnit(position.x, position.y);
+            enemy->hasMoved = true;
+            currentEnemy++;
         }
         else
         {
@@ -209,7 +215,101 @@ void EnemyManager::GetPriority()
             }
 
             enemy->movementComponent.startMovement(followPath);
+            enemyMoving = true;
         }
+    }
+}
+
+void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
+{
+    UVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
+    std::vector<Unit> unitBases;
+    unitBases.resize(3);
+
+    std::ifstream f("BaseStats.json");
+    json data = json::parse(f);
+    json bases = data["enemies"];
+    int currentUnit = 0;
+    std::unordered_map<std::string, int> weaponNameMap;
+    weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
+    weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
+    weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
+    weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
+    weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
+    weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
+    weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
+    weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
+    weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
+    weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
+
+    for (const auto& enemy : bases) {
+        int ID = enemy["ID"];
+        std::string name = enemy["Name"];
+        json stats = enemy["Stats"];
+        int HP = stats["HP"];
+        int str = stats["Str"];
+        int mag = stats["Mag"];
+        int skl = stats["Skl"];
+        int spd = stats["Spd"];
+        int lck = stats["Lck"];
+        int def = stats["Def"];
+        int bld = stats["Bld"];
+        int mov = stats["Mov"];
+        unitBases[currentUnit] = Unit(name, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+
+        json weaponProf = enemy["WeaponProf"];
+        for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+        {
+            unitBases[currentUnit].weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+        }
+        currentUnit++;
+    }
+
+    int ID;
+    int HP;
+    int str;
+    int mag;
+    int skl;
+    int spd;
+    int lck;
+    int def;
+    int bld;
+
+    io::CSVReader<9, io::trim_chars<' '>, io::no_quote_escape<':'>> in2("EnemyGrowths.csv");
+    in2.read_header(io::ignore_extra_column, "ID", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld");
+    currentUnit = 0;
+    std::vector<StatGrowths> unitGrowths;
+    unitGrowths.resize(6);
+    while (in2.read_row(ID, HP, str, mag, skl, spd, lck, def, bld)) {
+        unitGrowths[currentUnit] = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, 0 };
+        currentUnit++;
+    }
+
+    int numberOfEnemies;
+    map >> numberOfEnemies;
+    enemies.resize(numberOfEnemies);
+    for (int i = 0; i < numberOfEnemies; i++)
+    {
+        glm::vec2 position;
+        int type;
+        int level;
+        int growthID;
+        int inventorySize;
+        map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
+        enemies[i] = new Unit(unitBases[type]);
+        enemies[i]->team = 1;
+        enemies[i]->growths = unitGrowths[growthID];
+        for (int c = 0; c < inventorySize; c++)
+        {
+            int itemID;
+            map >> itemID;
+            enemies[i]->addItem(itemID);
+        }
+
+        enemies[i]->init(gen, distribution);
+        enemies[i]->LevelEnemy(level - 1);
+        enemies[i]->placeUnit(position.x, position.y);
+        enemies[i]->sprite.uv = &UVs;
     }
 }
 
@@ -221,14 +321,60 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	}
 }
 
-void EnemyManager::Update(float deltaTime)
+void EnemyManager::Update(BattleManager& battleManager)
+{
+    if (currentEnemy >= enemies.size())
+    {
+        EndTurn();
+    }
+    else
+    {
+        auto enemy = enemies[currentEnemy];
+
+        if (!enemyMoving)
+        {
+            GetPriority(enemy);
+        }
+        else
+        {
+            if (!enemy->movementComponent.moving)
+            {
+                battleManager.SetUp(enemy, otherUnit, enemy->CalculateBattleStats(), otherUnit->CalculateBattleStats(), canCounter);
+                enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
+
+                enemyMoving = false;
+                currentEnemy++;
+            }
+        }
+    }
+}
+
+void EnemyManager::UpdateEnemies(float deltaTime)
 {
     for (int i = 0; i < enemies.size(); i++)
     {
-    //    enemies[i]->Update(deltaTime);
+        enemies[i]->Update(deltaTime);
     }
-    enemies[1]->Update(deltaTime);
+}
 
+void EnemyManager::EndTurn()
+{
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        enemies[i]->hasMoved = false;
+    }
+    subject.notify(1);
+    std::cout << "Player Turn Start\n";
+
+}
+
+void EnemyManager::Clear()
+{
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        delete enemies[i];
+    }
+    enemies.clear();
 }
 
 std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange)

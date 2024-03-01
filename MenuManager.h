@@ -12,7 +12,7 @@ class BattleManager;
 struct TurnObserver
 {
 	virtual ~TurnObserver() {}
-	virtual void onNotify() = 0;
+	virtual void onNotify(int ID) = 0;
 };
 
 struct TurnSubject
@@ -33,11 +33,11 @@ struct TurnSubject
 			observers.pop_back();
 		}
 	}
-	void notify()
+	void notify(int ID)
 	{
 		for (int i = 0; i < observers.size(); i++)
 		{
-			observers[i]->onNotify();
+			observers[i]->onNotify(ID);
 		}
 	}
 };
