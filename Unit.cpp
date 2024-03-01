@@ -523,13 +523,13 @@ WeaponData Unit::GetWeaponData(Item* item)
     return WeaponData();
 }
 
-std::unordered_map<glm::vec2, pathPoint, vec2Hash> Unit::FindUnitMoveRange()
+std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
 {
     ClearPathData();
     auto position = sprite.getPosition();
 
-    path[position] = { position, position }; // pretty sure this is also wrong
-    std::vector<searchCell> checking;
+    path[position] = { position, 0, position }; // pretty sure this is also wrong
+    std::vector<pathCell> checking;
     std::vector<std::vector<bool>> checked;
 
     checked.resize(TileManager::tileManager.levelWidth);
@@ -553,7 +553,7 @@ std::unordered_map<glm::vec2, pathPoint, vec2Hash> Unit::FindUnitMoveRange()
     }
     glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
     costs[normalPosition.x][normalPosition.y] = 0;
-    searchCell first = { normalPosition, 0 };
+    pathCell first = { normalPosition, 0 };
     addToOpenSet(first, checking, checked, costs);
     foundTiles.push_back(position);
     costTile.push_back(0);
@@ -616,7 +616,7 @@ void Unit::ClearPathData()
     drawnPath.clear();
 }
 
-void Unit::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs)
+void Unit::addToOpenSet(pathCell newCell, std::vector<pathCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs)
 {
     int position;
     checking.push_back(newCell);
@@ -628,7 +628,7 @@ void Unit::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, s
     {
         if (checking[position].moveCost < checking[position / 2].moveCost)
         {
-            searchCell tempNode = checking[position];
+            pathCell tempNode = checking[position];
             checking[position] = checking[position / 2];
             checking[position / 2] = tempNode;
             position /= 2;
@@ -640,12 +640,12 @@ void Unit::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, s
     }
 }
 
-void Unit::removeFromOpenList(std::vector<searchCell>& checking)
+void Unit::removeFromOpenList(std::vector<pathCell>& checking)
 {
     int position = 1;
     int position2;
-    searchCell temp;
-    std::vector<searchCell>::iterator it = checking.end() - 1;
+    pathCell temp;
+    std::vector<pathCell>::iterator it = checking.end() - 1;
     checking[0] = checking[checking.size() - 1];
     checking.erase(it);
     while (position < checking.size())
@@ -695,7 +695,7 @@ void Unit::CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<boo
     }
 }
 
-void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs)
+void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs)
 {
     glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
     if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
@@ -727,11 +727,11 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
             }
             if (movementCost <= move)
             {
-                searchCell newCell{ checkingTile, movementCost };
+                pathCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);
                 foundTiles.push_back(tilePosition);
                 costTile.push_back(movementCost);
-                path[tilePosition] = { tilePosition, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+                path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
             }
             else
             {

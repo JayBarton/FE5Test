@@ -6,9 +6,6 @@
 #include <SDL.h>
 #include <iostream>
 #include <algorithm>
-/*/bool compareMoveCost(const searchCell& a, const searchCell& b) {
-	return a.moveCost < b.moveCost;
-}*/
 
 //Cursor should have a reference to menumanager
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
@@ -220,7 +217,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 
 	std::vector<glm::vec2> foundTiles2;
 	std::vector<glm::vec2> rangeTiles;
-	std::vector<searchCell> checking;
+	std::vector<pathCell> checking;
 	std::vector<std::vector<bool>> checked;
 
 	checked.resize(TileManager::tileManager.levelWidth);
@@ -243,7 +240,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	}
 	glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
 	costs[normalPosition.x][normalPosition.y] = 0;
-	searchCell first = { normalPosition, 0 };
+	pathCell first = { normalPosition, 0 };
 	selectedUnit->addToOpenSet(first, checking, checked, costs);
 	while (checking.size() > 0)
 	{
@@ -265,7 +262,7 @@ std::vector<Unit*> Cursor::inRangeUnits()
 	return units;
 }
 
-void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units)
+void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units)
 {
 	glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
 	if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
@@ -297,7 +294,7 @@ void Cursor::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector
 						units.push_back(unit);
 					}
 				}
-				searchCell newCell{ checkingTile, movementCost };
+				pathCell newCell{ checkingTile, movementCost };
 				selectedUnit->addToOpenSet(newCell, checking, checked, costs);
 				foundTiles.push_back(tilePosition);
 			}

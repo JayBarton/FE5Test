@@ -9,16 +9,14 @@
 #include "Sprite.h"
 class SpriteRenderer;
 
-struct searchCell
-{
-	glm::vec2 position;
-	int moveCost;
-};
-struct pathPoint
+struct pathCell
 {
 	glm::ivec2 position;
+	int moveCost;
 	glm::ivec2 previousPosition;
+
 };
+
 struct vec2Hash
 {
 	size_t operator()(const glm::vec2& vec) const
@@ -233,16 +231,16 @@ struct Unit
 	std::vector<int> costTile;
 
 	//This can probably be a map of vec2s rather than this pathPoint thing
-	std::unordered_map<glm::vec2, pathPoint, vec2Hash> path;
+	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
 	//Temporary, just using to visualize the path taken
 	std::vector<glm::ivec2> drawnPath;
 
-	std::unordered_map<glm::vec2, pathPoint, vec2Hash> FindUnitMoveRange();
+	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindUnitMoveRange();
 	void ClearPathData();
-	void addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs);
-	void removeFromOpenList(std::vector<searchCell>& checking);
+	void addToOpenSet(pathCell newCell, std::vector<pathCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs);
+	void removeFromOpenList(std::vector<pathCell>& checking);
 
 	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
-	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs);
+	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
 
 };

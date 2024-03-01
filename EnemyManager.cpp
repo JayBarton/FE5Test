@@ -5,11 +5,6 @@
 
 #include <algorithm>
 
-bool compareTargets(const Target& a, const Target& b)
-{
-    return a.priority > b.priority;
-}
-
 void EnemyManager::GetPriority()
 {
     otherUnit = nullptr;
@@ -20,7 +15,7 @@ void EnemyManager::GetPriority()
     TileManager::tileManager.removeUnit(position.x, position.y);
 
     BattleStats battleStats;
-    std::unordered_map<glm::vec2, pathPoint, vec2Hash> path = enemy->FindUnitMoveRange();
+    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
     
     int cannotCounterBonus = 50;
 
@@ -34,6 +29,7 @@ void EnemyManager::GetPriority()
             otherUnits.push_back(unit);
         }
     }
+    //If not in range of any units, enemy remains where they are
     if (otherUnits.size() == 0)
     {
         enemies[1]->placeUnit(position.x, position.y); 
@@ -41,24 +37,25 @@ void EnemyManager::GetPriority()
     }
     else
     {
-        std::vector<Target> targets;
-        targets.resize(otherUnits.size());
+        Target finalTarget;
         for (int i = 0; i < otherUnits.size(); i++)
         {
+            Target currentTarget;
+
             auto otherUnit = otherUnits[i];
             auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
-            auto attackPositions = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
+            currentTarget.attackPositions = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
 
-            targets[i].ID = i;
+            currentTarget.ID = i;
             //First want to determine if the other unit can counter. Very high priority if they cannot
             if (enemy->maxRange > otherWeapon.maxRange)
             {
                 //Only worth considering if this unit can actually reach the range being checked
                 //For ranges greater than 1, this would suggest every space around the other unit is occupied
                 bool canReach = false;
-                for (int c = 0; c < attackPositions.size(); c++)
+                for (int c = 0; c < currentTarget.attackPositions.size(); c++)
                 {
-                    if (attackPositions[c].distance == enemy->maxRange)
+                    if (currentTarget.attackPositions[c].distance == enemy->maxRange)
                     {
                         canReach = true;
                         break;
@@ -66,8 +63,8 @@ void EnemyManager::GetPriority()
                 }
                 if (canReach)
                 {
-                    targets[i].range = enemy->maxRange;
-                    targets[i].priority += cannotCounterBonus;
+                    currentTarget.range = enemy->maxRange;
+                    currentTarget.priority += cannotCounterBonus;
                     canCounter = false;
                 }
             }
@@ -76,9 +73,9 @@ void EnemyManager::GetPriority()
                 //Same as above, though with a range of 1 it could also suggest the other unit is 2 or more
                 //tiles from the edge of this enemy's movement range
                 bool canReach = false;
-                for (int c = 0; c < attackPositions.size(); c++)
+                for (int c = 0; c < currentTarget.attackPositions.size(); c++)
                 {
-                    if (attackPositions[c].distance == enemy->minRange)
+                    if (currentTarget.attackPositions[c].distance == enemy->minRange)
                     {
                         canReach = true;
                         break;
@@ -86,8 +83,8 @@ void EnemyManager::GetPriority()
                 }
                 if (canReach)
                 {
-                    targets[i].range = enemy->minRange;
-                    targets[i].priority += cannotCounterBonus;
+                    currentTarget.range = enemy->minRange;
+                    currentTarget.priority += cannotCounterBonus;
                     canCounter = false;
                 }
             }
@@ -100,9 +97,9 @@ void EnemyManager::GetPriority()
             for (int c = 0; c < enemy->weapons.size(); c++)
             {
                 auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
-                if (targets[i].priority >= cannotCounterBonus)
+                if (currentTarget.priority >= cannotCounterBonus)
                 {
-                    if (weapon.maxRange == targets[i].range || weapon.minRange == targets[i].range)
+                    if (weapon.maxRange == currentTarget.range || weapon.minRange == currentTarget.range)
                     {
                         //calculate damage
                         //for right now just going by other's defense
@@ -113,7 +110,7 @@ void EnemyManager::GetPriority()
                         {
                             maxDamage = damage;
                             battleStats = tempStats;
-                            targets[i].weaponToUse = enemy->weapons[c];
+                            currentTarget.weaponToUse = enemy->weapons[c];
                         }
                     }
                 }
@@ -124,9 +121,9 @@ void EnemyManager::GetPriority()
 
                     //Need to confirm we can reach the unit. Don't need to do this above as it has already been handled
                     //prefer to attack from as far away as possible
-                    for (int j = 0; j < attackPositions.size(); j++)
+                    for (int j = 0; j < currentTarget.attackPositions.size(); j++)
                     {
-                        if (attackPositions[j].distance == weaponData.maxRange)
+                        if (currentTarget.attackPositions[j].distance == weaponData.maxRange)
                         {
                             canReach = true;
                             rangeToUse = weaponData.maxRange;
@@ -135,9 +132,9 @@ void EnemyManager::GetPriority()
                     }
                     if (!canReach)
                     {
-                        for (int j = 0; j < attackPositions.size(); j++)
+                        for (int j = 0; j < currentTarget.attackPositions.size(); j++)
                         {
-                            if (attackPositions[j].distance == weaponData.minRange)
+                            if (currentTarget.attackPositions[j].distance == weaponData.minRange)
                             {
                                 canReach = true;
                                 rangeToUse = weaponData.minRange;
@@ -154,63 +151,65 @@ void EnemyManager::GetPriority()
                             maxDamage = damage;
                             battleStats = tempStats;
                             //If we hadn't gotten the range from a unit that cannot counter, get it now
-                            //Not sure if using min or max or what here
-                            targets[i].range = rangeToUse;
-                            targets[i].weaponToUse = enemy->weapons[c];
+                            currentTarget.range = rangeToUse;
+                            currentTarget.weaponToUse = enemy->weapons[c];
                         }
                     }
                 }
-
             }
-            targets[i].priority += maxDamage;
-        }
-        std::sort(targets.begin(), targets.end(), compareTargets);
-
-        for (int i = 0; i < enemy->inventory.size(); i++)
-        {
-            if (targets[0].weaponToUse == enemy->inventory[i])
+            currentTarget.priority += maxDamage;
+            if (currentTarget.priority > finalTarget.priority)
             {
-                enemy->equipWeapon(i);
-                break;
+                finalTarget = currentTarget;
             }
         }
-        //Can probably do this better
-        otherUnit = otherUnits[targets[0].ID];
-        std::cout << "Attack " << otherUnit->name << " with " << enemy->GetEquippedItem()->name;
-        //Definitely don't need to redo this calculation
-        auto attackPositions = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
-        glm::vec2 attackPosition;
-        int minDistance = 1000;
-
-        for (int i = 0; i < attackPositions.size(); i++)
+        //In range of units but cannot reach any of them, stay where you are
+        if (finalTarget.priority == 0)
         {
-            auto aPositionn = attackPositions[i].position;
-            if (i >= 4)
+            enemies[1]->placeUnit(position.x, position.y);
+            enemies[1]->hasMoved = true;
+        }
+        else
+        {
+            for (int i = 0; i < enemy->inventory.size(); i++)
             {
-                int a = 2;
-            }
-            if (attackPositions[i].distance == targets[0].range)
-            {
-                int distance = abs(position.x - aPositionn.x) + abs(position.y - aPositionn.y);
-                if (distance < minDistance)
+                if (finalTarget.weaponToUse == enemy->inventory[i])
                 {
-                    minDistance = distance;
-                    attackPosition = attackPositions[i].position;
+                    enemy->equipWeapon(i);
+                    break;
                 }
             }
-        }
-        std::vector<glm::ivec2> followPath;
-        glm::vec2 pathPoint = attackPosition;
-        followPath.push_back(pathPoint);
+            otherUnit = otherUnits[finalTarget.ID];
+            auto attackPositions = finalTarget.attackPositions;
+            glm::vec2 attackPosition;
+            int minDistance = 100;
 
-        while (pathPoint != enemy->sprite.getPosition())
-        {
-            auto previous = path[pathPoint].previousPosition;
-            followPath.push_back(previous);
-            pathPoint = previous;
-        }
+            for (int i = 0; i < attackPositions.size(); i++)
+            {
+                auto aPosition = attackPositions[i].position;
+                if (attackPositions[i].distance == finalTarget.range)
+                {
+                    int distance = path[aPosition].moveCost;
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        attackPosition = attackPositions[i].position;
+                    }
+                }
+            }
+            std::vector<glm::ivec2> followPath;
+            glm::vec2 pathPoint = attackPosition;
+            followPath.push_back(pathPoint);
 
-        enemy->movementComponent.startMovement(followPath);
+            while (pathPoint != enemy->sprite.getPosition())
+            {
+                auto previous = path[pathPoint].previousPosition;
+                followPath.push_back(previous);
+                pathPoint = previous;
+            }
+
+            enemy->movementComponent.startMovement(followPath);
+        }
     }
 }
 
@@ -232,12 +231,12 @@ void EnemyManager::Update(float deltaTime)
 
 }
 
-std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathPoint, vec2Hash>& path, int minRange, int maxRange)
+std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange)
 {
     auto position = toAttack->sprite.getPosition();
     std::vector<glm::vec2> foundTiles;
     std::vector<AttackPosition> rangeTiles;
-    std::vector<searchCell> checking;
+    std::vector<pathCell> checking;
     std::vector<std::vector<bool>> checked;
 
     checked.resize(TileManager::tileManager.levelWidth);
@@ -260,7 +259,7 @@ std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, co
     }
     glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
     costs[normalPosition.x][normalPosition.y] = 0;
-    searchCell first = { normalPosition, 0 };
+    pathCell first = { normalPosition, 0 };
     addToOpenSet(first, checking, checked, costs);
     while (checking.size() > 0)
     {
@@ -282,7 +281,7 @@ std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, co
     return rangeTiles;
 }
 
-void EnemyManager::addToOpenSet(searchCell newCell, std::vector<searchCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs)
+void EnemyManager::addToOpenSet(pathCell newCell, std::vector<pathCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs)
 {
     int position;
     checking.push_back(newCell);
@@ -294,7 +293,7 @@ void EnemyManager::addToOpenSet(searchCell newCell, std::vector<searchCell>& che
     {
         if (checking[position].moveCost < checking[position / 2].moveCost)
         {
-            searchCell tempNode = checking[position];
+            pathCell tempNode = checking[position];
             checking[position] = checking[position / 2];
             checking[position / 2] = tempNode;
             position /= 2;
@@ -306,12 +305,12 @@ void EnemyManager::addToOpenSet(searchCell newCell, std::vector<searchCell>& che
     }
 }
 
-void EnemyManager::removeFromOpenList(std::vector<searchCell>& checking)
+void EnemyManager::removeFromOpenList(std::vector<pathCell>& checking)
 {
     int position = 1;
     int position2;
-    searchCell temp;
-    std::vector<searchCell>::iterator it = checking.end() - 1;
+    pathCell temp;
+    std::vector<pathCell>::iterator it = checking.end() - 1;
     checking[0] = checking[checking.size() - 1];
     checking.erase(it);
     while (position < checking.size())
@@ -348,7 +347,7 @@ void EnemyManager::removeFromOpenList(std::vector<searchCell>& checking)
     }
 }
 
-void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles, const std::unordered_map<glm::vec2, pathPoint, vec2Hash>& path)
+void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
 {
     glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
     if(!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
@@ -377,7 +376,7 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
                         rangeTiles.push_back({ tilePosition, movementCost });
                     }
                 }
-                searchCell newCell{ checkingTile, movementCost };
+                pathCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);
                 foundTiles.push_back(tilePosition);
             }

@@ -15,7 +15,7 @@ struct Cursor
 	std::vector<int> costTile;
 
 	//This can probably be a map of vec2s rather than this pathPoint thing
-	std::unordered_map<glm::vec2, pathPoint, vec2Hash> path;
+	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
 	//Temporary, just using to visualize the path taken
 	std::vector<glm::ivec2> drawnPath;
 
@@ -44,6 +44,6 @@ struct Cursor
 	void GetUnitOptions();
 
 	std::vector<Unit*> inRangeUnits();
-	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<searchCell>& checking, searchCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units);
+	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units);
 	std::vector<Unit*> tradeRangeUnits();
 };

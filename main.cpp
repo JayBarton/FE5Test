@@ -420,7 +420,10 @@ int main(int argc, char** argv)
 		if (inputManager.isKeyPressed(SDLK_e))
 		{
 			enemyManager.GetPriority();
-			testMoving = true;
+			if (enemies[1]->movementComponent.moving)
+			{
+				testMoving = true;
+			}
 		}
 
 		enemyManager.Update(deltaTime);
