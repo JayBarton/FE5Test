@@ -29,6 +29,8 @@ struct Cursor
 	bool firstMove = true; //Not sure how to handle this. I want a slightly longer delay the first time the player moves, unless they are moving fast
 	bool fastCursor = false;
 	bool movingUnit = false;
+	//For Canto users
+	bool remainingMove = false; 
 
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;
@@ -39,7 +41,10 @@ struct Cursor
 	void Move(int x, int y, bool held = false);
 
 	void Wait();
+	void MoveUnitToTile();
+	void GetRemainingMove();
 	void UndoMove();
+	void UndoRemainingMove();
 
 	void GetUnitOptions();
 

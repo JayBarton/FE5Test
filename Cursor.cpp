@@ -69,8 +69,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 							attackTiles.clear();
 							costTile.clear();
 							movingUnit = true;
-
-							selectedUnit->movementComponent.startMovement(drawnPath);
+							selectedUnit->movementComponent.startMovement(drawnPath, path[position].moveCost, remainingMove);
 						}
 					}
 				}
@@ -80,12 +79,10 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				previousPosition = position;
 				selectedUnit = focusedUnit;
 				focusedUnit = nullptr;
-				//path[position] = { position, position };
 				path = selectedUnit->FindUnitMoveRange();
 				foundTiles = selectedUnit->foundTiles;
 				attackTiles = selectedUnit->attackTiles;
 				costTile = selectedUnit->costTile;
-				//FindUnitMoveRange();
 			}
 			else
 			{
@@ -105,16 +102,25 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		{
 			if (selectedUnit)
 			{
-				selectedUnit->ClearPathData();
-				focusedUnit = selectedUnit;
-				selectedUnit = nullptr;
-				foundTiles.clear();
-				attackTiles.clear();
-				path.clear();
-				costTile.clear();
-				position = previousPosition;
-				camera.moving = true;
-				camera.SetMove(position);
+				if (remainingMove)
+				{
+					position = previousPosition;
+					camera.moving = true;
+					camera.SetMove(position);
+				}
+				else
+				{
+					selectedUnit->ClearPathData();
+					focusedUnit = selectedUnit;
+					selectedUnit = nullptr;
+					foundTiles.clear();
+					attackTiles.clear();
+					path.clear();
+					costTile.clear();
+					position = previousPosition;
+					camera.moving = true;
+					camera.SetMove(position);
+				}
 			}
 		}
 
@@ -205,7 +211,15 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 
 void Cursor::GetUnitOptions()
 {
-	MenuManager::menuManager.AddMenu(0);
+	if (remainingMove)
+	{
+		MenuManager::menuManager.AddMenu(4);
+
+	}
+	else
+	{
+		MenuManager::menuManager.AddMenu(0);
+	}
 }
 
 //Not sure about passing the team here. Not sure how finding healable units should work, 
@@ -382,13 +396,35 @@ void Cursor::Move(int x, int y, bool held)
 
 void Cursor::Wait()
 {
+	MoveUnitToTile();
+	path.clear();
+	selectedUnit->hasMoved = true;
+	focusedUnit = selectedUnit;
+	selectedUnit = nullptr;
+	remainingMove = false;
+}
+
+//This sucks
+void Cursor::MoveUnitToTile()
+{
 	selectedUnit->ClearPathData();
 	TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
 	selectedUnit->placeUnit(position.x, position.y);
-	focusedUnit = selectedUnit;
-	selectedUnit = nullptr;
+	drawnPath.clear();
+}
+
+void Cursor::GetRemainingMove()
+{
+	remainingMove = true;
+	MoveUnitToTile();
 	drawnPath.clear();
 	path.clear();
+
+	previousPosition = position;
+	path = selectedUnit->FindRemainingMoveRange();
+	foundTiles = selectedUnit->foundTiles;
+	attackTiles = selectedUnit->attackTiles;
+	costTile = selectedUnit->costTile;
 }
 
 void Cursor::UndoMove()
@@ -403,4 +439,13 @@ void Cursor::UndoMove()
 	path.clear();
 	costTile.clear();
 	drawnPath.clear();
+}
+
+void Cursor::UndoRemainingMove()
+{
+	selectedUnit->ClearPathData();
+	position = previousPosition;
+	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
+
+	GetRemainingMove();
 }

@@ -93,6 +93,8 @@ struct Mount
 	int def;
 	int mov;
 	bool mounted = true;
+
+	int remainingMoves;
 };
 
 //I am not sure this needs to be a component of the unit. Since only one unit will ever be moving at a time,
@@ -107,7 +109,7 @@ struct MovementComponent
 	int current;
 	int end;
 	bool moving = false;
-	void startMovement(const std::vector<glm::ivec2>& path);
+	void startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove);
 	void getNewDirection();
 	void Update(float deltaTime);
 };
@@ -212,6 +214,8 @@ struct Unit
 
 	bool hasSkill(int ID);
 
+	bool isMounted();
+
 	int getMovementType();
 
 	void MountAction(bool on);
@@ -236,9 +240,13 @@ struct Unit
 	std::vector<glm::ivec2> drawnPath;
 
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindUnitMoveRange();
+	void PathSearchSetUp(std::vector<std::vector<int>>& costs, std::vector<std::vector<bool>>& checked, glm::vec2& position, std::vector<pathCell>& checking);
 	void ClearPathData();
 	void addToOpenSet(pathCell newCell, std::vector<pathCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs);
 	void removeFromOpenList(std::vector<pathCell>& checking);
+
+	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindRemainingMoveRange();
+	void CheckRemainingAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
 
 	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
 	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);

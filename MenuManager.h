@@ -42,43 +42,6 @@ struct TurnSubject
 	}
 };
 
-//Not even using this
-//Code duplication from Unit.h here. I don't have a generic messaging system, so this will have to do for now.
-//I just need to commincate to main that a battle has started. Perhaps I could make some sort of GameManager class that main handles but is otherwise
-//independent of it. But that's later.
-struct BattleObserver
-{
-	virtual ~BattleObserver() {}
-	virtual void onNotify(class Unit* attacker, class Unit* defender) = 0;
-};
-
-struct BattleSubject
-{
-	std::vector<BattleObserver*> observers;
-
-	void addObserver(BattleObserver* observer)
-	{
-		observers.push_back(observer);
-	}
-	void removeObserver(BattleObserver* observer)
-	{
-		auto it = std::find(observers.begin(), observers.end(), observer);
-		if (it != observers.end())
-		{
-			delete* it;
-			*it = observers.back();
-			observers.pop_back();
-		}
-	}
-	void notify(class Unit* attacker, class Unit* defender)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(attacker, defender);
-		}
-	}
-};
-
 struct Menu
 {
 	Menu() {}
@@ -89,6 +52,7 @@ struct Menu
 	virtual void CancelOption();
 	virtual void GetOptions() {};
 	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
+	void EndUnitMove();
 	void ClearMenu();
 
 	Cursor* cursor = nullptr;
@@ -130,6 +94,14 @@ struct UnitOptionsMenu : public Menu
 	bool canDismount = false;
 	bool canMount = false;
 	bool canTrade = false;
+};
+
+struct CantoOptionsMenu : public Menu
+{
+	CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CancelOption() override;
 };
 
 struct ItemOptionsMenu : public Menu
@@ -215,7 +187,7 @@ struct SelectEnemyMenu : public Menu
 
 struct SelectTradeUnit : public Menu
 {
-	SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units);
+	SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -223,7 +195,7 @@ struct SelectTradeUnit : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<Unit*> tradeUnits;
-
+	SpriteRenderer* renderer;
 };
 
 struct TradeMenu : public Menu

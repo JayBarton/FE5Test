@@ -121,16 +121,16 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 							std::cout << defender->name << " Accosts\n";
 						}
 					}
+					//No one has accost, we're done
 					else
 					{
-						battleActive = false;
-						attacker->hasMoved = true;
+						EndAttack();
 					}
 				}
+				//We are in an accost round, and it should only fire once(I think)
 				else
 				{
-					battleActive = false;
-					attacker->hasMoved = true;
+					EndAttack();
 				}
 			}
 		}
@@ -235,10 +235,10 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		int remainingHealth = otherUnit->currentHP - dealtDamage;
 		thisUnit->GetEquippedItem()->remainingUses--;
 		otherUnit->currentHP = remainingHealth;
+		//Need to figure this out
 		if (otherUnit->currentHP <= 0)
 		{
-			battleActive = false;
-			attacker->hasMoved = true;
+			EndAttack();
 		}
 		std::cout << thisUnit->name << " Attacks\n";
 	}
@@ -246,6 +246,20 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	{
 		std::cout << thisUnit->name << " Misses\n";
 	}
+}
+
+void BattleManager::EndAttack()
+{
+	battleActive = false;
+	subject.notify(attacker, defender);
+/*	if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+	{
+		//If the player attacked we need to return control to the cursor
+	}
+	else
+	{
+		attacker->hasMoved = true;
+	}*/
 }
 
 void BattleManager::Draw(TextRenderer* text)

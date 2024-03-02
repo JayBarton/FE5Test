@@ -36,6 +36,7 @@ struct EnemyManager
 	std::vector<glm::vec4> UVs;
 
 	void GetPriority(Unit* enemy);
+	void NoMove(Unit* enemy, glm::vec2& position);
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
 	void Update(BattleManager& battleManager);

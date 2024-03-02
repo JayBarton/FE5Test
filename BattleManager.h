@@ -1,7 +1,41 @@
 #pragma once
 #include <random>
 #include "Unit.h"
+
 class TextRenderer;
+
+struct BattleObserver
+{
+	virtual ~BattleObserver() {}
+	virtual void onNotify(Unit* attacker, Unit* defender) = 0;
+};
+
+struct BattleSubject
+{
+	std::vector<BattleObserver*> observers;
+
+	void addObserver(BattleObserver* observer)
+	{
+		observers.push_back(observer);
+	}
+	void removeObserver(BattleObserver* observer)
+	{
+		auto it = std::find(observers.begin(), observers.end(), observer);
+		if (it != observers.end())
+		{
+			delete* it;
+			*it = observers.back();
+			observers.pop_back();
+		}
+	}
+	void notify(Unit* attacker, Unit* defender)
+	{
+		for (int i = 0; i < observers.size(); i++)
+		{
+			observers[i]->onNotify(attacker, defender);
+		}
+	}
+};
 
 struct Attack
 {
@@ -20,6 +54,8 @@ struct BattleManager
 	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int firstDamage, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+
+	void EndAttack();
 
 	void Draw(TextRenderer* text);
 
@@ -42,4 +78,6 @@ struct BattleManager
 
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;
+
+	BattleSubject subject;
 };

@@ -36,9 +36,7 @@ void EnemyManager::GetPriority(Unit* enemy)
     //If not in range of any units, enemy remains where they are
     if (otherUnits.size() == 0)
     {
-        enemy->placeUnit(position.x, position.y); 
-        enemy->hasMoved = true;
-        currentEnemy++;
+        NoMove(enemy, position);
     }
     else
     {
@@ -171,9 +169,7 @@ void EnemyManager::GetPriority(Unit* enemy)
         //In range of units but cannot reach any of them, stay where you are
         if (finalTarget.priority == 0)
         {
-            enemy->placeUnit(position.x, position.y);
-            enemy->hasMoved = true;
-            currentEnemy++;
+            NoMove(enemy, position);
         }
         else
         {
@@ -214,10 +210,17 @@ void EnemyManager::GetPriority(Unit* enemy)
                 pathPoint = previous;
             }
 
-            enemy->movementComponent.startMovement(followPath);
+            enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
             enemyMoving = true;
         }
     }
+}
+
+void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
+{
+    enemy->placeUnit(position.x, position.y);
+    enemy->hasMoved = true;
+    currentEnemy++;
 }
 
 void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)

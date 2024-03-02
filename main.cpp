@@ -126,6 +126,32 @@ struct TurnEvents : public TurnObserver
 		}
 	}
 };
+
+struct BattleEvents : public BattleObserver
+{
+	virtual void onNotify(Unit* attacker, Unit* defender)
+	{
+		if (currentTurn == 0)
+		{
+			if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+			{
+				//If the player attacked we need to return control to the cursor
+				cursor.GetRemainingMove();
+			}
+			else
+			{
+				cursor.Wait();
+				//attacker->hasMoved = true;
+			}
+		}
+		//Zero idea how enemies should handle canto
+		else
+		{
+			attacker->hasMoved = true;
+		}
+	}
+};
+
 std::mt19937 gen;
 //gen.seed(1);
 std::uniform_int_distribution<int> distribution(0, 99);
@@ -222,6 +248,8 @@ int main(int argc, char** argv)
 	ItemManager::itemManager.SetUpItems();
 	UnitEvents* unitEvents = new UnitEvents();
 	TurnEvents* turnEvents = new TurnEvents();
+	BattleEvents* battleEvents = new BattleEvents();
+	battleManager.subject.addObserver(battleEvents);
 	loadMap("1.map");
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 
@@ -473,6 +501,7 @@ int main(int argc, char** argv)
 	}*/
 	delete unitEvents;
 	delete turnEvents;
+	delete battleEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();

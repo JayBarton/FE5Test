@@ -420,9 +420,14 @@ bool Unit::hasSkill(int ID)
     return false;
 }
 
+bool Unit::isMounted()
+{
+    return mount && mount->mounted;
+}
+
 int Unit::getMovementType()
 {
-    if (mount && mount->mounted)
+    if (isMounted())
     {
         return mount->movementType;
     }
@@ -531,32 +536,9 @@ std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
     path[position] = { position, 0, position }; // pretty sure this is also wrong
     std::vector<pathCell> checking;
     std::vector<std::vector<bool>> checked;
-
-    checked.resize(TileManager::tileManager.levelWidth);
-    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-    {
-        checked[i].resize(TileManager::tileManager.levelHeight);
-    }
     //TODO consider making this a map
     std::vector<std::vector<int>> costs;
-    costs.resize(TileManager::tileManager.levelWidth);
-    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-    {
-        costs[i].resize(TileManager::tileManager.levelHeight);
-    }
-    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
-    {
-        for (int c = 0; c < TileManager::tileManager.levelHeight; c++)
-        {
-            costs[i][c] = 50;
-        }
-    }
-    glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
-    costs[normalPosition.x][normalPosition.y] = 0;
-    pathCell first = { normalPosition, 0 };
-    addToOpenSet(first, checking, checked, costs);
-    foundTiles.push_back(position);
-    costTile.push_back(0);
+    PathSearchSetUp(costs, checked, position, checking);
     while (checking.size() > 0)
     {
         auto current = checking[0];
@@ -605,6 +587,35 @@ std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
         }
     }
     return path;
+}
+
+void Unit::PathSearchSetUp(std::vector<std::vector<int>>& costs, std::vector<std::vector<bool>>& checked, glm::vec2& position, std::vector<pathCell>& checking)
+{
+    costs.resize(TileManager::tileManager.levelWidth);
+
+    checked.resize(TileManager::tileManager.levelWidth);
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+    {
+        checked[i].resize(TileManager::tileManager.levelHeight);
+    }
+
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+    {
+        costs[i].resize(TileManager::tileManager.levelHeight);
+    }
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+    {
+        for (int c = 0; c < TileManager::tileManager.levelHeight; c++)
+        {
+            costs[i][c] = 50;
+        }
+    }
+    glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
+    costs[normalPosition.x][normalPosition.y] = 0;
+    pathCell first = { normalPosition, 0 };
+    addToOpenSet(first, checking, checked, costs);
+    foundTiles.push_back(position);
+    costTile.push_back(0);
 }
 
 void Unit::ClearPathData()
@@ -682,6 +693,78 @@ void Unit::removeFromOpenList(std::vector<pathCell>& checking)
     }
 }
 
+std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindRemainingMoveRange()
+{
+    ClearPathData();
+    auto position = sprite.getPosition();
+
+    path[position] = { position, 0, position }; // pretty sure this is also wrong
+    std::vector<pathCell> checking;
+    std::vector<std::vector<bool>> checked;
+    //TODO consider making this a map
+    std::vector<std::vector<int>> costs;
+    PathSearchSetUp(costs, checked, position, checking);
+    while (checking.size() > 0)
+    {
+        auto current = checking[0];
+        removeFromOpenList(checking);
+        int cost = current.moveCost;
+        glm::vec2 checkPosition = current.position;
+
+        glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+        glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+        glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+        glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+        CheckRemainingAdjacentTiles(up, checked, checking, current, costs);
+        CheckRemainingAdjacentTiles(down, checked, checking, current, costs);
+        CheckRemainingAdjacentTiles(right, checked, checking, current, costs);
+        CheckRemainingAdjacentTiles(left, checked, checking, current, costs);
+    }
+    return path;
+}
+
+void Unit::CheckRemainingAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs)
+{
+    glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+    if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+    {
+        int mCost = startCell.moveCost;
+        auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+        int movementCost = mCost + thisTile->properties.movementCost;
+        //This is just a test, will not be keeping long term
+        if (getMovementType() == Unit::FLYING)
+        {
+            movementCost = mCost + 1;
+        }
+
+        auto distance = costs[checkingTile.x][checkingTile.y];
+        if (!checked[checkingTile.x][checkingTile.y])
+        {
+            auto otherUnit = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y)->occupiedBy;
+            //This is horrid
+            if (otherUnit && otherUnit != this && otherUnit->team != team)
+            {
+                movementCost = 100;
+                costs[checkingTile.x][checkingTile.y] = movementCost;
+                checked[checkingTile.x][checkingTile.y] = true;
+            }
+            //This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
+            if (movementCost < distance)
+            {
+                costs[checkingTile.x][checkingTile.y] = movementCost;
+            }
+            if (movementCost <= mount->remainingMoves)
+            {
+                pathCell newCell{ checkingTile, movementCost };
+                addToOpenSet(newCell, checking, checked, costs);
+                foundTiles.push_back(tilePosition);
+                costTile.push_back(movementCost);
+                path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+            }
+        }
+    }
+}
+
 void Unit::CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked)
 {
     glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
@@ -748,12 +831,19 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
     }
 }
 
-void MovementComponent::startMovement(const std::vector<glm::ivec2>& path)
+void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove)
 {
     this->path = path;
     end = 0;
     current = path.size() - 1;
     moving = true;
+    if (!remainingMove)
+    {
+        if (owner->isMounted())
+        {
+            owner->mount->remainingMoves = owner->move - moveCost;
+        }
+    }
     getNewDirection();
 }
 

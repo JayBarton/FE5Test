@@ -43,6 +43,20 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
+void Menu::EndUnitMove()
+{
+	if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
+	{
+		cursor->GetRemainingMove();
+	}
+	else
+	{
+		cursor->Wait();
+	}
+	ClearMenu();
+
+}
+
 void Menu::CancelOption()
 {
 	MenuManager::menuManager.PreviousMenu();
@@ -104,7 +118,7 @@ void UnitOptionsMenu::SelectOption()
 	}
 	case TRADE:
 	{
-		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, tradeUnits);
+		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, tradeUnits, MenuManager::menuManager.renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -131,9 +145,8 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.mustWait = true;
 		break;
 	}
-		//Wait
+	//Wait
 	default:
-		cursor->selectedUnit->hasMoved = true;
 		cursor->Wait();
 		ClearMenu();
 		break;
@@ -144,9 +157,7 @@ void UnitOptionsMenu::CancelOption()
 {
 	if (MenuManager::menuManager.mustWait)
 	{
-		cursor->selectedUnit->hasMoved = true;
-		cursor->Wait();
-		Menu::ClearMenu();
+		EndUnitMove();
 	}
 	else
 	{
@@ -250,6 +261,48 @@ void UnitOptionsMenu::GetOptions()
 	}
 	optionsVector.push_back(WAIT);
 	numberOfOptions = optionsVector.size();
+}
+
+CantoOptionsMenu::CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	numberOfOptions = 1;
+}
+
+void CantoOptionsMenu::Draw()
+{
+	int xStart = 800;
+	int yOffset = 100;
+	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		//	xStart = 178;
+	}
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(176, 32 + (12 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	text->RenderText("Wait", xStart - 200, yOffset, 1);
+}
+
+void CantoOptionsMenu::SelectOption()
+{
+	cursor->Wait();
+	ClearMenu();
+}
+
+void CantoOptionsMenu::CancelOption()
+{
+	cursor->UndoRemainingMove();
+	Menu::CancelOption();
 }
 
 ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : Menu(Cursor, Text, Camera, shapeVAO)
@@ -411,6 +464,11 @@ void MenuManager::AddMenu(int ID)
 		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
 		menus.push_back(newMenu);
 	}
+	else if (ID == 4)
+	{
+		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
 }
 
 void MenuManager::AddUnitStatMenu(Unit* unit)
@@ -499,9 +557,7 @@ void ItemUseMenu::SelectOption()
 	{
 	case USE:
 		ItemManager::itemManager.UseItem(cursor->selectedUnit, inventoryIndex, item->useID);
-		cursor->selectedUnit->hasMoved = true;
-		cursor->Wait();
-		ClearMenu();
+		EndUnitMove();
 		break;
 	case EQUIP:
 		cursor->selectedUnit->equipWeapon(inventoryIndex);
@@ -713,7 +769,15 @@ void SelectEnemyMenu::SelectOption()
 {
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
 	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter);
-	cursor->Wait();
+	cursor->MoveUnitToTile();
+	if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
+	{
+	//	cursor->GetRemainingMove();
+	}
+	else
+	{
+	//	cursor->Wait();
+	}
 //	MenuManager::menuManager.camera->SetMove(cursor->position); Not sure about this, need to have the camera move so it centers the units
 	ClearMenu();
 }
@@ -874,8 +938,9 @@ void SelectEnemyMenu::CanEnemyCounter()
 	}
 }
 
-SelectTradeUnit::SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units) : Menu(Cursor, Text, camera, shapeVAO)
+SelectTradeUnit::SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
 {
+	renderer = Renderer;
 	tradeUnits = units;
 	GetOptions();
 }
@@ -902,6 +967,12 @@ void SelectTradeUnit::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	auto enemy = tradeUnit;
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, enemy->sprite.getPosition(), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(tradeUnit->name, 500, textHeight, 1);
