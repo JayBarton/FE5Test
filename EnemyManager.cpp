@@ -12,6 +12,7 @@ using json = nlohmann::json;
 
 void EnemyManager::GetPriority(Unit* enemy)
 {
+    state = GET_TARGET;
     otherUnit = nullptr;
     canCounter = true;
     auto position = enemy->sprite.getPosition();
@@ -209,7 +210,7 @@ void EnemyManager::GetPriority(Unit* enemy)
                 followPath.push_back(previous);
                 pathPoint = previous;
             }
-
+            state = ATTACK;
             enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
             enemyMoving = true;
         }
@@ -342,14 +343,81 @@ void EnemyManager::Update(BattleManager& battleManager)
         {
             if (!enemy->movementComponent.moving)
             {
-                battleManager.SetUp(enemy, otherUnit, enemy->CalculateBattleStats(), otherUnit->CalculateBattleStats(), canCounter);
                 enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
-
-                enemyMoving = false;
-                currentEnemy++;
+                if (state == ATTACK)
+                {
+                    battleManager.SetUp(enemy, otherUnit, enemy->CalculateBattleStats(), otherUnit->CalculateBattleStats(), canCounter);
+                }
+                else if(state == CANTO)
+                {
+                    FinishMove();
+                }
             }
         }
     }
+}
+
+void EnemyManager::CantoMove()
+{
+    auto enemy = enemies[currentEnemy];
+    auto position = enemy->sprite.getPosition();
+
+    auto directionToOtherUnit = glm::normalize(glm::vec2(position - otherUnit->sprite.getPosition()));
+
+
+    TileManager::tileManager.removeUnit(position.x, position.y);
+    state = CANTO;
+    auto path = enemy->FindRemainingMoveRange();
+    int bestValue = 0;
+    glm::ivec2 bestPosition;
+    for (auto const& x : path)
+    {
+        auto tile = TileManager::tileManager.getTile(x.first.x, x.first.y);
+        if (!tile->occupiedBy)
+        {
+            auto tileProperties = tile->properties;
+            auto directionToTarget = glm::normalize(glm::vec2(position - x.first));
+            int oppositeDirectionBonus = 0;
+            //Want to lightly discourage enemies from running past player units, and instead run in the direction they came
+            if (directionToOtherUnit.x * directionToTarget.x > 0 || directionToOtherUnit.y * directionToTarget.y > 0)
+            {
+                oppositeDirectionBonus = -1;
+            }
+            int tileConsiderations = x.second.moveCost + tileProperties.avoid + (tileProperties.defense * 10) + oppositeDirectionBonus;
+            if (tileConsiderations > bestValue)
+            {
+                bestValue = tileConsiderations;
+                bestPosition = x.first;
+
+            }
+        }
+    }
+    if (bestValue == 0)
+    {
+        NoMove(enemy, position);
+    }
+    else
+    {
+        std::vector<glm::ivec2> followPath;
+        glm::vec2 pathPoint = bestPosition;
+        followPath.push_back(pathPoint);
+
+        while (pathPoint != enemy->sprite.getPosition())
+        {
+            auto previous = path[pathPoint].previousPosition;
+            followPath.push_back(previous);
+            pathPoint = previous;
+        }
+        enemy->movementComponent.startMovement(followPath, path[bestPosition].moveCost, true);
+    }
+}
+
+void EnemyManager::FinishMove()
+{
+    enemies[currentEnemy]->hasMoved = true;
+    enemyMoving = false;
+    currentEnemy++;
+    state = GET_TARGET;
 }
 
 void EnemyManager::UpdateEnemies(float deltaTime)
@@ -520,7 +588,7 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
                 if ((something->minRange == something->maxRange && movementCost == something->maxRange) ||
                     (something->minRange < something->maxRange && movementCost <= something->maxRange))
                 {
-                    if (path.find(tilePosition) != path.end() && !TileManager::tileManager.getUnit(tilePosition.x, tilePosition.y))
+                    if (path.find(tilePosition) != path.end() && !thisTile->occupiedBy)
                     {
                         rangeTiles.push_back({ tilePosition, movementCost });
                     }

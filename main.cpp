@@ -141,13 +141,20 @@ struct BattleEvents : public BattleObserver
 			else
 			{
 				cursor.Wait();
-				//attacker->hasMoved = true;
 			}
 		}
-		//Zero idea how enemies should handle canto
+		//Not crazy about any of this
 		else
 		{
-			attacker->hasMoved = true;
+			if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+			{
+				enemyManager.CantoMove();
+			}
+			else
+			{
+				enemyManager.FinishMove();
+			}
+
 		}
 	}
 };

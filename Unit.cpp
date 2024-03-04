@@ -740,7 +740,7 @@ void Unit::CheckRemainingAdjacentTiles(glm::vec2& checkingTile, std::vector<std:
         auto distance = costs[checkingTile.x][checkingTile.y];
         if (!checked[checkingTile.x][checkingTile.y])
         {
-            auto otherUnit = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y)->occupiedBy;
+            auto otherUnit = thisTile->occupiedBy;
             //This is horrid
             if (otherUnit && otherUnit != this && otherUnit->team != team)
             {
@@ -795,7 +795,7 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
         auto distance = costs[checkingTile.x][checkingTile.y];
         if (!checked[checkingTile.x][checkingTile.y])
         {
-            auto otherUnit = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y)->occupiedBy;
+            auto otherUnit = thisTile->occupiedBy;
             //This is horrid
             if (otherUnit && otherUnit != this && otherUnit->team != team)
             {

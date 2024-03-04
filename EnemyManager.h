@@ -22,6 +22,14 @@ struct Target
 	std::vector<AttackPosition> attackPositions;
 };
 
+enum ActionState
+{
+	GET_TARGET,
+	ATTACK,
+	END_ATTACK,
+	CANTO
+};
+
 struct EnemyManager
 {
 	std::vector<Unit*> enemies;
@@ -33,6 +41,8 @@ struct EnemyManager
 
 	TurnSubject subject;
 
+	ActionState state = GET_TARGET;
+
 	std::vector<glm::vec4> UVs;
 
 	void GetPriority(Unit* enemy);
@@ -40,6 +50,8 @@ struct EnemyManager
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
 	void Update(BattleManager& battleManager);
+	void CantoMove();
+	void FinishMove();
 	void UpdateEnemies(float deltaTime);
 	void EndTurn();
 	void Clear();
