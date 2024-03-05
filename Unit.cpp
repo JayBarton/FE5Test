@@ -472,7 +472,6 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
 {
     BattleStats stats;
     int charismaBonus = 0;
-
     auto nearbyUnits = inRangeUnits(1, 3, team);
     for (int i = 0; i < nearbyUnits.size(); i++)
     {
@@ -501,7 +500,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
     {
         auto weapon = ItemManager::itemManager.weaponData[weaponID];
         stats.attackDamage = weapon.might + (!weapon.isMagic ? strength : magic); //+ mag if the weapon is magic
-
+        stats.attackType = !weapon.isMagic ? 0 : 1;
         stats.hitAccuracy = weapon.hit + skill * 2 + luck + charismaBonus;
         stats.hitCrit = weapon.crit + skill;
         int weight = weapon.weight - (!weapon.isMagic ? build : 0); //No build included if the weapon is magic
@@ -517,6 +516,26 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
         stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
     }
     return stats;
+}
+
+void Unit::CalculateMagicDefense(const WeaponData& unitWeapon, BattleStats& unitNormalStats, float attackDistance)
+{
+    unitNormalStats.attackType = 0;
+
+    if (unitWeapon.isMagic)
+    {
+        //Magic swords such as the Light Brand do physical damage when used in close range
+        //so what I'm doing is just negating the previous damage calculation and using strength instead
+        if (attackDistance == 1 && !unitWeapon.isTome)
+        {
+            unitNormalStats.attackDamage -= magic;
+            unitNormalStats.attackDamage += strength;
+        }
+        else
+        {
+            unitNormalStats.attackType = 1;
+        }
+    }
 }
 
 WeaponData Unit::GetWeaponData(Item* item)

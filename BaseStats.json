@@ -53,6 +53,26 @@
       "WeaponProf": {
         "Sword": 1
       }
+    },
+    {
+      "ID": 3,
+      "Name": "Mage",
+      "Stats": {
+        "HP": 18,
+        "Str": 0,
+        "Mag": 2,
+        "Skl": 2,
+        "Spd": 3,
+        "Lck": 0,
+        "Def": 0,
+        "Bld": 4,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Fire": 1,
+        "Thunder": 2,
+        "Wind": 1
+      }
     }
   ],
   "PlayerUnits": [

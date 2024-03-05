@@ -828,11 +828,16 @@ void SelectEnemyMenu::CanEnemyCounter()
 
 	unitNormalStats = unit->CalculateBattleStats();
 	auto unitWeapon = unit->GetWeaponData(unit->inventory[unit->equippedWeapon]);
-	int playerDefense = unit->defense;
-	int enemyDefense = enemy->defense;
+	//int playerDefense = unit->defense;
+	//int enemyDefense = enemy->defense;	
+	enemy->CalculateMagicDefense(enemyWeapon, enemyNormalStats, attackDistance);
+	unit->CalculateMagicDefense(unitWeapon, unitNormalStats, attackDistance);
+	int playerDefense = enemyNormalStats.attackType == 0 ? unit->defense : unit->magic;
+	int enemyDefense = unitNormalStats.attackType == 0 ? enemy->defense : enemy->magic;
 
+	
 	//Magic resistance stat is just the unit's magic stat
-	if (unitWeapon.isMagic)
+	/*if (unitWeapon.isMagic)
 	{
 		//Magic swords such as the Light Brand do physical damage when used in close range
 		//so what I'm doing is just negating the previous damage calculation and using strength instead
@@ -858,7 +863,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 		{
 			playerDefense = unit->magic;
 		}
-	}
+	}*/
 
 	auto playerPosition = unit->sprite.getPosition();
 	auto playerTile = TileManager::tileManager.getTile(playerPosition.x, playerPosition.y);

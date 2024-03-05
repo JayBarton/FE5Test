@@ -153,6 +153,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 	}
 	auto crit = theseStats.hitCrit;
 	auto accuracy = theseStats.hitAccuracy;
+	int foeDefense = theseStats.attackType == 0 ? foe->defense : foe->magic;
 	if (attack.wrathAttack)
 	{
 		std::cout << thisUnit->name << " activates wrath\n";
@@ -162,14 +163,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 	else if (foe->hasSkill(Unit::PRAYER))
 	{
 		int dealtDamage = theseStats.attackDamage;
-		if (!thisUnit->GetWeaponData(thisUnit->GetEquippedItem()).isMagic)
-		{
-			dealtDamage -= foe->defense;
-		}
-		else
-		{
-			dealtDamage -= foe->magic;
-		}
+		dealtDamage -= foeDefense;
 		int remainingHealth = foe->currentHP - dealtDamage;
 		if (remainingHealth <= 0 && theseStats.hitAccuracy > 0)
 		{
@@ -182,7 +176,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 			}
 		}
 	}
-	DoBattleAction(thisUnit, foe, accuracy, crit, theseStats.attackDamage, distribution, gen);
+	DoBattleAction(thisUnit, foe, accuracy, crit, theseStats.attackDamage, foeDefense, distribution, gen);
 	if (thisUnit->hasSkill(Unit::CONTINUE) && !attack.continuedAttack)
 	{
 		auto roll = (*distribution)(*gen);
@@ -196,7 +190,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 	}
 }
 
-void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int firstDamage, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
+void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int firstDamage, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
 {
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
@@ -224,14 +218,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 				}
 			}
 		}
-		if (!thisUnit->GetWeaponData(thisUnit->GetEquippedItem()).isMagic)
-		{
-			dealtDamage -= otherUnit->defense;
-		}
-		else
-		{
-			dealtDamage -= otherUnit->magic;
-		}
+		dealtDamage -= foeDefense;
 		int remainingHealth = otherUnit->currentHP - dealtDamage;
 		thisUnit->GetEquippedItem()->remainingUses--;
 		otherUnit->currentHP = remainingHealth;
@@ -252,14 +239,6 @@ void BattleManager::EndAttack()
 {
 	battleActive = false;
 	subject.notify(attacker, defender);
-/*	if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
-	{
-		//If the player attacked we need to return control to the cursor
-	}
-	else
-	{
-		attacker->hasMoved = true;
-	}*/
 }
 
 void BattleManager::Draw(TextRenderer* text)

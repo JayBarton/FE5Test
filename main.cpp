@@ -337,10 +337,13 @@ int main(int argc, char** argv)
 		currentUnit++;
 	}
 	playerUnits[0]->placeUnit(48, 112);
+//	playerUnits[0]->magic = 20;
 	playerUnits[1]->placeUnit(112, 112);
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 	playerUnits[2]->placeUnit(32, 96);
+	playerUnits[2]->defense = playerUnits[0]->defense;
+//	playerUnits[2]->strength = 20;
 
 //	enemies[0]->init(&gen, &distribution);
 //	enemies[0]->sprite.uv = &playerUVs;

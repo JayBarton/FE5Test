@@ -34,12 +34,14 @@ struct EnemyManager
 {
 	std::vector<Unit*> enemies;
 	int currentEnemy = 0;
+	int attackRange = 0;
 
 	bool canCounter = true;
 	bool enemyMoving = false;
 	Unit* otherUnit = nullptr;
 
 	TurnSubject subject;
+	BattleStats battleStats;
 
 	ActionState state = GET_TARGET;
 

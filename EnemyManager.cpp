@@ -19,7 +19,7 @@ void EnemyManager::GetPriority(Unit* enemy)
     //Assme this unit moves
     TileManager::tileManager.removeUnit(position.x, position.y);
 
-    BattleStats battleStats;
+    battleStats = BattleStats{};
     std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
     
     int cannotCounterBonus = 50;
@@ -106,10 +106,12 @@ void EnemyManager::GetPriority(Unit* enemy)
                     if (weapon.maxRange == currentTarget.range || weapon.minRange == currentTarget.range)
                     {
                         //calculate damage
-                        //for right now just going by other's defense
                         tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+                        enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
+                      
+                        int otherDefense = tempStats.attackType == 0 ? enemy->defense : enemy->magic;
 
-                        int damage = tempStats.attackDamage - otherUnit->defense;
+                        int damage = tempStats.attackDamage - otherDefense;
                         if (damage > maxDamage)
                         {
                             maxDamage = damage;
@@ -149,10 +151,25 @@ void EnemyManager::GetPriority(Unit* enemy)
                     tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
                     if (canReach)
                     {
-                        int damage = tempStats.attackDamage - otherUnit->defense;
+                        //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
+                        //at a closer ranger would do more damage.
+                        //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
+                        enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
+
+                        int otherDefense = tempStats.attackType == 0 ? enemy->defense : enemy->magic;
+
+                        int damage = tempStats.attackDamage - otherDefense;
                         if (damage > maxDamage)
                         {
-                            maxDamage = damage;
+                            //prioritize sure kills
+                            if (otherUnit->currentHP - damage <= 0)
+                            {
+                                maxDamage = 50;
+                            }
+                            else
+                            {
+                                maxDamage = damage;
+                            }
                             battleStats = tempStats;
                             //If we hadn't gotten the range from a unit that cannot counter, get it now
                             currentTarget.range = rangeToUse;
@@ -165,6 +182,25 @@ void EnemyManager::GetPriority(Unit* enemy)
             if (currentTarget.priority > finalTarget.priority)
             {
                 finalTarget = currentTarget;
+            }
+            //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
+            //In that case, check which unit will do less damage on counter
+            else if (currentTarget.priority == finalTarget.priority)
+            {
+                auto previousUnit = otherUnits[finalTarget.ID];
+                auto previousWeapon = previousUnit->GetWeaponData(previousUnit->GetEquippedItem());
+                auto foeWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                auto previousStats = previousUnit->CalculateBattleStats();
+                previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
+                auto otherStats = otherUnit->CalculateBattleStats();
+                otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
+                
+                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->defense : enemy->magic);
+                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->defense : enemy->magic);
+                if (damageTaken < previousDamage)
+                {
+                    finalTarget = currentTarget;
+                }
             }
         }
         //In range of units but cannot reach any of them, stay where you are
@@ -185,17 +221,19 @@ void EnemyManager::GetPriority(Unit* enemy)
             otherUnit = otherUnits[finalTarget.ID];
             auto attackPositions = finalTarget.attackPositions;
             glm::vec2 attackPosition;
-            int minDistance = 100;
-
+            int maxValue = -100;
             for (int i = 0; i < attackPositions.size(); i++)
             {
                 auto aPosition = attackPositions[i].position;
                 if (attackPositions[i].distance == finalTarget.range)
                 {
+                    auto tileProperties = TileManager::tileManager.getTile(aPosition.x, aPosition.y)->properties;
+                    int tileValue = tileProperties.avoid + tileProperties.defense - path[aPosition].moveCost;
+
                     int distance = path[aPosition].moveCost;
-                    if (distance < minDistance)
+                    if (tileValue > maxValue)
                     {
-                        minDistance = distance;
+                        maxValue = tileValue;
                         attackPosition = attackPositions[i].position;
                     }
                 }
@@ -211,6 +249,7 @@ void EnemyManager::GetPriority(Unit* enemy)
                 pathPoint = previous;
             }
             state = ATTACK;
+            attackRange = finalTarget.range;
             enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
             enemyMoving = true;
         }
@@ -228,7 +267,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 {
     UVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
     std::vector<Unit> unitBases;
-    unitBases.resize(3);
+    unitBases.resize(4);
 
     std::ifstream f("BaseStats.json");
     json data = json::parse(f);
@@ -346,7 +385,10 @@ void EnemyManager::Update(BattleManager& battleManager)
                 enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
                 if (state == ATTACK)
                 {
-                    battleManager.SetUp(enemy, otherUnit, enemy->CalculateBattleStats(), otherUnit->CalculateBattleStats(), canCounter);
+                    auto otherStats = otherUnit->CalculateBattleStats();
+                    auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                    otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+                    battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter);
                 }
                 else if(state == CANTO)
                 {
@@ -363,7 +405,6 @@ void EnemyManager::CantoMove()
     auto position = enemy->sprite.getPosition();
 
     auto directionToOtherUnit = glm::normalize(glm::vec2(position - otherUnit->sprite.getPosition()));
-
 
     TileManager::tileManager.removeUnit(position.x, position.y);
     state = CANTO;

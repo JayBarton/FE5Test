@@ -79,6 +79,9 @@ struct BattleStats
 	int hitAvoid;
 	int hitCrit;
 	int attackSpeed;
+	//God I have no idea how to handle this
+	//0 physical, 1 magic
+	int attackType = 0;
 };
 
 struct Mount
@@ -223,7 +226,7 @@ struct Unit
 	Item* GetEquippedItem();
 
 	BattleStats CalculateBattleStats(int weaponID = -1);
-
+	void CalculateMagicDefense(const WeaponData& unitWeapon, BattleStats& unitNormalStats, float attackDistance);
 	WeaponData GetWeaponData(Item* item);
 
 	//Feel like I don't really want all of this here but it is working for now
