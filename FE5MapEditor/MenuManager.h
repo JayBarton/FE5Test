@@ -37,6 +37,7 @@ struct MenuManager
 
     void AddEnemyMenu(class EnemyMode* mode, class Object* obj);
     void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
+    void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
 
     void PreviousMenu();
     void ClearMenu();
@@ -62,17 +63,29 @@ struct EnemyMenu : public Menu
     const static int CHANGE_LEVEL = 0;
     const static int CHANGE_GROWTH = 1;
     const static int OPEN_INVENTORY = 2;
+    const static int CHANGE_STATS = 0;
+    const static int CHANGE_PROFS = 1;
+
+    const static int PAGE1_LIMIT = 2;
 
     EnemyMode* mode = nullptr;
     Object* object = nullptr;
 
     int level = 1;
     int growthRateID = 0;
+    int page = 0;
     std::vector<StatGrowths> unitGrowths;
+    std::vector<int> baseStats;
     std::vector<int> inventory;
     std::vector<Item> items;
+    std::unordered_map<std::string, int> weaponNameMap;
+    std::string weaponNamesArray[10];
+    int weaponProficiencies[10] = { 0 };
+    int pageOptions[2];
 
     bool inInventory = false;
+    bool editedStats = false;
+    bool editedProfs = false;
 
     std::string growthNames[6];
 
@@ -90,4 +103,15 @@ struct InventoryMenu : public Menu
     std::vector<Item>& items;
     int currentSlot = -1;
     int currentItem = -1;
+};
+
+struct StatsMenu : public Menu
+{
+    StatsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, class EnemyMode* mode, class Object* object, std::vector<int>& baseStats, bool& editedStats);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    std::vector<int>& stats;
+    bool& edited;
 };

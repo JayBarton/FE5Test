@@ -75,7 +75,7 @@
     <LibraryPath>E:\GnuWin32\lib;E:\VSGameDev\glew-2.1.0\lib\Release\Win32;E:\VSGameDev\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>E:\GnuWin32\include\freetype2;E:\GnuWin32\include;E:\glm;E:\glew\glew-1.13.0\include;E:\mingw_dev_lib\include\SDL2;$(IncludePath)</IncludePath>
+    <IncludePath>E:\GnuWin32\include\freetype2;E:\GnuWin32\include;E:\glm;E:\glew\glew-1.13.0\include;E:\mingw_dev_lib\include\SDL2;E:\JSON\include\single_include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\GnuWin32\lib;E:\VSGameDev\glew-2.1.0\lib\Release\Win32;E:\VSGameDev\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

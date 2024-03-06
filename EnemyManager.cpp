@@ -340,6 +340,8 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         int inventorySize;
         map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
         enemies[i] = new Unit(unitBases[type]);
+        enemies[i]->init(gen, distribution);
+
         enemies[i]->team = 1;
         enemies[i]->growths = unitGrowths[growthID];
         for (int c = 0; c < inventorySize; c++)
@@ -348,9 +350,31 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
             map >> itemID;
             enemies[i]->addItem(itemID);
         }
-
-        enemies[i]->init(gen, distribution);
-        enemies[i]->LevelEnemy(level - 1);
+        int editedStats;
+        map >> editedStats;
+        if (editedStats)
+        {
+            int stats[9];
+            for (int i = 0; i < 9; i++)
+            {
+                map >> stats[i];
+            }
+            enemies[i]->maxHP = stats[0];
+            enemies[i]->currentHP = stats[0];
+            enemies[i]->strength = stats[1];
+            enemies[i]->magic = stats[2];
+            enemies[i]->skill = stats[3];
+            enemies[i]->speed = stats[4];
+            enemies[i]->luck = stats[5];
+            enemies[i]->defense = stats[6];
+            enemies[i]->build = stats[7];
+            enemies[i]->move = stats[8];
+            enemies[i]->level = level;
+        }
+        else
+        {
+            enemies[i]->LevelEnemy(level - 1);
+        }
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UVs;
     }
@@ -622,12 +646,11 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
             {
                 costs[checkingTile.x][checkingTile.y] = movementCost;
             }
-            auto something = enemies[1];
-            if (movementCost <= something->maxRange)
+            auto thisEnemy = enemies[currentEnemy];
+            if (movementCost <= thisEnemy->maxRange)
             {
-               // something->minRange = 1;
-                if ((something->minRange == something->maxRange && movementCost == something->maxRange) ||
-                    (something->minRange < something->maxRange && movementCost <= something->maxRange))
+                if ((thisEnemy->minRange == thisEnemy->maxRange && movementCost == thisEnemy->maxRange) ||
+                    (thisEnemy->minRange < thisEnemy->maxRange && movementCost <= thisEnemy->maxRange))
                 {
                     if (path.find(tilePosition) != path.end() && !thisTile->occupiedBy)
                     {

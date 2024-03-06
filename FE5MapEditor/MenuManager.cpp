@@ -7,6 +7,11 @@
 #include <SDL.h>
 
 #include <sstream>
+
+#include <fstream>  
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 Menu::Menu(TextRenderer* Text, Camera* Camera, int shapeVAO) : text(Text), camera(Camera), shapeVAO(shapeVAO)
 {
 }
@@ -75,6 +80,12 @@ void MenuManager::AddInventoryMenu(EnemyMode* mode, Object* obj, std::vector<int
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
+void MenuManager::AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats)
+{
+	Menu* newMenu = new StatsMenu(text, camera, shapeVAO, mode, obj, baseStats, editedStats);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
 void MenuManager::PreviousMenu()
 {
 	Menu* p = menus.back();
@@ -92,10 +103,81 @@ void MenuManager::ClearMenu()
 
 EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode* mode, Object* object) : Menu(Text, camera, shapeVAO)
 {
-	numberOfOptions = 3;
+	pageOptions[0] = 3;
+	pageOptions[1] = 2;
 	currentOption = 0;
 	this->mode = mode;
 	this->object = object;
+
+	std::ifstream f("../BaseStats.json");
+	json data = json::parse(f);
+	json bases = data["enemies"];
+	//int currentUnit = 0;
+	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
+	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
+	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
+	weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
+	weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
+	weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
+	weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
+	weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
+	weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
+	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
+
+	weaponNamesArray[WeaponData::TYPE_SWORD] = "Sword";
+	weaponNamesArray[WeaponData::TYPE_AXE] = "Axe";
+	weaponNamesArray[WeaponData::TYPE_LANCE] = "Lance";
+	weaponNamesArray[WeaponData::TYPE_BOW] = "Bow";
+	weaponNamesArray[WeaponData::TYPE_THUNDER] = "Thunder";
+	weaponNamesArray[WeaponData::TYPE_FIRE] = "Fire";
+	weaponNamesArray[WeaponData::TYPE_WIND] = "Wind";
+	weaponNamesArray[WeaponData::TYPE_DARK] = "Dark";
+	weaponNamesArray[WeaponData::TYPE_LIGHT] = "Light";
+	weaponNamesArray[WeaponData::TYPE_STAFF] = "Staff";
+	baseStats.resize(9);
+	if (object)
+	{
+		editedStats = object->editedStats;
+
+		level = object->level;
+		growthRateID = object->growthRateID;
+		inventory = object->inventory;
+	}
+	if (editedStats)
+	{
+		baseStats = object->stats;
+	}
+	else
+	{
+		for (const auto& enemy : bases) {
+			int ID = enemy["ID"];
+			if (ID == mode->currentElement)
+			{
+				json stats = enemy["Stats"];
+				baseStats[0] = stats["HP"];
+				baseStats[1] = stats["Str"];
+				baseStats[2] = stats["Mag"];
+				baseStats[3] = stats["Skl"];
+				baseStats[4] = stats["Spd"];
+				baseStats[5] = stats["Lck"];
+				baseStats[6] = stats["Def"];
+				baseStats[7] = stats["Bld"];
+				baseStats[8] = stats["Mov"];
+			}
+		}
+	}
+	for (const auto& enemy : bases) {
+		int ID = enemy["ID"];
+		if (ID == mode->currentElement)
+		{
+			json weaponProf = enemy["WeaponProf"];
+			for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+			{
+				weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+			}
+		}
+	}
+
 	int ID;
 	int HP;
 	int str;
@@ -141,13 +223,6 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 		}
 		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
 	}
-
-	if (object)
-	{
-		level = object->level;
-		growthRateID = object->growthRateID;
-		inventory = object->inventory;
-	}
 }
 std::string intToString2(int i)
 {
@@ -157,40 +232,81 @@ std::string intToString2(int i)
 }
 void EnemyMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(32 + 64 * currentOption, 56, 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	text->RenderText("Level : " + intToString2(level), 100, 200, 1);
-	auto growths = unitGrowths[growthRateID];
-	text->RenderText("Growth Pattern: " + growthNames[growthRateID], 200, 200, 1);
-
-	text->RenderText("HP: " + intToString2(growths.maxHP), 200, 230, 1);
-	text->RenderText("Str: " + intToString2(growths.strength), 200, 260, 1);
-	text->RenderText("Mag: " + intToString2(growths.magic), 200, 290, 1);
-	text->RenderText("Skl: " + intToString2(growths.skill), 200, 320, 1);
-	text->RenderText("Spd: " + intToString2(growths.speed), 200, 350, 1);
-	text->RenderText("Lck: " + intToString2(growths.luck), 200, 380, 1);
-	text->RenderText("Def: " + intToString2(growths.defense), 200, 410, 1);
-	text->RenderText("Bld: " + intToString2(growths.build), 200, 440, 1);
-
-	text->RenderText("Inventory", 500, 200, 1);
-	if (!inInventory)
+	if (page == 0)
 	{
-		for (int i = 0; i < inventory.size(); i++)
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(32 + 64 * currentOption, 56, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		text->RenderText("Level : " + intToString2(level), 100, 200, 1);
+		auto growths = unitGrowths[growthRateID];
+		text->RenderText("Growth Pattern: " + growthNames[growthRateID], 200, 200, 1);
+
+		text->RenderText("HP: " + intToString2(growths.maxHP), 200, 230, 1);
+		text->RenderText("Str: " + intToString2(growths.strength), 200, 260, 1);
+		text->RenderText("Mag: " + intToString2(growths.magic), 200, 290, 1);
+		text->RenderText("Skl: " + intToString2(growths.skill), 200, 320, 1);
+		text->RenderText("Spd: " + intToString2(growths.speed), 200, 350, 1);
+		text->RenderText("Lck: " + intToString2(growths.luck), 200, 380, 1);
+		text->RenderText("Def: " + intToString2(growths.defense), 200, 410, 1);
+		text->RenderText("Bld: " + intToString2(growths.build), 200, 440, 1);
+
+		text->RenderText("Inventory", 500, 200, 1);
+		if (!inInventory)
 		{
-			auto item = items[inventory[i]];
-			text->RenderText(item.name, 500, 230 + 30 * i + 1, 1);
+			for (int i = 0; i < inventory.size(); i++)
+			{
+				auto item = items[inventory[i]];
+				text->RenderText(item.name, 500, 230 + 30 * i + 1, 1);
+			}
+		}
+	}
+	else
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(32 + 64 * currentOption, 56, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		text->RenderText("Level : " + intToString2(level), 100, 200, 1);
+		text->RenderText("Stats", 200, 200, 1);
+
+		text->RenderText("HP: " + intToString2(baseStats[0]), 200, 230, 1);
+		text->RenderText("Str: " + intToString2(baseStats[1]), 200, 260, 1);
+		text->RenderText("Mag: " + intToString2(baseStats[2]), 200, 290, 1);
+		text->RenderText("Skl: " + intToString2(baseStats[3]), 200, 320, 1);
+		text->RenderText("Spd: " + intToString2(baseStats[4]), 200, 350, 1);
+		text->RenderText("Lck: " + intToString2(baseStats[5]), 200, 380, 1);
+		text->RenderText("Def: " + intToString2(baseStats[6]), 200, 410, 1);
+		text->RenderText("Bld: " + intToString2(baseStats[7]), 200, 440, 1);
+		text->RenderText("Mov: " + intToString2(baseStats[8]), 200, 470, 1);
+
+		text->RenderText("Weapon Profciencies", 500, 200, 1);
+		int offset = 30;
+		for (int i = 0; i < 10; i++)
+		{
+			text->RenderText(weaponNamesArray[i], 500, 200 + offset, 1);
+			text->RenderText(intToString2(weaponProficiencies[i]), 580, 200 + offset, 1);
+			offset += 30;
 		}
 	}
 }
@@ -199,11 +315,11 @@ void EnemyMenu::SelectOption()
 {
 	if (object)
 	{
-		mode->updateEnemy(level, growthRateID, inventory, object->type);
+		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats);
 	}
 	else
 	{
-		mode->placeEnemy(level, growthRateID, inventory);
+		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats);
 	}
 	CancelOption();
 }
@@ -232,32 +348,42 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 	if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
-		if (currentOption == CHANGE_LEVEL)
+		if (page == 0)
 		{
-			level--;
-			if (level < 1)
+			if (currentOption == CHANGE_LEVEL)
 			{
-				level = 20;
+				level--;
+				if (level < 1)
+				{
+					level = 20;
+				}
+			}
+			else if (currentOption == CHANGE_GROWTH)
+			{
+				growthRateID--;
+				if (growthRateID < 0)
+				{
+					growthRateID = 5;
+				}
+			}
+			else if (currentOption == OPEN_INVENTORY)
+			{
+				MenuManager::menuManager.AddInventoryMenu(mode, object, inventory, items);
+				inInventory = true;
 			}
 		}
-		else if (currentOption == CHANGE_GROWTH)
+		else
 		{
-			growthRateID--;
-			if (growthRateID < 0)
+			if (currentOption == CHANGE_STATS)
 			{
-				growthRateID = 5;
+				MenuManager::menuManager.AddStatsMenu(mode, object, baseStats, editedStats);
 			}
-		}
-		else if	(currentOption == OPEN_INVENTORY)
-		{
-			MenuManager::menuManager.AddInventoryMenu(mode, object, inventory, items);
-			inInventory = true;
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
 		currentOption++;
-		if (currentOption >= numberOfOptions)
+		if (currentOption >= pageOptions[page])
 		{
 			currentOption = 0;
 		}
@@ -270,14 +396,25 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = numberOfOptions -1;
 		}
 	}
-	if (inputManager.isKeyPressed(SDLK_RETURN))
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
 	}
-	if (inputManager.isKeyPressed(SDLK_z))
+	else if (inputManager.isKeyPressed(SDLK_z))
 	{
 		CancelOption();
 		currentOption = 0;
+	}
+	else if (inputManager.isKeyPressed(SDLK_TAB))
+	{
+		if (page == 0)
+		{
+			page = 1;
+		}
+		else
+		{
+			page = 0;
+		}
 	}
 }
 
@@ -433,4 +570,70 @@ void InventoryMenu::Draw()
 
 	}
 
+}
+
+StatsMenu::StatsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode* mode, Object* object, std::vector<int>& baseStats, bool& editedStats) :
+	Menu(Text, camera, shapeVAO), stats(baseStats), edited(editedStats)
+{
+	numberOfOptions = 9;
+}
+
+void StatsMenu::Draw()
+{
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->Draw();
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(32, 80 + 12 * currentOption, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
+void StatsMenu::SelectOption()
+{
+}
+
+void StatsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		stats[currentOption]--;
+		if (stats[currentOption] < 0)
+		{
+			stats[currentOption] = 0;
+		}
+		edited = true;
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		stats[currentOption]++;
+		edited = true;
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
 }

@@ -524,6 +524,7 @@ bool loadMap()
                 tObject.uvs = enemyUVs[type];
                 tObject.level = level;
                 tObject.growthRateID = growthID;
+                
 
                 inventory.resize(inventorySize);
                 for (int i = 0; i < inventorySize; i++)
@@ -532,11 +533,32 @@ bool loadMap()
                 }
                 tObject.inventory = inventory;
 
+                int editedStats;
+                map >> editedStats;
+                tObject.editedStats = editedStats;
+
+                if (editedStats)
+                {
+                    tObject.stats.resize(9);
+                    for (int i = 0; i < 9; i++)
+                    {
+                        map >> tObject.stats[i];
+                    }
+                }
+
                 std::stringstream stream;
                 stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID << " " << inventorySize;
                 for (int i = 0; i < inventorySize; i++)
                 {
                     stream << " " << inventory[i];
+                }
+                stream << " " << editedStats;
+                if (editedStats)
+                {
+                    for (int i = 0; i < 9; i++)
+                    {
+                        stream << " " << tObject.stats[i];
+                    }
                 }
 
                 objects[position] = tObject;

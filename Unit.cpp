@@ -11,14 +11,14 @@ Unit::Unit()
 
 Unit::~Unit()
 {
-  /*  for (int i = 0; i < inventory.size(); i++)
+    for (int i = 0; i < inventory.size(); i++)
     {
         delete inventory[i];
     }
     if (mount)
     {
         delete mount;
-    }*/
+    }
 }
 
 void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution)

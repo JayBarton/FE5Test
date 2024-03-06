@@ -20,6 +20,10 @@ struct Object
 
     int level;
     int growthRateID;
+    bool editedStats = false;
+    bool editedProfs = false;
+
+    std::vector<int> stats;
 
     int inventorySize = 0;
     std::vector<int> inventory;
@@ -138,12 +142,14 @@ struct EnemyMode : public EditMode
 
     void leftClick(int x, int y);
 
-    void placeEnemy(int level, int growthRateID, const std::vector<int>& inventory)
+    void placeEnemy(int level, int growthRateID, const std::vector<int>& inventory, std::vector<int>& stats, bool editedStats)
     {
         glm::vec2 startPosition = dObject->position;
         dObject->inventory = inventory;
         dObject->level = level;
         dObject->growthRateID = growthRateID;
+        dObject->stats = stats;
+        dObject->editedStats = editedStats;
         objects[startPosition] = *dObject;
 
         std::stringstream objectStream;
@@ -151,6 +157,14 @@ struct EnemyMode : public EditMode
         for(int i = 0; i < inventory.size(); i ++)
         {
             objectStream << " " << inventory[i];
+        }
+        objectStream << " " << editedStats;
+        if (editedStats)
+        {
+            for (int i = 0; i < stats.size(); i++)
+            {
+                objectStream << " " << stats[i];
+            }
         }
 
         objectWriteTypes[startPosition] = 1; //not sure which of these I'm using
@@ -162,18 +176,28 @@ struct EnemyMode : public EditMode
         std::cout << objectStrings[startPosition] << std::endl;
     }
 
-    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type)
+    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type, std::vector<int>& stats, bool editedStats)
     {
         glm::vec2 startPosition = dObject->position;
         dObject->inventory = inventory;
         dObject->level = level;
         dObject->growthRateID = growthRateID;
+        dObject->stats = stats;
+        dObject->editedStats = editedStats;
         objects[startPosition] = *dObject;
         std::stringstream objectStream;
         objectStream << type << " " << startPosition.x << " " << startPosition.y << " " << level << " " << growthRateID << " " << inventory.size();
         for (int i = 0; i < inventory.size(); i++)
         {
             objectStream << " " << inventory[i];
+        }
+        objectStream << " " << editedStats;
+        if (editedStats)
+        {
+            for (int i = 0; i < stats.size(); i++)
+            {
+                objectStream << " " << stats[i];
+            }
         }
         objectWriteTypes[startPosition] = 1; //not sure which of these I'm using
 
