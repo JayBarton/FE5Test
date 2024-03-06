@@ -24,6 +24,7 @@ struct Object
     bool editedProfs = false;
 
     std::vector<int> stats;
+    std::vector<int> profs;
 
     int inventorySize = 0;
     std::vector<int> inventory;
@@ -142,7 +143,7 @@ struct EnemyMode : public EditMode
 
     void leftClick(int x, int y);
 
-    void placeEnemy(int level, int growthRateID, const std::vector<int>& inventory, std::vector<int>& stats, bool editedStats)
+    void placeEnemy(int level, int growthRateID, const std::vector<int>& inventory, std::vector<int>& stats, bool editedStats, std::vector<int>& profs, bool editedProfs)
     {
         glm::vec2 startPosition = dObject->position;
         dObject->inventory = inventory;
@@ -150,6 +151,8 @@ struct EnemyMode : public EditMode
         dObject->growthRateID = growthRateID;
         dObject->stats = stats;
         dObject->editedStats = editedStats;
+        dObject->profs = profs;
+        dObject->editedProfs = editedProfs;
         objects[startPosition] = *dObject;
 
         std::stringstream objectStream;
@@ -167,6 +170,15 @@ struct EnemyMode : public EditMode
             }
         }
 
+        objectStream << " " << editedProfs;
+        if (editedProfs)
+        {
+            for (int i = 0; i < stats.size(); i++)
+            {
+                objectStream << " " << profs[i];
+            }
+        }
+
         objectWriteTypes[startPosition] = 1; //not sure which of these I'm using
 
         numberOfEnemies++;
@@ -176,7 +188,7 @@ struct EnemyMode : public EditMode
         std::cout << objectStrings[startPosition] << std::endl;
     }
 
-    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type, std::vector<int>& stats, bool editedStats)
+    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type, std::vector<int>& stats, bool editedStats, std::vector<int>& profs, bool editedProfs)
     {
         glm::vec2 startPosition = dObject->position;
         dObject->inventory = inventory;
@@ -184,6 +196,8 @@ struct EnemyMode : public EditMode
         dObject->growthRateID = growthRateID;
         dObject->stats = stats;
         dObject->editedStats = editedStats;
+        dObject->profs = profs;
+        dObject->editedProfs = editedProfs;
         objects[startPosition] = *dObject;
         std::stringstream objectStream;
         objectStream << type << " " << startPosition.x << " " << startPosition.y << " " << level << " " << growthRateID << " " << inventory.size();
@@ -197,6 +211,14 @@ struct EnemyMode : public EditMode
             for (int i = 0; i < stats.size(); i++)
             {
                 objectStream << " " << stats[i];
+            }
+        }
+        objectStream << " " << editedProfs;
+        if (editedProfs)
+        {
+            for (int i = 0; i < profs.size(); i++)
+            {
+                objectStream << " " << profs[i];
             }
         }
         objectWriteTypes[startPosition] = 1; //not sure which of these I'm using

@@ -344,20 +344,22 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 
         enemies[i]->team = 1;
         enemies[i]->growths = unitGrowths[growthID];
+        std::vector<int> inventory;
+        inventory.resize(inventorySize);
         for (int c = 0; c < inventorySize; c++)
         {
             int itemID;
             map >> itemID;
-            enemies[i]->addItem(itemID);
+            inventory[c] = itemID;
         }
         int editedStats;
         map >> editedStats;
         if (editedStats)
         {
             int stats[9];
-            for (int i = 0; i < 9; i++)
+            for (int c = 0; c < 9; c++)
             {
-                map >> stats[i];
+                map >> stats[c];
             }
             enemies[i]->maxHP = stats[0];
             enemies[i]->currentHP = stats[0];
@@ -375,6 +377,22 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         {
             enemies[i]->LevelEnemy(level - 1);
         }
+        int editedProfs;
+        map >> editedProfs;
+        if (editedProfs)
+        {
+            int profs[10];
+            for (int c = 0; c < 10; c++)
+            {
+                map >> enemies[i]->weaponProficiencies[c];
+            }
+        }
+
+        for (int c = 0; c < inventorySize; c++)
+        {
+            enemies[i]->addItem(inventory[c]);
+        }
+
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UVs;
     }

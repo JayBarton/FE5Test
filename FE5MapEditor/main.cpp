@@ -546,6 +546,18 @@ bool loadMap()
                     }
                 }
 
+                int editedProfs;
+                map >> editedProfs;
+                tObject.editedProfs = editedProfs;
+                if (editedProfs)
+                {
+                    tObject.profs.resize(10);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        map >> tObject.profs[i];
+                    }
+                }
+
                 std::stringstream stream;
                 stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID << " " << inventorySize;
                 for (int i = 0; i < inventorySize; i++)
@@ -558,6 +570,14 @@ bool loadMap()
                     for (int i = 0; i < 9; i++)
                     {
                         stream << " " << tObject.stats[i];
+                    }
+                }
+                stream << " " << editedProfs;
+                if (editedProfs)
+                {
+                    for (int i = 0; i < 10; i++)
+                    {
+                        stream << " " << tObject.profs[i];
                     }
                 }
 

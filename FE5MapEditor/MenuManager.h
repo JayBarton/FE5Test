@@ -38,6 +38,7 @@ struct MenuManager
     void AddEnemyMenu(class EnemyMode* mode, class Object* obj);
     void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
     void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
+    void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
 
     void PreviousMenu();
     void ClearMenu();
@@ -80,7 +81,7 @@ struct EnemyMenu : public Menu
     std::vector<Item> items;
     std::unordered_map<std::string, int> weaponNameMap;
     std::string weaponNamesArray[10];
-    int weaponProficiencies[10] = { 0 };
+    std::vector<int> weaponProficiencies;
     int pageOptions[2];
 
     bool inInventory = false;
@@ -113,5 +114,16 @@ struct StatsMenu : public Menu
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
     std::vector<int>& stats;
+    bool& edited;
+};
+
+struct ProfsMenu : public Menu
+{
+    ProfsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, class EnemyMode* mode, class Object* object, std::vector<int>& weaponProfs, bool& editedProfs);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    std::vector<int>& profs;
     bool& edited;
 };

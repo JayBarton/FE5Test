@@ -86,6 +86,12 @@ void MenuManager::AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& b
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
+void MenuManager::AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs)
+{
+	Menu* newMenu = new ProfsMenu(text, camera, shapeVAO, mode, obj, weaponProfs, editedProfs);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
 void MenuManager::PreviousMenu()
 {
 	Menu* p = menus.back();
@@ -135,10 +141,11 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 	weaponNamesArray[WeaponData::TYPE_LIGHT] = "Light";
 	weaponNamesArray[WeaponData::TYPE_STAFF] = "Staff";
 	baseStats.resize(9);
+	weaponProficiencies.resize(10);
 	if (object)
 	{
 		editedStats = object->editedStats;
-
+		editedProfs = object->editedProfs;
 		level = object->level;
 		growthRateID = object->growthRateID;
 		inventory = object->inventory;
@@ -166,14 +173,21 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 			}
 		}
 	}
-	for (const auto& enemy : bases) {
-		int ID = enemy["ID"];
-		if (ID == mode->currentElement)
-		{
-			json weaponProf = enemy["WeaponProf"];
-			for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+	if (editedProfs)
+	{
+		weaponProficiencies = object->profs;
+	}
+	else
+	{
+		for (const auto& enemy : bases) {
+			int ID = enemy["ID"];
+			if (ID == mode->currentElement)
 			{
-				weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+				json weaponProf = enemy["WeaponProf"];
+				for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+				{
+					weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+				}
 			}
 		}
 	}
@@ -315,11 +329,11 @@ void EnemyMenu::SelectOption()
 {
 	if (object)
 	{
-		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats);
+		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats, weaponProficiencies, editedProfs);
 	}
 	else
 	{
-		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats);
+		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats, weaponProficiencies, editedProfs);
 	}
 	CancelOption();
 }
@@ -377,6 +391,11 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			if (currentOption == CHANGE_STATS)
 			{
 				MenuManager::menuManager.AddStatsMenu(mode, object, baseStats, editedStats);
+			}
+			else if (currentOption == CHANGE_PROFS)
+			{
+				MenuManager::menuManager.AddProfsMenu(mode, object, weaponProficiencies, editedProfs);
+
 			}
 		}
 	}
@@ -584,7 +603,7 @@ void StatsMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(32, 80 + 12 * currentOption, 0.0f));
+	model = glm::translate(model, glm::vec3(48, 80 + 12 * currentOption, 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -630,6 +649,73 @@ void StatsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
 		stats[currentOption]++;
+		edited = true;
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+}
+
+
+ProfsMenu::ProfsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode* mode, Object* object, std::vector<int>& weaponProfs, bool& editedProfs) :
+	Menu(Text, camera, shapeVAO), profs(weaponProfs), edited(editedProfs)
+{
+	numberOfOptions = 10;
+}
+
+void ProfsMenu::Draw()
+{
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->Draw();
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(144, 80 + 12 * currentOption, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
+void ProfsMenu::SelectOption()
+{
+}
+
+void ProfsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		profs[currentOption]--;
+		if (profs[currentOption] < 0)
+		{
+			profs[currentOption] = 0;
+		}
+		edited = true;
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		profs[currentOption]++;
 		edited = true;
 	}
 	else if (inputManager.isKeyPressed(SDLK_z))
