@@ -107,6 +107,11 @@ void MenuManager::ClearMenu()
 	}
 }
 
+bool IDLocation(const json& enemy, int ID)
+{
+	return enemy["ID"] == ID;
+}
+
 EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode* mode, Object* object) : Menu(Text, camera, shapeVAO)
 {
 	pageOptions[0] = 3;
@@ -142,6 +147,8 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 	weaponNamesArray[WeaponData::TYPE_STAFF] = "Staff";
 	baseStats.resize(9);
 	weaponProficiencies.resize(10);
+
+	int desiredID;
 	if (object)
 	{
 		editedStats = object->editedStats;
@@ -149,48 +156,32 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 		level = object->level;
 		growthRateID = object->growthRateID;
 		inventory = object->inventory;
-		for (const auto& enemy : bases) 
-		{
-			int ID = enemy["ID"];
-			if (ID == object->type)
-			{
-				className = enemy["Name"];
-			}
-		}
+
+		desiredID = object->type;
 	}
 	else
 	{
-		for (const auto& enemy : bases)
-		{
-			int ID = enemy["ID"];
-			if (ID == mode->currentElement)
-			{
-				className = enemy["Name"];
-			}
-		}
+		desiredID = mode->currentElement;
 	}
+	auto it = std::find_if(bases.begin(), bases.end(), std::bind(IDLocation, std::placeholders::_1, desiredID));;
+	className = (*it)["Name"];
+	
 	if (editedStats)
 	{
 		baseStats = object->stats;
 	}
 	else
 	{
-		for (const auto& enemy : bases) {
-			int ID = enemy["ID"];
-			if (ID == mode->currentElement)
-			{
-				json stats = enemy["Stats"];
-				baseStats[0] = stats["HP"];
-				baseStats[1] = stats["Str"];
-				baseStats[2] = stats["Mag"];
-				baseStats[3] = stats["Skl"];
-				baseStats[4] = stats["Spd"];
-				baseStats[5] = stats["Lck"];
-				baseStats[6] = stats["Def"];
-				baseStats[7] = stats["Bld"];
-				baseStats[8] = stats["Mov"];
-			}
-		}
+		auto stats = (*it)["Stats"];
+		baseStats[0] = stats["HP"];
+		baseStats[1] = stats["Str"];
+		baseStats[2] = stats["Mag"];
+		baseStats[3] = stats["Skl"];
+		baseStats[4] = stats["Spd"];
+		baseStats[5] = stats["Lck"];
+		baseStats[6] = stats["Def"];
+		baseStats[7] = stats["Bld"];
+		baseStats[8] = stats["Mov"];
 	}
 	if (editedProfs)
 	{
@@ -198,16 +189,10 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 	}
 	else
 	{
-		for (const auto& enemy : bases) {
-			int ID = enemy["ID"];
-			if (ID == mode->currentElement)
-			{
-				json weaponProf = enemy["WeaponProf"];
-				for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
-				{
-					weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
-				}
-			}
+		auto weaponProf = (*it)["WeaponProf"];
+		for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+		{
+			weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
 		}
 	}
 
