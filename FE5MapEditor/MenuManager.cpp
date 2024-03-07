@@ -149,6 +149,25 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 		level = object->level;
 		growthRateID = object->growthRateID;
 		inventory = object->inventory;
+		for (const auto& enemy : bases) 
+		{
+			int ID = enemy["ID"];
+			if (ID == object->type)
+			{
+				className = enemy["Name"];
+			}
+		}
+	}
+	else
+	{
+		for (const auto& enemy : bases)
+		{
+			int ID = enemy["ID"];
+			if (ID == mode->currentElement)
+			{
+				className = enemy["Name"];
+			}
+		}
 	}
 	if (editedStats)
 	{
@@ -290,7 +309,7 @@ void EnemyMenu::Draw()
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(32 + 64 * currentOption, 56, 0.0f));
+		model = glm::translate(model, glm::vec3(64 + 96 * currentOption, 56, 0.0f));
 
 		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -323,6 +342,8 @@ void EnemyMenu::Draw()
 			offset += 30;
 		}
 	}
+	text->RenderText(className, 100, 110, 1);
+
 }
 
 void EnemyMenu::SelectOption()
@@ -434,6 +455,7 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			page = 0;
 		}
+		currentOption = 0;
 	}
 }
 

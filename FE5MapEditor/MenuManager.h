@@ -89,6 +89,7 @@ struct EnemyMenu : public Menu
     bool editedProfs = false;
 
     std::string growthNames[6];
+    std::string className;
 
 };
 

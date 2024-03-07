@@ -34,7 +34,11 @@
 #include <random>
 #include <ctime>
 
-#include <string>     // std::string, std::stoi
+#include <string> 
+
+#include <fstream>  
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 void init();
 bool loadMap();
@@ -120,11 +124,24 @@ int levelHeight;
 
 bool loading = true; //not great but it works
 
+std::vector<std::string> classNames;
+
 int main(int argc, char** argv)
 {
     init();
 
     inputText.resize(2);
+
+    std::ifstream f("../BaseStats.json");
+    json data = json::parse(f);
+    json enemyData = data["enemies"];
+
+    classNames.resize(enemyData.size());
+    int currentName = 0;
+    for (const auto& enemy : enemyData) {
+        classNames[currentName] = enemy["Name"];
+        currentName++;
+    }
 
     GLfloat deltaTime = 0.0f;
     GLfloat lastFrame = 0.0f;
@@ -783,6 +800,7 @@ void Draw()
             Texture2D displayTexture = ResourceManager::GetTexture("tiles");
             Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
             Text->RenderText("Tile Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+            Text->RenderText("Current: " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
 
         }
         else
@@ -794,9 +812,10 @@ void Draw()
             {
                 Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
             }
+            Text->RenderText("Current: " + classNames[editMode->currentElement], SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+
         }
 
-        Text->RenderText("Current " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
         Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
 
         Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
