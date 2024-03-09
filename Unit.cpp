@@ -1,4 +1,4 @@
-#include "Unit.h"
+﻿#include "Unit.h"
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
 #include "TileManager.h"
@@ -107,6 +107,28 @@ void Unit::LevelUp()
     {
         luck++;
     }
+}
+
+int Unit::CalculateExperience(Unit* enemy)
+{
+    int experience = 0;
+    experience += (31 - level) / classPower;
+    if (enemy->currentHP <= 0)
+    {
+        /*
+        * = {[enemy’s Class power x (enemy’s Level + enemy’s Class bonus)] – [Class power x (Level + Class bonus)] + 20, take as 0 if negative} +
+        Experience from combat + Boss bonus + Thief bonus
+        */
+        int classBonus = isPromoted ? 20 : 0;
+        int enemyClassBonus = enemy->isPromoted ? 20 : 0;
+        int defeatExperience = (enemy->classPower * (enemy->level + enemyClassBonus)) - (classPower * (level + classBonus)) + 20;
+        if (defeatExperience < 0)
+        {
+            defeatExperience = 0;
+        }
+        experience += defeatExperience; // + boss bonus + thief bonus. Add 40 if the enemy is a boss. Add 20 if they have the Steal skill(not implemented)
+    }
+    return experience;
 }
 
 void Unit::AddExperience(int exp)

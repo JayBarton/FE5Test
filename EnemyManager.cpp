@@ -305,6 +305,18 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         {
             unitBases[currentUnit].weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
         }
+        if (enemy.find("Skills") != enemy.end())
+        {
+            auto skills = enemy["Skills"];
+            for (const auto& skill : skills)
+            {
+                unitBases[currentUnit].skills.push_back(int(skill));
+            }
+        }
+        if (enemy.find("ClassPower") != enemy.end())
+        {
+            unitBases[currentUnit].classPower = enemy["ClassPower"];
+        }
         currentUnit++;
     }
 

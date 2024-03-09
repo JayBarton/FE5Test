@@ -29,6 +29,7 @@ struct Observer
 {
 	virtual ~Observer() {}
 	virtual void onNotify(class Unit* unit) = 0;
+	virtual void onNotify(class Unit* unit, int exp) = 0;
 };
 
 struct Subject
@@ -54,6 +55,14 @@ struct Subject
 		for (int i = 0; i < observers.size(); i++)
 		{
 			observers[i]->onNotify(unit);
+		}
+	}
+
+	void notify(class Unit* unit, int exp)
+	{
+		for (int i = 0; i < observers.size(); i++)
+		{
+			observers[i]->onNotify(unit, exp);
 		}
 	}
 };
@@ -163,6 +172,10 @@ struct Unit
 	int currentHP;
 	int experience = 0;
 
+	//Used for experience calculations
+	//Most non-promoted classes have a power of 3
+	int classPower = 3;
+
 	int maxRange = 0;
 	int minRange = 5;
 
@@ -175,6 +188,8 @@ struct Unit
 	int movementType;
 
 	bool hasMoved = false;
+	//Also for experience calculations, but probably unneeded for this project
+	bool isPromoted = false;
 
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
@@ -198,6 +213,7 @@ struct Unit
 	void Draw(SpriteRenderer* Renderer);
 
 	void LevelUp();
+	int CalculateExperience(Unit* enemy);
 	void AddExperience(int exp);
 	void LevelEnemy(int level);
 

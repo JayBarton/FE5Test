@@ -84,11 +84,22 @@ BattleManager battleManager;
 
 EnemyManager enemyManager;
 
+//Want to find a better way of handling this, it's a bunch of variables for displaying stuff after battles
+//Looks bad up here
 Unit* leveledUnit = nullptr;
 StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
 bool leveling = false;
+bool addingExperience = false;
 float levelUpTimer;
 float levelUpTime = 2.5f;
+
+float experienceTimer;
+float experienceTime = 0.0025f;
+float experienceDisplayTime = 1.0f;
+int displayedExperience = 0;
+int gainedExperience = 0;
+int finalExperience = 0;
+bool displayingExperience = false;
 
 int currentTurn = 0;
 
@@ -101,6 +112,12 @@ struct UnitEvents : public Observer
 			leveledUnit->skill, leveledUnit->speed, leveledUnit->luck,leveledUnit->defense,leveledUnit->build,leveledUnit->move };
 		std::cout << "Level up!!!\n";
 		leveling = true;
+	}
+	virtual void onNotify(Unit* lUnit, int exp)
+	{
+		leveledUnit = lUnit;
+		displayedExperience = exp;
+		addingExperience = true;
 	}
 };
 
@@ -142,6 +159,15 @@ struct BattleEvents : public BattleObserver
 			{
 				cursor.Wait();
 			}
+			gainedExperience = attacker->CalculateExperience(defender);
+			leveledUnit = attacker;
+			displayedExperience = leveledUnit->experience;
+			addingExperience = true;
+			finalExperience = gainedExperience + displayedExperience;
+			if (finalExperience >= 100)
+			{
+				finalExperience -= 100;
+			}
 		}
 		//Not crazy about any of this
 		else
@@ -154,7 +180,15 @@ struct BattleEvents : public BattleObserver
 			{
 				enemyManager.FinishMove();
 			}
-
+			gainedExperience = defender->CalculateExperience(attacker);
+			leveledUnit = defender;
+			displayedExperience = leveledUnit->experience;
+			addingExperience = true;
+			finalExperience = gainedExperience + displayedExperience;
+			if (finalExperience >= 100)
+			{
+				finalExperience -= 100;
+			}
 		}
 	}
 };
@@ -317,7 +351,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-		if (unit.find("Skills") != unit.end()) {
+		if (unit.find("Skills") != unit.end()) 
+		{
 			auto skills = unit["Skills"];
 			for (const auto& skill : skills)
 			{
@@ -329,6 +364,10 @@ int main(int argc, char** argv)
 		{
 			newUnit->addItem(int(item));
 		}
+		if (unit.find("ClassPower") != unit.end())
+		{
+			newUnit->classPower = unit["ClassPower"];
+		}
 
 		newUnit->subject.addObserver(unitEvents);
 		newUnit->init(&gen, &distribution);
@@ -337,6 +376,7 @@ int main(int argc, char** argv)
 		currentUnit++;
 	}
 	playerUnits[0]->placeUnit(48, 112);
+	playerUnits[0]->experience = 90;
 //	playerUnits[0]->magic = 20;
 	playerUnits[1]->placeUnit(112, 112);
 	playerUnits[1]->movementType = Unit::FOOT;
@@ -416,7 +456,7 @@ int main(int argc, char** argv)
 
 		if (MenuManager::menuManager.menus.size() == 0)
 		{
-			if (!leveling)
+			if (!leveling && !addingExperience)
 			{
 				//if in battle, handle battle, don't check input
 				//Should be able to level up while in the battle state, need to figure that out
@@ -457,13 +497,45 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-				levelUpTimer += deltaTime;
-				if (levelUpTimer > 2.0f)
+				if (leveling)
 				{
-					levelUpTimer = 0;
-					leveling = false;
-					delete preLevelStats;
-					leveledUnit = nullptr;
+					levelUpTimer += deltaTime;
+					if (levelUpTimer > 2.0f)
+					{
+						levelUpTimer = 0;
+						leveling = false;
+						delete preLevelStats;
+						leveledUnit = nullptr;
+					}
+				}
+				else
+				{
+					experienceTimer += deltaTime;
+					if (displayingExperience)
+					{
+						if (experienceTimer > experienceDisplayTime)
+						{
+							addingExperience = false;
+							leveledUnit->AddExperience(gainedExperience);
+							displayingExperience = false;
+						}
+					}
+					else
+					{
+						if (experienceTimer > experienceTime)
+						{
+							displayedExperience++;
+							if (displayedExperience == finalExperience)
+							{
+								displayingExperience = true;
+							}
+							else if (displayedExperience >= 100)
+							{
+								displayedExperience -= 100;
+							}
+							experienceTimer = 0;
+						}
+					}
 				}
 			}
 		}
@@ -790,6 +862,27 @@ void DrawText()
 		{
 			Text->RenderText(intToString(1), x + 55, y + 45, 1);
 		}
+	}
+	else if (addingExperience)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(80, 98, 0.0f));
+
+		model = glm::scale(model, glm::vec3(1 * displayedExperience, 5, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		Text->RenderText("EXP", 215, 260, 1);
+		Text->RenderText(intToString(displayedExperience), 565, 260, 1);
+
+
 	}
 	else if (battleManager.battleActive)
 	{

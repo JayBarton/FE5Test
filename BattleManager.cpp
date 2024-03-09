@@ -17,6 +17,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	defenderTurn = false;
 	checkDouble = true;
 	actionTimer = 0.0f;
+	battleQueue.clear();
 	battleQueue.reserve(3);
 
 	battleQueue.push_back(Attack{1, 0});
@@ -225,7 +226,8 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		//Need to figure this out
 		if (otherUnit->currentHP <= 0)
 		{
-			EndAttack();
+			battleQueue.clear();
+			//EndAttack();
 		}
 		std::cout << thisUnit->name << " Attacks\n";
 	}
