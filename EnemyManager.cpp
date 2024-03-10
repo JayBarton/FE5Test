@@ -109,7 +109,7 @@ void EnemyManager::GetPriority(Unit* enemy)
                         tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
                         enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
                       
-                        int otherDefense = tempStats.attackType == 0 ? enemy->defense : enemy->magic;
+                        int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
 
                         int damage = tempStats.attackDamage - otherDefense;
                         if (damage > maxDamage)
@@ -156,7 +156,7 @@ void EnemyManager::GetPriority(Unit* enemy)
                         //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
                         enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
 
-                        int otherDefense = tempStats.attackType == 0 ? enemy->defense : enemy->magic;
+                        int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
 
                         int damage = tempStats.attackDamage - otherDefense;
                         if (damage > maxDamage)

@@ -5,6 +5,9 @@
 #include "InputManager.h"
 #include "Items.h"
 #include "BattleManager.h"
+
+#include "Globals.h"
+
 #include <SDL.h>
 
 
@@ -309,13 +312,7 @@ ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Cam
 {
 	GetOptions();
 }
-//Here for now aaaa
-std::string intToString2(int i)
-{
-	std::stringstream s;
-	s << i;
-	return s.str();
-}
+
 void ItemOptionsMenu::Draw()
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
@@ -347,7 +344,7 @@ void ItemOptionsMenu::Draw()
 			color = grey;
 		}
 		text->RenderText(item->name, 96, yPosition, 1, color);
-		text->RenderTextRight(intToString2(item->remainingUses), 200, yPosition, 1, 14, color);
+		text->RenderTextRight(intToString(item->remainingUses), 200, yPosition, 1, 14, color);
 	}
 	if (inventory[currentOption]->isWeapon)
 	{
@@ -368,31 +365,31 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 	int xStatName = 620;
 	int xStatValue = 660;
 	text->RenderText("Type", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(weaponData.type), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
 	yPosition += offSet;
 	text->RenderText("Atk", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
 	if (selectedStats.attackDamage > currentStats.attackDamage)
 	{
 		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
 	}
 	yPosition += offSet;
 	text->RenderText("Hit", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
 	if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
 	{
 		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
 	}
 	yPosition += offSet;
 	text->RenderText("Crit", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
 	if (selectedStats.hitCrit > currentStats.hitCrit)
 	{
 		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
 	}
 	yPosition += offSet;
 	text->RenderText("Avo", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString2(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
 	if (selectedStats.hitAvoid > currentStats.hitAvoid)
 	{
 		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
@@ -530,7 +527,7 @@ void ItemUseMenu::Draw()
 			color = grey;
 		}
 		text->RenderText(item->name, 96, yPosition, 1, color);
-		text->RenderTextRight(intToString2(item->remainingUses), 200, yPosition, 1, 14, color);
+		text->RenderTextRight(intToString(item->remainingUses), 200, yPosition, 1, 14, color);
 	}
 	int yOffset = 100;
 	if (canUse)
@@ -638,7 +635,7 @@ void SelectWeaponMenu::Draw()
 	{
 		int yPosition = 100 + i * 30;
 		text->RenderText(inventory[i]->name, 96, yPosition, 1);
-		text->RenderTextRight(intToString2(inventory[i]->remainingUses), 200, yPosition, 1, 14);
+		text->RenderTextRight(intToString(inventory[i]->remainingUses), 200, yPosition, 1, 14);
 	}
 
 	DrawWeaponComparison(weapons);
@@ -728,14 +725,14 @@ void SelectEnemyMenu::Draw()
 	}
 
 	int statsY = 180;
-	text->RenderTextRight(intToString2(enemy->level), enemyStatsX, statsY, 1, 14);
+	text->RenderTextRight(intToString(enemy->level), enemyStatsX, statsY, 1, 14);
 	text->RenderText("LV", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(intToString2(unit->level), enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(intToString(unit->level), enemyStatsX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(intToString2(enemy->currentHP), enemyStatsX, statsY, 1, 14);
+	text->RenderTextRight(intToString(enemy->currentHP), enemyStatsX, statsY, 1, 14);
 	text->RenderText("HP", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(intToString2(unit->currentHP), enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(intToString(unit->currentHP), enemyStatsX + 160, statsY, 1, 14);
 
 	statsY += 30;
 	text->RenderTextRight(enemyStats.atk, enemyStatsX, statsY, 1, 14);
@@ -819,6 +816,7 @@ void SelectEnemyMenu::CanEnemyCounter()
 	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
 	attackDistance /= TileManager::TILE_SIZE;
 	auto enemyWeapon = enemy->GetWeaponData(enemy->GetEquippedItem());
+	enemyCanCounter = false;
 	if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
 	{
 		enemyCanCounter = true;
@@ -932,9 +930,9 @@ void SelectEnemyMenu::CanEnemyCounter()
 	enemyNormalStats.hitCrit = std::min(enemyNormalStats.hitCrit, 25);
 	enemyNormalStats.hitCrit = std::max(0, enemyNormalStats.hitCrit);
 
-	playerStats = DisplayedBattleStats{ intToString2(unit->level), intToString2(unit->currentHP), intToString2(unitNormalStats.attackDamage), intToString2(playerDefense), intToString2(unitNormalStats.hitAccuracy), intToString2(unitNormalStats.hitCrit), intToString2(unitNormalStats.attackSpeed) };
+	playerStats = DisplayedBattleStats{ intToString(unit->level), intToString(unit->currentHP), intToString(unitNormalStats.attackDamage), intToString(playerDefense), intToString(unitNormalStats.hitAccuracy), intToString(unitNormalStats.hitCrit), intToString(unitNormalStats.attackSpeed) };
 
-	enemyStats = DisplayedBattleStats{ intToString2(enemy->level), intToString2(enemy->currentHP), intToString2(enemyNormalStats.attackDamage), intToString2(enemyDefense), intToString2(enemyNormalStats.hitAccuracy), intToString2(enemyNormalStats.hitCrit), intToString2(enemyNormalStats.attackSpeed) };
+	enemyStats = DisplayedBattleStats{ intToString(enemy->level), intToString(enemy->currentHP), intToString(enemyNormalStats.attackDamage), intToString(enemyDefense), intToString(enemyNormalStats.hitAccuracy), intToString(enemyNormalStats.hitCrit), intToString(enemyNormalStats.attackSpeed) };
 	if (!enemyCanCounter)
 	{
 		enemyStats.hit = "--";
@@ -985,7 +983,7 @@ void SelectTradeUnit::Draw()
 	for (int i = 0; i < inventorySize; i++)
 	{
 		text->RenderText(tradeUnit->inventory[i]->name, 500, textHeight, 1);
-		text->RenderTextRight(intToString2(tradeUnit->inventory[i]->remainingUses), 600, textHeight, 1, 14);
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 600, textHeight, 1, 14);
 		textHeight += 30;
 	}
 }
@@ -1095,13 +1093,13 @@ void TradeMenu::Draw()
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
 	{
 		text->RenderText(firstUnit->inventory[i]->name, 130, 180 + i * 30, 1);
-		text->RenderTextRight(intToString2(firstUnit->inventory[i]->remainingUses), 230, 180 + i * 30, 1, 14);
+		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 230, 180 + i * 30, 1, 14);
 	}
 
 	for (int i = 0; i < tradeUnit->inventory.size(); i++)
 	{
 		text->RenderText(tradeUnit->inventory[i]->name, 670, 180 + i * 30, 1);
-		text->RenderTextRight(intToString2(tradeUnit->inventory[i]->remainingUses), 770, 180 + i * 30, 1, 14);
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 770, 180 + i * 30, 1, 14);
 	}
 }
 
@@ -1299,30 +1297,30 @@ void UnitStatsViewMenu::Draw()
 	text->RenderText("Lv", 48, 128, 1);
 	text->RenderText("HP", 48, 160, 1);
 
-	text->RenderTextRight(intToString2(unit->level), 90, 128, 1, 14);
-	text->RenderTextRight(intToString2(unit->currentHP), 90, 160, 1, 14);
+	text->RenderTextRight(intToString(unit->level), 90, 128, 1, 14);
+	text->RenderTextRight(intToString(unit->currentHP), 90, 160, 1, 14);
 
 	text->RenderText("E", 110, 128, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 	text->RenderText("/", 110, 160, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 
-	text->RenderTextRight(intToString2(unit->experience), 130, 128, 1, 14);
-	text->RenderTextRight(intToString2(unit->maxHP), 130, 160, 1, 14);
+	text->RenderTextRight(intToString(unit->experience), 130, 128, 1, 14);
+	text->RenderTextRight(intToString(unit->maxHP), 130, 160, 1, 14);
 
 	text->RenderText("ATK", 500, 64, 1);
 	text->RenderText("HIT", 500, 96, 1);
 	text->RenderText("RNG", 500, 128, 1);
 	if (unit->equippedWeapon >= 0)
 	{
-		text->RenderTextRight(intToString2(battleStats.attackDamage), 542, 64, 1, 14);
-		text->RenderTextRight(intToString2(battleStats.hitAccuracy), 542, 96, 1, 14);
+		text->RenderTextRight(intToString(battleStats.attackDamage), 542, 64, 1, 14);
+		text->RenderTextRight(intToString(battleStats.hitAccuracy), 542, 96, 1, 14);
 		auto weapon = unit->GetWeaponData(unit->GetEquippedItem());
 		if (weapon.maxRange == weapon.minRange)
 		{
-			text->RenderTextRight(intToString2(weapon.maxRange), 542, 128, 1, 14);
+			text->RenderTextRight(intToString(weapon.maxRange), 542, 128, 1, 14);
 		}
 		else
 		{
-			text->RenderTextRight(intToString2(weapon.minRange) + " ~ " + intToString2(weapon.maxRange), 542, 128, 1, 30);
+			text->RenderTextRight(intToString(weapon.minRange) + " ~ " + intToString(weapon.maxRange), 542, 128, 1, 30);
 		}
 	}
 	else
@@ -1333,9 +1331,9 @@ void UnitStatsViewMenu::Draw()
 
 	}
 	text->RenderText("CRT", 600, 64, 1);
-	text->RenderTextRight(intToString2(battleStats.hitCrit), 642, 64, 1, 14);
+	text->RenderTextRight(intToString(battleStats.hitCrit), 642, 64, 1, 14);
 	text->RenderText("AVO", 600, 96, 1);
-	text->RenderTextRight(intToString2(battleStats.hitAvoid), 642, 96, 1, 14);
+	text->RenderTextRight(intToString(battleStats.hitAvoid), 642, 96, 1, 14);
 
 	//page 1
 	if (firstPage)
@@ -1355,7 +1353,7 @@ void UnitStatsViewMenu::Draw()
 				color = grey;
 			}
 			text->RenderText(item->name, 480, yPosition, 1, color);
-			text->RenderTextRight(intToString2(item->remainingUses), 680, yPosition, 1, 14, color);
+			text->RenderTextRight(intToString(item->remainingUses), 680, yPosition, 1, 14, color);
 			if (i == unit->equippedWeapon)
 			{
 				text->RenderText("E", 700, yPosition, 1);
@@ -1365,19 +1363,19 @@ void UnitStatsViewMenu::Draw()
 		{
 			text->RenderText("Combat Stats", 54, 190, 1);
 			text->RenderText("STR", 48, 220, 0.8f);
-			text->RenderTextRight(intToString2(unit->strength), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->strength), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("MAG", 48, 252, 0.8f);
-			text->RenderTextRight(intToString2(unit->magic), 148, 252, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->magic), 148, 252, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("SKL", 48, 284, 0.8f);
-			text->RenderTextRight(intToString2(unit->skill), 148, 284, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->skill), 148, 284, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("SPD", 48, 316, 0.8f);
-			text->RenderTextRight(intToString2(unit->speed), 148, 316, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->speed), 148, 316, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("LCK", 48, 348, 0.8f);
-			text->RenderTextRight(intToString2(unit->luck), 148, 348, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->luck), 148, 348, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("DEF", 48, 380, 0.8f);
-			text->RenderTextRight(intToString2(unit->defense), 148, 380, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->defense), 148, 380, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("CON", 48, 412, 0.8f);
-			text->RenderTextRight(intToString2(unit->build), 148, 412, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->build), 148, 412, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 		}
 		else
 		{
@@ -1404,19 +1402,19 @@ void UnitStatsViewMenu::Draw()
 				int xStatName = 48;
 				int xStatValue = 88;
 				text->RenderText("Type", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString2(weaponData.type), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 				text->RenderText("Atk", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString2(battleStats.attackDamage), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(battleStats.attackDamage), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 				text->RenderText("Hit", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString2(battleStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(battleStats.hitAccuracy), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 				text->RenderText("Crit", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString2(battleStats.hitCrit), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(battleStats.hitCrit), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 				text->RenderText("Avo", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString2(battleStats.hitAvoid), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(battleStats.hitAvoid), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 			}
 			if (true)

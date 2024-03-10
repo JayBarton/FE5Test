@@ -56,6 +56,8 @@ struct BattleManager
 	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, int firstDamage, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void EndAttack();
+	
+	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager);
 
 	void Draw(TextRenderer* text);
 

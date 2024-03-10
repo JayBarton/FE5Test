@@ -2,6 +2,8 @@
 #include "Unit.h"
 #include "TextRenderer.h"
 #include "Items.h"
+#include "Cursor.h"
+#include "EnemyManager.h"
 #include <iostream>
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack)
@@ -241,6 +243,34 @@ void BattleManager::EndAttack()
 {
 	battleActive = false;
 	subject.notify(attacker, defender);
+}
+
+void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager)
+{
+	if (attacker->team == 0)
+	{
+		if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+		{
+			//If the player attacked we need to return control to the cursor
+			cursor->GetRemainingMove();
+		}
+		else
+		{
+			cursor->Wait();
+		}
+	}
+	//Not crazy about any of this
+	else
+	{
+		if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+		{
+			enemyManager->CantoMove();
+		}
+		else
+		{
+			enemyManager->FinishMove();
+		}
+	}
 }
 
 void BattleManager::Draw(TextRenderer* text)

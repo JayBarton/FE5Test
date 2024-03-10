@@ -539,7 +539,7 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
     }
     return stats;
 }
-
+//Rename this, calculating magic damage really
 void Unit::CalculateMagicDefense(const WeaponData& unitWeapon, BattleStats& unitNormalStats, float attackDistance)
 {
     unitNormalStats.attackType = 0;

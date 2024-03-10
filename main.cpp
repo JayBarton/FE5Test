@@ -19,6 +19,9 @@
 #include "BattleManager.h"
 #include "EnemyManager.h"
 
+#include "Globals.h"
+#include "PostBattleDisplays.h"
+
 #include "csv.h"
 #include <nlohmann/json.hpp>
 
@@ -47,13 +50,7 @@ void Draw();
 void DrawUnitRanges();
 void DrawText();
 void loadMap(std::string nextMap);
-std::string intToString(int i);
 void resizeWindow(int width, int height);
-
-// The Width of the screen
-const GLuint SCREEN_WIDTH = 800;
-// The height of the screen
-const GLuint SCREEN_HEIGHT = 600;
 
 const static int TILE_SIZE = 16;
 
@@ -84,22 +81,7 @@ BattleManager battleManager;
 
 EnemyManager enemyManager;
 
-//Want to find a better way of handling this, it's a bunch of variables for displaying stuff after battles
-//Looks bad up here
-Unit* leveledUnit = nullptr;
-StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
-bool leveling = false;
-bool addingExperience = false;
-float levelUpTimer;
-float levelUpTime = 2.5f;
-
-float experienceTimer;
-float experienceTime = 0.0025f;
-float experienceDisplayTime = 1.0f;
-int displayedExperience = 0;
-int gainedExperience = 0;
-int finalExperience = 0;
-bool displayingExperience = false;
+PostBattleDisplays displays;
 
 int currentTurn = 0;
 
@@ -107,17 +89,7 @@ struct UnitEvents : public Observer
 {
 	virtual void onNotify(Unit* lUnit)
 	{
-		leveledUnit = lUnit;
-		preLevelStats = new StatGrowths{ leveledUnit->maxHP, leveledUnit->strength, leveledUnit->magic,
-			leveledUnit->skill, leveledUnit->speed, leveledUnit->luck,leveledUnit->defense,leveledUnit->build,leveledUnit->move };
-		std::cout << "Level up!!!\n";
-		leveling = true;
-	}
-	virtual void onNotify(Unit* lUnit, int exp)
-	{
-		leveledUnit = lUnit;
-		displayedExperience = exp;
-		addingExperience = true;
+		displays.OnUnitLevel(lUnit);
 	}
 };
 
@@ -150,46 +122,21 @@ struct BattleEvents : public BattleObserver
 	{
 		if (currentTurn == 0)
 		{
-			if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
-			{
-				//If the player attacked we need to return control to the cursor
-				cursor.GetRemainingMove();
-			}
-			else
-			{
-				cursor.Wait();
-			}
-			gainedExperience = attacker->CalculateExperience(defender);
-			leveledUnit = attacker;
-			displayedExperience = leveledUnit->experience;
-			addingExperience = true;
-			finalExperience = gainedExperience + displayedExperience;
-			if (finalExperience >= 100)
-			{
-				finalExperience -= 100;
-			}
+			displays.AddExperience(attacker, defender);
 		}
 		//Not crazy about any of this
 		else
 		{
-			if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
-			{
-				enemyManager.CantoMove();
-			}
-			else
-			{
-				enemyManager.FinishMove();
-			}
-			gainedExperience = defender->CalculateExperience(attacker);
-			leveledUnit = defender;
-			displayedExperience = leveledUnit->experience;
-			addingExperience = true;
-			finalExperience = gainedExperience + displayedExperience;
-			if (finalExperience >= 100)
-			{
-				finalExperience -= 100;
-			}
+			displays.AddExperience(defender, attacker);
 		}
+	}
+};
+
+struct PostBattleEvents : public PostBattleObserver
+{
+	virtual void onNotify()
+	{
+		battleManager.EndBattle(&cursor, &enemyManager);
 	}
 };
 
@@ -290,7 +237,9 @@ int main(int argc, char** argv)
 	UnitEvents* unitEvents = new UnitEvents();
 	TurnEvents* turnEvents = new TurnEvents();
 	BattleEvents* battleEvents = new BattleEvents();
+	PostBattleEvents* postBattleEvents = new PostBattleEvents();
 	battleManager.subject.addObserver(battleEvents);
+	displays.subject.addObserver(postBattleEvents);
 	loadMap("1.map");
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 
@@ -382,7 +331,7 @@ int main(int argc, char** argv)
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 	playerUnits[2]->placeUnit(32, 96);
-	playerUnits[2]->defense = playerUnits[0]->defense;
+//	playerUnits[2]->defense = playerUnits[0]->defense;
 //	playerUnits[2]->strength = 20;
 
 //	enemies[0]->init(&gen, &distribution);
@@ -456,7 +405,11 @@ int main(int argc, char** argv)
 
 		if (MenuManager::menuManager.menus.size() == 0)
 		{
-			if (!leveling && !addingExperience)
+			if (displays.state != NONE)
+			{
+				displays.Update(deltaTime);
+			}
+			else
 			{
 				//if in battle, handle battle, don't check input
 				//Should be able to level up while in the battle state, need to figure that out
@@ -492,49 +445,6 @@ int main(int argc, char** argv)
 					else
 					{
 						camera.MoveTo(deltaTime, 5.0f);
-					}
-				}
-			}
-			else
-			{
-				if (leveling)
-				{
-					levelUpTimer += deltaTime;
-					if (levelUpTimer > 2.0f)
-					{
-						levelUpTimer = 0;
-						leveling = false;
-						delete preLevelStats;
-						leveledUnit = nullptr;
-					}
-				}
-				else
-				{
-					experienceTimer += deltaTime;
-					if (displayingExperience)
-					{
-						if (experienceTimer > experienceDisplayTime)
-						{
-							addingExperience = false;
-							leveledUnit->AddExperience(gainedExperience);
-							displayingExperience = false;
-						}
-					}
-					else
-					{
-						if (experienceTimer > experienceTime)
-						{
-							displayedExperience++;
-							if (displayedExperience == finalExperience)
-							{
-								displayingExperience = true;
-							}
-							else if (displayedExperience >= 100)
-							{
-								displayedExperience -= 100;
-							}
-							experienceTimer = 0;
-						}
 					}
 				}
 			}
@@ -584,6 +494,7 @@ int main(int argc, char** argv)
 	delete unitEvents;
 	delete turnEvents;
 	delete battleEvents;
+	delete postBattleEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();
@@ -794,95 +705,9 @@ void DrawUnitRanges()
 
 void DrawText()
 {
-	if (leveling)
+	if (displays.state != NONE)
 	{
-		int x = SCREEN_WIDTH * 0.5f;
-		int y = SCREEN_HEIGHT * 0.5f;
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(80, 96, 0.0f));
-
-		model = glm::scale(model, glm::vec3(100, 50, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-
-		Text->RenderTextRight("HP", x - 130, y - 30, 1, 25);
-		Text->RenderTextRight("STR", x - 130, y - 5, 1, 25);
-		Text->RenderTextRight("MAG", x - 130, y + 20, 1, 25);
-		Text->RenderTextRight("SKL", x - 130, y + 45, 1, 25);
-		Text->RenderTextRight("SPD", x - 10, y - 30, 1, 25);
-		Text->RenderTextRight("LCK", x - 10, y - 5, 1, 25);
-		Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
-		Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
-		//This needs to be redone, need the leveled unit, not the focused unit
-		auto unit = leveledUnit;
-		Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 14);
-		if (unit->maxHP > preLevelStats->maxHP)
-		{
-			Text->RenderText(intToString(1), x - 65, y - 30, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->strength), x - 90, y - 5, 1, 14);
-		if (unit->strength > preLevelStats->strength)
-		{
-			Text->RenderText(intToString(1), x - 65, y - 5, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->magic), x - 90, y + 20, 1, 14);
-		if (unit->magic > preLevelStats->magic)
-		{
-			Text->RenderText(intToString(1), x - 65, y + 20, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->skill), x - 90, y + 45, 1, 14);
-		if (unit->skill > preLevelStats->skill)
-		{
-			Text->RenderText(intToString(1), x - 65, y + 45, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->speed), x + 30, y - 30, 1, 14);
-		if (unit->speed > preLevelStats->speed)
-		{
-			Text->RenderText(intToString(1), x + 55, y - 30, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->luck), x + 30, y - 5, 1, 14);
-		if (unit->luck > preLevelStats->luck)
-		{
-			Text->RenderText(intToString(1), x + 55, y - 5, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->defense), x + 30, y + 20, 1, 14);
-		if (unit->defense > preLevelStats->defense)
-		{
-			Text->RenderText(intToString(1), x + 55, y + 20, 1);
-		}
-		Text->RenderTextRight(intToString(preLevelStats->build), x + 30, y + 45, 1, 14);
-		if (unit->build > preLevelStats->build)
-		{
-			Text->RenderText(intToString(1), x + 55, y + 45, 1);
-		}
-	}
-	else if (addingExperience)
-	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(80, 98, 0.0f));
-
-		model = glm::scale(model, glm::vec3(1 * displayedExperience, 5, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-
-		Text->RenderText("EXP", 215, 260, 1);
-		Text->RenderText(intToString(displayedExperience), 565, 260, 1);
-
-
+		displays.Draw(&camera, Text, shapeVAO);
 	}
 	else if (battleManager.battleActive)
 	{
@@ -950,13 +775,6 @@ void DrawText()
 			Text->RenderText(intToString(unit->currentHP) + "/" + intToString(unit->maxHP), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
 		}
 	}
-}
-
-std::string intToString(int i)
-{
-	std::stringstream s;
-	s << i;
-	return s.str();
 }
 
 void resizeWindow(int width, int height)

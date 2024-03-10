@@ -142,9 +142,11 @@
     <ClInclude Include="csv.h" />
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="EnemyManager.h" />
+    <ClInclude Include="Globals.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Items.h" />
     <ClInclude Include="MenuManager.h" />
+    <ClInclude Include="PostBattleDisplays.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
     <ClInclude Include="Shader.h" />
@@ -167,6 +169,7 @@
     <ClCompile Include="Items.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuManager.cpp" />
+    <ClCompile Include="PostBattleDisplays.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SATCollision.cpp" />
     <ClCompile Include="Shader.cpp" />

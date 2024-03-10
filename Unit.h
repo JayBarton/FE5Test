@@ -29,7 +29,6 @@ struct Observer
 {
 	virtual ~Observer() {}
 	virtual void onNotify(class Unit* unit) = 0;
-	virtual void onNotify(class Unit* unit, int exp) = 0;
 };
 
 struct Subject
@@ -55,14 +54,6 @@ struct Subject
 		for (int i = 0; i < observers.size(); i++)
 		{
 			observers[i]->onNotify(unit);
-		}
-	}
-
-	void notify(class Unit* unit, int exp)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(unit, exp);
 		}
 	}
 };
