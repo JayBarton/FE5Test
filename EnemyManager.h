@@ -27,7 +27,8 @@ enum ActionState
 	GET_TARGET,
 	ATTACK,
 	END_ATTACK,
-	CANTO
+	CANTO,
+	HEALING
 };
 
 struct EnemyManager
@@ -35,6 +36,7 @@ struct EnemyManager
 	std::vector<Unit*> enemies;
 	int currentEnemy = 0;
 	int attackRange = 0;
+	int healIndex = -1;
 
 	bool canCounter = true;
 	bool enemyMoving = false;
@@ -52,11 +54,13 @@ struct EnemyManager
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
 	void Update(BattleManager& battleManager);
+	void HealSelf(Unit* enemy);
 	void CantoMove();
 	void FinishMove();
 	void UpdateEnemies(float deltaTime);
 	void EndTurn();
 	void Clear();
+	std::vector<Unit*> GetOtherUnits(Unit* enemy);
 
 	std::vector<AttackPosition> ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange);
 

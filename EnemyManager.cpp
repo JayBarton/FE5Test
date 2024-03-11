@@ -12,7 +12,6 @@ using json = nlohmann::json;
 
 void EnemyManager::GetPriority(Unit* enemy)
 {
-    state = GET_TARGET;
     otherUnit = nullptr;
     canCounter = true;
     auto position = enemy->sprite.getPosition();
@@ -24,16 +23,8 @@ void EnemyManager::GetPriority(Unit* enemy)
     
     int cannotCounterBonus = 50;
 
-    std::vector<Unit*> otherUnits;
-    otherUnits.reserve(6);
-    for (auto const& it : enemy->attackTiles)
-    {
-        auto point = it;
-        if (Unit* unit = TileManager::tileManager.getUnitOnTeam(point.x, point.y, 0))
-        {
-            otherUnits.push_back(unit);
-        }
-    }
+    std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+
     //If not in range of any units, enemy remains where they are
     if (otherUnits.size() == 0)
     {
@@ -262,6 +253,20 @@ void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
     enemy->hasMoved = true;
     currentEnemy++;
 }
+std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
+{
+    std::vector<Unit*> otherUnits;
+    otherUnits.reserve(6);
+    for (auto const& it : enemy->attackTiles)
+    {
+        auto point = it;
+        if (Unit* unit = TileManager::tileManager.getUnitOnTeam(point.x, point.y, 0))
+        {
+            otherUnits.push_back(unit);
+        }
+    }
+    return otherUnits;
+}
 
 void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
 {
@@ -430,7 +435,31 @@ void EnemyManager::Update(BattleManager& battleManager)
 
         if (!enemyMoving)
         {
-            GetPriority(enemy);
+            if (enemy->currentHP <= enemy->maxHP * 0.5f)
+            {
+                healIndex = -1;
+                for (int i = 0; i < enemy->inventory.size(); i++)
+                {
+                    if (enemy->inventory[i]->ID == 0)
+                    {
+                        //can heal. Move away from closest player unit and heal
+                        healIndex = i;
+                        break;
+                    }
+                }
+                if (healIndex >= 0)
+                {
+                    HealSelf(enemy);
+                }
+                if (healIndex < 0)
+                {
+                    //Check nearby friendly units to see if they have a healing item. If they do, trade with them, heal, and end move.
+                }
+            }
+            else
+            {
+                GetPriority(enemy);
+            }
         }
         else
         {
@@ -448,7 +477,90 @@ void EnemyManager::Update(BattleManager& battleManager)
                 {
                     FinishMove();
                 }
+                else if (state == HEALING)
+                {
+                    ItemManager::itemManager.UseItem(enemy, healIndex, enemy->inventory[healIndex]->useID);
+                    FinishMove();
+                }
             }
+        }
+    }
+}
+
+void EnemyManager::HealSelf(Unit* enemy)
+{
+    std::cout << "HEALING\n";
+    state = HEALING;
+    auto position = enemy->sprite.getPosition();
+
+    TileManager::tileManager.removeUnit(position.x, position.y);
+
+    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+    std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+
+    //want to find the closest player unit and move away from it.
+    Unit* closestUnit = nullptr;
+    int closestDistance = 20;
+    for (int i = 0; i < otherUnits.size(); i++)
+    {
+        int distance = path[otherUnits[i]->sprite.getPosition()].moveCost;
+        if (distance < closestDistance)
+        {
+            closestDistance = distance;
+            closestUnit = otherUnits[i];
+        }
+    }
+    if (closestUnit == nullptr)
+    {
+        //No units nearby, just heal
+        NoMove(enemy, position);
+    }
+    else
+    {
+        auto directionToOtherUnit = glm::normalize(glm::vec2(position - closestUnit->sprite.getPosition()));
+
+        int bestValue = 0;
+        glm::ivec2 bestPosition;
+        for (auto const& x : path)
+        {
+            auto tile = TileManager::tileManager.getTile(x.first.x, x.first.y);
+            if (!tile->occupiedBy)
+            {
+                auto tileProperties = tile->properties;
+                auto directionToTarget = glm::normalize(glm::vec2(position - x.first));
+                int oppositeDirectionBonus = 0;
+                //Try to run away from the closest unit, but prioritize good tiles
+                if (directionToOtherUnit.x * directionToTarget.x > 0 || directionToOtherUnit.y * directionToTarget.y > 0)
+                {
+                    oppositeDirectionBonus = -1;
+                }
+                int tileConsiderations = x.second.moveCost + tileProperties.avoid + (tileProperties.defense * 10) + oppositeDirectionBonus;
+                if (tileConsiderations > bestValue)
+                {
+                    bestValue = tileConsiderations;
+                    bestPosition = x.first;
+
+                }
+            }
+        }
+        if (bestValue == 0)
+        {
+            NoMove(enemy, position);
+        }
+        else
+        {
+            std::vector<glm::ivec2> followPath;
+            glm::vec2 pathPoint = bestPosition;
+            followPath.push_back(pathPoint);
+
+            while (pathPoint != enemy->sprite.getPosition())
+            {
+                auto previous = path[pathPoint].previousPosition;
+                followPath.push_back(previous);
+                pathPoint = previous;
+            }
+            enemy->movementComponent.startMovement(followPath, path[bestPosition].moveCost, false);
+            enemyMoving = true;
         }
     }
 }
