@@ -58,8 +58,9 @@ void ItemManager::LoadWeaponData()
 	}
 }
 
-void ItemManager::UseItem(Unit* unit, int index, int ID)
+void ItemManager::UseItem(Unit* unit, int index)
 {
+	int ID = unit->inventory[index]->useID;
 	switch (ID)
 	{
 	case HEAL:
@@ -70,8 +71,8 @@ void ItemManager::UseItem(Unit* unit, int index, int ID)
 
 void ItemManager::Heal(Unit* unit, int index)
 {
-	//Send message to play animation of health bar filling up...Eventually
-	unit->currentHP = unit->maxHP;
+	//Send message to play animation of health bar filling up.
+	subject.notify(unit, index);
 	auto item = unit->inventory[index];
 	item->remainingUses--;
 	if (item->remainingUses == 0)
@@ -79,6 +80,7 @@ void ItemManager::Heal(Unit* unit, int index)
 		if (item->isWeapon)
 		{
 			//break weapon
+			//Will probably need some sort of notifcation that the weapon broke as well...
 		}
 		else
 		{

@@ -134,9 +134,37 @@ struct BattleEvents : public BattleObserver
 
 struct PostBattleEvents : public PostBattleObserver
 {
-	virtual void onNotify()
+	virtual void onNotify(int ID)
 	{
-		battleManager.EndBattle(&cursor, &enemyManager);
+		if (ID == 0)
+		{
+			battleManager.EndBattle(&cursor, &enemyManager);
+		}
+		else if (ID == 1)
+		{
+			if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
+			{
+				//If the player attacked we need to return control to the cursor
+				cursor.GetRemainingMove();
+			}
+			else
+			{
+				cursor.Wait();
+			}
+		}
+		else if (ID == 2)
+		{
+			enemyManager.FinishMove();
+		}
+	}
+};
+//This is identical to above so I'm not sure I even need it here...
+struct ItemEvents : public ItemUseObserver
+{
+	virtual void onNotify(Unit* unit, int index)
+	{
+		//Do something in display here...
+		displays.StartUse(unit, index);
 	}
 };
 
@@ -238,6 +266,8 @@ int main(int argc, char** argv)
 	TurnEvents* turnEvents = new TurnEvents();
 	BattleEvents* battleEvents = new BattleEvents();
 	PostBattleEvents* postBattleEvents = new PostBattleEvents();
+	ItemEvents* itemEvents = new ItemEvents();
+	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	displays.subject.addObserver(postBattleEvents);
 	loadMap("1.map");
@@ -326,6 +356,7 @@ int main(int argc, char** argv)
 	}
 	playerUnits[0]->placeUnit(48, 112);
 	playerUnits[0]->experience = 90;
+	playerUnits[0]->currentHP = 10;
 //	playerUnits[0]->magic = 20;
 	playerUnits[1]->placeUnit(112, 112);
 	playerUnits[1]->movementType = Unit::FOOT;
@@ -350,6 +381,7 @@ int main(int argc, char** argv)
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
 	enemyManager.subject.addObserver(turnEvents);
+	enemyManager.displays = &displays;
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
@@ -495,6 +527,7 @@ int main(int argc, char** argv)
 	delete turnEvents;
 	delete battleEvents;
 	delete postBattleEvents;
+	delete itemEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();

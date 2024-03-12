@@ -663,6 +663,7 @@ void Unit::ClearPathData()
 {
     foundTiles.clear();
     attackTiles.clear();
+    tradeUnits.clear();
     path.clear();
     costTile.clear();
     drawnPath.clear();
@@ -838,12 +839,20 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
         {
             auto otherUnit = thisTile->occupiedBy;
             //This is horrid
-            if (otherUnit && otherUnit != this && otherUnit->team != team)
+            if (otherUnit)
             {
-                movementCost = 100;
-                costs[checkingTile.x][checkingTile.y] = movementCost;
-                checked[checkingTile.x][checkingTile.y] = true;
+                if (otherUnit->team != team)
+                {
+                    movementCost = 100;
+                    costs[checkingTile.x][checkingTile.y] = movementCost;
+                    checked[checkingTile.x][checkingTile.y] = true;
+                }
+                else if (otherUnit != this)
+                {
+                    tradeUnits.push_back(otherUnit);
+                }
             }
+            
             //This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
             if (movementCost < distance)
             {
@@ -865,6 +874,10 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
                     if (distance == 50)
                     {
                         attackTiles.push_back(tilePosition);
+                        if (otherUnit && otherUnit != this && otherUnit->team == team)
+                        {
+                            tradeUnits.push_back(otherUnit);
+                        }
                     }
                 }
             }

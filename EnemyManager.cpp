@@ -6,11 +6,12 @@
 
 #include <algorithm>
 #include <fstream>  
+#include "PostBattleDisplays.h"
 #include "csv.h"
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void EnemyManager::GetPriority(Unit* enemy)
+void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
 {
     otherUnit = nullptr;
     canCounter = true;
@@ -19,7 +20,6 @@ void EnemyManager::GetPriority(Unit* enemy)
     TileManager::tileManager.removeUnit(position.x, position.y);
 
     battleStats = BattleStats{};
-    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
     
     int cannotCounterBonus = 50;
 
@@ -39,7 +39,7 @@ void EnemyManager::GetPriority(Unit* enemy)
 
             auto otherUnit = otherUnits[i];
             auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
-            currentTarget.attackPositions = ValidAttackPosition(otherUnit, path, enemy->minRange, enemy->maxRange);
+            currentTarget.attackPositions = ValidAdjacentPositions(otherUnit, path, enemy->minRange, enemy->maxRange);
 
             currentTarget.ID = i;
             //First want to determine if the other unit can counter. Very high priority if they cannot
@@ -435,6 +435,7 @@ void EnemyManager::Update(BattleManager& battleManager)
 
         if (!enemyMoving)
         {
+            std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
             if (enemy->currentHP <= enemy->maxHP * 0.5f)
             {
                 healIndex = -1;
@@ -449,16 +450,16 @@ void EnemyManager::Update(BattleManager& battleManager)
                 }
                 if (healIndex >= 0)
                 {
-                    HealSelf(enemy);
+                    HealSelf(enemy, path);
                 }
                 if (healIndex < 0)
                 {
-                    //Check nearby friendly units to see if they have a healing item. If they do, trade with them, heal, and end move.
+                    FindHealItem(enemy, path);
                 }
             }
             else
             {
-                GetPriority(enemy);
+                GetPriority(enemy, path);
             }
         }
         else
@@ -479,23 +480,96 @@ void EnemyManager::Update(BattleManager& battleManager)
                 }
                 else if (state == HEALING)
                 {
-                    ItemManager::itemManager.UseItem(enemy, healIndex, enemy->inventory[healIndex]->useID);
-                    FinishMove();
+                    displays->EnemyUse(enemy, healIndex);
+                   // ItemManager::itemManager.UseItem(enemy, healIndex);
+                }
+                else if (state == TRADING)
+                {
+                    displays->EnemyTrade(this);
                 }
             }
         }
     }
 }
 
-void EnemyManager::HealSelf(Unit* enemy)
+void EnemyManager::FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
 {
-    std::cout << "HEALING\n";
+    auto position = enemy->sprite.getPosition();
+
+    TileManager::tileManager.removeUnit(position.x, position.y);
+    //Check nearby friendly units to see if they have a healing item. If they do, trade with them, heal, and end move.
+    Unit* closestFriendly = nullptr;
+    glm::vec2 closestPosition;
+    int minDistance = 100;
+    for (int i = 0; i < enemy->tradeUnits.size(); i++)
+    {
+        int possibleIndex = -1;
+
+        auto tradeUnit = enemy->tradeUnits[i];
+
+        for (int c = 0; c < tradeUnit->inventory.size(); c++)
+        {
+            if (tradeUnit->inventory[c]->ID == 0)
+            {
+                possibleIndex = c;
+                break;
+            }
+        }
+        if (possibleIndex >= 0)
+        {
+            auto adjacentPositions = ValidAdjacentPositions(tradeUnit, path, 1, 1);
+            for (int c = 0; c < adjacentPositions.size(); c++)
+            {
+                auto distance = adjacentPositions[c].distance;
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestPosition = adjacentPositions[c].position;
+                    closestFriendly = tradeUnit;
+                    healIndex = possibleIndex;
+                }
+            }
+        }
+    }
+    if (closestFriendly)
+    {
+        std::vector<glm::ivec2> followPath;
+        glm::vec2 pathPoint = closestPosition;
+        followPath.push_back(pathPoint);
+
+        while (pathPoint != enemy->sprite.getPosition())
+        {
+            auto previous = path[pathPoint].previousPosition;
+            followPath.push_back(previous);
+            pathPoint = previous;
+        }
+        //Add the healing item to this enemy's inventory. If inventory is full, swap last item.
+        int tradeIndex = enemy->inventory.size();
+        if (tradeIndex > 8)
+        {
+            tradeIndex--;
+        }
+        //Swapping here so I don't have to keep track of this data outside of this function
+        //Still going to need some way of informing the player that the enemy made a trade though.
+        enemy->swapItem(closestFriendly, healIndex, tradeIndex);
+        healIndex = tradeIndex;
+        enemy->movementComponent.startMovement(followPath, path[closestPosition].moveCost, false);
+        enemyMoving = true;
+        state = TRADING;
+    }
+    else
+    {
+        GetPriority(enemy, path);
+    }
+}
+
+void EnemyManager::HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
+{
     state = HEALING;
     auto position = enemy->sprite.getPosition();
 
     TileManager::tileManager.removeUnit(position.x, position.y);
-
-    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+    
     std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
 
     //want to find the closest player unit and move away from it.
@@ -655,7 +729,8 @@ void EnemyManager::Clear()
     enemies.clear();
 }
 
-std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange)
+std::vector<AttackPosition> EnemyManager::ValidAdjacentPositions(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path,
+    int minRange, int maxRange)
 {
     auto position = toAttack->sprite.getPosition();
     std::vector<glm::vec2> foundTiles;
@@ -689,7 +764,6 @@ std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, co
     {
         auto current = checking[0];
         removeFromOpenList(checking);
-        int cost = current.moveCost;
         glm::vec2 checkPosition = current.position;
 
         glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
@@ -697,10 +771,10 @@ std::vector<AttackPosition> EnemyManager::ValidAttackPosition(Unit* toAttack, co
         glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
         glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
 
-        CheckAdjacentTiles(up, checked, checking, current, costs, foundTiles, rangeTiles, path);
-        CheckAdjacentTiles(down, checked, checking, current, costs, foundTiles, rangeTiles, path);
-        CheckAdjacentTiles(right, checked, checking, current, costs, foundTiles, rangeTiles, path);
-        CheckAdjacentTiles(left, checked, checking, current, costs, foundTiles, rangeTiles, path);
+        CheckAdjacentTiles(up, checked, checking, current, costs, foundTiles, rangeTiles, path, minRange, maxRange);
+        CheckAdjacentTiles(down, checked, checking, current, costs, foundTiles, rangeTiles, path, minRange, maxRange);
+        CheckAdjacentTiles(right, checked, checking, current, costs, foundTiles, rangeTiles, path, minRange, maxRange);
+        CheckAdjacentTiles(left, checked, checking, current, costs, foundTiles, rangeTiles, path, minRange, maxRange);
     }
     return rangeTiles;
 }
@@ -771,7 +845,9 @@ void EnemyManager::removeFromOpenList(std::vector<pathCell>& checking)
     }
 }
 
-void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
+void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, 
+    pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles,
+    const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange)
 {
     glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
     if(!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
@@ -788,11 +864,10 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
             {
                 costs[checkingTile.x][checkingTile.y] = movementCost;
             }
-            auto thisEnemy = enemies[currentEnemy];
-            if (movementCost <= thisEnemy->maxRange)
+            if (movementCost <= maxRange)
             {
-                if ((thisEnemy->minRange == thisEnemy->maxRange && movementCost == thisEnemy->maxRange) ||
-                    (thisEnemy->minRange < thisEnemy->maxRange && movementCost <= thisEnemy->maxRange))
+                if ((minRange == maxRange && movementCost == maxRange) ||
+                    (minRange < maxRange && movementCost <= maxRange))
                 {
                     if (path.find(tilePosition) != path.end() && !thisTile->occupiedBy)
                     {

@@ -6,6 +6,9 @@
 #include "Camera.h"
 #include <glm.hpp>
 
+#include "Items.h"
+#include "EnemyManager.h"
+
 void PostBattleDisplays::AddExperience(Unit* unit, Unit* foe)
 {
 	leveledUnit = unit;
@@ -29,6 +32,28 @@ void PostBattleDisplays::OnUnitLevel(Unit* unit)
 	state = LEVEL_UP_NOTE;
 }
 
+void PostBattleDisplays::StartUse(Unit* unit, int index)
+{
+	state = HEALING_ANIMATION;
+	leveledUnit = unit;
+	displayedHP = leveledUnit->currentHP;
+}
+
+void PostBattleDisplays::EnemyUse(Unit* unit, int index)
+{
+	state = ENEMY_USE;
+	leveledUnit = unit;
+	itemToUse = index;
+}
+
+void PostBattleDisplays::EnemyTrade(EnemyManager* enemyManager)
+{
+	state = ENEMY_TRADE;
+	this->enemyManager = enemyManager;
+	leveledUnit = enemyManager->enemies[enemyManager->currentEnemy];
+	itemToUse = enemyManager->healIndex;
+}
+
 void PostBattleDisplays::Update(float deltaTime)
 {
 	switch (state)
@@ -39,40 +64,101 @@ void PostBattleDisplays::Update(float deltaTime)
 		UpdateExperienceDisplay(deltaTime);
 		break;
 	case LEVEL_UP_NOTE:
-		levelUpNoteTimer += deltaTime;
-		if (levelUpNoteTimer > levelUpNoteTime)
+		displayTimer += deltaTime;
+		if (displayTimer > levelUpNoteTime)
 		{
-			levelUpNoteTimer = 0.0f;
+			displayTimer = 0.0f;
 			state = LEVEL_UP;
 		}
 		break;
 	case LEVEL_UP:
 		UpdateLevelUpDisplay(deltaTime);
 		break;
-	default:
+	case HEALING_ANIMATION:
+		displayTimer += deltaTime;
+		if (displayTimer > healAnimationTime)
+		{
+			displayTimer = 0.0f;
+			state = HEALING_BAR;
+		}
 		break;
+	case HEALING_BAR:
+		UpdateHealthBarDisplay(deltaTime);
+		break;
+	case ENEMY_USE:
+		displayTimer += deltaTime;
+		if (displayTimer > textDisplayTime)
+		{
+			displayTimer = 0.0f;
+			ItemManager::itemManager.UseItem(leveledUnit, itemToUse);
+		}
+	case ENEMY_TRADE:
+		displayTimer += deltaTime;
+		if (displayTimer > textDisplayTime)
+		{
+			displayTimer = 0.0f;
+			state = ENEMY_USE;
+		}
+		break;
+	}
+}
+
+void PostBattleDisplays::UpdateHealthBarDisplay(float deltaTime)
+{
+	displayTimer += deltaTime;
+	if (finishedHealing)
+	{
+		if (displayTimer > healAnimationTime)
+		{
+			leveledUnit->currentHP = leveledUnit->maxHP;
+			finishedHealing = false;
+			displayTimer = 0;
+			state = NONE;
+			//I don't know about this gravy...
+			if (leveledUnit->team == 0)
+			{
+				subject.notify(1);
+			}
+			else
+			{
+				subject.notify(2);
+			}
+		}
+	}
+	else
+	{
+		if (displayTimer > healDisplayTime)
+		{
+			displayedHP++;
+			if (displayedHP >= leveledUnit->maxHP)
+			{
+				displayedHP = leveledUnit->maxHP;
+				finishedHealing = true;
+			}
+			displayTimer = 0;
+		}
 	}
 }
 
 void PostBattleDisplays::UpdateLevelUpDisplay(float deltaTime)
 {
-	levelUpTimer += deltaTime;
-	if (levelUpTimer > 2.0f)
+	displayTimer += deltaTime;
+	if (displayTimer > 2.0f)
 	{
-		levelUpTimer = 0;
+		displayTimer = 0;
 		delete preLevelStats;
 		leveledUnit = nullptr;
 		state = NONE;
-		subject.notify();
+		subject.notify(0);
 	}
 }
 
 void PostBattleDisplays::UpdateExperienceDisplay(float deltaTime)
 {
-	experienceTimer += deltaTime;
+	displayTimer += deltaTime;
 	if (displayingExperience)
 	{
-		if (experienceTimer > experienceDisplayTime)
+		if (displayTimer > experienceDisplayTime)
 		{
 			leveledUnit->AddExperience(gainedExperience);
 			displayingExperience = false;
@@ -80,14 +166,14 @@ void PostBattleDisplays::UpdateExperienceDisplay(float deltaTime)
 			{
 				leveledUnit = nullptr;
 				state = NONE;
-				subject.notify();
+				subject.notify(0);
 			}
-			experienceTimer = 0;
+			displayTimer = 0;
 		}
 	}
 	else
 	{
-		if (experienceTimer > experienceTime)
+		if (displayTimer > experienceTime)
 		{
 			displayedExperience++;
 			if (displayedExperience >= 100)
@@ -98,8 +184,7 @@ void PostBattleDisplays::UpdateExperienceDisplay(float deltaTime)
 			{
 				displayingExperience = true;
 			}
-			else 
-			experienceTimer = 0;
+			displayTimer = 0;
 		}
 	}
 }
@@ -119,15 +204,61 @@ void PostBattleDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		glm::vec2 drawPosition = leveledUnit->sprite.getPosition();
 		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
 		Text->RenderText("LEVEL UP", drawPosition.x, drawPosition.y, 0.85f, glm::vec3(0.95f, 0.95f, 0.0f));
-
 		break;
 	}
 	case LEVEL_UP:
 		DrawLevelUpDisplay(camera, shapeVAO, Text);
 		break;
-	default:
+	case HEALING_ANIMATION:
+		DrawHealAnimation(camera, shapeVAO);
+		break;
+	case HEALING_BAR:
+		DrawHealthBar(camera, shapeVAO, Text);
+		break;
+	case ENEMY_USE:
+		Text->RenderText(leveledUnit->name + " used " + leveledUnit->inventory[itemToUse]->name, 300, 300, 1);
+		break;
+	case ENEMY_TRADE:
+		Text->RenderText(leveledUnit->name + " recieved " + leveledUnit->inventory[itemToUse]->name, 300, 300, 1);
 		break;
 	}
+}
+
+void PostBattleDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text)
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(80, 98, 0.0f));
+	model = glm::scale(model, glm::vec3(100 * (float(displayedHP) / float(leveledUnit->maxHP)), 5, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	Text->RenderText("HP", 215, 260, 1);
+	Text->RenderText(intToString(displayedHP), 565, 260, 1);
+}
+
+void PostBattleDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+	glm::mat4 model = glm::mat4();
+	auto unitPosition = leveledUnit->sprite.getPosition();
+	model = glm::translate(model, glm::vec3(unitPosition.x, unitPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 }
 
 void PostBattleDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)

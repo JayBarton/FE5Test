@@ -28,8 +28,11 @@ enum ActionState
 	ATTACK,
 	END_ATTACK,
 	CANTO,
-	HEALING
+	HEALING,
+	TRADING
 };
+
+class PostBattleDisplays;
 
 struct EnemyManager
 {
@@ -41,6 +44,7 @@ struct EnemyManager
 	bool canCounter = true;
 	bool enemyMoving = false;
 	Unit* otherUnit = nullptr;
+	PostBattleDisplays* displays = nullptr;
 
 	TurnSubject subject;
 	BattleStats battleStats;
@@ -49,12 +53,13 @@ struct EnemyManager
 
 	std::vector<glm::vec4> UVs;
 
-	void GetPriority(Unit* enemy);
+	void GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
 	void Update(BattleManager& battleManager);
-	void HealSelf(Unit* enemy);
+	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
+	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
 	void FinishMove();
 	void UpdateEnemies(float deltaTime);
@@ -62,13 +67,15 @@ struct EnemyManager
 	void Clear();
 	std::vector<Unit*> GetOtherUnits(Unit* enemy);
 
-	std::vector<AttackPosition> ValidAttackPosition(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange);
-
+	std::vector<AttackPosition> ValidAdjacentPositions(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path,
+		int minRange, int maxRange);
 
 	//horrible code duplication
 	void addToOpenSet(pathCell newCell, std::vector<pathCell>& checking, std::vector<std::vector<bool>>& checked, std::vector<std::vector<int>>& costs);
 	void removeFromOpenList(std::vector<pathCell>& checking);
 
-	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
+	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell,
+		std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<AttackPosition>& rangeTiles,
+		const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, int minRange, int maxRange);
 
 };

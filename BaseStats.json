@@ -145,7 +145,7 @@
         "Bld": 10,
         "Mov": 1
       },
-      "Inventory": [ 9, 1 ],
+      "Inventory": [ 9, 1, 0 ],
       "WeaponProf": {
         "Lance": 4,
         "Sword": 2

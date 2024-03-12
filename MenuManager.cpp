@@ -553,8 +553,8 @@ void ItemUseMenu::SelectOption()
 	switch (optionsVector[currentOption])
 	{
 	case USE:
-		ItemManager::itemManager.UseItem(cursor->selectedUnit, inventoryIndex, item->useID);
-		EndUnitMove();
+		ItemManager::itemManager.UseItem(cursor->selectedUnit, inventoryIndex);
+		ClearMenu();
 		break;
 	case EQUIP:
 		cursor->selectedUnit->equipWeapon(inventoryIndex);

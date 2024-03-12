@@ -241,6 +241,8 @@ struct Unit
 	//Both of these are used to draw the movement and attack range of a unit
 	std::vector<glm::ivec2> foundTiles;
 	std::vector<glm::ivec2> attackTiles;
+	//Using this to allow enemies to trade with each other
+	std::vector<Unit*> tradeUnits;
 	//Temporary, just using to visualize tile costs
 	std::vector<int> costTile;
 
