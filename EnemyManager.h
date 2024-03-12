@@ -32,7 +32,7 @@ enum ActionState
 	TRADING
 };
 
-class PostBattleDisplays;
+class InfoDisplays;
 
 struct EnemyManager
 {
@@ -44,7 +44,7 @@ struct EnemyManager
 	bool canCounter = true;
 	bool enemyMoving = false;
 	Unit* otherUnit = nullptr;
-	PostBattleDisplays* displays = nullptr;
+	InfoDisplays* displays = nullptr;
 
 	TurnSubject subject;
 	BattleStats battleStats;

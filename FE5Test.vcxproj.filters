@@ -75,7 +75,7 @@
     <ClInclude Include="EnemyManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PostBattleDisplays.h">
+    <ClInclude Include="InfoDisplays.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Globals.h">
@@ -143,7 +143,7 @@
     <ClCompile Include="EnemyManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PostBattleDisplays.cpp">
+    <ClCompile Include="InfoDisplays.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

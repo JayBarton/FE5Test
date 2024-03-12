@@ -20,7 +20,7 @@
 #include "EnemyManager.h"
 
 #include "Globals.h"
-#include "PostBattleDisplays.h"
+#include "InfoDisplays.h"
 
 #include "csv.h"
 #include <nlohmann/json.hpp>
@@ -81,7 +81,7 @@ BattleManager battleManager;
 
 EnemyManager enemyManager;
 
-PostBattleDisplays displays;
+InfoDisplays displays;
 
 int currentTurn = 0;
 

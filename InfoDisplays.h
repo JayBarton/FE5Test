@@ -50,7 +50,7 @@ enum DisplayState
 	ENEMY_TRADE
 };
 class EnemyManager;
-struct PostBattleDisplays
+struct InfoDisplays
 {
 	DisplayState state = NONE;
 	PostBattleSubject subject;

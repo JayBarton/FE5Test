@@ -1,4 +1,4 @@
-#include "PostBattleDisplays.h"
+#include "InfoDisplays.h"
 #include "Unit.h"
 #include "ResourceManager.h"
 #include "TextRenderer.h"
@@ -9,7 +9,7 @@
 #include "Items.h"
 #include "EnemyManager.h"
 
-void PostBattleDisplays::AddExperience(Unit* unit, Unit* foe)
+void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 {
 	leveledUnit = unit;
 
@@ -24,7 +24,7 @@ void PostBattleDisplays::AddExperience(Unit* unit, Unit* foe)
 	state = ADD_EXPERIENCE;
 }
 
-void PostBattleDisplays::OnUnitLevel(Unit* unit)
+void InfoDisplays::OnUnitLevel(Unit* unit)
 {
 	leveledUnit = unit;
 	preLevelStats = new StatGrowths{ leveledUnit->maxHP, leveledUnit->strength, leveledUnit->magic,
@@ -32,21 +32,21 @@ void PostBattleDisplays::OnUnitLevel(Unit* unit)
 	state = LEVEL_UP_NOTE;
 }
 
-void PostBattleDisplays::StartUse(Unit* unit, int index)
+void InfoDisplays::StartUse(Unit* unit, int index)
 {
 	state = HEALING_ANIMATION;
 	leveledUnit = unit;
 	displayedHP = leveledUnit->currentHP;
 }
 
-void PostBattleDisplays::EnemyUse(Unit* unit, int index)
+void InfoDisplays::EnemyUse(Unit* unit, int index)
 {
 	state = ENEMY_USE;
 	leveledUnit = unit;
 	itemToUse = index;
 }
 
-void PostBattleDisplays::EnemyTrade(EnemyManager* enemyManager)
+void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)
 {
 	state = ENEMY_TRADE;
 	this->enemyManager = enemyManager;
@@ -54,7 +54,7 @@ void PostBattleDisplays::EnemyTrade(EnemyManager* enemyManager)
 	itemToUse = enemyManager->healIndex;
 }
 
-void PostBattleDisplays::Update(float deltaTime)
+void InfoDisplays::Update(float deltaTime)
 {
 	switch (state)
 	{
@@ -103,7 +103,7 @@ void PostBattleDisplays::Update(float deltaTime)
 	}
 }
 
-void PostBattleDisplays::UpdateHealthBarDisplay(float deltaTime)
+void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 {
 	displayTimer += deltaTime;
 	if (finishedHealing)
@@ -140,7 +140,7 @@ void PostBattleDisplays::UpdateHealthBarDisplay(float deltaTime)
 	}
 }
 
-void PostBattleDisplays::UpdateLevelUpDisplay(float deltaTime)
+void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 {
 	displayTimer += deltaTime;
 	if (displayTimer > 2.0f)
@@ -153,7 +153,7 @@ void PostBattleDisplays::UpdateLevelUpDisplay(float deltaTime)
 	}
 }
 
-void PostBattleDisplays::UpdateExperienceDisplay(float deltaTime)
+void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 {
 	displayTimer += deltaTime;
 	if (displayingExperience)
@@ -189,7 +189,7 @@ void PostBattleDisplays::UpdateExperienceDisplay(float deltaTime)
 	}
 }
 
-void PostBattleDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
+void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 {
 	switch (state)
 	{
@@ -224,7 +224,7 @@ void PostBattleDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 	}
 }
 
-void PostBattleDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text)
+void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
@@ -243,7 +243,7 @@ void PostBattleDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRendere
 	Text->RenderText(intToString(displayedHP), 565, 260, 1);
 }
 
-void PostBattleDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
+void InfoDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
@@ -261,7 +261,7 @@ void PostBattleDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
 	glBindVertexArray(0);
 }
 
-void PostBattleDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)
+void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)
 {
 	int x = SCREEN_WIDTH * 0.5f;
 	int y = SCREEN_HEIGHT * 0.5f;
@@ -331,7 +331,7 @@ void PostBattleDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRe
 	}
 }
 
-void PostBattleDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)
+void InfoDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);

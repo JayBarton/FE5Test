@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <fstream>  
-#include "PostBattleDisplays.h"
+#include "InfoDisplays.h"
 #include "csv.h"
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;

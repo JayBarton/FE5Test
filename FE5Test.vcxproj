@@ -146,7 +146,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Items.h" />
     <ClInclude Include="MenuManager.h" />
-    <ClInclude Include="PostBattleDisplays.h" />
+    <ClInclude Include="InfoDisplays.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
     <ClInclude Include="Shader.h" />
@@ -169,7 +169,7 @@
     <ClCompile Include="Items.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuManager.cpp" />
-    <ClCompile Include="PostBattleDisplays.cpp" />
+    <ClCompile Include="InfoDisplays.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SATCollision.cpp" />
     <ClCompile Include="Shader.cpp" />
