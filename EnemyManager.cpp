@@ -720,6 +720,18 @@ void EnemyManager::EndTurn()
 
 }
 
+void EnemyManager::RemoveDeadUnits()
+{
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        if (enemies[i]->isDead)
+        {
+            enemies.erase(enemies.begin() + i);
+            i--;
+        }
+    }
+}
+
 void EnemyManager::Clear()
 {
     for (int i = 0; i < enemies.size(); i++)

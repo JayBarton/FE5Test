@@ -37,23 +37,41 @@ void Unit::placeUnit(int x, int y)
 
 void Unit::Update(float deltaTime)
 {
-    if (movementComponent.moving)
+    if (!isDead)
     {
-        movementComponent.Update(deltaTime);
+    //this will presumably also handle animation at some point, and no point in animation dead units
+        if (movementComponent.moving)
+        {
+            movementComponent.Update(deltaTime);
+        }
     }
 }
 
 void Unit::Draw(SpriteRenderer* Renderer)
 {
-    ResourceManager::GetShader("sprite").Use();
-    glm::vec3 color = sprite.color;
-    glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
+    if (!isDead)
+    {
+        ResourceManager::GetShader("sprite").Use();
+        glm::vec3 color = sprite.color;
+        glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
 
-    glm::vec2 position = sprite.getPosition();
-    Renderer->setUVs(sprite.getUV());
-    Texture2D texture = ResourceManager::GetTexture("sprites");
+        glm::vec2 position = sprite.getPosition();
+        Renderer->setUVs(sprite.getUV());
+        Texture2D texture = ResourceManager::GetTexture("sprites");
 
-    Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, hasMoved);
+        Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, 1.0f - sprite.alpha, hasMoved);
+    }
+}
+
+bool Unit::Dying(float deltaTime)
+{
+    sprite.alpha -= deltaTime * 1;
+    
+    if (sprite.alpha <= 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 void Unit::LevelUp()

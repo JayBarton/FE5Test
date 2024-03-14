@@ -393,10 +393,15 @@ void Cursor::Move(int x, int y, bool held)
 		}
 	}
 }
-
+//Being called erroneously in a few places
 void Cursor::Wait()
 {
 	MoveUnitToTile();
+	FinishMove();
+}
+
+void Cursor::FinishMove()
+{
 	path.clear();
 	selectedUnit->hasMoved = true;
 	focusedUnit = selectedUnit;

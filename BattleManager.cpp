@@ -4,6 +4,9 @@
 #include "Items.h"
 #include "Cursor.h"
 #include "EnemyManager.h"
+#include "Globals.h"
+#include "TextRenderer.h"
+#include "Camera.h"
 #include <iostream>
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack)
@@ -81,59 +84,77 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 {
 	if (battleActive)
 	{
-		actionTimer += deltaTime;
-		if (actionTimer >= actionDelay)
+		if (unitDied)
 		{
-			actionTimer = 0;
-
-			if(battleQueue.size() > 0)
+			if (deadUnit->Dying(deltaTime))
 			{
-				auto attack = battleQueue[0];
-				battleQueue.erase(battleQueue.begin());
-				if (attack.firstAttacker)
+				deadUnit->isDead = true;
+				TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+				deadUnit = nullptr;
+				unitDied = false;
+				EndAttack();
+			}
+		}
+		else
+		{
+			actionTimer += deltaTime;
+			if (actionTimer >= actionDelay)
+			{
+				actionTimer = 0;
+
+				if (battleQueue.size() > 0)
 				{
-					PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+					auto attack = battleQueue[0];
+					battleQueue.erase(battleQueue.begin());
+					if (attack.firstAttacker)
+					{
+						PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+					}
+					else
+					{
+						PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+					}
+				}
+				else if (deadUnit)
+				{
+					unitDied = true;
 				}
 				else
 				{
-					PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
-				}
-			}
-			else
-			{
-				//if either unit has accost and accost has not fired
-				//reset battle queue
-				if (!accostFired)
-				{
-					if (attacker->hasSkill(Unit::ACCOST))
+					//if either unit has accost and accost has not fired
+					//reset battle queue
+					if (!accostFired)
 					{
-						if (attacker->currentHP > defender->currentHP && attackerStats.attackSpeed > defenderStats.attackSpeed)
+						if (attacker->hasSkill(Unit::ACCOST))
 						{
-							battleQueue = accostQueue;
-							accostFired = true;
-							std::cout << attacker->name << " Accosts\n";
+							if (attacker->currentHP > defender->currentHP && attackerStats.attackSpeed > defenderStats.attackSpeed)
+							{
+								battleQueue = accostQueue;
+								accostFired = true;
+								std::cout << attacker->name << " Accosts\n";
 
+							}
 						}
-					}
-					else if (defender->hasSkill(Unit::ACCOST))
-					{
-						if (defender->currentHP > attacker->currentHP && defenderStats.attackSpeed > attackerStats.attackSpeed)
+						else if (defender->hasSkill(Unit::ACCOST))
 						{
-							battleQueue = accostQueue;
-							accostFired = true;
-							std::cout << defender->name << " Accosts\n";
+							if (defender->currentHP > attacker->currentHP && defenderStats.attackSpeed > attackerStats.attackSpeed)
+							{
+								battleQueue = accostQueue;
+								accostFired = true;
+								std::cout << defender->name << " Accosts\n";
+							}
+						}
+						//No one has accost, we're done
+						else
+						{
+							EndAttack();
 						}
 					}
-					//No one has accost, we're done
+					//We are in an accost round, and it should only fire once(I think)
 					else
 					{
 						EndAttack();
 					}
-				}
-				//We are in an accost round, and it should only fire once(I think)
-				else
-				{
-					EndAttack();
 				}
 			}
 		}
@@ -228,6 +249,8 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		//Need to figure this out
 		if (otherUnit->currentHP <= 0)
 		{
+			otherUnit->currentHP = 0;
+			deadUnit = otherUnit;
 			battleQueue.clear();
 			//EndAttack();
 		}
@@ -249,20 +272,21 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager)
 {
 	if (attacker->team == 0)
 	{
-		if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+		if (!attacker->isDead && attacker->isMounted() && attacker->mount->remainingMoves > 0)
 		{
 			//If the player attacked we need to return control to the cursor
 			cursor->GetRemainingMove();
 		}
 		else
 		{
-			cursor->Wait();
+			cursor->FinishMove();
+			cursor->focusedUnit = nullptr;
 		}
 	}
 	//Not crazy about any of this
 	else
 	{
-		if (attacker->isMounted() && attacker->mount->remainingMoves > 0)
+		if (!attacker->isDead && attacker->isMounted() && attacker->mount->remainingMoves > 0)
 		{
 			enemyManager->CantoMove();
 		}
@@ -273,7 +297,38 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager)
 	}
 }
 
-void BattleManager::Draw(TextRenderer* text)
+void BattleManager::Draw(TextRenderer* text, Camera& camera)
 {
+	if (!unitDied)
+	{
+		int yOffset = 150;
+		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa
+		glm::vec2 attackerDraw;
+		glm::vec2 defenderDraw;
+		if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
+		{
+			attackerDraw = glm::vec2(200, yOffset);
+			defenderDraw = glm::vec2(500, yOffset);
+		}
+		else
+		{
+			defenderDraw = glm::vec2(200, yOffset);
+			attackerDraw = glm::vec2(500, yOffset);
+		}
+		glm::vec2 drawPosition = glm::vec2(attacker->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
+		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		text->RenderText(attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
+		attackerDraw.y += 22.0f;
+		text->RenderText("HP", attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+		attackerDraw.x += 25;
+		text->RenderText(intToString(attacker->currentHP) + "/" + intToString(attacker->maxHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
 
+		drawPosition = glm::vec2(defender->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
+		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		text->RenderText(defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+		defenderDraw.y += 22.0f;
+		text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+		defenderDraw.x += 25;
+		text->RenderText(intToString(defender->currentHP) + "/" + intToString(defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+	}
 }

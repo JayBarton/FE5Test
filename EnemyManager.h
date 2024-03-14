@@ -64,6 +64,7 @@ struct EnemyManager
 	void FinishMove();
 	void UpdateEnemies(float deltaTime);
 	void EndTurn();
+	void RemoveDeadUnits();
 	void Clear();
 	std::vector<Unit*> GetOtherUnits(Unit* enemy);
 

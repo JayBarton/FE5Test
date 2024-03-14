@@ -182,6 +182,8 @@ struct Unit
 	//Also for experience calculations, but probably unneeded for this project
 	bool isPromoted = false;
 
+	bool isDead = false;
+
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
@@ -202,6 +204,8 @@ struct Unit
 	void placeUnit(int x, int y);
 	void Update(float deltaTime);
 	void Draw(SpriteRenderer* Renderer);
+
+	bool Dying(float deltaTime);
 
 	void LevelUp();
 	int CalculateExperience(Unit* enemy);

@@ -41,6 +41,7 @@ struct Cursor
 	void Move(int x, int y, bool held = false);
 
 	void Wait();
+	void FinishMove();
 	void MoveUnitToTile();
 	void GetRemainingMove();
 	void UndoMove();

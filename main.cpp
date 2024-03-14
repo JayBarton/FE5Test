@@ -97,6 +97,15 @@ struct TurnEvents : public TurnObserver
 {
 	virtual void onNotify(int ID)
 	{
+		for (int i = 0; i < playerUnits.size(); i++)
+		{
+			if (playerUnits[i]->isDead)
+			{
+				playerUnits.erase(playerUnits.begin() + i);
+				i--;
+			}
+		}
+		enemyManager.RemoveDeadUnits();
 		if (ID == 0)
 		{
 			for (int i = 0; i < playerUnits.size(); i++)
@@ -113,6 +122,7 @@ struct TurnEvents : public TurnObserver
 		{
 			currentTurn = 0;
 		}
+		
 	}
 };
 
@@ -124,7 +134,6 @@ struct BattleEvents : public BattleObserver
 		{
 			displays.AddExperience(attacker, defender);
 		}
-		//Not crazy about any of this
 		else
 		{
 			displays.AddExperience(defender, attacker);
@@ -140,6 +149,7 @@ struct PostBattleEvents : public PostBattleObserver
 		{
 			battleManager.EndBattle(&cursor, &enemyManager);
 		}
+		//player used an item
 		else if (ID == 1)
 		{
 			if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
@@ -152,6 +162,8 @@ struct PostBattleEvents : public PostBattleObserver
 				cursor.Wait();
 			}
 		}
+		//Enemy used an item
+		//Even if they can canto, if an enemy uses an item I want them to end their move
 		else if (ID == 2)
 		{
 			enemyManager.FinishMove();
@@ -744,35 +756,7 @@ void DrawText()
 	}
 	else if (battleManager.battleActive)
 	{
-		int yOffset = 150;
-		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa
-		glm::vec2 attackerDraw;
-		glm::vec2 defenderDraw;
-		if (battleManager.attacker->sprite.getPosition().x < battleManager.defender->sprite.getPosition().x)
-		{
-			attackerDraw = glm::vec2(200, yOffset);
-			defenderDraw = glm::vec2(500, yOffset);
-		}
-		else
-		{
-			defenderDraw = glm::vec2(200, yOffset);
-			attackerDraw = glm::vec2(500, yOffset);
-		}
-		glm::vec2 drawPosition = glm::vec2(battleManager.attacker->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
-		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
-		Text->RenderText(battleManager.attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
-		attackerDraw.y += 22.0f;
-		Text->RenderText("HP", attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-		attackerDraw.x += 25;
-		Text->RenderText(intToString(battleManager.attacker->currentHP) + "/" + intToString(battleManager.attacker->maxHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
-
-		drawPosition = glm::vec2(battleManager.defender->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
-		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
-		Text->RenderText(battleManager.defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
-		defenderDraw.y += 22.0f;
-		Text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-		defenderDraw.x += 25;
-		Text->RenderText(intToString(battleManager.defender->currentHP) + "/" + intToString(battleManager.defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+		battleManager.Draw(Text, camera);
 	}
 	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
 	{

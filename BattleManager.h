@@ -59,10 +59,11 @@ struct BattleManager
 	
 	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager);
 
-	void Draw(TextRenderer* text);
+	void Draw(TextRenderer* text, class Camera& camera);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
+	Unit* deadUnit = nullptr;
 
 	BattleStats attackerStats;
 	BattleStats defenderStats;
@@ -75,8 +76,8 @@ struct BattleManager
 	bool attackerTurn = true;
 	bool defenderTurn = false;
 	bool checkDouble = true;
-
 	bool accostFired = false;
+	bool unitDied = false;
 
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;

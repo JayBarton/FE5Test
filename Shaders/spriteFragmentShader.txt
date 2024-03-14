@@ -5,6 +5,7 @@ out vec4 color;
 uniform sampler2D image;
 uniform vec4 spriteColor;
 uniform float u_colorFactor;
+uniform float fadeFactor;
 
 void main()
 {    
@@ -12,5 +13,8 @@ void main()
     vec4 sample = vec4(spriteColor) * texture(image, TextureCoordinates);
 	float grey = 0.21 * sample.r + 0.71 * sample.g + 0.07 * sample.b;
 	color = vec4(sample.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), sample.a);
+//	color = mix(color, vec4(0.5f), fadeFactor);
+//	color.a = sample.a;
+	
 	//color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 }  

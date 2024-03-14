@@ -11,17 +11,26 @@
 
 void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 {
-	leveledUnit = unit;
-
-	gainedExperience = unit->CalculateExperience(foe);
-	leveledUnit = unit;
-	displayedExperience = leveledUnit->experience;
-	finalExperience = gainedExperience + displayedExperience;
-	if (finalExperience >= 100)
+	if (unit->isDead)
 	{
-		finalExperience -= 100;
+		leveledUnit = nullptr;
+		state = NONE;
+		subject.notify(0);
 	}
-	state = ADD_EXPERIENCE;
+	else
+	{
+		leveledUnit = unit;
+
+		gainedExperience = unit->CalculateExperience(foe);
+		leveledUnit = unit;
+		displayedExperience = leveledUnit->experience;
+		finalExperience = gainedExperience + displayedExperience;
+		if (finalExperience >= 100)
+		{
+			finalExperience -= 100;
+		}
+		state = ADD_EXPERIENCE;
+	}
 }
 
 void InfoDisplays::OnUnitLevel(Unit* unit)
