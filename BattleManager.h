@@ -44,10 +44,10 @@ struct Attack
 	bool vantageAttack = false;
 	bool wrathAttack = false;
 };
-
+class Camera;
 struct BattleManager
 {
-	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack);
+	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera);
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 
@@ -57,9 +57,9 @@ struct BattleManager
 
 	void EndAttack();
 	
-	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager);
+	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager, Camera& camera);
 
-	void Draw(TextRenderer* text, class Camera& camera);
+	void Draw(TextRenderer* text, Camera& camera);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
@@ -67,6 +67,8 @@ struct BattleManager
 
 	BattleStats attackerStats;
 	BattleStats defenderStats;
+
+	glm::vec2 cameraStart;
 
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;

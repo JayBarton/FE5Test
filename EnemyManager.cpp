@@ -3,6 +3,7 @@
 #include "Items.h"
 #include "TileManager.h"
 #include "BattleManager.h"
+#include "Camera.h"
 
 #include <algorithm>
 #include <fstream>  
@@ -247,6 +248,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     }
 }
 
+//This and finish move are nearly identical...
 void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
 {
     enemy->placeUnit(position.x, position.y);
@@ -413,6 +415,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UVs;
     }
+  //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
 void EnemyManager::Draw(SpriteRenderer* renderer)
@@ -423,7 +426,7 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	}
 }
 
-void EnemyManager::Update(BattleManager& battleManager)
+void EnemyManager::Update(BattleManager& battleManager, Camera& camera)
 {
     if (currentEnemy >= enemies.size())
     {
@@ -432,7 +435,8 @@ void EnemyManager::Update(BattleManager& battleManager)
     else
     {
         auto enemy = enemies[currentEnemy];
-
+        //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
+      //  camera.SetMove(enemy->sprite.getPosition());
         if (!enemyMoving)
         {
             std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
@@ -472,11 +476,11 @@ void EnemyManager::Update(BattleManager& battleManager)
                     auto otherStats = otherUnit->CalculateBattleStats();
                     auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
                     otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                    battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter);
+                    battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
                 }
                 else if(state == CANTO)
                 {
-                    FinishMove();
+                    FinishMove(camera);
                 }
                 else if (state == HEALING)
                 {
@@ -619,6 +623,8 @@ void EnemyManager::HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell,
         }
         if (bestValue == 0)
         {
+            //This would mean that all valid tiles to escape to are occupied by allies, so this unit cannot move
+            //This is untested right now.
             NoMove(enemy, position);
         }
         else
@@ -693,7 +699,7 @@ void EnemyManager::CantoMove()
     }
 }
 
-void EnemyManager::FinishMove()
+void EnemyManager::FinishMove(Camera& camera)
 {
     enemies[currentEnemy]->hasMoved = true;
     enemyMoving = false;

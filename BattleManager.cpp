@@ -9,7 +9,7 @@
 #include "Camera.h"
 #include <iostream>
 
-void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack)
+void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera)
 {
 	battleActive = true;
 	this->attacker = attacker;
@@ -78,6 +78,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		accostQueue[i].wrathAttack = false;
 		accostQueue[i].vantageAttack = false;
 	}
+	camera.SetMove(defender->sprite.getPosition());
 }
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
@@ -268,7 +269,7 @@ void BattleManager::EndAttack()
 	subject.notify(attacker, defender);
 }
 
-void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager)
+void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera& camera)
 {
 	if (attacker->team == 0)
 	{
@@ -292,9 +293,10 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager)
 		}
 		else
 		{
-			enemyManager->FinishMove();
+			enemyManager->FinishMove(camera);
 		}
 	}
+	camera.SetMove(attacker->sprite.getPosition());
 }
 
 void BattleManager::Draw(TextRenderer* text, Camera& camera)

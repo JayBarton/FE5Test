@@ -171,19 +171,20 @@ void UnitOptionsMenu::CancelOption()
 
 void UnitOptionsMenu::Draw()
 {
-//	int xStart = SCREEN_WIDTH;
-	int xStart = 800;
+	int xText = 600;
+	int xIndicator = 176;
 	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		//	xStart = 178;
+		xText = 72;
+		xIndicator = 8;
 	}
 	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(176, 32 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -198,32 +199,32 @@ void UnitOptionsMenu::Draw()
 	if (canAttack)
 	{
 		commands += "Attack\n";
-		text->RenderText("Attack", xStart - 200, yOffset, 1);
+		text->RenderText("Attack", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	if (canTrade)
 	{
-		text->RenderText("Trade", xStart - 200, yOffset, 1);
+		text->RenderText("Trade", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	commands += "Items\n";
-	text->RenderText("Items", xStart - 200, yOffset, 1);
+	text->RenderText("Items", xText, yOffset, 1);
 	yOffset += 30;
 	if (canDismount)
 	{
 		commands += "Dismount\n";
-		text->RenderText("Dismount", xStart - 200, yOffset, 1);
+		text->RenderText("Dismount", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	else if (canMount)
 	{
 		commands += "Mount\n";
-		text->RenderText("Mount", xStart - 200, yOffset, 1);
+		text->RenderText("Mount", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	commands += "Wait";
-	text->RenderText("Wait", xStart - 200, yOffset, 1);
-	//Text->RenderText(commands, xStart - 200, 100, 1);
+	text->RenderText("Wait", xText, yOffset, 1);
+	//Text->RenderText(commands, xText, 100, 1);
 }
 
 void UnitOptionsMenu::GetOptions()
@@ -273,17 +274,19 @@ CantoOptionsMenu::CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* c
 
 void CantoOptionsMenu::Draw()
 {
-	int xStart = 800;
+	int xText = 600;
+	int xIndicator = 176;
 	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		//	xStart = 178;
+		xText = 72;
+		xIndicator = 8;
 	}
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(176, 32 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -293,7 +296,7 @@ void CantoOptionsMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-	text->RenderText("Wait", xStart - 200, yOffset, 1);
+	text->RenderText("Wait", xText, yOffset, 1);
 }
 
 void CantoOptionsMenu::SelectOption()
@@ -696,10 +699,22 @@ SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* cam
 
 void SelectEnemyMenu::Draw()
 {
+	auto enemy = unitsToAttack[currentOption];
+	auto targetPosition = enemy->sprite.getPosition();
+	int enemyStatsTextX = 536;
+	int statsDisplay = 169;
+
+	int yOffset = 100;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		enemyStatsTextX = 32;
+		statsDisplay = 7;
+	}
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(169, 10, 0.0f));
+	model = glm::translate(model, glm::vec3(statsDisplay, 10, 0.0f));
 
 	model = glm::scale(model, glm::vec3(80, 209, 0.0f));
 
@@ -712,60 +727,59 @@ void SelectEnemyMenu::Draw()
 
 	renderer->setUVs(cursor->uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-	auto enemy = unitsToAttack[currentOption];
+	
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, enemy->sprite.getPosition(), 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
 
-	int enemyStatsX = 536;
 
-	text->RenderText(enemy->name, enemyStatsX, 100, 1);
+	text->RenderText(enemy->name, enemyStatsTextX, 100, 1);
 	if (auto enemyWeapon = enemy->GetEquippedItem())
 	{
-		text->RenderText(enemyWeapon->name, enemyStatsX, 130, 1); //need error checking here
+		text->RenderText(enemyWeapon->name, enemyStatsTextX, 130, 1); //need error checking here
 	}
 
 	int statsY = 180;
-	text->RenderTextRight(intToString(enemy->level), enemyStatsX, statsY, 1, 14);
-	text->RenderText("LV", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(intToString(unit->level), enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(intToString(enemy->level), enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("LV", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(intToString(unit->level), enemyStatsTextX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(intToString(enemy->currentHP), enemyStatsX, statsY, 1, 14);
-	text->RenderText("HP", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(intToString(unit->currentHP), enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(intToString(enemy->currentHP), enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("HP", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(intToString(unit->currentHP), enemyStatsTextX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.atk, enemyStatsX, statsY, 1, 14);
-	text->RenderText("Atk", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.atk, enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.atk, enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("Atk", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.atk, enemyStatsTextX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.def, enemyStatsX, statsY, 1, 14);
-	text->RenderText("Def", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.def, enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.def, enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("Def", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.def, enemyStatsTextX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.hit, enemyStatsX, statsY, 1, 14);
-	text->RenderText("Hit", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.hit, enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.hit, enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("Hit", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.hit, enemyStatsTextX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.crit, enemyStatsX, statsY, 1, 14);
-	text->RenderText("Crit", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.crit, enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.crit, enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("Crit", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.crit, enemyStatsTextX + 160, statsY, 1, 14);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.attackSpeed, enemyStatsX, statsY, 1, 14);
-	text->RenderText("AS", enemyStatsX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.attackSpeed, enemyStatsX + 160, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.attackSpeed, enemyStatsTextX, statsY, 1, 14);
+	text->RenderText("AS", enemyStatsTextX + 80, statsY, 1);
+	text->RenderTextRight(playerStats.attackSpeed, enemyStatsTextX + 160, statsY, 1, 14);
 
-	text->RenderText(unit->name, enemyStatsX + 160, 500, 1);
+	text->RenderText(unit->name, enemyStatsTextX + 160, 500, 1);
 }
 
 void SelectEnemyMenu::SelectOption()
 {
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
-	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter);
+	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter, *camera);
 	cursor->MoveUnitToTile();
 	if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
 	{
@@ -957,10 +971,21 @@ void SelectTradeUnit::Draw()
 	{
 		boxHeight += (inventorySize + 1) * 30;
 	}
+	auto enemy = tradeUnit;
+	auto targetPosition = enemy->sprite.getPosition();
+	int xText = 536;
+	int xIndicator = 169;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		xText = 32;
+		xIndicator = 7;
+	}
+
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(169, 10, 0.0f));
+	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
 
 	model = glm::scale(model, glm::vec3(80, boxHeight, 0.0f));
 
@@ -973,17 +998,16 @@ void SelectTradeUnit::Draw()
 
 	renderer->setUVs(cursor->uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-	auto enemy = tradeUnit;
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, enemy->sprite.getPosition(), 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
-	text->RenderText(tradeUnit->name, 500, textHeight, 1);
+	text->RenderText(tradeUnit->name, xText, textHeight, 1);
 	textHeight += 60;
 	for (int i = 0; i < inventorySize; i++)
 	{
-		text->RenderText(tradeUnit->inventory[i]->name, 500, textHeight, 1);
-		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 600, textHeight, 1, 14);
+		text->RenderText(tradeUnit->inventory[i]->name, xText, textHeight, 1);
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 100, textHeight, 1, 14);
 		textHeight += 30;
 	}
 }
@@ -1440,7 +1464,6 @@ void UnitStatsViewMenu::SelectOption()
 
 void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-
 	if (!examining)
 	{
 		if (firstPage)
@@ -1527,18 +1550,20 @@ ExtraMenu::ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int sha
 
 void ExtraMenu::Draw()
 {
-	int xStart = 800;
+	int xText = 600;
+	int xIndicator = 176;
 	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		//	xStart = 178;
+		xText = 72;
+		xIndicator = 8;
 	}
 	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(176, 32 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -1549,11 +1574,11 @@ void ExtraMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 	
-	text->RenderText("Unit", 600, 100, 1);
-	text->RenderText("Status", 600, 130, 1);
-	text->RenderText("Options", 600, 160, 1);
-	text->RenderText("Suspend", 600, 190, 1);
-	text->RenderText("End", 600, 220, 1);
+	text->RenderText("Unit", xText, 100, 1);
+	text->RenderText("Status", xText, 130, 1);
+	text->RenderText("Options", xText, 160, 1);
+	text->RenderText("Suspend", xText, 190, 1);
+	text->RenderText("End", xText, 220, 1);
 }
 
 void ExtraMenu::SelectOption()

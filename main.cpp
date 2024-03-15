@@ -121,6 +121,8 @@ struct TurnEvents : public TurnObserver
 		else if (ID == 1)
 		{
 			currentTurn = 0;
+			cursor.position = playerUnits[0]->sprite.getPosition();
+			camera.SetMove(cursor.position);
 		}
 		
 	}
@@ -147,7 +149,7 @@ struct PostBattleEvents : public PostBattleObserver
 	{
 		if (ID == 0)
 		{
-			battleManager.EndBattle(&cursor, &enemyManager);
+			battleManager.EndBattle(&cursor, &enemyManager, camera);
 		}
 		//player used an item
 		else if (ID == 1)
@@ -166,7 +168,7 @@ struct PostBattleEvents : public PostBattleObserver
 		//Even if they can canto, if an enemy uses an item I want them to end their move
 		else if (ID == 2)
 		{
-			enemyManager.FinishMove();
+			enemyManager.FinishMove(camera);
 		}
 	}
 };
@@ -368,7 +370,7 @@ int main(int argc, char** argv)
 	}
 	playerUnits[0]->placeUnit(48, 112);
 	playerUnits[0]->experience = 90;
-	playerUnits[0]->currentHP = 10;
+//	playerUnits[0]->currentHP = 10;
 //	playerUnits[0]->magic = 20;
 	playerUnits[1]->placeUnit(112, 112);
 	playerUnits[1]->movementType = Unit::FOOT;
@@ -460,6 +462,10 @@ int main(int argc, char** argv)
 				if (battleManager.battleActive)
 				{
 					battleManager.Update(deltaTime, &gen, &distribution);
+					if (camera.moving)
+					{
+						camera.MoveTo(deltaTime, 5.0f);
+					}
 				}
 				else
 				{
@@ -475,22 +481,23 @@ int main(int argc, char** argv)
 					{
 						//if (!camera.moving)
 						cursor.CheckInput(inputManager, deltaTime, camera);
+						if (!camera.moving)
+						{
+							camera.Follow(cursor.position);
+						}
+						else
+						{
+							camera.MoveTo(deltaTime, 5.0f);
+						}
 					}
 					else
 					{
 						//enemy management
-						enemyManager.Update(battleManager);
+						enemyManager.Update(battleManager, camera);
 					}
 
-					if (!camera.moving)
-					{
-						camera.Follow(cursor.position);
-					}
-					else
-					{
-						camera.MoveTo(deltaTime, 5.0f);
-					}
 				}
+
 			}
 		}
 		else

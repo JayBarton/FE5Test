@@ -33,7 +33,7 @@ enum ActionState
 };
 
 class InfoDisplays;
-
+class Camera;
 struct EnemyManager
 {
 	std::vector<Unit*> enemies;
@@ -57,11 +57,11 @@ struct EnemyManager
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
-	void Update(BattleManager& battleManager);
+	void Update(BattleManager& battleManager, Camera& camera);
 	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
-	void FinishMove();
+	void FinishMove(Camera& camera);
 	void UpdateEnemies(float deltaTime);
 	void EndTurn();
 	void RemoveDeadUnits();

@@ -105,7 +105,6 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				if (remainingMove)
 				{
 					position = previousPosition;
-					camera.moving = true;
 					camera.SetMove(position);
 				}
 				else
@@ -118,7 +117,6 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					path.clear();
 					costTile.clear();
 					position = previousPosition;
-					camera.moving = true;
 					camera.SetMove(position);
 				}
 			}

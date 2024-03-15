@@ -179,12 +179,13 @@ void Camera::Follow(glm::vec2 p)
 		needsMatrixUpdate = true;
 	}
 }
-
+//No good, at least not for refocusing the camera to active units.
 void Camera::SetMove(glm::vec2 p)
 {
 	glm::vec2 pScreen = worldToScreen(p);
 	startPosition = position;
-	movePosition = position;
+	movePosition = p;
+	moving = true;
 	if (pScreen.x > border.z)
 	{
 		movePosition.x += (pScreen.x - border.z) / cameraScale;
