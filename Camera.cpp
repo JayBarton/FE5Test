@@ -184,7 +184,7 @@ void Camera::SetMove(glm::vec2 p)
 {
 	glm::vec2 pScreen = worldToScreen(p);
 	startPosition = position;
-	movePosition = p;
+	movePosition = position; //Setting move position to position and leaving the first set of ifs uncommented worked for cancelling moves...
 	moving = true;
 	if (pScreen.x > border.z)
 	{
@@ -202,6 +202,35 @@ void Camera::SetMove(glm::vec2 p)
 	{
 		movePosition.y -= (border.y - pScreen.y) / cameraScale;
 	}
+
+	if (movePosition.x - (halfWidth / cameraScale) < 0)
+	{
+		movePosition.x = (halfWidth / cameraScale);
+	}
+	if (movePosition.x + (halfWidth / cameraScale) > levelWidth)
+	{
+		movePosition.x = (levelWidth - halfWidth / cameraScale);
+	}
+
+	if (movePosition.y - (halfHeight / cameraScale) < 0)
+	{
+		movePosition.y = (halfHeight / cameraScale);
+	}
+	if (movePosition.y + (halfHeight / cameraScale) > levelHeight)
+	{
+		movePosition.y = (levelHeight - halfHeight / cameraScale);
+	}
+	if (startPosition == movePosition)
+	{
+		moving = false;
+	}
+}
+
+void Camera::SetCenter(glm::vec2 p)
+{
+	startPosition = position;
+	movePosition = p; 
+	moving = true;
 
 	if (movePosition.x - (halfWidth / cameraScale) < 0)
 	{

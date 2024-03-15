@@ -41,6 +41,9 @@ struct EnemyManager
 	int attackRange = 0;
 	int healIndex = -1;
 
+	float timer = 0.0f;
+	float turnStartDelay = 0.25f;
+
 	bool canCounter = true;
 	bool enemyMoving = false;
 	Unit* otherUnit = nullptr;
@@ -57,7 +60,7 @@ struct EnemyManager
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 	void Draw(SpriteRenderer* renderer);
-	void Update(BattleManager& battleManager, Camera& camera);
+	void Update(float deltaTime, BattleManager& battleManager, Camera& camera);
 	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
@@ -66,6 +69,7 @@ struct EnemyManager
 	void EndTurn();
 	void RemoveDeadUnits();
 	void Clear();
+	Unit* GetCurrentUnit();
 	std::vector<Unit*> GetOtherUnits(Unit* enemy);
 
 	std::vector<AttackPosition> ValidAdjacentPositions(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path,

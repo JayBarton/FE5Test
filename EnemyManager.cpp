@@ -426,7 +426,7 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	}
 }
 
-void EnemyManager::Update(BattleManager& battleManager, Camera& camera)
+void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera)
 {
     if (currentEnemy >= enemies.size())
     {
@@ -435,44 +435,53 @@ void EnemyManager::Update(BattleManager& battleManager, Camera& camera)
     else
     {
         auto enemy = enemies[currentEnemy];
-        //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
-      //  camera.SetMove(enemy->sprite.getPosition());
+        timer += deltaTime;
         if (!enemyMoving)
         {
-            std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-            if (enemy->currentHP <= enemy->maxHP * 0.5f)
+            //Small delay between starting the next enemy's move
+            if (timer >= turnStartDelay)
             {
-                healIndex = -1;
-                for (int i = 0; i < enemy->inventory.size(); i++)
+                timer = 0.0f;
+                //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
+                camera.SetMove(enemy->sprite.getPosition());
+                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+                if (enemy->currentHP <= enemy->maxHP * 0.5f)
                 {
-                    if (enemy->inventory[i]->ID == 0)
+                    healIndex = -1;
+                    for (int i = 0; i < enemy->inventory.size(); i++)
                     {
-                        //can heal. Move away from closest player unit and heal
-                        healIndex = i;
-                        break;
+                        if (enemy->inventory[i]->ID == 0)
+                        {
+                            //can heal. Move away from closest player unit and heal
+                            healIndex = i;
+                            break;
+                        }
+                    }
+                    if (healIndex >= 0)
+                    {
+                        HealSelf(enemy, path);
+                    }
+                    if (healIndex < 0)
+                    {
+                        FindHealItem(enemy, path);
                     }
                 }
-                if (healIndex >= 0)
+                else
                 {
-                    HealSelf(enemy, path);
+                    GetPriority(enemy, path);
                 }
-                if (healIndex < 0)
-                {
-                    FindHealItem(enemy, path);
-                }
-            }
-            else
-            {
-                GetPriority(enemy, path);
             }
         }
         else
         {
+            timer = 0.0f;
             if (!enemy->movementComponent.moving)
             {
                 enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
                 if (state == ATTACK)
                 {
+                    //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
+                    //before the battle actually starts
                     auto otherStats = otherUnit->CalculateBattleStats();
                     auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
                     otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
@@ -524,7 +533,7 @@ void EnemyManager::FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathC
             auto adjacentPositions = ValidAdjacentPositions(tradeUnit, path, 1, 1);
             for (int c = 0; c < adjacentPositions.size(); c++)
             {
-                auto distance = adjacentPositions[c].distance;
+                auto distance = path[adjacentPositions[c].position].moveCost;
                 if (distance < minDistance)
                 {
                     minDistance = distance;
@@ -745,6 +754,11 @@ void EnemyManager::Clear()
         delete enemies[i];
     }
     enemies.clear();
+}
+
+Unit* EnemyManager::GetCurrentUnit()
+{
+    return enemies[currentEnemy];
 }
 
 std::vector<AttackPosition> EnemyManager::ValidAdjacentPositions(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path,

@@ -78,7 +78,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		accostQueue[i].wrathAttack = false;
 		accostQueue[i].vantageAttack = false;
 	}
-	camera.SetMove(defender->sprite.getPosition());
+	camera.SetCenter(defender->sprite.getPosition());
 }
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
@@ -296,7 +296,7 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 			enemyManager->FinishMove(camera);
 		}
 	}
-	camera.SetMove(attacker->sprite.getPosition());
+	camera.SetCenter(attacker->sprite.getPosition());
 }
 
 void BattleManager::Draw(TextRenderer* text, Camera& camera)

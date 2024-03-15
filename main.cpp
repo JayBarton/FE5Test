@@ -108,6 +108,7 @@ struct TurnEvents : public TurnObserver
 		enemyManager.RemoveDeadUnits();
 		if (ID == 0)
 		{
+			cursor.focusedUnit = nullptr;
 			for (int i = 0; i < playerUnits.size(); i++)
 			{
 				playerUnits[i]->hasMoved = false;
@@ -122,6 +123,7 @@ struct TurnEvents : public TurnObserver
 		{
 			currentTurn = 0;
 			cursor.position = playerUnits[0]->sprite.getPosition();
+			cursor.focusedUnit = playerUnits[0];
 			camera.SetMove(cursor.position);
 		}
 		
@@ -369,7 +371,7 @@ int main(int argc, char** argv)
 		currentUnit++;
 	}
 	playerUnits[0]->placeUnit(48, 112);
-	playerUnits[0]->experience = 90;
+//	playerUnits[0]->experience = 90;
 //	playerUnits[0]->currentHP = 10;
 //	playerUnits[0]->magic = 20;
 	playerUnits[1]->placeUnit(112, 112);
@@ -493,7 +495,15 @@ int main(int argc, char** argv)
 					else
 					{
 						//enemy management
-						enemyManager.Update(battleManager, camera);
+						enemyManager.Update(deltaTime, battleManager, camera);
+						if (!camera.moving)
+						{
+							camera.Follow(enemyManager.GetCurrentUnit()->sprite.getPosition());
+						}
+						else
+						{
+							camera.MoveTo(deltaTime, 5.0f);
+						}
 					}
 
 				}

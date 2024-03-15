@@ -66,6 +66,7 @@ public:
 	void Follow(glm::vec2 p, float speed, float delta);
 	void Follow(glm::vec2 p);
     void SetMove(glm::vec2 p);
+    void SetCenter(glm::vec2 p);
     void MoveTo(float delta, float speed);
 
     int screenWidth;
