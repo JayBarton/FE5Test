@@ -4,9 +4,9 @@
 #include "Unit.h"
 //Want turnsubject, move to it's own file later
 #include "MenuManager.h"
-
+#include "PathFinder.h"
 class SpriteRenderer;
-
+class PathFinder;
 struct AttackPosition
 {
 	glm::vec2 position;
@@ -29,7 +29,8 @@ enum ActionState
 	END_ATTACK,
 	CANTO,
 	HEALING,
-	TRADING
+	TRADING,
+	APPROACHING
 };
 
 class InfoDisplays;
@@ -55,16 +56,19 @@ struct EnemyManager
 	ActionState state = GET_TARGET;
 
 	std::vector<glm::vec4> UVs;
+	std::vector<Unit*>* playerUnits;
+
+	PathFinder pathFinder;
 
 	void GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void NoMove(Unit* enemy, glm::vec2& position);
-	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
+	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits);
 	void Draw(SpriteRenderer* renderer);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera);
 	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
-	void FinishMove(Camera& camera);
+	void FinishMove();
 	void UpdateEnemies(float deltaTime);
 	void EndTurn();
 	void RemoveDeadUnits();

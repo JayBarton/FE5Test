@@ -170,7 +170,7 @@ struct PostBattleEvents : public PostBattleObserver
 		//Even if they can canto, if an enemy uses an item I want them to end their move
 		else if (ID == 2)
 		{
-			enemyManager.FinishMove(camera);
+			enemyManager.FinishMove();
 		}
 	}
 };
@@ -498,7 +498,10 @@ int main(int argc, char** argv)
 						enemyManager.Update(deltaTime, battleManager, camera);
 						if (!camera.moving)
 						{
-							camera.Follow(enemyManager.GetCurrentUnit()->sprite.getPosition());
+							if (auto enemy = enemyManager.GetCurrentUnit())
+							{
+								camera.Follow(enemy->sprite.getPosition());
+							}
 						}
 						else
 						{
@@ -649,7 +652,7 @@ void loadMap(std::string nextMap)
 		}
 		else if (thing == "Enemies")
 		{
-			enemyManager.SetUp(map, &gen, &distribution);
+			enemyManager.SetUp(map, &gen, &distribution, &playerUnits);
 		}
 	}
 

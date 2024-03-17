@@ -293,7 +293,7 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 		}
 		else
 		{
-			enemyManager->FinishMove(camera);
+			enemyManager->FinishMove();
 		}
 	}
 	camera.SetCenter(attacker->sprite.getPosition());

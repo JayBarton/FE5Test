@@ -147,6 +147,7 @@
     <ClInclude Include="Items.h" />
     <ClInclude Include="MenuManager.h" />
     <ClInclude Include="InfoDisplays.h" />
+    <ClInclude Include="PathFinder.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
     <ClInclude Include="Shader.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="InfoDisplays.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SATCollision.cpp" />
     <ClCompile Include="Shader.cpp" />

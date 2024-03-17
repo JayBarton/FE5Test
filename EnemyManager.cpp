@@ -4,6 +4,8 @@
 #include "TileManager.h"
 #include "BattleManager.h"
 #include "Camera.h"
+#include "PathFinder.h"
+
 
 #include <algorithm>
 #include <fstream>  
@@ -29,7 +31,29 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     //If not in range of any units, enemy remains where they are
     if (otherUnits.size() == 0)
     {
-        NoMove(enemy, position);
+      //  NoMove(enemy, position);
+        state = APPROACHING;
+        int minDistance = 1000;
+        int index = -1;
+        for (int i = 0; i < playerUnits->size(); i++)
+        {
+            auto playerUnit = (*playerUnits)[i];
+            if (!playerUnit->isDead)
+            {
+                auto playerPosition = playerUnit->sprite.getPosition();
+
+                auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y);
+                if (mDistance < minDistance)
+                {
+                    minDistance = mDistance;
+                    index = i;
+                }
+            }
+        }
+        auto playerUnit = (*playerUnits)[index];
+        auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->move);
+        enemy->movementComponent.startMovement(path, enemy->move, false);
+        enemyMoving = true;
     }
     else
     {
@@ -270,11 +294,12 @@ std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
     return otherUnits;
 }
 
-void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
+void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits)
 {
     UVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
     std::vector<Unit> unitBases;
     unitBases.resize(4);
+    this->playerUnits = playerUnits;
 
     std::ifstream f("BaseStats.json");
     json data = json::parse(f);
@@ -415,6 +440,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UVs;
     }
+  //  enemies[0]->move = 6;
   //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
@@ -487,9 +513,9 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                     otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
                     battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
                 }
-                else if(state == CANTO)
+                else if(state == CANTO || state == APPROACHING)
                 {
-                    FinishMove(camera);
+                    FinishMove();
                 }
                 else if (state == HEALING)
                 {
@@ -688,6 +714,7 @@ void EnemyManager::CantoMove()
             }
         }
     }
+    //No good spot to canto to
     if (bestValue == 0)
     {
         NoMove(enemy, position);
@@ -708,7 +735,7 @@ void EnemyManager::CantoMove()
     }
 }
 
-void EnemyManager::FinishMove(Camera& camera)
+void EnemyManager::FinishMove()
 {
     enemies[currentEnemy]->hasMoved = true;
     enemyMoving = false;
@@ -758,7 +785,11 @@ void EnemyManager::Clear()
 
 Unit* EnemyManager::GetCurrentUnit()
 {
-    return enemies[currentEnemy];
+    if (currentEnemy < enemies.size())
+    {
+        return enemies[currentEnemy];
+    }
+    return nullptr;
 }
 
 std::vector<AttackPosition> EnemyManager::ValidAdjacentPositions(Unit* toAttack, const std::unordered_map<glm::vec2, pathCell, vec2Hash>& path,
