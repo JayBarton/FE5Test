@@ -29,12 +29,15 @@ void TileManager::setUp(int width, int height)
     tiles = new Tile[totalTiles];
 
     tileTypes.resize(6);
-    tileTypes[0] = { 0, "Grass", 0, 0, 1, 0 };
-    tileTypes[1] = { 1, "House", 10, 1, 1, 0 };
-    tileTypes[2] = { 2, "Mountain", 30, 5, 2, 0 };
-    tileTypes[3] = { 3, "Forest", 20, 2, 2, 0 };
-    tileTypes[4] = { 4, "Forest", 20, 2, 2, 0 };
-    tileTypes[5] = { 5, "Road", 0, 0, 1, 0 };
+    tileTypes[0] = { "Plains", 0, 0, 1, 0 };
+    tileTypes[1] = { "--", 20, 5, 20, 0 };
+    tileTypes[2] = { "House", 10, 1, 1, 0 };
+    tileTypes[3] = { "Peak", 40, 5, 20, 0 };
+    tileTypes[4] = {"Forest", 20, 2, 2, 0 };
+    tileTypes[5] = {"Cliff", 0, 0, 20, 0 };
+
+  /*  tileTypes[2] = {2, "Mountain", 30, 5, 2, 0};
+    tileTypes[5] = { 5, "Road", 0, 0, 1, 0 };*/
 }
 
 bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
@@ -72,9 +75,34 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
         //If the number is a valid tile number
         if (tileType >= -1 && tileType < TILE_SPRITES)
         {
-            auto properties = tileTypes[tileType];
+            int ID = -1;
+            if (tileType >= 28)
+            {
+                ID = 5;
+            }
+            else if (tileType >= 23)
+            {
+                ID = 4;
+            }
+            else if (tileType >= 15)
+            {
+                ID = 3;
+            }
+            else if (tileType >= 14)
+            {
+                ID = 2;
+            }
+            else if (tileType >= 5)
+            {
+                ID = 1;
+            }
+            else
+            {
+                ID = 0;
+            }
+            auto properties = tileTypes[ID];
             tiles[i] = { x, y, properties };
-            spriteBatch.addToBatch(displayTexture.ID, glm::vec2(x, y), TILE_SIZE, TILE_SIZE, uvs[tiles[i].properties.theType]);
+            spriteBatch.addToBatch(displayTexture.ID, glm::vec2(x, y), TILE_SIZE, TILE_SIZE, uvs[tileType]);
         }
         //If we don't recognize the tile type
         else
@@ -136,7 +164,7 @@ void TileManager::removeUnit(int x, int y)
 bool TileManager::outOfBounds(int x, int y)
 {
     bool out = false;
-    if(x < LEVEL_START_X  || x > levelWidth + TILE_SIZE || y < LEVEL_START_Y || y > levelHeight + TILE_SIZE)
+    if(x < TILE_SIZE || x >= levelWidth - TILE_SIZE || y < TILE_SIZE || y >= levelHeight - TILE_SIZE)
     {
         out = true;
     }
@@ -147,7 +175,8 @@ bool TileManager::outOfBounds(int x, int y)
 //Not sure if this is neccessary
 int TileManager::getType(int x, int y)
 {
-    return getTile(x, y)->properties.theType;
+    return 1;
+ //   return getTile(x, y)->properties.theType;
 }
 
 int TileManager::xPositionToIndex(int x)

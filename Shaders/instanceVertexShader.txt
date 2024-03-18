@@ -1,5 +1,4 @@
 #version 330 core
-layout (location = 0) in vec4 vertex;
 
 out vec2 TextureCoordinates;
 
@@ -25,13 +24,13 @@ void main()
 	
 	vec2 uvCoords[6] = vec2[]
 	(
-		vec2(uv.x, 1.0f),
-		vec2(uv.y, 0.0f),
-		vec2(uv.x, 0.0f),
+		vec2(uv.x, uv.w),
+		vec2(uv.y, uv.z),
+		vec2(uv.x, uv.z),
 		
-		vec2(uv.x, 1.0f),
-		vec2(uv.y, 1.0f),
-		vec2(uv.y, 0.0f)
+		vec2(uv.x, uv.w),
+		vec2(uv.y, uv.w),
+		vec2(uv.y, uv.z)
 	);
 	
 	
@@ -42,7 +41,6 @@ void main()
 
 	// Now assemble the four columns into a matrix.
 	mat4 model = mat4(col1, col2, col3, col4);
-	//gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0);
 	gl_Position = projection * model * vec4(position[gl_VertexID], 0.0, 1.0);
 		
 	TextureCoordinates = uvCoords[gl_VertexID].xy;

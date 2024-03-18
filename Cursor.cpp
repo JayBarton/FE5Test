@@ -124,8 +124,6 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
-
-		CheckBounds();
 	}
 }
 
@@ -345,21 +343,21 @@ std::vector<Unit*> Cursor::tradeRangeUnits()
 
 void Cursor::CheckBounds()
 {
-	if (position.x < 0)
+	if (position.x < TileManager::TILE_SIZE)
 	{
-		position.x = 0;
+		position.x = TileManager::TILE_SIZE;
 	}
-	else if (position.x + TileManager::TILE_SIZE > TileManager::tileManager.levelWidth)
+	else if (position.x + TileManager::TILE_SIZE > TileManager::tileManager.levelWidth - TileManager::TILE_SIZE)
 	{
-		position.x = TileManager::tileManager.levelWidth - TileManager::TILE_SIZE;
+		position.x = TileManager::tileManager.levelWidth - TileManager::TILE_SIZE * 2;
 	}
-	if (position.y < 0)
+	if (position.y < TileManager::TILE_SIZE)
 	{
-		position.y = 0;
+		position.y = TileManager::TILE_SIZE;
 	}
-	else if (position.y + TileManager::TILE_SIZE > TileManager::tileManager.levelHeight)
+	else if (position.y + TileManager::TILE_SIZE > TileManager::tileManager.levelHeight - TileManager::TILE_SIZE)
 	{
-		position.y = TileManager::tileManager.levelHeight - TileManager::TILE_SIZE;
+		position.y = TileManager::tileManager.levelHeight - TileManager::TILE_SIZE * 2;
 	}
 }
 
@@ -378,6 +376,8 @@ void Cursor::Move(int x, int y, bool held)
 	if (move)
 	{
 		position = moveTo;
+		CheckBounds();
+
 		if (!selectedUnit)
 		{
 			if (auto tile = TileManager::tileManager.getTile(position.x, position.y))

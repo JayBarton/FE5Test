@@ -5,8 +5,6 @@
 #include "Unit.h"
 struct TileProperties
 {
-    //The tile type/sprite index
-    int theType;
     //Not sure if this should be a string but it is for now
     std::string name;
     //Avoid bonus for units on this tile

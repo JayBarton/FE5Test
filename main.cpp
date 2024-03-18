@@ -261,7 +261,7 @@ int main(int argc, char** argv)
 
 //	ResourceManager::LoadShader("Shaders/postVertexShader.txt", "Shaders/postFragmentShader.txt", nullptr, "postprocessing");
 
-	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheettest.png", "tiles");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 
@@ -273,7 +273,6 @@ int main(int argc, char** argv)
 
 	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(TILE_SIZE, TILE_SIZE);
 	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
-	cursor.position = glm::vec2(0);
 
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
@@ -286,7 +285,7 @@ int main(int argc, char** argv)
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	displays.subject.addObserver(postBattleEvents);
-	loadMap("1.map");
+	loadMap("2.map");
 	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
 
 	std::ifstream f("BaseStats.json");
@@ -393,6 +392,7 @@ int main(int argc, char** argv)
 	//enemies[0]->LevelEnemy(9);
 
 //	enemyManager.enemies = enemies;
+	cursor.position = playerUnits[0]->sprite.getPosition();
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);

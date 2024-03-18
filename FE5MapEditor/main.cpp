@@ -195,7 +195,7 @@ int main(int argc, char** argv)
     ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
    // ResourceManager::LoadTexture("spritesheet.png", "sprites");
-    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheettest.png", "tiles");
+    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
     ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 
     ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
