@@ -42,7 +42,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
             {
                 auto playerPosition = playerUnit->sprite.getPosition();
 
-                auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y);
+                auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y); 
                 if (mDistance < minDistance)
                 {
                     minDistance = mDistance;
@@ -199,9 +199,15 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
             {
                 finalTarget = currentTarget;
             }
+            if (currentTarget.priority == 0)
+            {
+                int a = 2;
+            }
             //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
             //In that case, check which unit will do less damage on counter
-            else if (currentTarget.priority == finalTarget.priority)
+            //Priority of 0 at this point would suggest either no unit in range, or zero damage will be dealt
+            //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
+            else if (currentTarget.priority > 0 && currentTarget.priority == finalTarget.priority)
             {
                 auto previousUnit = otherUnits[finalTarget.ID];
                 auto previousWeapon = previousUnit->GetWeaponData(previousUnit->GetEquippedItem());
@@ -439,6 +445,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UVs;
+        enemies[i]->sprite.color = glm::vec3(1.0f, 0.0f, 0.0f);
     }
   //  enemies[0]->move = 6;
   //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);

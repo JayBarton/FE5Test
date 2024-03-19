@@ -92,7 +92,7 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
             {
                 ID = 2;
             }
-            else if (tileType >= 5)
+            else if (tileType >= 4)
             {
                 ID = 1;
             }

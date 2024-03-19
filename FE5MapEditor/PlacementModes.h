@@ -173,7 +173,7 @@ struct EnemyMode : public EditMode
         objectStream << " " << editedProfs;
         if (editedProfs)
         {
-            for (int i = 0; i < stats.size(); i++)
+            for (int i = 0; i < profs.size(); i++)
             {
                 objectStream << " " << profs[i];
             }

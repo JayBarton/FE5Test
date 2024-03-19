@@ -4,6 +4,7 @@
 #include<gtx/rotate_vector.hpp>
 #include <list>
 #include <iostream>
+#include "Tile.h"
 
 void PathFinder::addToOpenSet(Node *node)
 {
@@ -94,9 +95,14 @@ std::vector<glm::ivec2> PathFinder::findPath(const glm::vec2& start, const glm::
         Node* currentNode = new Node();
         *currentNode = openSet[0];
         theNodes.push_back(currentNode);
-        //if the node with the lowest f cost is the end node, or is the unit's move range
-        if (*currentNode == endNode || currentNode->gValue >= range)
+        //if the node with the lowest f cost is the end node
+        if (*currentNode == endNode)
         {
+            //Need the full path so I know the optimal path, but then I need to only allow travel up to the max move of the unit
+            while (currentNode->gValue > range)
+            {
+                currentNode = currentNode->parentNode;
+            }
             //In the case that the end of the path is occupied by another unit, we instead want to end on the next node on the path
             //I am not entirely sure if this is the best way of handling this, nor am I sure how frequent an occurance this is.
             //At the least, this will prevent two approaching enemies from occupying the same space.
@@ -178,11 +184,18 @@ void PathFinder::addChild(const glm::vec2& position, int cost, Node *parent)
         //(that is handled above when returning the path)
         //Only the enemies are using this class at all right now, so I can just check for the player team. In future,
         //may want to pass in the unit so I can know what team to check against.
+        //This is currently not in use, as I only use this class for enemies that are not in attacking range of player units,
+        //Which means there won't be a case where there is a tile occupied by an unfriendly unit on their path anyway.
         bool cool = true;
-        if (thisTile->occupiedBy && thisTile->occupiedBy->team == 0)
+       /* if (thisTile->occupiedBy && thisTile->occupiedBy->team == 0)
         {
-            cool = false;
-        }
+            //Do need to be able to recognize the end node however
+            glm::vec2 tilePos = glm::vec2(thisTile->x, thisTile->y);
+            if (tilePos != position)
+            {
+                cool = false;
+            }
+        }*/
         if(cool)
         {
             //create a new node

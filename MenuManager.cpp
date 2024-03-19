@@ -5,6 +5,7 @@
 #include "InputManager.h"
 #include "Items.h"
 #include "BattleManager.h"
+#include "Tile.h"
 
 #include "Globals.h"
 
