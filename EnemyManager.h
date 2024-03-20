@@ -20,6 +20,7 @@ struct Target
 	int range = 0;
 	Item* weaponToUse = nullptr;
 	std::vector<AttackPosition> attackPositions;
+	BattleStats battleStats;
 };
 
 enum ActionState

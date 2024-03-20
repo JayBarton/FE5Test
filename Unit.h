@@ -187,6 +187,7 @@ struct Unit
 
 	//Not sure if this is staying here
 	bool active = false;
+	bool stationary = false;
 
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
@@ -276,5 +277,11 @@ struct Unit
 	//Really don't like how I have three versions of this, but each of them is different enough that it's hard to figure out how I could make them generic
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindApproachMoveRange(std::vector<Unit*>& foundUnits, int range);
 	void CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<Unit*>& foundUnits, int range);
+
+	//Seriously, another one.
+	//REALLY need to find a better way of doing this shit
+	std::vector<Unit*> inRangeUnits(int team);
+	void CheckRangeTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units, int team);
+
 
 };

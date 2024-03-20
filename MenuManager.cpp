@@ -235,7 +235,7 @@ void UnitOptionsMenu::GetOptions()
 	canDismount = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
-	unitsInRange = cursor->inRangeUnits();
+	unitsInRange = cursor->selectedUnit->inRangeUnits(1);
 	if (unitsInRange.size() > 0)
 	{
 		canAttack = true;

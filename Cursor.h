@@ -49,7 +49,5 @@ struct Cursor
 
 	void GetUnitOptions();
 
-	std::vector<Unit*> inRangeUnits();
-	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units);
 	std::vector<Unit*> tradeRangeUnits();
 };

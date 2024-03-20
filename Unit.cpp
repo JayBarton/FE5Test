@@ -891,7 +891,15 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
                     //U G H. Doing this to prevent it from adding dupes to the vector
                     if (distance == 50)
                     {
-                        attackTiles.push_back(tilePosition);
+                        auto p = glm::ivec2(startCell.position) * TileManager::TILE_SIZE;
+                        auto thisTile = TileManager::tileManager.getTile(p.x, p.y);
+                        //Only want to have attack tiles if they are actually in range of where the unit can reach
+                        //This does not work properly with ranges greater than one, so it's still a work in progress.
+                        auto otherUnit = thisTile->occupiedBy;
+                      //  if (!otherUnit)
+                        {
+                            attackTiles.push_back(tilePosition);
+                        }
                         if (otherUnit && otherUnit != this && otherUnit->team == team)
                         {
                             tradeUnits.push_back(otherUnit);
@@ -950,15 +958,6 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
         auto distance = costs[checkingTile.x][checkingTile.y];
         if (!checked[checkingTile.x][checkingTile.y])
         {
-            auto otherUnit = thisTile->occupiedBy;
-            //This is horrid
-            if (otherUnit && otherUnit != this && otherUnit->team != team)
-            {
-                foundUnits.push_back(otherUnit);
-             //   movementCost = 100;
-                //costs[checkingTile.x][checkingTile.y] = movementCost;
-                //checked[checkingTile.x][checkingTile.y] = true;
-            }
             //This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
             if (movementCost < distance)
             {
@@ -966,11 +965,111 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
             }
             if (movementCost <= range)
             {
+                auto otherUnit = thisTile->occupiedBy;
+
+                if (otherUnit && otherUnit != this && otherUnit->team != team)
+                {
+                    foundUnits.push_back(otherUnit);
+                }
                 pathCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);
                 foundTiles.push_back(tilePosition);
                 costTile.push_back(movementCost);
                 path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+            }
+        }
+    }
+}
+
+//Not sure about passing the team here. Not sure how finding healable units should work, 
+//since healing and attack range could be different, so I can't really reuse this without copying the code.
+std::vector<Unit*> Unit::inRangeUnits(int foeTeam)
+{
+    std::vector<Unit*> units;
+    glm::ivec2 position = glm::ivec2(sprite.getPosition());
+
+    std::vector<glm::vec2> foundTiles2;
+    std::vector<glm::vec2> rangeTiles;
+    std::vector<pathCell> checking;
+    std::vector<std::vector<bool>> checked;
+
+    checked.resize(TileManager::tileManager.levelWidth);
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+    {
+        checked[i].resize(TileManager::tileManager.levelHeight);
+    }
+    std::vector<std::vector<int>> costs;
+    costs.resize(TileManager::tileManager.levelWidth);
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+    {
+        costs[i].resize(TileManager::tileManager.levelHeight);
+    }
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+    {
+        for (int c = 0; c < TileManager::tileManager.levelHeight; c++)
+        {
+            costs[i][c] = 50;
+        }
+    }
+    glm::ivec2 normalPosition = glm::ivec2(position) / TileManager::TILE_SIZE;
+    costs[normalPosition.x][normalPosition.y] = 0;
+    pathCell first = { normalPosition, 0 };
+    addToOpenSet(first, checking, checked, costs);
+    while (checking.size() > 0)
+    {
+        auto current = checking[0];
+        removeFromOpenList(checking);
+        int cost = current.moveCost;
+        glm::vec2 checkPosition = current.position;
+
+        glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+        glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+        glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+        glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+
+        CheckRangeTiles(up, checked, checking, current, costs, foundTiles2, units, foeTeam);
+        CheckRangeTiles(down, checked, checking, current, costs, foundTiles2, units, foeTeam);
+        CheckRangeTiles(right, checked, checking, current, costs, foundTiles2, units, foeTeam);
+        CheckRangeTiles(left, checked, checking, current, costs, foundTiles2, units, foeTeam);
+    }
+    return units;
+}
+
+void Unit::CheckRangeTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units, int foeTeam)
+{
+    glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+    if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+    {
+        int mCost = startCell.moveCost;
+        auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+        int movementCost = mCost + 1;
+
+        auto distance = costs[checkingTile.x][checkingTile.y];
+        if (!checked[checkingTile.x][checkingTile.y])
+        {
+            //This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
+            //No idea if this is even needed here, this is what happens when you have the exact same code pasted in three locations!!!
+            if (movementCost < distance)
+            {
+                costs[checkingTile.x][checkingTile.y] = movementCost;
+            }
+            if (movementCost <= maxRange)
+            {
+                //If the attack range goes from 1-2, we need to add every unit that is within 2 tiles. However,
+                //if the attack range is just 2, such as with bows, we only want to add units that are exactly 2 tiles away
+                //This does NOT account for cases in which the range is not a real range, but is 1, 3. So if you have one weapon with a range of 1-1, and
+                //Another with a range of 3-3, this breaks down. Not sure how to resolve that at this time.
+                if ((minRange == maxRange && movementCost == maxRange) ||
+                    (minRange < maxRange && movementCost <= maxRange))
+                {
+                    if (Unit* unit = TileManager::tileManager.getUnitOnTeam(tilePosition.x, tilePosition.y, foeTeam))
+                    {
+                        units.push_back(unit);
+                    }
+                }
+                pathCell newCell{ checkingTile, movementCost };
+                addToOpenSet(newCell, checking, checked, costs);
+                foundTiles.push_back(tilePosition);
             }
         }
     }
