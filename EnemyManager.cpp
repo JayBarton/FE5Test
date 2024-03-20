@@ -14,7 +14,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
+void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, std::vector<Unit*>& otherUnits)
 {
     otherUnit = nullptr;
     canCounter = true;
@@ -23,259 +23,253 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     TileManager::tileManager.removeUnit(position.x, position.y);
 
     battleStats = BattleStats{};
-    
+
     int cannotCounterBonus = 50;
 
-    std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-
-    //If not in range of any units, enemy remains where they are
-    if (otherUnits.size() == 0)
+    Target finalTarget;
+    for (int i = 0; i < otherUnits.size(); i++)
     {
-      //  NoMove(enemy, position);
-        state = APPROACHING;
-        int minDistance = 1000;
-        int index = -1;
-        for (int i = 0; i < playerUnits->size(); i++)
+        Target currentTarget;
+
+        auto otherUnit = otherUnits[i];
+        auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+        currentTarget.attackPositions = ValidAdjacentPositions(otherUnit, path, enemy->minRange, enemy->maxRange);
+
+        currentTarget.ID = i;
+        //First want to determine if the other unit can counter. Very high priority if they cannot
+        if (enemy->maxRange > otherWeapon.maxRange)
         {
-            auto playerUnit = (*playerUnits)[i];
-            if (!playerUnit->isDead)
+            //Only worth considering if this unit can actually reach the range being checked
+            //For ranges greater than 1, this would suggest every space around the other unit is occupied
+            bool canReach = false;
+            for (int c = 0; c < currentTarget.attackPositions.size(); c++)
             {
-                auto playerPosition = playerUnit->sprite.getPosition();
-
-                auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y); 
-                if (mDistance < minDistance)
+                if (currentTarget.attackPositions[c].distance == enemy->maxRange)
                 {
-                    minDistance = mDistance;
-                    index = i;
-                }
-            }
-        }
-        auto playerUnit = (*playerUnits)[index];
-        auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->move);
-        enemy->movementComponent.startMovement(path, enemy->move, false);
-        enemyMoving = true;
-    }
-    else
-    {
-        Target finalTarget;
-        for (int i = 0; i < otherUnits.size(); i++)
-        {
-            Target currentTarget;
-
-            auto otherUnit = otherUnits[i];
-            auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
-            currentTarget.attackPositions = ValidAdjacentPositions(otherUnit, path, enemy->minRange, enemy->maxRange);
-
-            currentTarget.ID = i;
-            //First want to determine if the other unit can counter. Very high priority if they cannot
-            if (enemy->maxRange > otherWeapon.maxRange)
-            {
-                //Only worth considering if this unit can actually reach the range being checked
-                //For ranges greater than 1, this would suggest every space around the other unit is occupied
-                bool canReach = false;
-                for (int c = 0; c < currentTarget.attackPositions.size(); c++)
-                {
-                    if (currentTarget.attackPositions[c].distance == enemy->maxRange)
-                    {
-                        canReach = true;
-                        break;
-                    }
-                }
-                if (canReach)
-                {
-                    currentTarget.range = enemy->maxRange;
-                    currentTarget.priority += cannotCounterBonus;
-                    canCounter = false;
-                }
-            }
-            else if (enemy->minRange < otherWeapon.minRange)
-            {
-                //Same as above, though with a range of 1 it could also suggest the other unit is 2 or more
-                //tiles from the edge of this enemy's movement range
-                bool canReach = false;
-                for (int c = 0; c < currentTarget.attackPositions.size(); c++)
-                {
-                    if (currentTarget.attackPositions[c].distance == enemy->minRange)
-                    {
-                        canReach = true;
-                        break;
-                    }
-                }
-                if (canReach)
-                {
-                    currentTarget.range = enemy->minRange;
-                    currentTarget.priority += cannotCounterBonus;
-                    canCounter = false;
-                }
-            }
-            //Next want to check how much damage this enemy can do to the other unit
-            //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
-            BattleStats tempStats;
-            int maxDamage = 0;
-            int rangeToUse = 0;
-
-            for (int c = 0; c < enemy->weapons.size(); c++)
-            {
-                auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
-                if (currentTarget.priority >= cannotCounterBonus)
-                {
-                    if (weapon.maxRange == currentTarget.range || weapon.minRange == currentTarget.range)
-                    {
-                        //calculate damage
-                        tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
-                        enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
-                      
-                        int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
-
-                        int damage = tempStats.attackDamage - otherDefense;
-                        if (damage > maxDamage)
-                        {
-                            maxDamage = damage;
-                            battleStats = tempStats;
-                            currentTarget.weaponToUse = enemy->weapons[c];
-                        }
-                    }
-                }
-                else
-                {
-                    auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
-                    bool canReach = false;
-
-                    //Need to confirm we can reach the unit. Don't need to do this above as it has already been handled
-                    //prefer to attack from as far away as possible
-                    for (int j = 0; j < currentTarget.attackPositions.size(); j++)
-                    {
-                        if (currentTarget.attackPositions[j].distance == weaponData.maxRange)
-                        {
-                            canReach = true;
-                            rangeToUse = weaponData.maxRange;
-                            break;
-                        }
-                    }
-                    if (!canReach)
-                    {
-                        for (int j = 0; j < currentTarget.attackPositions.size(); j++)
-                        {
-                            if (currentTarget.attackPositions[j].distance == weaponData.minRange)
-                            {
-                                canReach = true;
-                                rangeToUse = weaponData.minRange;
-                                break;
-                            }
-                        }
-                    }
-                    tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
-                    if (canReach)
-                    {
-                        //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
-                        //at a closer ranger would do more damage.
-                        //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
-                        enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
-
-                        int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
-
-                        int damage = tempStats.attackDamage - otherDefense;
-                        if (damage > maxDamage)
-                        {
-                            //prioritize sure kills
-                            if (otherUnit->currentHP - damage <= 0)
-                            {
-                                maxDamage = 50;
-                            }
-                            else
-                            {
-                                maxDamage = damage;
-                            }
-                            battleStats = tempStats;
-                            //If we hadn't gotten the range from a unit that cannot counter, get it now
-                            currentTarget.range = rangeToUse;
-                            currentTarget.weaponToUse = enemy->weapons[c];
-                        }
-                    }
-                }
-            }
-            currentTarget.priority += maxDamage;
-            if (currentTarget.priority > finalTarget.priority)
-            {
-                finalTarget = currentTarget;
-            }
-            if (currentTarget.priority == 0)
-            {
-                int a = 2;
-            }
-            //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
-            //In that case, check which unit will do less damage on counter
-            //Priority of 0 at this point would suggest either no unit in range, or zero damage will be dealt
-            //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
-            else if (currentTarget.priority > 0 && currentTarget.priority == finalTarget.priority)
-            {
-                auto previousUnit = otherUnits[finalTarget.ID];
-                auto previousWeapon = previousUnit->GetWeaponData(previousUnit->GetEquippedItem());
-                auto foeWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
-                auto previousStats = previousUnit->CalculateBattleStats();
-                previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
-                auto otherStats = otherUnit->CalculateBattleStats();
-                otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
-                
-                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->defense : enemy->magic);
-                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->defense : enemy->magic);
-                if (damageTaken < previousDamage)
-                {
-                    finalTarget = currentTarget;
-                }
-            }
-        }
-        //In range of units but cannot reach any of them, stay where you are
-        if (finalTarget.priority == 0)
-        {
-            NoMove(enemy, position);
-        }
-        else
-        {
-            for (int i = 0; i < enemy->inventory.size(); i++)
-            {
-                if (finalTarget.weaponToUse == enemy->inventory[i])
-                {
-                    enemy->equipWeapon(i);
+                    canReach = true;
                     break;
                 }
             }
-            otherUnit = otherUnits[finalTarget.ID];
-            auto attackPositions = finalTarget.attackPositions;
-            glm::vec2 attackPosition;
-            int maxValue = -100;
-            for (int i = 0; i < attackPositions.size(); i++)
+            if (canReach)
             {
-                auto aPosition = attackPositions[i].position;
-                if (attackPositions[i].distance == finalTarget.range)
+                currentTarget.range = enemy->maxRange;
+                currentTarget.priority += cannotCounterBonus;
+                canCounter = false;
+            }
+        }
+        else if (enemy->minRange < otherWeapon.minRange)
+        {
+            //Same as above, though with a range of 1 it could also suggest the other unit is 2 or more
+            //tiles from the edge of this enemy's movement range
+            bool canReach = false;
+            for (int c = 0; c < currentTarget.attackPositions.size(); c++)
+            {
+                if (currentTarget.attackPositions[c].distance == enemy->minRange)
                 {
-                    auto tileProperties = TileManager::tileManager.getTile(aPosition.x, aPosition.y)->properties;
-                    int tileValue = tileProperties.avoid + tileProperties.defense - path[aPosition].moveCost;
+                    canReach = true;
+                    break;
+                }
+            }
+            if (canReach)
+            {
+                currentTarget.range = enemy->minRange;
+                currentTarget.priority += cannotCounterBonus;
+                canCounter = false;
+            }
+        }
+        //Next want to check how much damage this enemy can do to the other unit
+        //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
+        BattleStats tempStats;
+        int maxDamage = 0;
+        int rangeToUse = 0;
 
-                    int distance = path[aPosition].moveCost;
-                    if (tileValue > maxValue)
+        for (int c = 0; c < enemy->weapons.size(); c++)
+        {
+            auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
+            if (currentTarget.priority >= cannotCounterBonus)
+            {
+                if (weapon.maxRange == currentTarget.range || weapon.minRange == currentTarget.range)
+                {
+                    //calculate damage
+                    tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+                    enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
+
+                    int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
+
+                    int damage = tempStats.attackDamage - otherDefense;
+                    if (damage > maxDamage)
                     {
-                        maxValue = tileValue;
-                        attackPosition = attackPositions[i].position;
+                        maxDamage = damage;
+                        battleStats = tempStats;
+                        currentTarget.weaponToUse = enemy->weapons[c];
                     }
                 }
             }
-            std::vector<glm::ivec2> followPath;
-            glm::vec2 pathPoint = attackPosition;
-            followPath.push_back(pathPoint);
-
-            while (pathPoint != enemy->sprite.getPosition())
+            else
             {
-                auto previous = path[pathPoint].previousPosition;
-                followPath.push_back(previous);
-                pathPoint = previous;
+                auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
+                bool canReach = false;
+
+                //Need to confirm we can reach the unit. Don't need to do this above as it has already been handled
+                //prefer to attack from as far away as possible
+                for (int j = 0; j < currentTarget.attackPositions.size(); j++)
+                {
+                    if (currentTarget.attackPositions[j].distance == weaponData.maxRange)
+                    {
+                        canReach = true;
+                        rangeToUse = weaponData.maxRange;
+                        break;
+                    }
+                }
+                if (!canReach)
+                {
+                    for (int j = 0; j < currentTarget.attackPositions.size(); j++)
+                    {
+                        if (currentTarget.attackPositions[j].distance == weaponData.minRange)
+                        {
+                            canReach = true;
+                            rangeToUse = weaponData.minRange;
+                            break;
+                        }
+                    }
+                }
+                tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+                if (canReach)
+                {
+                    //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
+                    //at a closer ranger would do more damage.
+                    //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
+                    enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
+
+                    int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
+
+                    int damage = tempStats.attackDamage - otherDefense;
+                    if (damage > maxDamage)
+                    {
+                        //prioritize sure kills
+                        if (otherUnit->currentHP - damage <= 0)
+                        {
+                            maxDamage = 50;
+                        }
+                        else
+                        {
+                            maxDamage = damage;
+                        }
+                        battleStats = tempStats;
+                        //If we hadn't gotten the range from a unit that cannot counter, get it now
+                        currentTarget.range = rangeToUse;
+                        currentTarget.weaponToUse = enemy->weapons[c];
+                    }
+                }
             }
-            state = ATTACK;
-            attackRange = finalTarget.range;
-            enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
-            enemyMoving = true;
+        }
+        currentTarget.priority += maxDamage;
+        if (currentTarget.priority > finalTarget.priority)
+        {
+            finalTarget = currentTarget;
+        }
+        if (currentTarget.priority == 0)
+        {
+            int a = 2;
+        }
+        //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
+        //In that case, check which unit will do less damage on counter
+        //Priority of 0 at this point would suggest either no unit in range, or zero damage will be dealt
+        //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
+        else if (currentTarget.priority > 0 && currentTarget.priority == finalTarget.priority)
+        {
+            auto previousUnit = otherUnits[finalTarget.ID];
+            auto previousWeapon = previousUnit->GetWeaponData(previousUnit->GetEquippedItem());
+            auto foeWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+            auto previousStats = previousUnit->CalculateBattleStats();
+            previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
+            auto otherStats = otherUnit->CalculateBattleStats();
+            otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
+
+            int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->defense : enemy->magic);
+            int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->defense : enemy->magic);
+            if (damageTaken < previousDamage)
+            {
+                finalTarget = currentTarget;
+            }
         }
     }
+    //In range of units but cannot reach any of them, stay where you are
+    if (finalTarget.priority == 0)
+    {
+        NoMove(enemy, position);
+    }
+    else
+    {
+        for (int i = 0; i < enemy->inventory.size(); i++)
+        {
+            if (finalTarget.weaponToUse == enemy->inventory[i])
+            {
+                enemy->equipWeapon(i);
+                break;
+            }
+        }
+        otherUnit = otherUnits[finalTarget.ID];
+        auto attackPositions = finalTarget.attackPositions;
+        glm::vec2 attackPosition;
+        int maxValue = -100;
+        for (int i = 0; i < attackPositions.size(); i++)
+        {
+            auto aPosition = attackPositions[i].position;
+            if (attackPositions[i].distance == finalTarget.range)
+            {
+                auto tileProperties = TileManager::tileManager.getTile(aPosition.x, aPosition.y)->properties;
+                int tileValue = tileProperties.avoid + tileProperties.defense - path[aPosition].moveCost;
+
+                int distance = path[aPosition].moveCost;
+                if (tileValue > maxValue)
+                {
+                    maxValue = tileValue;
+                    attackPosition = attackPositions[i].position;
+                }
+            }
+        }
+        std::vector<glm::ivec2> followPath;
+        glm::vec2 pathPoint = attackPosition;
+        followPath.push_back(pathPoint);
+
+        while (pathPoint != enemy->sprite.getPosition())
+        {
+            auto previous = path[pathPoint].previousPosition;
+            followPath.push_back(previous);
+            pathPoint = previous;
+        }
+        state = ATTACK;
+        attackRange = finalTarget.range;
+        enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
+        enemyMoving = true;
+    }
+}
+
+void EnemyManager::ApproachNearest(glm::vec2& position, Unit* enemy)
+{
+    state = APPROACHING;
+    int minDistance = 1000;
+    int index = -1;
+    for (int i = 0; i < playerUnits->size(); i++)
+    {
+        auto playerUnit = (*playerUnits)[i];
+        if (!playerUnit->isDead)
+        {
+            auto playerPosition = playerUnit->sprite.getPosition();
+
+            auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y);
+            if (mDistance < minDistance)
+            {
+                minDistance = mDistance;
+                index = i;
+            }
+        }
+    }
+    auto playerUnit = (*playerUnits)[index];
+    auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->move);
+    enemy->movementComponent.startMovement(path, enemy->move, false);
+    enemyMoving = true;
 }
 
 //This and finish move are nearly identical...
@@ -477,32 +471,122 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                 timer = 0.0f;
                 //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
                 camera.SetMove(enemy->sprite.getPosition());
-                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-                if (enemy->currentHP <= enemy->maxHP * 0.5f)
+                //If active
+                if (enemy->active)
                 {
-                    healIndex = -1;
-                    for (int i = 0; i < enemy->inventory.size(); i++)
+                    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+                    if (enemy->currentHP <= enemy->maxHP * 0.5f)
                     {
-                        if (enemy->inventory[i]->ID == 0)
+                        healIndex = -1;
+                        for (int i = 0; i < enemy->inventory.size(); i++)
                         {
-                            //can heal. Move away from closest player unit and heal
-                            healIndex = i;
-                            break;
+                            if (enemy->inventory[i]->ID == 0)
+                            {
+                                //can heal. Move away from closest player unit and heal
+                                healIndex = i;
+                                break;
+                            }
+                        }
+                        if (healIndex >= 0)
+                        {
+                            HealSelf(enemy, path);
+                        }
+                        if (healIndex < 0)
+                        {
+                            FindHealItem(enemy, path);
                         }
                     }
-                    if (healIndex >= 0)
+                    else
                     {
-                        HealSelf(enemy, path);
-                    }
-                    if (healIndex < 0)
-                    {
-                        FindHealItem(enemy, path);
+                        std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+
+                        //If not in range of any units, enemy approaches the nearest unit
+                        if (otherUnits.size() == 0)
+                        {
+                            auto position = enemy->sprite.getPosition();
+                            ApproachNearest(position, enemy);
+                        }
+                        else
+                        {
+                            GetPriority(enemy, path, otherUnits);
+                        }
                     }
                 }
+                 //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
+                 //If units found, set active to true and path towards the closest unit
+                 //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
+                 //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can  just call get priority again.
+                 //In get priority, should check for active, and do nothing if it is false
                 else
                 {
-                    GetPriority(enemy, path);
+                    std::vector<Unit*> otherUnits;
+                    auto path = enemy->FindApproachMoveRange(otherUnits, enemy->move + enemy->maxRange + 1);
+                    if (otherUnits.size() > 0)
+                    {
+                        //It's possible a unit has moved into the attackable range.
+                        //Check that by checking if the move cost to them is less than the enemy move cost + max range
+                        //If they are attackable, attack them and activate
+                        std::vector<Unit*> attackableUnits;
+                        attackableUnits.reserve(otherUnits.size());
+                        for (int i = 0; i < otherUnits.size(); i++)
+                        {
+                            auto p = otherUnits[i]->sprite.getPosition();
+                            auto moveCost = path[p].moveCost;
+                            if (moveCost <= enemy->move + enemy->maxRange)
+                            {
+                                attackableUnits.push_back(otherUnits[i]);
+                            }
+                        }
+                        if (attackableUnits.size() > 0)
+                        {
+                            GetPriority(enemy, path, attackableUnits);
+                            enemy->active = true;
+                        }
+                        //If enemies were in the activate range, but not in attack range, approach the closest one.
+                        else
+                        {
+                            int closest = 1000;
+                            glm::vec2 otherPosition;
+                            for (int i = 0; i < otherUnits.size(); i++)
+                            {
+                                auto p = otherUnits[i]->sprite.getPosition();
+                                auto moveCost = path[p].moveCost;
+                                if (moveCost < closest)
+                                {
+                                    closest = moveCost;
+                                    otherUnit = otherUnits[i];
+                                    otherPosition = p;
+                                }
+                            }
+                            std::vector<glm::ivec2> followPath;
+                            glm::vec2 pathPoint = otherPosition;
+                            while (path[pathPoint].moveCost > enemy->move)
+                            {
+                                pathPoint = path[pathPoint].previousPosition;
+                            }
+                            followPath.push_back(pathPoint);
+
+                            while (pathPoint != enemy->sprite.getPosition())
+                            {
+                                auto previous = path[pathPoint].previousPosition;
+                                followPath.push_back(previous);
+                                pathPoint = previous;
+                            }
+                            state = APPROACHING;
+                            enemy->movementComponent.startMovement(followPath, path[otherPosition].moveCost, false);
+                            enemyMoving = true;
+                            enemy->active = true;
+                        }
+                    }
+                    //If no enemies are in the active range, do nothing this turn
+                    else
+                    {
+                        auto position = enemy->sprite.getPosition();
+                        NoMove(enemy, position);
+                    }
+
                 }
+ 
             }
         }
         else
@@ -605,7 +689,18 @@ void EnemyManager::FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathC
     }
     else
     {
-        GetPriority(enemy, path);
+        std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+
+        //If not in range of any units, enemy approaches the nearest unit
+        if (otherUnits.size() == 0)
+        {
+            auto position = enemy->sprite.getPosition();
+            ApproachNearest(position, enemy);
+        }
+        else
+        {
+            GetPriority(enemy, path, otherUnits);
+        }
     }
 }
 

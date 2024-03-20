@@ -184,6 +184,10 @@ struct Unit
 
 	bool isDead = false;
 
+
+	//Not sure if this is staying here
+	bool active = false;
+
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
@@ -266,5 +270,11 @@ struct Unit
 
 	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
 	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
+
+
+	//More horrible duplicate code
+	//Really don't like how I have three versions of this, but each of them is different enough that it's hard to figure out how I could make them generic
+	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindApproachMoveRange(std::vector<Unit*>& foundUnits, int range);
+	void CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<Unit*>& foundUnits, int range);
 
 };

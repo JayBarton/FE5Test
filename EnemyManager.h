@@ -60,7 +60,8 @@ struct EnemyManager
 
 	PathFinder pathFinder;
 
-	void GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
+	void GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, std::vector<Unit*>& otherUnits);
+	void ApproachNearest(glm::vec2& position, Unit* enemy);
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits);
 	void Draw(SpriteRenderer* renderer);

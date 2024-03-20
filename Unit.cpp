@@ -615,7 +615,7 @@ std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
         CheckAdjacentTiles(right, checked, checking, current, costs);
         CheckAdjacentTiles(left, checked, checking, current, costs);
     }
-    if (maxRange > 0)
+    if (maxRange > 1)
     {
         checked.clear();
         checked.resize(TileManager::tileManager.levelWidth);
@@ -898,6 +898,79 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindApproachMoveRange(std::vector<Unit*>& foundUnits, int range)
+{
+    ClearPathData();
+    auto position = sprite.getPosition();
+
+    path[position] = { position, 0, position }; // pretty sure this is also wrong
+    std::vector<pathCell> checking;
+    std::vector<std::vector<bool>> checked;
+    //TODO consider making this a map
+    std::vector<std::vector<int>> costs;
+    PathSearchSetUp(costs, checked, position, checking);
+    while (checking.size() > 0)
+    {
+        auto current = checking[0];
+        removeFromOpenList(checking);
+        int cost = current.moveCost;
+        glm::vec2 checkPosition = current.position;
+
+        glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+        glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+        glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+        glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+        CheckApproachAdjacentTiles(up, checked, checking, current, costs, foundUnits, range);
+        CheckApproachAdjacentTiles(down, checked, checking, current, costs, foundUnits, range);
+        CheckApproachAdjacentTiles(right, checked, checking, current, costs, foundUnits, range);
+        CheckApproachAdjacentTiles(left, checked, checking, current, costs, foundUnits, range);
+    }
+    return path;
+}
+
+void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<Unit*>& foundUnits, int range)
+{
+    glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+    if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+    {
+        int mCost = startCell.moveCost;
+        auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+        int movementCost = mCost + thisTile->properties.movementCost;
+        //This is just a test, will not be keeping long term
+        if (getMovementType() == Unit::FLYING)
+        {
+            movementCost = mCost + 1;
+        }
+
+        auto distance = costs[checkingTile.x][checkingTile.y];
+        if (!checked[checkingTile.x][checkingTile.y])
+        {
+            auto otherUnit = thisTile->occupiedBy;
+            //This is horrid
+            if (otherUnit && otherUnit != this && otherUnit->team != team)
+            {
+                foundUnits.push_back(otherUnit);
+             //   movementCost = 100;
+                //costs[checkingTile.x][checkingTile.y] = movementCost;
+                //checked[checkingTile.x][checkingTile.y] = true;
+            }
+            //This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
+            if (movementCost < distance)
+            {
+                costs[checkingTile.x][checkingTile.y] = movementCost;
+            }
+            if (movementCost <= range)
+            {
+                pathCell newCell{ checkingTile, movementCost };
+                addToOpenSet(newCell, checking, checked, costs);
+                foundTiles.push_back(tilePosition);
+                costTile.push_back(movementCost);
+                path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
             }
         }
     }
