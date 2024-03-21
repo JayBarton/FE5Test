@@ -46,6 +46,7 @@ void InfoDisplays::StartUse(Unit* unit, int index)
 	state = HEALING_ANIMATION;
 	leveledUnit = unit;
 	displayedHP = leveledUnit->currentHP;
+	healedHP = leveledUnit->maxHP;
 }
 
 void InfoDisplays::EnemyUse(Unit* unit, int index)
@@ -139,9 +140,9 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 		if (displayTimer > healDisplayTime)
 		{
 			displayedHP++;
-			if (displayedHP >= leveledUnit->maxHP)
+			if (displayedHP >= healedHP)
 			{
-				displayedHP = leveledUnit->maxHP;
+				displayedHP = healedHP;
 				finishedHealing = true;
 			}
 			displayTimer = 0;

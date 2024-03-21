@@ -67,6 +67,10 @@ struct EnemyMenu : public Menu
     const static int CHANGE_STATS = 0;
     const static int CHANGE_PROFS = 1;
 
+    const static int ACTIVATION_OPTION = 0;
+    const static int STATIONARY_OPTION = 1;
+    const static int BOSS_OPTION = 2;
+
     const static int PAGE1_LIMIT = 2;
 
     EnemyMode* mode = nullptr;
@@ -82,11 +86,16 @@ struct EnemyMenu : public Menu
     std::unordered_map<std::string, int> weaponNameMap;
     std::string weaponNamesArray[10];
     std::vector<int> weaponProficiencies;
-    int pageOptions[2];
+    int pageOptions[3];
 
     bool inInventory = false;
     bool editedStats = false;
     bool editedProfs = false;
+    bool stationary = false;
+
+    bool bossBonus = false;
+    //Could be an enum if I come up with other requirements
+    int activationType = 0;
 
     std::string growthNames[6];
     std::string className;

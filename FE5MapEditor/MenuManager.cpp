@@ -116,6 +116,7 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 {
 	pageOptions[0] = 3;
 	pageOptions[1] = 2;
+	pageOptions[2] = 3;
 	currentOption = 0;
 	this->mode = mode;
 	this->object = object;
@@ -158,6 +159,9 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 		inventory = object->inventory;
 
 		desiredID = object->type;
+		activationType = object->activationType;
+		stationary = object->stationary;
+		bossBonus = object->bossBonus;
 	}
 	else
 	{
@@ -266,6 +270,8 @@ void EnemyMenu::Draw()
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
+		text->RenderText("Basics", 528, TileManager::TILE_SIZE, 1);
+
 		text->RenderText("Level : " + intToString2(level), 100, 200, 1);
 		auto growths = unitGrowths[growthRateID];
 		text->RenderText("Growth Pattern: " + growthNames[growthRateID], 200, 200, 1);
@@ -289,7 +295,7 @@ void EnemyMenu::Draw()
 			}
 		}
 	}
-	else
+	else if (page == 1)
 	{
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
@@ -304,6 +310,8 @@ void EnemyMenu::Draw()
 		glBindVertexArray(shapeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+
+		text->RenderText("Stats and Profciencies", 528, TileManager::TILE_SIZE, 1);
 
 		text->RenderText("Level : " + intToString2(level), 100, 200, 1);
 		text->RenderText("Stats", 200, 200, 1);
@@ -327,19 +335,59 @@ void EnemyMenu::Draw()
 			offset += 30;
 		}
 	}
-	text->RenderText(className, 100, 110, 1);
+	else
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(64 + 64 * currentOption, 56, 0.0f));
 
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		text->RenderText("AI Options", 528, TileManager::TILE_SIZE, 1);
+
+		std::string activationTypeString = "Attack";
+		if (activationType == 1)
+		{
+			activationTypeString = "Range";
+		}
+		else if (activationType == 2)
+		{			
+			activationTypeString = "Attack Range";
+		}
+		std::string stationaryYesNo = "No";
+		std::string bossYesNo = "No";
+		if (stationary)
+		{
+			stationaryYesNo = "Yes";
+		}
+		if (bossBonus)
+		{
+			bossYesNo = "Yes";
+		}
+		text->RenderText("Activation type : " + activationTypeString, 100, 200, 1);
+		text->RenderText("Stationary? " + stationaryYesNo, 400, 200, 1);
+		text->RenderText("Boss? " + bossYesNo, 600, 200, 1);
+	}
+	text->RenderText(className, 100, 110, 1);
 }
 
 void EnemyMenu::SelectOption()
 {
 	if (object)
 	{
-		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats, weaponProficiencies, editedProfs);
+		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats, weaponProficiencies, editedProfs, activationType, stationary, bossBonus);
 	}
 	else
 	{
-		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats, weaponProficiencies, editedProfs);
+		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats, weaponProficiencies, editedProfs, activationType, stationary, bossBonus);
 	}
 	CancelOption();
 }
@@ -392,7 +440,7 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				inInventory = true;
 			}
 		}
-		else
+		else if (page == 1)
 		{
 			if (currentOption == CHANGE_STATS)
 			{
@@ -401,7 +449,25 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			else if (currentOption == CHANGE_PROFS)
 			{
 				MenuManager::menuManager.AddProfsMenu(mode, object, weaponProficiencies, editedProfs);
-
+			}
+		}
+		else
+		{
+			if (currentOption == ACTIVATION_OPTION)
+			{
+				activationType++;
+				if (activationType > 2)
+				{
+					activationType = 0;
+				}
+			}
+			else if (currentOption == STATIONARY_OPTION)
+			{
+				stationary = !stationary;
+			}
+			else if (currentOption == BOSS_OPTION)
+			{
+				bossBonus = !bossBonus;
 			}
 		}
 	}
@@ -432,11 +498,8 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 	else if (inputManager.isKeyPressed(SDLK_TAB))
 	{
-		if (page == 0)
-		{
-			page = 1;
-		}
-		else
+		page++;
+		if (page > 2)
 		{
 			page = 0;
 		}

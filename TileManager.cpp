@@ -28,13 +28,14 @@ void TileManager::setUp(int width, int height)
 
     tiles = new Tile[totalTiles];
 
-    tileTypes.resize(6);
+    tileTypes.resize(7);
     tileTypes[0] = { "Plains", 0, 0, 1, 0 };
     tileTypes[1] = { "--", 20, 5, 20, 0 };
     tileTypes[2] = { "House", 10, 1, 1, 0 };
     tileTypes[3] = { "Peak", 40, 5, 20, 0 };
     tileTypes[4] = {"Forest", 20, 2, 2, 0 };
     tileTypes[5] = {"Cliff", 0, 0, 20, 0 };
+    tileTypes[6] = {"Gate", 30, 10, 1, 1 };
 
   /*  tileTypes[2] = {2, "Mountain", 30, 5, 2, 0};
     tileTypes[5] = { 5, "Road", 0, 0, 1, 0 };*/
@@ -76,7 +77,11 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
         if (tileType >= -1 && tileType < TILE_SPRITES)
         {
             int ID = -1;
-            if (tileType >= 28)
+            if (tileType >= 29)
+            {
+                ID = 6;
+            }
+            else if (tileType >= 28)
             {
                 ID = 5;
             }

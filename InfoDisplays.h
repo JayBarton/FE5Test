@@ -75,6 +75,7 @@ struct InfoDisplays
 
 	int itemToUse;
 	int displayedHP;
+	int healedHP;
 	float healAnimationTime = 1.0f;
 	float healDisplayTime = 0.035f;
 

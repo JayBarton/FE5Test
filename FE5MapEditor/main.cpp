@@ -575,6 +575,8 @@ bool loadMap()
                     }
                 }
 
+                map >> tObject.activationType >> tObject.stationary >> tObject.bossBonus;
+
                 std::stringstream stream;
                 stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID << " " << inventorySize;
                 for (int i = 0; i < inventorySize; i++)
@@ -597,6 +599,7 @@ bool loadMap()
                         stream << " " << tObject.profs[i];
                     }
                 }
+                stream << " " << tObject.activationType << " " << tObject.stationary << " " << tObject.bossBonus;
 
                 objects[position] = tObject;
                 objectWriteTypes[position] = ENEMY_WRITE;
@@ -793,57 +796,59 @@ void Draw()
             Renderer->setUVs(iter.second.uvs);
             Renderer->DrawSprite(texture, iter.second.position, 0.0f, iter.second.dimensions);
         }
-
-        if (editMode->type == EditMode::TILE)
-        {
-            Renderer->setUVs(TileManager::tileManager.uvs[displayObject.type]);
-            Texture2D displayTexture = ResourceManager::GetTexture("tiles");
-            Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
-            Text->RenderText("Tile Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
-            Text->RenderText("Current: " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
-
-        }
-        else
-        {
-            Renderer->setUVs(displayObject.uvs);
-            Texture2D displayTexture = ResourceManager::GetTexture("sprites");
-            Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
-            if (editMode->type == EditMode::ENEMY)
-            {
-                Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
-            }
-            Text->RenderText("Current: " + classNames[editMode->currentElement], SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
-
-        }
-
-        Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
-
-        Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
-        Text->RenderText(intToString(displayObject.position.y), SCREEN_WIDTH * 0.5f + 256, 96, 1);
-
-
-        if (saveDisplay)
-        {
-            Text->RenderText(mapName + " saved", SCREEN_WIDTH - 200, SCREEN_HEIGHT - TILE_SIZE, 1);
-        }
-
-        else if (state == RESIZE_MAP)
-        {
-            Text->RenderText("X Tiles " + intToString(levelWidth), SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText("Y Tiles " + intToString(levelHeight), SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f - 64, 1);
-
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
-            Text->RenderText(inputText[LEVEL_HEIGHT_STRING], SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f, 1);
-        }
-        else if (state == SET_WIDTH)
-        {
-            Text->RenderText("Tiles wide ", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
-            Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
-        }
         if (MenuManager::menuManager.menus.size() > 0)
         {
             auto menu = MenuManager::menuManager.menus.back();
             menu->Draw();
+        }
+        else
+        {
+            if (editMode->type == EditMode::TILE)
+            {
+                Renderer->setUVs(TileManager::tileManager.uvs[displayObject.type]);
+                Texture2D displayTexture = ResourceManager::GetTexture("tiles");
+                Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
+                Text->RenderText("Tile Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+                Text->RenderText("Current: " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+
+            }
+            else
+            {
+                Renderer->setUVs(displayObject.uvs);
+                Texture2D displayTexture = ResourceManager::GetTexture("sprites");
+                Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
+                if (editMode->type == EditMode::ENEMY)
+                {
+                    Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
+                }
+                Text->RenderText("Current: " + classNames[editMode->currentElement], SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+
+            }
+
+            Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
+
+            Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
+            Text->RenderText(intToString(displayObject.position.y), SCREEN_WIDTH * 0.5f + 256, 96, 1);
+
+
+            if (saveDisplay)
+            {
+                Text->RenderText(mapName + " saved", SCREEN_WIDTH - 200, SCREEN_HEIGHT - TILE_SIZE, 1);
+            }
+
+            else if (state == RESIZE_MAP)
+            {
+                Text->RenderText("X Tiles " + intToString(levelWidth), SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+                Text->RenderText("Y Tiles " + intToString(levelHeight), SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+
+                Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
+                Text->RenderText(inputText[LEVEL_HEIGHT_STRING], SCREEN_WIDTH * 0.5f + 64, SCREEN_HEIGHT * 0.5f, 1);
+            }
+            else if (state == SET_WIDTH)
+            {
+                Text->RenderText("Tiles wide ", SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f - 64, 1);
+                Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
+            }
         }
     }
     else

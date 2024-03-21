@@ -18,7 +18,7 @@ class TileManager
 private :
 
     //Tile constants
-    static const int TILE_SPRITES = 29;
+    static const int TILE_SPRITES = 30;
 
     static const int LEVEL_START_X = 0;
     static const int LEVEL_START_Y = 0;

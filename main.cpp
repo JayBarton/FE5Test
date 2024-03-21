@@ -111,7 +111,7 @@ struct TurnEvents : public TurnObserver
 			cursor.focusedUnit = nullptr;
 			for (int i = 0; i < playerUnits.size(); i++)
 			{
-				playerUnits[i]->hasMoved = false;
+				playerUnits[i]->EndTurn();
 			}
 			//Whatever enemy manager set up here
 			//Probably going to want to figure out some sort of priority for the order in which enemies act
@@ -122,6 +122,12 @@ struct TurnEvents : public TurnObserver
 		else if (ID == 1)
 		{
 			currentTurn = 0;
+			//Start turn set up here
+			//I'm just looping through right now, will need some different stuff set up to get heal animations playing properly
+			for (int i = 0; i < playerUnits.size(); i++)
+			{
+				playerUnits[i]->StartTurn();
+			}
 			cursor.position = playerUnits[0]->sprite.getPosition();
 			cursor.focusedUnit = playerUnits[0];
 			camera.SetMove(cursor.position);

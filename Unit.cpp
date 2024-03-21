@@ -144,7 +144,8 @@ int Unit::CalculateExperience(Unit* enemy)
         {
             defeatExperience = 0;
         }
-        experience += defeatExperience; // + boss bonus + thief bonus. Add 40 if the enemy is a boss. Add 20 if they have the Steal skill(not implemented)
+        int bossBonus = enemy->boss ? 40 : 0;
+        experience += defeatExperience + bossBonus; // thief bonus. Add 20 if they have the Steal skill(not implemented)
     }
     return experience;
 }
@@ -585,6 +586,35 @@ WeaponData Unit::GetWeaponData(Item* item)
         return ItemManager::itemManager.weaponData[item->ID];
     }
     return WeaponData();
+}
+
+void Unit::StartTurn()
+{
+    auto position = sprite.getPosition();
+    auto tileProperties = TileManager::tileManager.getTile(position.x, position.y)->properties;
+    if (currentHP < maxHP)
+    {
+        if (tileProperties.bonus > 0)
+        {
+            float healAmount = ceil(maxHP * 0.1f);
+            currentHP += healAmount;
+            if (currentHP > maxHP)
+            {
+                currentHP = maxHP;
+            }
+            //Heal tile, heal this unit
+        }
+    }
+}
+
+void Unit::EndTurn()
+{
+    hasMoved = false;
+    if (isMounted())
+    {
+        //Resetting remaining moves.
+        mount->remainingMoves = move;
+    }
 }
 
 std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()

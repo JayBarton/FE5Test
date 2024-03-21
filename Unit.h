@@ -188,6 +188,11 @@ struct Unit
 	//Not sure if this is staying here
 	bool active = false;
 	bool stationary = false;
+	bool boss = false;
+	//Will activate the enemy if they enter a specific range from the enemy if true
+	//Enemy activates on unit entering attack range otherwise
+	int activationType = 0;
+
 
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
@@ -259,6 +264,9 @@ struct Unit
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
 	//Temporary, just using to visualize the path taken
 	std::vector<glm::ivec2> drawnPath;
+
+	void StartTurn();
+	void EndTurn();
 
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindUnitMoveRange();
 	void PathSearchSetUp(std::vector<std::vector<int>>& costs, std::vector<std::vector<bool>>& checked, glm::vec2& position, std::vector<pathCell>& checking);

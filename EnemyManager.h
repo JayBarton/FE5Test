@@ -67,6 +67,9 @@ struct EnemyManager
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits);
 	void Draw(SpriteRenderer* renderer);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera);
+	void StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera);
+	void RangeActivation(Unit* enemy);
+	void FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
