@@ -84,6 +84,10 @@ EnemyManager enemyManager;
 InfoDisplays displays;
 
 int currentTurn = 0;
+bool turnTransition = false;
+bool turnDisplay = false;
+//Ugh. To handle healing units on turn transition
+int turnUnit = 0;
 
 struct UnitEvents : public Observer
 {
@@ -115,6 +119,8 @@ struct TurnEvents : public TurnObserver
 			}
 			//Whatever enemy manager set up here
 			//Probably going to want to figure out some sort of priority for the order in which enemies act
+			turnTransition = true;
+			turnDisplay = true;
 			enemyManager.currentEnemy = 0;
 			currentTurn = 1;
 			std::cout << "Enemy Turn Start\n";
@@ -124,15 +130,11 @@ struct TurnEvents : public TurnObserver
 			currentTurn = 0;
 			//Start turn set up here
 			//I'm just looping through right now, will need some different stuff set up to get heal animations playing properly
-			for (int i = 0; i < playerUnits.size(); i++)
-			{
-				playerUnits[i]->StartTurn();
-			}
-			cursor.position = playerUnits[0]->sprite.getPosition();
-			cursor.focusedUnit = playerUnits[0];
-			camera.SetMove(cursor.position);
+			turnTransition = true;
+			turnDisplay = true;
+			turnUnit = 0;
 		}
-		
+		displays.ChangeTurn(currentTurn);
 	}
 };
 
@@ -177,6 +179,10 @@ struct PostBattleEvents : public PostBattleObserver
 		else if (ID == 2)
 		{
 			enemyManager.FinishMove();
+		}
+		else if (ID == 3)
+		{
+			turnUnit++;
 		}
 	}
 };
@@ -376,6 +382,7 @@ int main(int argc, char** argv)
 		currentUnit++;
 	}
 	playerUnits[0]->placeUnit(48, 304);
+	playerUnits[0]->currentHP = 11;
 //	playerUnits[0]->experience = 90;
 //	playerUnits[0]->currentHP = 10;
 //	playerUnits[0]->magic = 20;
@@ -383,6 +390,7 @@ int main(int argc, char** argv)
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 	playerUnits[2]->placeUnit(48, 288);
+	playerUnits[2]->currentHP = 10;
 //	playerUnits[2]->defense = playerUnits[0]->defense;
 //	playerUnits[2]->strength = 20;
 
@@ -477,18 +485,54 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-					//nesting getting a little deep here
-					if (inputManager.isKeyPressed(SDLK_l))
+					if (turnTransition)
 					{
-						if (auto thisUnit = cursor.focusedUnit)
+						if (currentTurn == 0)
 						{
-							thisUnit->AddExperience(50);
+							if (turnUnit >= playerUnits.size())
+							{
+								turnUnit = 0;
+								cursor.position = playerUnits[0]->sprite.getPosition();
+								cursor.focusedUnit = playerUnits[0];
+								camera.SetMove(cursor.position);
+								turnTransition = false;
+							}
+							else
+							{
+								playerUnits[turnUnit]->StartTurn(displays);
+
+								if (displays.state == NONE)
+								{
+									turnUnit++;
+								}
+							}
+						}
+						else
+						{
+							if (turnUnit >= enemyManager.enemies.size())
+							{
+								turnUnit = 0;
+								turnTransition = false;
+							}
+							else
+							{
+								enemyManager.enemies[turnUnit]->StartTurn(displays);
+
+								if (displays.state == NONE)
+								{
+									turnUnit++;
+								}
+							}
 						}
 					}
-					if (currentTurn == 0)
+					//nesting getting a little deep here
+					else if (currentTurn == 0)
 					{
-						//if (!camera.moving)
-						cursor.CheckInput(inputManager, deltaTime, camera);
+						//Oh man I hate this
+						if (!camera.moving)
+						{
+							cursor.CheckInput(inputManager, deltaTime, camera);
+						}
 						if (!camera.moving)
 						{
 							camera.Follow(cursor.position);
@@ -514,9 +558,7 @@ int main(int argc, char** argv)
 							camera.MoveTo(deltaTime, 5.0f);
 						}
 					}
-
 				}
-
 			}
 		}
 		else

@@ -3,6 +3,7 @@
 #include "ResourceManager.h"
 #include "TileManager.h"
 #include "Items.h"
+#include "InfoDisplays.h"
 
 Unit::Unit()
 {
@@ -588,7 +589,9 @@ WeaponData Unit::GetWeaponData(Item* item)
     return WeaponData();
 }
 
-void Unit::StartTurn()
+//Using this function to handle effects that heal the unit at the start of the turn
+//Currently only on gate tiles, but Renewal should work here with some modification.
+void Unit::StartTurn(InfoDisplays& displays)
 {
     auto position = sprite.getPosition();
     auto tileProperties = TileManager::tileManager.getTile(position.x, position.y)->properties;
@@ -597,12 +600,12 @@ void Unit::StartTurn()
         if (tileProperties.bonus > 0)
         {
             float healAmount = ceil(maxHP * 0.1f);
-            currentHP += healAmount;
-            if (currentHP > maxHP)
+            int toHeal = currentHP + healAmount;
+            if (toHeal > maxHP)
             {
-                currentHP = maxHP;
+                toHeal = maxHP;
             }
-            //Heal tile, heal this unit
+            displays.StartUnitHeal(this, toHeal);
         }
     }
 }

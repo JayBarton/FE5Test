@@ -446,6 +446,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         enemies[i]->sprite.uv = &UVs;
         enemies[i]->sprite.color = glm::vec3(1.0f, 0.0f, 0.0f);
     }
+    enemies[14]->currentHP = 14;
   //  enemies[0]->move = 6;
   //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }

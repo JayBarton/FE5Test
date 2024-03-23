@@ -47,7 +47,8 @@ enum DisplayState
 	HEALING_ANIMATION,
 	HEALING_BAR,
 	ENEMY_USE,
-	ENEMY_TRADE
+	ENEMY_TRADE,
+	TURN_CHANGE
 };
 class EnemyManager;
 struct InfoDisplays
@@ -62,22 +63,33 @@ struct InfoDisplays
 
 	float displayTimer = 0.0f;
 	float levelUpTime = 2.5f;
-
 	float experienceTime = 0.0025f;
 	float experienceDisplayTime = 1.0f;
+	float healAnimationTime = 1.0f;
+	float healDisplayTime = 0.035f;
+	float turnDisplayTime = 1.0f;
+
+	float turnDisplayAlpha = 0.0f;
+	float turnDisplayMaxAlpha = 0.2f;
+
+	float turnTextX = -100;
+	int turnTextXFinal = 400;
+
 	int displayedExperience = 0;
 	int gainedExperience = 0;
 	int finalExperience = 0;
 	bool displayingExperience = false;
 	bool finishedHealing = false;
+	bool usedItem = false;
+	bool turnChangeStart = false;
+	
 
 	float levelUpNoteTime = 1.0f;
 
 	int itemToUse;
 	int displayedHP;
 	int healedHP;
-	float healAnimationTime = 1.0f;
-	float healDisplayTime = 0.035f;
+	int turn;
 
 	float textDisplayTime = 1.0f;
 
@@ -85,6 +97,8 @@ struct InfoDisplays
 	void StartUse(Unit* unit, int index);
 	void EnemyUse(Unit* enemy, int index);
 	void EnemyTrade(EnemyManager* enemyManager);
+	void StartUnitHeal(Unit*, int healAmount);
+	void ChangeTurn(int currentTurn);
 
 	void OnUnitLevel(Unit* unit);
 

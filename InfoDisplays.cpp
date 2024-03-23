@@ -47,6 +47,7 @@ void InfoDisplays::StartUse(Unit* unit, int index)
 	leveledUnit = unit;
 	displayedHP = leveledUnit->currentHP;
 	healedHP = leveledUnit->maxHP;
+	usedItem = true;
 }
 
 void InfoDisplays::EnemyUse(Unit* unit, int index)
@@ -62,6 +63,23 @@ void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)
 	this->enemyManager = enemyManager;
 	leveledUnit = enemyManager->enemies[enemyManager->currentEnemy];
 	itemToUse = enemyManager->healIndex;
+}
+
+void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount)
+{
+	state = HEALING_ANIMATION;
+	leveledUnit = unit;
+	displayedHP = leveledUnit->currentHP;
+	healedHP = healAmount;
+}
+
+void InfoDisplays::ChangeTurn(int currentTurn)
+{
+	turn = currentTurn;
+	state = TURN_CHANGE;
+	turnChangeStart = true;
+	turnDisplayAlpha = 0.0f;
+	turnTextX = -100;
 }
 
 void InfoDisplays::Update(float deltaTime)
@@ -110,6 +128,42 @@ void InfoDisplays::Update(float deltaTime)
 			state = ENEMY_USE;
 		}
 		break;
+	case TURN_CHANGE:
+		displayTimer += deltaTime;
+		if (turnChangeStart)
+		{
+			turnDisplayAlpha += deltaTime;
+			if (turnDisplayAlpha >= turnDisplayMaxAlpha)
+			{
+				turnDisplayAlpha = turnDisplayMaxAlpha;
+			}
+			turnTextX += deltaTime + 30;
+			if (turnTextX >= turnTextXFinal)
+			{
+				turnTextX = turnTextXFinal;
+			}
+		}
+		else
+		{
+			turnDisplayAlpha -= deltaTime;
+			if (turnDisplayAlpha <= 0)
+			{
+				turnDisplayAlpha = 0;
+			}
+		}
+		if (displayTimer > turnDisplayTime)
+		{
+			displayTimer = 0.0f;
+			if (turnChangeStart)
+			{
+				turnChangeStart = false;
+			}
+			else
+			{
+				state = NONE;
+			}
+		}
+		break;
 	}
 }
 
@@ -120,18 +174,26 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 	{
 		if (displayTimer > healAnimationTime)
 		{
-			leveledUnit->currentHP = leveledUnit->maxHP;
+			leveledUnit->currentHP = healedHP;
 			finishedHealing = false;
 			displayTimer = 0;
 			state = NONE;
-			//I don't know about this gravy...
-			if (leveledUnit->team == 0)
+			if (usedItem)
 			{
-				subject.notify(1);
+				usedItem = false;
+				//I don't know about this gravy...
+				if (leveledUnit->team == 0)
+				{
+					subject.notify(1);
+				}
+				else
+				{
+					subject.notify(2);
+				}
 			}
 			else
 			{
-				subject.notify(2);
+				subject.notify(3);
 			}
 		}
 	}
@@ -230,6 +292,31 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		break;
 	case ENEMY_TRADE:
 		Text->RenderText(leveledUnit->name + " recieved " + leveledUnit->inventory[itemToUse]->name, 300, 300, 1);
+		break;
+	case TURN_CHANGE:
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", turnDisplayAlpha);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		std::string thisTurn;
+		if (turn == 0)
+		{
+			thisTurn = "Player Turn";
+		}
+		else
+		{
+			thisTurn = "Enemy Turn";
+		}
+		//Using text now, I think I'll use a sprite ultimately
+		Text->RenderText(thisTurn, turnTextX, 300, 1);
 		break;
 	}
 }
