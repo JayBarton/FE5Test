@@ -94,15 +94,16 @@ struct InfoDisplays
 	float textDisplayTime = 1.0f;
 
 	void AddExperience(Unit* unit, Unit* foe);
-	void StartUse(Unit* unit, int index);
+	void StartUse(Unit* unit, int index, Camera* camera);
 	void EnemyUse(Unit* enemy, int index);
 	void EnemyTrade(EnemyManager* enemyManager);
-	void StartUnitHeal(Unit*, int healAmount);
+	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
 
 	void OnUnitLevel(Unit* unit);
 
-	void Update(float deltaTime);
+	void Update(float deltaTime, class InputManager& inputManager);
+	void TurnChangeUpdate(InputManager& inputManager, float deltaTime);
 	void UpdateHealthBarDisplay(float deltaTime);
 	void UpdateLevelUpDisplay(float deltaTime);
 	void UpdateExperienceDisplay(float deltaTime);

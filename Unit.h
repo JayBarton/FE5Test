@@ -265,7 +265,7 @@ struct Unit
 	//Temporary, just using to visualize the path taken
 	std::vector<glm::ivec2> drawnPath;
 
-	void StartTurn(class InfoDisplays& displays);
+	void StartTurn(class InfoDisplays& displays, class Camera* camera);
 	void EndTurn();
 
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindUnitMoveRange();

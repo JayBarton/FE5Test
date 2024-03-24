@@ -48,6 +48,7 @@ struct EnemyManager
 
 	bool canCounter = true;
 	bool enemyMoving = false;
+	bool followCamera = false;
 	Unit* otherUnit = nullptr;
 	InfoDisplays* displays = nullptr;
 

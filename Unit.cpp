@@ -4,6 +4,7 @@
 #include "TileManager.h"
 #include "Items.h"
 #include "InfoDisplays.h"
+#include "Camera.h"
 
 Unit::Unit()
 {
@@ -591,7 +592,7 @@ WeaponData Unit::GetWeaponData(Item* item)
 
 //Using this function to handle effects that heal the unit at the start of the turn
 //Currently only on gate tiles, but Renewal should work here with some modification.
-void Unit::StartTurn(InfoDisplays& displays)
+void Unit::StartTurn(InfoDisplays& displays, Camera* camera)
 {
     auto position = sprite.getPosition();
     auto tileProperties = TileManager::tileManager.getTile(position.x, position.y)->properties;
@@ -605,7 +606,7 @@ void Unit::StartTurn(InfoDisplays& displays)
             {
                 toHeal = maxHP;
             }
-            displays.StartUnitHeal(this, toHeal);
+            displays.StartUnitHeal(this, toHeal, camera);
         }
     }
 }

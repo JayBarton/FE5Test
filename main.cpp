@@ -192,7 +192,7 @@ struct ItemEvents : public ItemUseObserver
 	virtual void onNotify(Unit* unit, int index)
 	{
 		//Do something in display here...
-		displays.StartUse(unit, index);
+		displays.StartUse(unit, index, &camera);
 	}
 };
 
@@ -469,7 +469,11 @@ int main(int argc, char** argv)
 		{
 			if (displays.state != NONE)
 			{
-				displays.Update(deltaTime);
+				if (camera.moving)
+				{
+					camera.MoveTo(deltaTime, 5.0f);
+				}
+				displays.Update(deltaTime, inputManager);
 			}
 			else
 			{
@@ -499,7 +503,7 @@ int main(int argc, char** argv)
 							}
 							else
 							{
-								playerUnits[turnUnit]->StartTurn(displays);
+								playerUnits[turnUnit]->StartTurn(displays, &camera);
 
 								if (displays.state == NONE)
 								{
@@ -516,7 +520,7 @@ int main(int argc, char** argv)
 							}
 							else
 							{
-								enemyManager.enemies[turnUnit]->StartTurn(displays);
+								enemyManager.enemies[turnUnit]->StartTurn(displays, &camera);
 
 								if (displays.state == NONE)
 								{
@@ -548,9 +552,12 @@ int main(int argc, char** argv)
 						enemyManager.Update(deltaTime, battleManager, camera);
 						if (!camera.moving)
 						{
-							if (auto enemy = enemyManager.GetCurrentUnit())
+							if (enemyManager.followCamera)
 							{
-								camera.Follow(enemy->sprite.getPosition());
+								if (auto enemy = enemyManager.GetCurrentUnit())
+								{
+									camera.Follow(enemy->sprite.getPosition());
+								}
 							}
 						}
 						else

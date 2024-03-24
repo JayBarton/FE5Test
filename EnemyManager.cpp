@@ -461,6 +461,7 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera)
 {
+    followCamera = false;
     if (currentEnemy >= enemies.size())
     {
         EndTurn();
@@ -487,7 +488,6 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                 {
                     timer = 0.0f;
                     //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
-                    camera.SetMove(enemy->sprite.getPosition());
                     //If active
                     if (enemy->active)
                     {
@@ -527,6 +527,11 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                         if (enemy->activationType > 0)
                         {
                             RangeActivation(enemy);
+                            //Move this into range activation if it works
+                            if (enemyMoving)
+                            {
+                          //      camera.SetMove(enemy->sprite.getPosition());
+                            }
                         }
                         else
                         {
@@ -540,6 +545,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                             if (enemyMoving)
                             {
                                 enemy->active = true;
+                             //   camera.SetMove(enemy->sprite.getPosition());
                             }
                         }
                     }
@@ -548,6 +554,9 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
             }
             else
             {
+
+                followCamera = true;
+
                 timer = 0.0f;
                 if (!enemy->movementComponent.moving)
                 {

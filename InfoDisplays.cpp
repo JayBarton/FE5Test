@@ -4,7 +4,10 @@
 #include "TextRenderer.h"
 #include "Globals.h"
 #include "Camera.h"
+#include "InputManager.h"
 #include <glm.hpp>
+#include <SDL.h>
+
 
 #include "Items.h"
 #include "EnemyManager.h"
@@ -41,13 +44,11 @@ void InfoDisplays::OnUnitLevel(Unit* unit)
 	state = LEVEL_UP_NOTE;
 }
 
-void InfoDisplays::StartUse(Unit* unit, int index)
+void InfoDisplays::StartUse(Unit* unit, int index, Camera* camera)
 {
-	state = HEALING_ANIMATION;
-	leveledUnit = unit;
-	displayedHP = leveledUnit->currentHP;
-	healedHP = leveledUnit->maxHP;
+	//When I have other usable items, can check/pass in what type here to determine what to do.
 	usedItem = true;
+	StartUnitHeal(unit, unit->maxHP, camera);
 }
 
 void InfoDisplays::EnemyUse(Unit* unit, int index)
@@ -65,12 +66,14 @@ void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)
 	itemToUse = enemyManager->healIndex;
 }
 
-void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount)
+//Call this from StartUse
+void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount, Camera* camera)
 {
 	state = HEALING_ANIMATION;
 	leveledUnit = unit;
 	displayedHP = leveledUnit->currentHP;
 	healedHP = healAmount;
+	camera->SetCenter(leveledUnit->sprite.getPosition());
 }
 
 void InfoDisplays::ChangeTurn(int currentTurn)
@@ -82,17 +85,18 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	turnTextX = -100;
 }
 
-void InfoDisplays::Update(float deltaTime)
+void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 {
+	if (state != NONE)
+	{
+		displayTimer += deltaTime;
+	}
 	switch (state)
 	{
-	case NONE:
-		break;
 	case ADD_EXPERIENCE:
 		UpdateExperienceDisplay(deltaTime);
 		break;
 	case LEVEL_UP_NOTE:
-		displayTimer += deltaTime;
 		if (displayTimer > levelUpNoteTime)
 		{
 			displayTimer = 0.0f;
@@ -103,7 +107,6 @@ void InfoDisplays::Update(float deltaTime)
 		UpdateLevelUpDisplay(deltaTime);
 		break;
 	case HEALING_ANIMATION:
-		displayTimer += deltaTime;
 		if (displayTimer > healAnimationTime)
 		{
 			displayTimer = 0.0f;
@@ -114,14 +117,12 @@ void InfoDisplays::Update(float deltaTime)
 		UpdateHealthBarDisplay(deltaTime);
 		break;
 	case ENEMY_USE:
-		displayTimer += deltaTime;
 		if (displayTimer > textDisplayTime)
 		{
 			displayTimer = 0.0f;
 			ItemManager::itemManager.UseItem(leveledUnit, itemToUse);
 		}
 	case ENEMY_TRADE:
-		displayTimer += deltaTime;
 		if (displayTimer > textDisplayTime)
 		{
 			displayTimer = 0.0f;
@@ -129,7 +130,19 @@ void InfoDisplays::Update(float deltaTime)
 		}
 		break;
 	case TURN_CHANGE:
-		displayTimer += deltaTime;
+		TurnChangeUpdate(inputManager, deltaTime);
+		break;
+	}
+}
+
+void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		state = NONE;
+	}
+	else
+	{
 		if (turnChangeStart)
 		{
 			turnDisplayAlpha += deltaTime;
@@ -163,13 +176,11 @@ void InfoDisplays::Update(float deltaTime)
 				state = NONE;
 			}
 		}
-		break;
 	}
 }
 
 void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 {
-	displayTimer += deltaTime;
 	if (finishedHealing)
 	{
 		if (displayTimer > healAnimationTime)
@@ -214,7 +225,6 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 
 void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 {
-	displayTimer += deltaTime;
 	if (displayTimer > 2.0f)
 	{
 		displayTimer = 0;
@@ -227,7 +237,6 @@ void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 
 void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 {
-	displayTimer += deltaTime;
 	if (displayingExperience)
 	{
 		if (displayTimer > experienceDisplayTime)
