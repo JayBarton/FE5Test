@@ -72,6 +72,8 @@ public:
     int screenWidth;
     int screenHeight;
 
+    float t = 0.0f;
+
     //Hate all of this, I'm sure there's a better way
     glm::vec2 movePosition;
     glm::vec2 startPosition;

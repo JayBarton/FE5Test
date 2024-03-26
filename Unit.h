@@ -213,6 +213,7 @@ struct Unit
 
 	void placeUnit(int x, int y);
 	void Update(float deltaTime);
+	void UpdateMovement(float deltaTime);
 	void Draw(SpriteRenderer* Renderer);
 
 	bool Dying(float deltaTime);

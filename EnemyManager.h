@@ -45,10 +45,13 @@ struct EnemyManager
 
 	float timer = 0.0f;
 	float turnStartDelay = 0.25f;
+	float actionDelay = 0.25f;
 
 	bool canCounter = true;
 	bool enemyMoving = false;
 	bool followCamera = false;
+	bool canAct = false;
+	bool skippedUnit = false;
 	Unit* otherUnit = nullptr;
 	InfoDisplays* displays = nullptr;
 
@@ -65,12 +68,15 @@ struct EnemyManager
 	void GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, std::vector<Unit*>& otherUnits);
 	void ApproachNearest(glm::vec2& position, Unit* enemy);
 	void NoMove(Unit* enemy, glm::vec2& position);
+	void NextUnit();
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits);
 	void Draw(SpriteRenderer* renderer);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera);
+	void DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager);
 	void StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void RangeActivation(Unit* enemy);
-	void FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
+	void DoNothing(Unit* enemy, glm::vec2& position);
+	void FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, Camera& camera);
 	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();

@@ -199,7 +199,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     //In range of units but cannot reach any of them, stay where you are
     if (finalTarget.priority == 0)
     {
-        NoMove(enemy, position);
+        DoNothing(enemy, position);
     }
     else
     {
@@ -275,12 +275,16 @@ void EnemyManager::ApproachNearest(glm::vec2& position, Unit* enemy)
     enemyMoving = true;
 }
 
-//This and finish move are nearly identical...
 void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
 {
     enemy->placeUnit(position.x, position.y);
- //   enemy->hasMoved = true;
+    NextUnit();
+}
+void EnemyManager::NextUnit()
+{
     currentEnemy++;
+    canAct = false;
+    followCamera = false;
 }
 std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
 {
@@ -446,7 +450,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         enemies[i]->sprite.uv = &UVs;
         enemies[i]->sprite.color = glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    enemies[14]->currentHP = 14;
+  //  enemies[14]->currentHP = 14;
   //  enemies[0]->move = 6;
   //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
@@ -461,127 +465,147 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera)
 {
-    followCamera = false;
-    if (currentEnemy >= enemies.size())
+    skippedUnit = true;
+   // while (skippedUnit)
     {
-        EndTurn();
-    }
-    else
-    {
-        auto enemy = enemies[currentEnemy];
-        timer += deltaTime;
-
-        if (enemy->stationary)
+        skippedUnit = false;
+        if (currentEnemy >= enemies.size())
         {
-            if (timer >= turnStartDelay)
-            {
-                timer = 0.0f;
-                StationaryUpdate(enemy, battleManager, camera);
-            }
+            EndTurn();
         }
         else
         {
-            if (!enemyMoving)
+            auto enemy = enemies[currentEnemy];
+            timer += deltaTime;
+
+            if (enemy->stationary)
             {
-                //Small delay between starting the next enemy's move
                 if (timer >= turnStartDelay)
                 {
                     timer = 0.0f;
-                    //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
-                    //If active
-                    if (enemy->active)
-                    {
-                        std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-                        if (enemy->currentHP <= enemy->maxHP * 0.5f)
-                        {
-                            healIndex = -1;
-                            for (int i = 0; i < enemy->inventory.size(); i++)
-                            {
-                                if (enemy->inventory[i]->ID == 0)
-                                {
-                                    //can heal. Move away from closest player unit and heal
-                                    healIndex = i;
-                                    break;
-                                }
-                            }
-                            if (healIndex >= 0)
-                            {
-                                HealSelf(enemy, path);
-                            }
-                            if (healIndex < 0)
-                            {
-                                FindHealItem(enemy, path);
-                            }
-                        }
-                        else
-                        {
-                            FindUnitInAttackRange(enemy, path);
-                        }
-                    }
-                    //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
-                    //If units found, set active to true and path towards the closest unit
-                    //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
-                    //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can just call get priority again.
-                    else
-                    {
-                        if (enemy->activationType > 0)
-                        {
-                            RangeActivation(enemy);
-                            //Move this into range activation if it works
-                            if (enemyMoving)
-                            {
-                          //      camera.SetMove(enemy->sprite.getPosition());
-                            }
-                        }
-                        else
-                        {
-                            std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-                            std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-                            GetPriority(enemy, path, otherUnits);
-                            //So what I am doing here is, if the enemy is able to move/attack, set them to active.
-                            //This is only going to work in the case that the enemy actually found a unit to attack, so if all of the attack positions are
-                            //occupied, they will remain inactive
-                            //Not sure if this is how I want things to work going forward, but it's the plan for now.
-                            if (enemyMoving)
-                            {
-                                enemy->active = true;
-                             //   camera.SetMove(enemy->sprite.getPosition());
-                            }
-                        }
-                    }
-
+                    StationaryUpdate(enemy, battleManager, camera);
                 }
             }
             else
             {
+                DefaultUpdate(deltaTime, enemy, camera, battleManager);
+            }
+        }
+    }
+}
 
-                followCamera = true;
 
-                timer = 0.0f;
-                if (!enemy->movementComponent.moving)
+void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager)
+{
+    if (!enemyMoving)
+    {
+        //Small delay between starting the next enemy's move
+        if (timer >= turnStartDelay)
+        {
+            timer = 0.0f;
+            //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
+            //If active
+            if (enemy->active)
+            {
+                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+                if (enemy->currentHP <= enemy->maxHP * 0.5f)
                 {
-                    enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
-                    if (state == ATTACK)
+                    healIndex = -1;
+                    for (int i = 0; i < enemy->inventory.size(); i++)
                     {
-                        //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
-                        //before the battle actually starts
-                        auto otherStats = otherUnit->CalculateBattleStats();
-                        auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
-                        otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
+                        if (enemy->inventory[i]->ID == 0)
+                        {
+                            //can heal. Move away from closest player unit and heal
+                            healIndex = i;
+                            break;
+                        }
                     }
-                    else if (state == CANTO || state == APPROACHING)
+                    if (healIndex >= 0)
                     {
-                        FinishMove();
+                        HealSelf(enemy, path);
                     }
-                    else if (state == HEALING)
+                    if (healIndex < 0)
                     {
-                        displays->EnemyUse(enemy, healIndex);
+                        FindHealItem(enemy, path);
                     }
-                    else if (state == TRADING)
+                }
+                else
+                {
+                    FindUnitInAttackRange(enemy, path, camera);
+                }
+            }
+            //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
+            //If units found, set active to true and path towards the closest unit
+            //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
+            //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can just call get priority again.
+            else
+            {
+                if (enemy->activationType > 0)
+                {
+                    RangeActivation(enemy);
+                    //Move this into range activation if it works
+                    if (enemyMoving)
                     {
-                        displays->EnemyTrade(this);
+                        camera.SetMove(enemy->sprite.getPosition());
                     }
+                }
+                else
+                {
+                    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+                    std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+                    GetPriority(enemy, path, otherUnits);
+                    //So what I am doing here is, if the enemy is able to move/attack, set them to active.
+                    //This is only going to work in the case that the enemy actually found a unit to attack, so if all of the attack positions are
+                    //occupied, they will remain inactive
+                    //Not sure if this is how I want things to work going forward, but it's the plan for now.
+                    if (enemyMoving)
+                    {
+                        enemy->active = true;
+                        camera.SetMove(enemy->sprite.getPosition());
+                    }
+                }
+            }
+
+        }
+    }
+    else
+    {
+        followCamera = true;
+        if (!canAct)
+        {
+            if (timer >= actionDelay)
+            {
+                timer = 0.0f;
+                canAct = true;
+            }
+        }
+        else
+        {
+            enemy->UpdateMovement(deltaTime);
+            timer = 0.0f;
+            if (!enemy->movementComponent.moving)
+            {
+                enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
+                if (state == ATTACK)
+                {
+                    //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
+                    //before the battle actually starts
+                    auto otherStats = otherUnit->CalculateBattleStats();
+                    auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                    otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+                    battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
+                }
+                else if (state == CANTO || state == APPROACHING)
+                {
+                    FinishMove();
+                }
+                else if (state == HEALING)
+                {
+                    displays->EnemyUse(enemy, healIndex);
+                }
+                else if (state == TRADING)
+                {
+                    displays->EnemyTrade(this);
                 }
             }
         }
@@ -684,7 +708,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
         //In range of units but cannot reach any of them, stay where you are
         if (finalTarget.priority == 0)
         {
-            NoMove(enemy, position);
+            DoNothing(enemy, position);
         }
         else
         {
@@ -712,9 +736,10 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
         }
     }
+    //No units in range
     else
     {
-        NoMove(enemy, position);
+        DoNothing(enemy, position);
     }
 }
 
@@ -796,11 +821,19 @@ void EnemyManager::RangeActivation(Unit* enemy)
     else
     {
         auto position = enemy->sprite.getPosition();
-        NoMove(enemy, position);
+        DoNothing(enemy, position);
     }
 }
 
-void EnemyManager::FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
+//Want to skip the current enemy's turn, so set the timer to its end value
+void EnemyManager::DoNothing(Unit* enemy, glm::vec2& position)
+{
+    NoMove(enemy, position);
+    skippedUnit = true;
+    timer = turnStartDelay;
+}
+
+void EnemyManager::FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, Camera& camera)
 {
     std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
 
@@ -810,6 +843,10 @@ void EnemyManager::FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::ve
         auto position = enemy->sprite.getPosition();
         TileManager::tileManager.removeUnit(position.x, position.y);
         ApproachNearest(position, enemy);
+        if (enemyMoving)
+        {
+            camera.SetMove(enemy->sprite.getPosition());
+        }
     }
     else
     {
@@ -1036,7 +1073,8 @@ void EnemyManager::FinishMove()
 {
     enemies[currentEnemy]->hasMoved = true;
     enemyMoving = false;
-    currentEnemy++;
+    NextUnit();
+
     state = GET_TARGET;
 }
 

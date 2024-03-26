@@ -182,6 +182,7 @@ void Camera::Follow(glm::vec2 p)
 //No good, at least not for refocusing the camera to active units.
 void Camera::SetMove(glm::vec2 p)
 {
+	t = 0.0f;
 	glm::vec2 pScreen = worldToScreen(p);
 	startPosition = position;
 	movePosition = position; //Setting move position to position and leaving the first set of ifs uncommented worked for cancelling moves...
@@ -228,6 +229,7 @@ void Camera::SetMove(glm::vec2 p)
 
 void Camera::SetCenter(glm::vec2 p)
 {
+	t = 0.0f;
 	startPosition = position;
 	movePosition = p; 
 	moving = true;
@@ -255,10 +257,45 @@ void Camera::SetCenter(glm::vec2 p)
 	}
 }
 
+float quadraticEaseInOut(float t) {
+	return (t < 0.5f) ? (2 * t * t) : (-1 + (4 - 2 * t) * t);
+}
+
+float EaseInOut(float t) {
+	return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;
+}
+
+float EaseOut(float t)
+{
+	return 1 - (1 - t) * (1 - t);
+}
+
 void Camera::MoveTo(float delta, float speed)
 {
 	auto direction = glm::normalize(movePosition - startPosition);
-	auto L1 = glm::length(position);
+	float distance = glm::length(movePosition - startPosition);
+
+	// Calculate easing factor based on current time
+//	float easingFactor = quadraticEaseInOut(t);
+	float easingFactor = EaseOut(t);
+
+	// Calculate current position based on easing factor
+	glm::vec2 currentPosition = startPosition + direction * (distance * easingFactor);
+
+	// Update camera position
+	position = currentPosition;
+
+	// Increment time based on speed
+	t += speed / distance;
+
+	// Break loop if reached the destination
+	if (t >= 1.0f)
+	{
+		position = movePosition;
+		moving = false;
+	}
+
+	/*auto L1 = glm::length(position);
 	auto L2 = glm::length(movePosition);
 	//What the hell am I even doing here? Completely wrong.
 	auto moveScale = L1 / L2;
@@ -272,6 +309,7 @@ void Camera::MoveTo(float delta, float speed)
 	{
 		moving = false;
 		position = movePosition;
-	}
+	}*/
 	needsMatrixUpdate = true;
+
 }

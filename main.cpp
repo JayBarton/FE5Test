@@ -578,8 +578,16 @@ int main(int argc, char** argv)
 		for (int i = 0; i < playerUnits.size(); i++)
 		{
 			playerUnits[i]->Update(deltaTime);
+			playerUnits[i]->UpdateMovement(deltaTime);
 		}
-		enemyManager.UpdateEnemies(deltaTime);
+		if (!camera.moving)
+		{
+			enemyManager.UpdateEnemies(deltaTime);
+		}
+		else
+		{
+			int a = 2;
+		}
 
 		/*if (inputManager.isKeyPressed(SDLK_e))
 		{

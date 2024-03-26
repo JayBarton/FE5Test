@@ -41,11 +41,15 @@ void Unit::Update(float deltaTime)
 {
     if (!isDead)
     {
-    //this will presumably also handle animation at some point, and no point in animation dead units
-        if (movementComponent.moving)
-        {
-            movementComponent.Update(deltaTime);
-        }
+        //this will presumably also handle animation at some point, and no point in animation dead units
+    }
+}
+
+void Unit::UpdateMovement(float deltaTime)
+{
+    if (movementComponent.moving)
+    {
+        movementComponent.Update(deltaTime);
     }
 }
 
