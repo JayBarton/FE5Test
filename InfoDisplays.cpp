@@ -70,6 +70,7 @@ void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)
 void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount, Camera* camera)
 {
 	state = HEALING_ANIMATION;
+	healDelay = true;
 	leveledUnit = unit;
 	displayedHP = leveledUnit->currentHP;
 	healedHP = healAmount;
@@ -107,7 +108,15 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		UpdateLevelUpDisplay(deltaTime);
 		break;
 	case HEALING_ANIMATION:
-		if (displayTimer > healAnimationTime)
+		if (healDelay)
+		{
+			if (displayTimer > healDelayTime)
+			{
+				healDelay = false;
+				displayTimer = 0.0f;
+			}
+		}
+		else if (displayTimer > healAnimationTime)
 		{
 			displayTimer = 0.0f;
 			state = HEALING_BAR;
@@ -351,20 +360,23 @@ void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Tex
 
 void InfoDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
-	glm::mat4 model = glm::mat4();
-	auto unitPosition = leveledUnit->sprite.getPosition();
-	model = glm::translate(model, glm::vec3(unitPosition.x, unitPosition.y, 0.0f));
+	if (!healDelay)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+		glm::mat4 model = glm::mat4();
+		auto unitPosition = leveledUnit->sprite.getPosition();
+		model = glm::translate(model, glm::vec3(unitPosition.x, unitPosition.y, 0.0f));
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
 
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 }
 
 void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)

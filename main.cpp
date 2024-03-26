@@ -473,7 +473,10 @@ int main(int argc, char** argv)
 				{
 					camera.MoveTo(deltaTime, 5.0f);
 				}
-				displays.Update(deltaTime, inputManager);
+				else
+				{
+					displays.Update(deltaTime, inputManager);
+				}
 			}
 			else
 			{

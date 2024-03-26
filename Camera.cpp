@@ -260,6 +260,7 @@ void Camera::MoveTo(float delta, float speed)
 	auto direction = glm::normalize(movePosition - startPosition);
 	auto L1 = glm::length(position);
 	auto L2 = glm::length(movePosition);
+	//What the hell am I even doing here? Completely wrong.
 	auto moveScale = L1 / L2;
 	if (moveScale < 1)
 	{
