@@ -149,6 +149,7 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		state = NONE;
+		displayTimer = 0.0f;
 	}
 	else
 	{

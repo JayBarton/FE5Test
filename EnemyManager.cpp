@@ -279,6 +279,7 @@ void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
 {
     enemy->placeUnit(position.x, position.y);
     NextUnit();
+    skippedUnit = true;
 }
 void EnemyManager::NextUnit()
 {
@@ -465,30 +466,74 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera)
 {
-    skippedUnit = true;
-   // while (skippedUnit)
+    if (currentEnemy >= enemies.size())
     {
-        skippedUnit = false;
-        if (currentEnemy >= enemies.size())
-        {
-            EndTurn();
-        }
-        else
-        {
-            auto enemy = enemies[currentEnemy];
-            timer += deltaTime;
+        EndTurn();
+    }
+    else
+    {
+        auto enemy = enemies[currentEnemy];
 
-            if (enemy->stationary)
+        if (enemyMoving)
+        {
+            followCamera = true;
+            if (!canAct)
             {
-                if (timer >= turnStartDelay)
+                timer += deltaTime;
+                if (timer >= actionDelay)
                 {
                     timer = 0.0f;
-                    StationaryUpdate(enemy, battleManager, camera);
+                    canAct = true;
                 }
             }
             else
             {
-                DefaultUpdate(deltaTime, enemy, camera, battleManager);
+                enemy->UpdateMovement(deltaTime);
+                if (!enemy->movementComponent.moving)
+                {
+                    enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
+                    if (state == ATTACK)
+                    {
+                        //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
+                        //before the battle actually starts
+                        auto otherStats = otherUnit->CalculateBattleStats();
+                        auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                        otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
+                    }
+                    else if (state == CANTO || state == APPROACHING)
+                    {
+                        FinishMove();
+                    }
+                    else if (state == HEALING)
+                    {
+                        displays->EnemyUse(enemy, healIndex);
+                    }
+                    else if (state == TRADING)
+                    {
+                        displays->EnemyTrade(this);
+                    }
+                }
+            }
+        }
+        else
+        {
+            timer += deltaTime;
+            if (timer >= turnStartDelay)
+            {
+                timer = 0.0f;
+                skippedUnit = false;
+                while (currentEnemy < enemies.size() && !skippedUnit && !enemyMoving)
+                {
+                    if (enemy->stationary)
+                    {
+                        StationaryUpdate(enemy, battleManager, camera);
+                    }
+                    else
+                    {
+                        DefaultUpdate(deltaTime, enemy, camera, battleManager);
+                    }
+                }
             }
         }
     }
@@ -500,115 +545,70 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
     if (!enemyMoving)
     {
         //Small delay between starting the next enemy's move
-        if (timer >= turnStartDelay)
+
+        //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
+        //If active
+        if (enemy->active)
         {
-            timer = 0.0f;
-            //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
-            //If active
-            if (enemy->active)
+            std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+            if (enemy->currentHP <= enemy->maxHP * 0.5f)
             {
-                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-                if (enemy->currentHP <= enemy->maxHP * 0.5f)
+                healIndex = -1;
+                for (int i = 0; i < enemy->inventory.size(); i++)
                 {
-                    healIndex = -1;
-                    for (int i = 0; i < enemy->inventory.size(); i++)
+                    if (enemy->inventory[i]->ID == 0)
                     {
-                        if (enemy->inventory[i]->ID == 0)
-                        {
-                            //can heal. Move away from closest player unit and heal
-                            healIndex = i;
-                            break;
-                        }
-                    }
-                    if (healIndex >= 0)
-                    {
-                        HealSelf(enemy, path);
-                    }
-                    if (healIndex < 0)
-                    {
-                        FindHealItem(enemy, path);
+                        //can heal. Move away from closest player unit and heal
+                        healIndex = i;
+                        break;
                     }
                 }
-                else
+                if (healIndex >= 0)
                 {
-                    FindUnitInAttackRange(enemy, path, camera);
+                    HealSelf(enemy, path);
+                }
+                if (healIndex < 0)
+                {
+                    FindHealItem(enemy, path);
                 }
             }
-            //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
-            //If units found, set active to true and path towards the closest unit
-            //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
-            //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can just call get priority again.
             else
             {
-                if (enemy->activationType > 0)
-                {
-                    RangeActivation(enemy);
-                    //Move this into range activation if it works
-                    if (enemyMoving)
-                    {
-                        camera.SetMove(enemy->sprite.getPosition());
-                    }
-                }
-                else
-                {
-                    std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-                    std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-                    GetPriority(enemy, path, otherUnits);
-                    //So what I am doing here is, if the enemy is able to move/attack, set them to active.
-                    //This is only going to work in the case that the enemy actually found a unit to attack, so if all of the attack positions are
-                    //occupied, they will remain inactive
-                    //Not sure if this is how I want things to work going forward, but it's the plan for now.
-                    if (enemyMoving)
-                    {
-                        enemy->active = true;
-                        camera.SetMove(enemy->sprite.getPosition());
-                    }
-                }
-            }
-
-        }
-    }
-    else
-    {
-        followCamera = true;
-        if (!canAct)
-        {
-            if (timer >= actionDelay)
-            {
-                timer = 0.0f;
-                canAct = true;
+                FindUnitInAttackRange(enemy, path, camera);
             }
         }
+        //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
+        //If units found, set active to true and path towards the closest unit
+        //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
+        //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can just call get priority again.
         else
         {
-            enemy->UpdateMovement(deltaTime);
-            timer = 0.0f;
-            if (!enemy->movementComponent.moving)
+            if (enemy->activationType > 0)
             {
-                enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
-                if (state == ATTACK)
+                RangeActivation(enemy);
+                //Move this into range activation if it works
+                if (enemyMoving)
                 {
-                    //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
-                    //before the battle actually starts
-                    auto otherStats = otherUnit->CalculateBattleStats();
-                    auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
-                    otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                    battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
+                    camera.SetMove(enemy->sprite.getPosition());
                 }
-                else if (state == CANTO || state == APPROACHING)
+            }
+            else
+            {
+                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+                std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+                GetPriority(enemy, path, otherUnits);
+                //So what I am doing here is, if the enemy is able to move/attack, set them to active.
+                //This is only going to work in the case that the enemy actually found a unit to attack, so if all of the attack positions are
+                //occupied, they will remain inactive
+                //Not sure if this is how I want things to work going forward, but it's the plan for now.
+                if (enemyMoving)
                 {
-                    FinishMove();
-                }
-                else if (state == HEALING)
-                {
-                    displays->EnemyUse(enemy, healIndex);
-                }
-                else if (state == TRADING)
-                {
-                    displays->EnemyTrade(this);
+                    enemy->active = true;
+                    camera.SetMove(enemy->sprite.getPosition());
                 }
             }
         }
+
     }
 }
 
@@ -728,7 +728,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
             battleStats = finalTarget.battleStats;
             bool canCounter = false;
-
+            skippedUnit = true;
             if (weapon.maxRange >= attackRange && weapon.minRange <= attackRange)
             {
                 canCounter = true;
