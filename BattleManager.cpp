@@ -7,10 +7,15 @@
 #include "Globals.h"
 #include "TextRenderer.h"
 #include "Camera.h"
+#include "SpriteRenderer.h"
 #include <iostream>
 
-void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera)
+#include "Cursor.h"
+
+void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
+	BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/)
 {
+	this->aiDelay = aiDelay;
 	battleActive = true;
 	this->attacker = attacker;
 	this->defender = defender;
@@ -83,7 +88,16 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
 {
-	if (battleActive)
+	if (aiDelay)
+	{
+		delayTimer += deltaTime;
+		if (delayTimer >= delay)
+		{
+			delayTimer = 0.0f;
+			aiDelay = false;
+		}
+	}
+	else if (battleActive)
 	{
 		if (unitDied)
 		{
@@ -299,9 +313,16 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 	camera.SetCenter(attacker->sprite.getPosition());
 }
 
-void BattleManager::Draw(TextRenderer* text, Camera& camera)
+void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor)
 {
-	if (!unitDied)
+	if (aiDelay)
+	{
+		Renderer->setUVs(cursor->uvs[1]);
+		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+
+		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	}
+	else if (!unitDied)
 	{
 		int yOffset = 150;
 		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa

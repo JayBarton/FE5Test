@@ -762,10 +762,12 @@ void Draw()
 			playerUnits[i]->Draw(Renderer);
 		}
 		enemyManager.Draw(Renderer);
-
-		Renderer->setUVs(cursor.uvs[1]);
-		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-		Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+		if (currentTurn == 0)
+		{
+			Renderer->setUVs(cursor.uvs[1]);
+			Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+			Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+		}
 	}
 	if (drawingMenu)
 	{
@@ -842,7 +844,7 @@ void DrawText()
 	}
 	else if (battleManager.battleActive)
 	{
-		battleManager.Draw(Text, camera);
+		battleManager.Draw(Text, camera, Renderer, &cursor);
 	}
 	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
 	{

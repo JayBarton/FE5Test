@@ -47,7 +47,7 @@ struct Attack
 class Camera;
 struct BattleManager
 {
-	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera);
+	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiAttack = false);
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 
@@ -59,7 +59,7 @@ struct BattleManager
 	
 	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager, Camera& camera);
 
-	void Draw(TextRenderer* text, Camera& camera);
+	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
@@ -80,6 +80,10 @@ struct BattleManager
 	bool checkDouble = true;
 	bool accostFired = false;
 	bool unitDied = false;
+	bool aiDelay = false;
+
+	float delayTimer = 0.0f;
+	float delay = 0.75f;
 
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;

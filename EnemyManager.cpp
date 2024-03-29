@@ -499,7 +499,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                         auto otherStats = otherUnit->CalculateBattleStats();
                         auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
                         otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
+                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
                     }
                     else if (state == CANTO || state == APPROACHING)
                     {
@@ -733,7 +733,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             {
                 canCounter = true;
             }
-            battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera);
+            battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
         }
     }
     //No units in range
