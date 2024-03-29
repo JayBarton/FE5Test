@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "Sprite.h"
 class SpriteRenderer;
+class InputManager;
 
 struct pathCell
 {
@@ -114,7 +115,7 @@ struct MovementComponent
 	bool moving = false;
 	void startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove);
 	void getNewDirection();
-	void Update(float deltaTime);
+	void Update(float deltaTime, InputManager& inputManager);
 };
 
 class WeaponData;
@@ -213,7 +214,7 @@ struct Unit
 
 	void placeUnit(int x, int y);
 	void Update(float deltaTime);
-	void UpdateMovement(float deltaTime);
+	void UpdateMovement(float deltaTime, InputManager& inputManager);
 	void Draw(SpriteRenderer* Renderer);
 
 	bool Dying(float deltaTime);

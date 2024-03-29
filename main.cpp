@@ -83,6 +83,8 @@ EnemyManager enemyManager;
 
 InfoDisplays displays;
 
+float unitSpeed = 2.5f;
+
 int currentTurn = 0;
 bool turnTransition = false;
 bool turnDisplay = false;
@@ -552,7 +554,7 @@ int main(int argc, char** argv)
 					else
 					{
 						//enemy management
-						enemyManager.Update(deltaTime, battleManager, camera);
+						enemyManager.Update(deltaTime, battleManager, camera, inputManager);
 						if (!camera.moving)
 						{
 							if (enemyManager.followCamera)
@@ -578,26 +580,12 @@ int main(int argc, char** argv)
 		for (int i = 0; i < playerUnits.size(); i++)
 		{
 			playerUnits[i]->Update(deltaTime);
-			playerUnits[i]->UpdateMovement(deltaTime);
+			playerUnits[i]->UpdateMovement(deltaTime, inputManager);
 		}
 		if (!camera.moving)
 		{
 			enemyManager.UpdateEnemies(deltaTime);
 		}
-		else
-		{
-			int a = 2;
-		}
-
-		/*if (inputManager.isKeyPressed(SDLK_e))
-		{
-			enemyManager.GetPriority();
-			//if (enemies[1]->movementComponent.moving)
-			{
-				testMoving = true;
-			}
-		}*/
-
 		camera.update();
 
 		Draw();

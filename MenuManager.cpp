@@ -1594,8 +1594,16 @@ void ExtraMenu::SelectOption()
 
 		break;
 	case OPTIONS:
-		std::cout << "Options menu\n";
-
+		if (unitSpeed < 5)
+		{
+			unitSpeed = 5.0f;
+			std::cout << "Speed up\n";
+		}
+		else
+		{
+			std::cout << "Speed down\n";
+			unitSpeed = 2.5f;
+		}
 		break;
 	case SUSPEND:
 		std::cout << "Suspend menu\n";

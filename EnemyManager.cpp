@@ -464,7 +464,7 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	}
 }
 
-void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera)
+void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
 {
     if (currentEnemy >= enemies.size())
     {
@@ -488,7 +488,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
             }
             else
             {
-                enemy->UpdateMovement(deltaTime);
+                enemy->UpdateMovement(deltaTime, inputManager);
                 if (!enemy->movementComponent.moving)
                 {
                     enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);

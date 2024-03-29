@@ -5,6 +5,9 @@
 #include "Items.h"
 #include "InfoDisplays.h"
 #include "Camera.h"
+#include "Globals.h"
+#include "InputManager.h"
+#include <SDL.h>
 
 Unit::Unit()
 {
@@ -45,11 +48,11 @@ void Unit::Update(float deltaTime)
     }
 }
 
-void Unit::UpdateMovement(float deltaTime)
+void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
 {
     if (movementComponent.moving)
     {
-        movementComponent.Update(deltaTime);
+        movementComponent.Update(deltaTime, inputManager);
     }
 }
 
@@ -1155,9 +1158,14 @@ void MovementComponent::getNewDirection()
     }
 }
 
-void MovementComponent::Update(float deltaTime)
+void MovementComponent::Update(float deltaTime, InputManager& inputManager)
 {
-    glm::vec2 newPosition = owner->sprite.getPosition() + direction * 5.0f;
+    float speed = unitSpeed;
+    if (inputManager.isKeyDown(SDLK_RETURN))
+    {
+        speed = heldSpeed;
+    }
+    glm::vec2 newPosition = owner->sprite.getPosition() + direction * speed;
 
     glm::vec2 toNextNode = newPosition - nextNode;
     if (toNextNode == glm::vec2(0))

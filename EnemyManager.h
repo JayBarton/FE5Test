@@ -71,7 +71,7 @@ struct EnemyManager
 	void NextUnit();
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits);
 	void Draw(SpriteRenderer* renderer);
-	void Update(float deltaTime, BattleManager& battleManager, Camera& camera);
+	void Update(float deltaTime, BattleManager& battleManager, Camera& camera, class InputManager& inputManager);
 	void DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager);
 	void StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void RangeActivation(Unit* enemy);
