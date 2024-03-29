@@ -49,7 +49,6 @@ void init();
 void Draw();
 void DrawUnitRanges();
 void DrawText();
-void loadMap(std::string nextMap);
 void resizeWindow(int width, int height);
 
 const static int TILE_SIZE = 16;
@@ -82,6 +81,8 @@ BattleManager battleManager;
 EnemyManager enemyManager;
 
 InfoDisplays displays;
+
+std::vector<glm::vec4> playerUVs;
 
 float unitSpeed = 2.5f;
 
@@ -197,6 +198,9 @@ struct ItemEvents : public ItemUseObserver
 		displays.StartUse(unit, index, &camera);
 	}
 };
+void loadMap(std::string nextMap, UnitEvents* unitEvents);
+
+void LoadPlayerUnits(std::ifstream& map, UnitEvents* unitEvents);
 
 std::mt19937 gen;
 //gen.seed(1);
@@ -299,91 +303,9 @@ int main(int argc, char** argv)
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	displays.subject.addObserver(postBattleEvents);
-	loadMap("2.map");
-	std::vector<glm::vec4> playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
-
-	std::ifstream f("BaseStats.json");
-	json data = json::parse(f);
-	json bases = data["PlayerUnits"];
-	int currentUnit = 0;
-	std::unordered_map<std::string, int> weaponNameMap;
-	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
-	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
-	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
-	weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
-	weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
-	weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
-	weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
-	weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
-	weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
-	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
-	playerUnits.resize(bases.size());
-	for (const auto& unit : bases) {
-		int ID = unit["ID"];
-		std::string name = unit["Name"];
-		std::string unitClass = unit["Class"];
-		json stats = unit["Stats"];
-		int HP = stats["HP"];
-		int str = stats["Str"];
-		int mag = stats["Mag"];
-		int skl = stats["Skl"];
-		int spd = stats["Spd"];
-		int lck = stats["Lck"];
-		int def = stats["Def"];
-		int bld = stats["Bld"];
-		int mov = stats["Mov"];
-		Unit* newUnit = new Unit(unitClass, name, HP, str, mag, skl, spd, lck, def, bld, mov);
-
-		json growths = unit["GrowthRates"];
-		HP = growths["HP"];
-		str = growths["Str"];
-		mag = growths["Mag"];
-		skl = growths["Skl"];
-		spd = growths["Spd"];
-		lck = growths["Lck"];
-		def = growths["Def"];
-		bld = growths["Bld"];
-		mov = growths["Mov"];
-
-		newUnit->growths = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, mov };
-		json weaponProf = unit["WeaponProf"];
-		for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
-		{
-			newUnit->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
-		}
-		if (unit.find("SpecialWeapons") != unit.end()) {
-			auto specialWeapons = unit["SpecialWeapons"];
-			for (const auto& weapon : specialWeapons)
-			{
-				newUnit->uniqueWeapons.push_back(int(weapon));
-			}
-		}
-
-		if (unit.find("Skills") != unit.end()) 
-		{
-			auto skills = unit["Skills"];
-			for (const auto& skill : skills)
-			{
-				newUnit->skills.push_back(int(skill));
-			}
-		}
-		json inventory = unit["Inventory"];
-		for (const auto& item : inventory) 
-		{
-			newUnit->addItem(int(item));
-		}
-		if (unit.find("ClassPower") != unit.end())
-		{
-			newUnit->classPower = unit["ClassPower"];
-		}
-
-		newUnit->subject.addObserver(unitEvents);
-		newUnit->init(&gen, &distribution);
-		newUnit->sprite.uv = &playerUVs;
-		playerUnits[currentUnit] = newUnit;
-		currentUnit++;
-	}
-	playerUnits[0]->placeUnit(48, 304);
+	playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
+	loadMap("2.map", unitEvents);
+/*	playerUnits[0]->placeUnit(48, 304);
 	playerUnits[0]->currentHP = 11;
 //	playerUnits[0]->experience = 90;
 //	playerUnits[0]->currentHP = 10;
@@ -394,7 +316,7 @@ int main(int argc, char** argv)
 	playerUnits[2]->placeUnit(48, 288);
 	playerUnits[2]->currentHP = 10;
 //	playerUnits[2]->defense = playerUnits[0]->defense;
-//	playerUnits[2]->strength = 20;
+//	playerUnits[2]->strength = 20;*/
 
 //	enemies[0]->init(&gen, &distribution);
 //	enemies[0]->sprite.uv = &playerUVs;
@@ -686,7 +608,7 @@ void init()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void loadMap(std::string nextMap)
+void loadMap(std::string nextMap, UnitEvents* unitEvents)
 {
 	std::ifstream map(levelDirectory + nextMap);
 
@@ -708,8 +630,13 @@ void loadMap(std::string nextMap)
 		{
 			enemyManager.SetUp(map, &gen, &distribution, &playerUnits);
 		}
+		else if (thing == "Starts")
+		{
+			LoadPlayerUnits(map, unitEvents);
+		}
 	}
-
+	playerUnits[1]->movementType = Unit::FOOT;
+	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 	map.close();
 
 	levelWidth = xTiles * TileManager::TILE_SIZE;
@@ -720,6 +647,105 @@ void loadMap(std::string nextMap)
 	//	camera.setScale(2.0f);
 	camera.update();
 
+}
+
+void LoadPlayerUnits(std::ifstream& map, UnitEvents* unitEvents)
+{
+	std::ifstream f("BaseStats.json");
+	json data = json::parse(f);
+	json bases = data["PlayerUnits"];
+	int currentUnit = 0;
+	std::unordered_map<std::string, int> weaponNameMap;
+	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
+	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
+	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
+	weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
+	weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
+	weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
+	weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
+	weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
+	weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
+	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
+
+	int numberOfStarts = 0;
+	map >> numberOfStarts;
+	playerUnits.resize(numberOfStarts);
+	int type;
+	glm::vec2 position;
+	for (int i = 0; i < numberOfStarts; i++)
+	{
+		map >> type >> position.x >> position.y;
+		for (const auto& unit : bases)
+		{
+			int ID = unit["ID"];
+			if (ID == type)
+			{
+				std::string name = unit["Name"];
+				std::string unitClass = unit["Class"];
+				json stats = unit["Stats"];
+				int HP = stats["HP"];
+				int str = stats["Str"];
+				int mag = stats["Mag"];
+				int skl = stats["Skl"];
+				int spd = stats["Spd"];
+				int lck = stats["Lck"];
+				int def = stats["Def"];
+				int bld = stats["Bld"];
+				int mov = stats["Mov"];
+				Unit* newUnit = new Unit(unitClass, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+				newUnit->level = stats["Level"];
+
+				json growths = unit["GrowthRates"];
+				HP = growths["HP"];
+				str = growths["Str"];
+				mag = growths["Mag"];
+				skl = growths["Skl"];
+				spd = growths["Spd"];
+				lck = growths["Lck"];
+				def = growths["Def"];
+				bld = growths["Bld"];
+				mov = growths["Mov"];
+
+				newUnit->growths = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, mov };
+				json weaponProf = unit["WeaponProf"];
+				for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+				{
+					newUnit->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+				}
+				if (unit.find("SpecialWeapons") != unit.end()) {
+					auto specialWeapons = unit["SpecialWeapons"];
+					for (const auto& weapon : specialWeapons)
+					{
+						newUnit->uniqueWeapons.push_back(int(weapon));
+					}
+				}
+
+				if (unit.find("Skills") != unit.end())
+				{
+					auto skills = unit["Skills"];
+					for (const auto& skill : skills)
+					{
+						newUnit->skills.push_back(int(skill));
+					}
+				}
+				json inventory = unit["Inventory"];
+				for (const auto& item : inventory)
+				{
+					newUnit->addItem(int(item));
+				}
+				if (unit.find("ClassPower") != unit.end())
+				{
+					newUnit->classPower = unit["ClassPower"];
+				}
+				newUnit->subject.addObserver(unitEvents);
+				newUnit->init(&gen, &distribution);
+				newUnit->sprite.uv = &playerUVs;
+				newUnit->placeUnit(position.x, position.y);
+				playerUnits[currentUnit] = newUnit;
+				currentUnit++;
+			}
+		}
+	}
 }
 
 void Draw()
@@ -853,7 +879,6 @@ void DrawText()
 
 		if (auto unit = cursor.focusedUnit)
 		{
-			unit->sprite.getPosition();
 			int yOffset = 24;
 			if (fixedPosition.y < 80) //Just hard setting a distance of 5 tiles from the top. Find a less silly way of doing this
 			{

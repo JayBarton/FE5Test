@@ -154,6 +154,151 @@
       "Skills": [ 0 ]
     },
     {
+      "ID": 2,
+      "Name": "Eyvale",
+      "Class": "SwordMaster",
+      "Stats": {
+        "Level": 12,
+        "HP": 28,
+        "Str": 9,
+        "Mag": 4,
+        "Skl": 18,
+        "Spd": 20,
+        "Lck": 10,
+        "Def": 7,
+        "Bld": 8,
+        "Mov": 8,
+        "Lead": 1,
+        "MS": 2,
+        "PC": 1
+      },
+      "GrowthRates": {
+        "HP": 30,
+        "Str": 15,
+        "Mag": 10,
+        "Skl": 15,
+        "Spd": 10,
+        "Lck": 25,
+        "Def": 5,
+        "Bld": 5,
+        "Mov": 1
+      },
+      "Inventory": [ 5, 6, 7 ],
+      "WeaponProf": {
+        "Sword": 5
+      },
+      "Skills": [ 1 ]
+    },
+    {
+      "ID": 3,
+      "Name": "Halvan",
+      "Class": "Axe Fighter",
+      "Stats": {
+        "Level": 2,
+        "HP": 28,
+        "Str": 7,
+        "Mag": 0,
+        "Skl": 7,
+        "Spd": 7,
+        "Lck": 2,
+        "Def": 5,
+        "Bld": 12,
+        "Mov": 6,
+        "Lead": 0,
+        "MS": 0,
+        "PC": 4
+      },
+      "GrowthRates": {
+        "HP": 80,
+        "Str": 40,
+        "Mag": 5,
+        "Skl": 20,
+        "Spd": 30,
+        "Lck": 30,
+        "Def": 30,
+        "Bld": 30,
+        "Mov": 2
+      },
+      "Inventory": [ 8 ],
+      "WeaponProf": {
+        "Axe": 2
+      },
+      "Skills": [ 3 ]
+    },
+    {
+      "ID": 4,
+      "Name": "Othin",
+      "Class": "Axe Fighter",
+      "Stats": {
+        "Level": 1,
+        "HP": 27,
+        "Str": 6,
+        "Mag": 0,
+        "Skl": 7,
+        "Spd": 9,
+        "Lck": 3,
+        "Def": 4,
+        "Bld": 11,
+        "Mov": 6,
+        "Lead": 0,
+        "MS": 0,
+        "PC": 3
+      },
+      "GrowthRates": {
+        "HP": 85,
+        "Str": 30,
+        "Mag": 5,
+        "Skl": 25,
+        "Spd": 35,
+        "Lck": 55,
+        "Def": 25,
+        "Bld": 25,
+        "Mov": 2
+      },
+      "Inventory": [ 8 ],
+      "WeaponProf": {
+        "Axe": 1
+      },
+      "Skills": [ 2 ]
+    },
+    {
+      "ID": 5,
+      "Name": "Dagda",
+      "Class": "Warrior",
+      "Stats": {
+        "Level": 6,
+        "HP": 43,
+        "Str": 14,
+        "Mag": 1,
+        "Skl": 11,
+        "Spd": 9,
+        "Lck": 2,
+        "Def": 10,
+        "Bld": 15,
+        "Mov": 7,
+        "Lead": 0,
+        "MS": 1,
+        "PC": 1
+      },
+      "GrowthRates": {
+        "HP": 15,
+        "Str": 10,
+        "Mag": 5,
+        "Skl": 10,
+        "Spd": 10,
+        "Lck": 30,
+        "Def": 10,
+        "Bld": 5,
+        "Mov": 1
+      },
+      "Inventory": [ 14, 15 ],
+      "WeaponProf": {
+        "Axe": 5,
+        "Bow": 1
+      },
+      "Skills": [ 4 ]
+    },
+    {
       "ID": 6,
       "Name": "Tania",
       "Class": "Bow Fighter",
@@ -187,7 +332,42 @@
       "WeaponProf": {
         "Bow": 1
       },
-      "ClassPower":  2 
+      "ClassPower": 2
+    },
+    {
+      "ID": 7,
+      "Name": "Marty",
+      "Class": "Mountain Thief",
+      "Stats": {
+        "Level": 1,
+        "HP": 32,
+        "Str": 9,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 6,
+        "Def": 6,
+        "Bld": 15,
+        "Mov": 6,
+        "Lead": 0,
+        "MS": 0,
+        "PC": 1
+      },
+      "GrowthRates": {
+        "HP": 90,
+        "Str": 15,
+        "Mag": 5,
+        "Skl": 10,
+        "Spd": 15,
+        "Lck": 50,
+        "Def": 40,
+        "Bld": 75,
+        "Mov": 2
+      },
+      "Inventory": [ 13 ],
+      "WeaponProf": {
+        "Axe": 2
+      }
     }
   ]
 }

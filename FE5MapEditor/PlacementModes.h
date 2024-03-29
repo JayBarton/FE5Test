@@ -24,6 +24,7 @@ struct Object
     bool editedProfs = false;
     bool stationary = false;
     bool bossBonus = false;
+    bool sprite = true;
     int activationType = 0;
 
     std::vector<int> stats;
@@ -46,6 +47,7 @@ struct EditMode
     const static int TILE = 0;
     const static int PICKUP = 1;
     const static int ENEMY = 2;
+    const static int STARTS = 3;
     int currentElement;
     int maxElement;
     //The current edit mode
@@ -104,7 +106,6 @@ struct TileMode : public EditMode
     }
 };
 
-
 struct EnemyMode : public EditMode
 {
     //1 when facing right, 2 when facing left
@@ -124,6 +125,7 @@ struct EnemyMode : public EditMode
         maxElement = NUMBER_OF_ENEMIES - 1;
         updateDisplay();
         type = ENEMY;
+        dObject->sprite = true;
     }
 
     std::unordered_map<glm::vec2, Object, vec2Hash2>& objects;
@@ -224,6 +226,53 @@ struct EnemyMode : public EditMode
     }
 
     ~EnemyMode()
+    {
+    }
+};
+
+struct PlayerStartMode : public EditMode
+{
+    PlayerStartMode(Object* obj, std::unordered_map<glm::vec2, Object, vec2Hash2>& objects,
+        std::unordered_map<glm::vec2, std::string, vec2Hash2>& objectStrings,
+        std::unordered_map<glm::vec2, int, vec2Hash2>& objectWriteTypes, 
+        int& numberOfStarts) : EditMode(obj), numberOfStarts(numberOfStarts), objects(objects), objectStrings(objectStrings), objectWriteTypes(objectWriteTypes)
+    {
+        maxElement = 99;
+        type = STARTS;
+        dObject->sprite = false;
+
+    }
+
+    std::unordered_map<glm::vec2, Object, vec2Hash2>& objects;
+    std::unordered_map<glm::vec2, std::string, vec2Hash2>& objectStrings;
+    std::unordered_map<glm::vec2, int, vec2Hash2>& objectWriteTypes;
+    int& numberOfStarts;
+    void rightClick(int x, int y)
+    {
+        glm::vec2 mousePosition(x, y);
+        if (objects.count(mousePosition) == 1)
+        {
+            objects.erase(mousePosition);
+            objectStrings.erase(mousePosition);
+            objectWriteTypes.erase(mousePosition);
+            numberOfStarts--;
+        }
+    }
+    void leftClick(int x, int y)
+    {
+        glm::vec2 startPosition = dObject->position;
+        objects[startPosition] = *dObject;
+        std::stringstream objectStream;
+        objectStream << dObject->type << " " << startPosition.x << " " << startPosition.y;
+
+        objectWriteTypes[startPosition] = STARTS; //not sure which of these I'm using
+
+        objectStrings[startPosition] = objectStream.str();
+
+        std::cout << objectStrings[startPosition] << std::endl;
+        numberOfStarts++;
+    }
+    ~PlayerStartMode()
     {
     }
 };

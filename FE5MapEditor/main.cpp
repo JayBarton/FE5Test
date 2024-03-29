@@ -75,6 +75,7 @@ std::vector<glm::vec4> enemyUVs;
 Object displayObject;
 
 int numberOfEnemies = 0;
+int numberOfStarts = 0;
 
 // The Width of the screen
 const GLuint SCREEN_WIDTH = 800;
@@ -542,7 +543,6 @@ bool loadMap()
                 tObject.level = level;
                 tObject.growthRateID = growthID;
                 
-
                 inventory.resize(inventorySize);
                 for (int i = 0; i < inventorySize; i++)
                 {
@@ -606,7 +606,23 @@ bool loadMap()
                 objectStrings[position] = stream.str();
             }
         }
+        else if(thing == "Starts")
+        {
+            map >> numberOfStarts;
+            for (size_t i = 0; i < numberOfStarts; i++)
+            {
+                Object tObject;
+                tObject.sprite = false;
+                map >> tObject.type >> tObject.position.x >> tObject.position.y;
 
+                std::stringstream stream;
+                stream << tObject.type << " " << tObject.position.x << " " << tObject.position.y;
+
+                objects[tObject.position] = tObject;
+                objectWriteTypes[tObject.position] = 3;
+                objectStrings[tObject.position] = stream.str();
+            }
+        }
     }
     map.close();
     return good;
@@ -620,9 +636,14 @@ void saveMap()
     map << TileManager::tileManager.saveTiles();
     map << "\n";
     std::string enemies = "Enemies\n";
+    std::string starts = "Starts\n";
     std::stringstream stream;
     stream << numberOfEnemies;
     enemies += stream.str();
+
+    std::stringstream stream2;
+    stream2 << numberOfStarts;
+    starts += stream2.str();
 
     for (auto& iter : objectWriteTypes)
     {
@@ -630,9 +651,13 @@ void saveMap()
         {
             enemies += "\n" + objectStrings[iter.first];
         }
+        else if (iter.second == 3)
+        {
+            starts += "\n" + objectStrings[iter.first];
+        }
     }
 
-    map << enemies << "\n";
+    map << enemies << "\n" << starts << "\n";
 
     map.close();
 
@@ -641,7 +666,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n";
+    mapP << enemies << "\n" << starts << "\n";;
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);
@@ -762,6 +787,10 @@ void switchMode()
     {
         newMode = new EnemyMode(&displayObject, objects, objectStrings, objectWriteTypes, numberOfEnemies, enemyUVs);
     }
+    else if (editMode->type == EditMode::ENEMY)
+    {
+        newMode = new PlayerStartMode(&displayObject, objects, objectStrings, objectWriteTypes, numberOfStarts);
+    }
     else
     {
         newMode = new TileMode(&displayObject);
@@ -791,10 +820,35 @@ void Draw()
         ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
         Texture2D texture = ResourceManager::GetTexture("sprites");
+        int help = 0;
         for (auto& iter : objects)
         {
-            Renderer->setUVs(iter.second.uvs);
-            Renderer->DrawSprite(texture, iter.second.position, 0.0f, iter.second.dimensions);
+            if (iter.second.sprite)
+            {
+                Renderer->setUVs(iter.second.uvs);
+                Renderer->DrawSprite(texture, iter.second.position, 0.0f, iter.second.dimensions);
+            }
+            else
+            {
+                help++;
+                ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+                ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+                glm::mat4 model = glm::mat4();
+                model = glm::translate(model, glm::vec3(iter.second.position, 0.0f));
+
+                model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+                ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+                ResourceManager::GetShader("shape").SetMatrix4("model", model);
+                glBindVertexArray(shapeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+
+                glm::vec2 drawPosition = glm::vec2(iter.second.position) + glm::vec2(4);
+                drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+                Text->RenderText(intToString(iter.second.type), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
+            }
         }
         if (MenuManager::menuManager.menus.size() > 0)
         {
@@ -812,7 +866,7 @@ void Draw()
                 Text->RenderText("Current: " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
 
             }
-            else
+            else if(editMode->type == EditMode::ENEMY)
             {
                 Renderer->setUVs(displayObject.uvs);
                 Texture2D displayTexture = ResourceManager::GetTexture("sprites");
@@ -822,7 +876,26 @@ void Draw()
                     Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
                 }
                 Text->RenderText("Current: " + classNames[editMode->currentElement], SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+            }
+            else
+            {
+                ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+                ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+                glm::mat4 model = glm::mat4();
+                model = glm::translate(model, glm::vec3(displayObject.position, 0.0f));
 
+                model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+                ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+                ResourceManager::GetShader("shape").SetMatrix4("model", model);
+                glBindVertexArray(shapeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+
+                glm::vec2 drawPosition = glm::vec2(displayObject.position) + glm::vec2(4);
+                drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+                Text->RenderText(intToString(editMode->currentElement), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
             }
 
             Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
