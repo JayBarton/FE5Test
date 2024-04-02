@@ -18,6 +18,7 @@
 #include "Items.h"
 #include "BattleManager.h"
 #include "EnemyManager.h"
+#include "TextAdvancer.h"
 
 #include "Globals.h"
 #include "InfoDisplays.h"
@@ -81,6 +82,10 @@ BattleManager battleManager;
 EnemyManager enemyManager;
 
 InfoDisplays displays;
+
+TextObject testText;
+TextObject testText2;
+TextObjectManager textManager;
 
 std::vector<glm::vec4> playerUVs;
 
@@ -208,7 +213,24 @@ std::uniform_int_distribution<int> distribution(0, 99);
 int main(int argc, char** argv)
 {
 	init();
+	testText.position = glm::vec2(100.0f, 100.0f);
+	testText.displayedPosition = testText.position;
+	testText.charsPerLine = 55;
+	testText.nextIndex = 55;
 
+	testText2.position = glm::vec2(100.0f, 400.0f);
+	testText2.charsPerLine = 55;
+	testText2.nextIndex = 55;
+	testText2.displayedPosition = testText2.position;
+
+	textManager.textLines.push_back({ 0, "On a dilemma between what I need and what I just want.\nBetween your thighs I feel a sensation.\nHow long can I resist the temptation?<0" });
+	textManager.textLines.push_back({ 1, "You've got to be crazy. You've gotta have a real nead.\nGotta sleep on your toes, and when you're on the streets,\ngot to be able to pick up the easy meat<0" });
+	textManager.textLines.push_back({ 1, "with your eyes closed. And then moving in silently, down wind and out of sight\n You gotta strike when the moment is right without thinking<0" });
+	textManager.textLines.push_back({ 0, "I've got my bird, you've got your man\n So who else do we need, really?<1" });
+
+	textManager.textObjects.push_back(testText);
+	textManager.textObjects.push_back(testText2);
+	textManager.init();
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastFrame = 0.0f;
 
@@ -391,7 +413,11 @@ int main(int argc, char** argv)
 
 		if (MenuManager::menuManager.menus.size() == 0)
 		{
-			if (displays.state != NONE)
+			if (textManager.active)
+			{
+				textManager.Update(deltaTime, inputManager);
+			}
+			else if (displays.state != NONE)
 			{
 				if (camera.moving)
 				{
@@ -511,6 +537,7 @@ int main(int argc, char** argv)
 		camera.update();
 
 		Draw();
+
 		fps = fpsLimiter.end();
 		//std::cout << fps << std::endl;
 	}
@@ -792,6 +819,11 @@ void Draw()
 	{
 		DrawText();
 	}
+	if (textManager.active)
+	{
+		textManager.Draw(Text);
+	}
+
 	SDL_GL_SwapWindow(window);
 
 }
