@@ -116,7 +116,8 @@ void TextRenderer::Load(std::string font, GLuint fontSize)
     FT_Done_FreeType(ft);
 }
 
-void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)
+//cutOff is being used for a cut off effect for my advancable text; it can be removed if I reuse this code elsewhere
+void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color, float cutOff /* = 0*/)
 {
     // Activate corresponding render state
     //Adjust scale to font size(need to replace with variable
@@ -124,6 +125,7 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
     float copyX = x;
     this->TextShader.Use();
     this->TextShader.SetVector3f("textColor", color);
+    this->TextShader.SetFloat("textCutOff", cutOff);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
 

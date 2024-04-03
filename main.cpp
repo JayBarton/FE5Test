@@ -224,8 +224,8 @@ int main(int argc, char** argv)
 	testText2.displayedPosition = testText2.position;
 
 	textManager.textLines.push_back({ 0, "On a dilemma between what I need and what I just want.\nBetween your thighs I feel a sensation.\nHow long can I resist the temptation?<0" });
-	textManager.textLines.push_back({ 1, "You've got to be crazy. You've gotta have a real nead.\nGotta sleep on your toes, and when you're on the streets,\ngot to be able to pick up the easy meat<0" });
-	textManager.textLines.push_back({ 1, "with your eyes closed. And then moving in silently, down wind and out of sight\n You gotta strike when the moment is right without thinking<0" });
+	textManager.textLines.push_back({ 0, "You've got to be crazy. You've gotta have a real nead.\nGotta sleep on your toes, and when you're on the streets,\ngot to be able to pick up the easy meat<0" });
+	textManager.textLines.push_back({ 0, "with your eyes closed. And then moving in silently, down wind and out of sight\n You gotta strike when the moment is right without thinking<0" });
 	textManager.textLines.push_back({ 0, "I've got my bird, you've got your man\n So who else do we need, really?<1" });
 
 	textManager.textObjects.push_back(testText);
@@ -940,13 +940,13 @@ void resizeWindow(int width, int height)
 	SDL_SetWindowSize(window, width, height);
 	float ratio = 8.0f / 7.0f;
 	int aspectWidth = width;
-	int aspectHeight = float(aspectWidth) / ratio;
+	int aspectHeight = round(float(aspectWidth) / ratio);
 	if (aspectHeight > height)
 	{
 		aspectHeight = height;
-		aspectWidth = float(aspectHeight) * ratio;
+		aspectWidth = round(float(aspectHeight) * ratio);
 	}
-	int vpx = float(width) / 2.0f - float(aspectWidth) / 2.0f;
-	int vpy = float(height) / 2.0f - float(aspectHeight) / 2.0f;
+	int vpx = round(float(width) / 2.0f - float(aspectWidth) / 2.0f);
+	int vpy = round(float(height) / 2.0f - float(aspectHeight) / 2.0f);
 	glViewport(vpx, vpy, aspectWidth, aspectHeight);
 }

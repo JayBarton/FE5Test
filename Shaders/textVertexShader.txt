@@ -6,6 +6,8 @@ out VS_OUT{
 	flat int index;
 }vs_out;
 
+out vec3 FragPos;  
+
 uniform mat4 projection;
 uniform mat4 transform[200];
 
@@ -14,4 +16,7 @@ void main()
     gl_Position = projection * transform[gl_InstanceID] * vec4(vertex.xy, 0.0, 1.0);
 	vs_out.index = gl_InstanceID;
     vs_out.TextureCoordinates = vertex.xy;
+	
+	//This exists for an effect with my advancable text; it can be removed if I reuse this code elsewhere
+	FragPos = vec3(transform[gl_InstanceID] * vec4(vertex.xy, 0.0, 1.0));
 } 

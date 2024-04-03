@@ -48,7 +48,7 @@ public:
     // Pre-compiles a list of characters from the given font
     void Load(std::string font, GLuint fontSize);
     // Renders a string of text using the precompiled list of characters
-    void RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color = glm::vec3(1.0f));
+    void RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color = glm::vec3(1.0f), float cutOff = 0);
 
     void TextRenderCall(int length);
 

@@ -13,7 +13,7 @@ TextObject::TextObject()
 
 void TextObject::Draw(TextRenderer* textRenderer)
 {
-	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1);
+	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
 }
 
 TextObjectManager::TextObjectManager()
@@ -26,7 +26,7 @@ void TextObjectManager::init()
 {
 	currentLine = 0;
 	textObjects[focusedObject].text = textLines[currentLine].text;
-	active = true;
+	active = false;
 }
 
 void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
