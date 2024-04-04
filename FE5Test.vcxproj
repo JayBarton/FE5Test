@@ -148,8 +148,10 @@
     <ClInclude Include="MenuManager.h" />
     <ClInclude Include="InfoDisplays.h" />
     <ClInclude Include="PathFinder.h" />
+    <ClInclude Include="PlayerManager.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="SpriteBatch.h" />
@@ -173,8 +175,10 @@
     <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="InfoDisplays.cpp" />
     <ClCompile Include="PathFinder.cpp" />
+    <ClCompile Include="PlayerManager.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SATCollision.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteBatch.cpp" />
