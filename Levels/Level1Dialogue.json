@@ -1,0 +1,34 @@
+{
+  "text": [
+    {
+      "ID": 1,
+      "dialogue": [
+        {
+          "speaker": 6,
+          "location": 0,
+          "speech": "Dad, it's already started!<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "speech": "This is bad.<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "speech": "Even as strong as Eyvale is,\nthese are imperial soldiers...Let's go.<1"
+        }
+      ]
+    },
+    {
+      "ID": 2,
+      "dialogue": [
+        {
+          "speaker": 7,
+          "location": 1,
+          "speech": "Oh man.<1"
+        }
+      ]
+    }
+  ]
+}

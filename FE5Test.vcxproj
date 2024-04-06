@@ -193,6 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BaseStats.json" />
+    <None Include="Levels\Level1Dialogue.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

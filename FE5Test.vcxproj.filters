@@ -173,5 +173,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BaseStats.json" />
+    <None Include="Levels\Level1Dialogue.json" />
   </ItemGroup>
 </Project>

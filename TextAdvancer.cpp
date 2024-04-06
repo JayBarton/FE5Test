@@ -40,6 +40,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 			if (nextOption == 1)
 			{
 				active = false;
+				waitingOnInput = false;
 			}
 			else
 			{
