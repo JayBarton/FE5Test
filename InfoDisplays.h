@@ -1,42 +1,10 @@
 #pragma once
 #include <vector>
+#include "Globals.h"
 class Unit;
 class StatGrowths;
 class TextRenderer;
 class Camera;
-
-struct PostBattleObserver
-{
-	virtual ~PostBattleObserver() {}
-	virtual void onNotify(int ID) = 0;
-};
-
-struct PostBattleSubject
-{
-	std::vector<PostBattleObserver*> observers;
-
-	void addObserver(PostBattleObserver* observer)
-	{
-		observers.push_back(observer);
-	}
-	void removeObserver(PostBattleObserver* observer)
-	{
-		auto it = std::find(observers.begin(), observers.end(), observer);
-		if (it != observers.end())
-		{
-			delete* it;
-			*it = observers.back();
-			observers.pop_back();
-		}
-	}
-	void notify(int ID)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(ID);
-		}
-	}
-};
 
 enum DisplayState
 {
@@ -54,7 +22,7 @@ class EnemyManager;
 struct InfoDisplays
 {
 	DisplayState state = NONE;
-	PostBattleSubject subject;
+	Subject<int> subject;
 	Unit* leveledUnit = nullptr;
 	//Ugh. Figure out how to gain access to this better later
 	EnemyManager* enemyManager = nullptr;

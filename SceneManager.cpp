@@ -7,8 +7,10 @@
 
 #include <sstream>
 #include <fstream>
+
 SceneManager::SceneManager()
 {
+	activation = new EnemyTurnEnd(this, 1, 2);
 	actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(176, 144)));
 	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 6, glm::vec2(32, 64), glm::vec2(80, 128)));
 	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 5, glm::vec2(32, 96), glm::vec2(64, 112)));
@@ -41,7 +43,15 @@ void SceneManager::init()
 	testText2.charsPerLine = 55;
 	testText2.nextIndex = 55;
 	testText2.displayedPosition = testText2.position;
+}
 
+void SceneManager::RoundEnded(int currentRound)
+{
+	if (activation->type == 1)
+	{
+		static_cast<EnemyTurnEnd*>(activation)->currentRound = currentRound;
+		activation->CheckActivation();
+	}
 }
 
 void SceneManager::Update(float deltaTime, PlayerManager* playerManager, Camera& camera, InputManager& inputManager)
@@ -169,4 +179,10 @@ void SceneManager::ClearActions()
 		delete actions[i];
 	}
 	actions.clear();
+
+	if (activation)
+	{
+		delete activation;
+	}
+	activation = nullptr;
 }

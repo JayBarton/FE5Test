@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-
+#include "Globals.h"
 const static int HEAL = 0;
 
 struct Item
@@ -50,38 +50,6 @@ struct WeaponData
 };
 class Unit;
 
-struct ItemUseObserver
-{
-	virtual ~ItemUseObserver() {}
-	virtual void onNotify(Unit* unit, int index) = 0;
-};
-
-struct ItemUseSubject
-{
-	std::vector<ItemUseObserver*> observers;
-
-	void addObserver(ItemUseObserver* observer)
-	{
-		observers.push_back(observer);
-	}
-	void removeObserver(ItemUseObserver* observer)
-	{
-		auto it = std::find(observers.begin(), observers.end(), observer);
-		if (it != observers.end())
-		{
-			delete* it;
-			*it = observers.back();
-			observers.pop_back();
-		}
-	}
-	void notify(Unit* unit, int index)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(unit, index);
-		}
-	}
-};
 
 struct ItemManager
 {
@@ -97,7 +65,7 @@ struct ItemManager
 	void UseItem(Unit* unit, int index);
 	void Heal(Unit* unit, int index);
 
-	ItemUseSubject subject;
+	Subject<Unit*, int> subject;
 
 	static ItemManager itemManager;
 };

@@ -55,7 +55,7 @@ struct EnemyManager
 	Unit* otherUnit = nullptr;
 	InfoDisplays* displays = nullptr;
 
-	TurnSubject subject;
+	Subject<int> subject;
 	BattleStats battleStats;
 
 	ActionState state = GET_TARGET;

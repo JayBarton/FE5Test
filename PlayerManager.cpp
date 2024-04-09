@@ -9,7 +9,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer* unitEvents)
+void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents)
 {
 	playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
 	this->gen = gen;
@@ -58,6 +58,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	}
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+	playerUnits[0]->experience = 90;
 }
 
 Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)

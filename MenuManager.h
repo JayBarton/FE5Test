@@ -9,39 +9,6 @@ class BattleStats;
 class SpriteRenderer;
 class BattleManager;
 
-struct TurnObserver
-{
-	virtual ~TurnObserver() {}
-	virtual void onNotify(int ID) = 0;
-};
-
-struct TurnSubject
-{
-	std::vector<TurnObserver*> observers;
-
-	void addObserver(TurnObserver* observer)
-	{
-		observers.push_back(observer);
-	}
-	void removeObserver(TurnObserver* observer)
-	{
-		auto it = std::find(observers.begin(), observers.end(), observer);
-		if (it != observers.end())
-		{
-			delete* it;
-			*it = observers.back();
-			observers.pop_back();
-		}
-	}
-	void notify(int ID)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(ID);
-		}
-	}
-};
-
 struct Menu
 {
 	Menu() {}
@@ -263,7 +230,7 @@ struct MenuManager
 	SpriteRenderer* renderer = nullptr;
 	BattleManager* battleManager = nullptr;
 
-	TurnSubject subject;
+	Subject<int> subject;
 
 	//Some actions, such as trading or dismounting will allow the menu to stay open but will force the unit to stay where they have been moved too
 	bool mustWait = false;

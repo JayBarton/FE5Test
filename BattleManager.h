@@ -4,39 +4,6 @@
 
 class TextRenderer;
 
-struct BattleObserver
-{
-	virtual ~BattleObserver() {}
-	virtual void onNotify(Unit* attacker, Unit* defender) = 0;
-};
-
-struct BattleSubject
-{
-	std::vector<BattleObserver*> observers;
-
-	void addObserver(BattleObserver* observer)
-	{
-		observers.push_back(observer);
-	}
-	void removeObserver(BattleObserver* observer)
-	{
-		auto it = std::find(observers.begin(), observers.end(), observer);
-		if (it != observers.end())
-		{
-			delete* it;
-			*it = observers.back();
-			observers.pop_back();
-		}
-	}
-	void notify(Unit* attacker, Unit* defender)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(attacker, defender);
-		}
-	}
-};
-
 struct Attack
 {
 	bool firstAttacker = true;
@@ -88,5 +55,5 @@ struct BattleManager
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;
 
-	BattleSubject subject;
+	Subject<Unit*, Unit*> subject;
 };

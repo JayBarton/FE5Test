@@ -10,9 +10,9 @@ struct PlayerManager
 
 	std::mt19937* gen;
 	std::uniform_int_distribution<int>* distribution;
-	Observer* unitEvents;
+	Observer<class Unit*>* unitEvents;
 
-	void init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer* unitEvents);
+	void init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents);
 	void Update(float deltaTime, class InputManager& inputManager);
 
 	void LoadUnits(std::ifstream& map);

@@ -86,13 +86,14 @@ InfoDisplays displays;
 
 float unitSpeed = 2.5f;
 
+int currentRound = 0;
 int currentTurn = 0;
 bool turnTransition = false;
 bool turnDisplay = false;
 //Ugh. To handle healing units on turn transition
 int turnUnit = 0;
 
-struct UnitEvents : public Observer
+struct UnitEvents : public Observer<Unit*>
 {
 	virtual void onNotify(Unit* lUnit)
 	{
@@ -100,7 +101,7 @@ struct UnitEvents : public Observer
 	}
 };
 
-struct TurnEvents : public TurnObserver
+struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
@@ -136,12 +137,14 @@ struct TurnEvents : public TurnObserver
 			turnTransition = true;
 			turnDisplay = true;
 			turnUnit = 0;
+			currentRound++;
+			sceneManager.RoundEnded(currentRound);
 		}
 		displays.ChangeTurn(currentTurn);
 	}
 };
 
-struct BattleEvents : public BattleObserver
+struct BattleEvents : public Observer<Unit*, Unit*>
 {
 	virtual void onNotify(Unit* attacker, Unit* defender)
 	{
@@ -156,7 +159,7 @@ struct BattleEvents : public BattleObserver
 	}
 };
 
-struct PostBattleEvents : public PostBattleObserver
+struct PostBattleEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
@@ -190,7 +193,7 @@ struct PostBattleEvents : public PostBattleObserver
 	}
 };
 //This is identical to above so I'm not sure I even need it here...
-struct ItemEvents : public ItemUseObserver
+struct ItemEvents : public Observer<Unit*, int>
 {
 	virtual void onNotify(Unit* unit, int index)
 	{

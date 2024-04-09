@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include "Sprite.h"
+#include "Globals.h"
 class SpriteRenderer;
 class InputManager;
 
@@ -23,39 +24,6 @@ struct vec2Hash
 	size_t operator()(const glm::vec2& vec) const
 	{
 		return ((std::hash<float>()(vec.x) ^ (std::hash<float>()(vec.y) << 1)) >> 1);
-	}
-};
-
-struct Observer
-{
-	virtual ~Observer() {}
-	virtual void onNotify(class Unit* unit) = 0;
-};
-
-struct Subject
-{
-	std::vector<Observer*> observers;
-
-	void addObserver(Observer* observer)
-	{
-		observers.push_back(observer);
-	}
-	void removeObserver(Observer* observer)
-	{
-		auto it = std::find(observers.begin(), observers.end(), observer);
-		if (it != observers.end())
-		{
-			delete* it;
-			*it = observers.back();
-			observers.pop_back();
-		}
-	}
-	void notify(class Unit* unit)
-	{
-		for (int i = 0; i < observers.size(); i++)
-		{
-			observers[i]->onNotify(unit);
-		}
 	}
 };
 
@@ -106,7 +74,7 @@ struct Mount
 //is used to move any unit.
 struct MovementComponent
 {
-	Unit* owner = nullptr;
+	class Unit* owner = nullptr;
 	glm::vec2 nextNode;
 	glm::vec2 direction;
 	std::vector<glm::ivec2> path;
@@ -205,7 +173,7 @@ struct Unit
 	MovementComponent movementComponent;
 	StatGrowths growths;
 
-	Subject subject;
+	Subject<Unit*> subject;
 
 	Mount* mount = nullptr;
 
