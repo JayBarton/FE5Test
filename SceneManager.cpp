@@ -8,9 +8,8 @@
 #include <sstream>
 #include <fstream>
 
-SceneManager::SceneManager()
+Scene::Scene()
 {
-	activation = new EnemyTurnEnd(this, 1, 2);
 	actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(176, 144)));
 	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 6, glm::vec2(32, 64), glm::vec2(80, 128)));
 	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 5, glm::vec2(32, 96), glm::vec2(64, 112)));
@@ -26,12 +25,12 @@ SceneManager::SceneManager()
 	nameMap[7] = "Marty";
 }
 
-SceneManager::~SceneManager()
+Scene::~Scene()
 {
 	ClearActions();
 }
 
-void SceneManager::init()
+void Scene::init()
 {
 	playingScene = true;
 	testText.position = glm::vec2(100.0f, 100.0f);
@@ -45,16 +44,16 @@ void SceneManager::init()
 	testText2.displayedPosition = testText2.position;
 }
 
-void SceneManager::RoundEnded(int currentRound)
+void Scene::extraSetup(Subject<int>* subject)
 {
-	if (activation->type == 1)
-	{
-		static_cast<EnemyTurnEnd*>(activation)->currentRound = currentRound;
-		activation->CheckActivation();
-	}
+	auto type = new EnemyTurnEnd(this, 1, 2);
+	type->roundEvents->enemyTurnEnd = type;
+	type->subject = subject;
+	subject->addObserver(type->roundEvents);
+	activation = type;
 }
 
-void SceneManager::Update(float deltaTime, PlayerManager* playerManager, Camera& camera, InputManager& inputManager)
+void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera, InputManager& inputManager)
 {
 	if (state!= WAITING)
 	{
@@ -172,7 +171,7 @@ void SceneManager::Update(float deltaTime, PlayerManager* playerManager, Camera&
 	}
 }
 
-void SceneManager::ClearActions()
+void Scene::ClearActions()
 {
 	for (int i = 0; i < actions.size(); i++)
 	{
@@ -185,4 +184,15 @@ void SceneManager::ClearActions()
 		delete activation;
 	}
 	activation = nullptr;
+}
+
+EnemyTurnEnd::EnemyTurnEnd(Scene* owner, int type, int round) : Activation(owner, type), round(round)
+{
+	currentRound = 0;
+	roundEvents = new RoundEvents();
+}
+
+EnemyTurnEnd::~EnemyTurnEnd()
+{
+	subject->removeObserver(roundEvents);
 }

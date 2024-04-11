@@ -151,6 +151,7 @@
     <ClInclude Include="PlayerManager.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
+    <ClInclude Include="SceneActions.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Sprite.h" />

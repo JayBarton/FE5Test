@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "../InputManager.h"
 #include "../csv.h"
+#include "../SceneActions.h"
 #include "PlacementModes.h"
 #include <SDL.h>
 
@@ -89,6 +90,24 @@ void MenuManager::AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& b
 void MenuManager::AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs)
 {
 	Menu* newMenu = new ProfsMenu(text, camera, shapeVAO, mode, obj, weaponProfs, editedProfs);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::OpenSceneMenu(std::vector<SceneObjects>& sceneObjects)
+{
+	Menu* newMenu = new SceneMenu(text, camera, shapeVAO, sceneObjects);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::OpenActionMenu(std::vector<SceneAction*>& sceneActions)
+{
+	Menu* newMenu = new SceneActionMenu(text, camera, shapeVAO, sceneActions);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::OpenCameraActionMenu(std::vector<SceneAction*>& sceneActions)
+{
+	Menu* newMenu = new CameraActionMenu(text, camera, shapeVAO, sceneActions);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -791,5 +810,158 @@ void ProfsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{
 		CancelOption();
+	}
+}
+
+SceneMenu::SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects>& sceneObjects) : Menu(Text, camera, shapeVAO), sceneObjects(sceneObjects)
+{
+	numberOfOptions = sceneObjects.size() + 1;
+}
+
+void SceneMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(16, 32 + 12 * currentOption, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	for (int i = 0; i < sceneObjects.size(); i++)
+	{
+		text->RenderText("Scene: " + intToString(i + 1), 100, 100 + (i * 32), 1);
+	}
+	text->RenderText("New Scene", 100, 100 + (sceneObjects.size() * 32), 1);
+
+}
+
+void SceneMenu::SelectOption()
+{
+	if (currentOption == sceneObjects.size())
+	{
+		SceneObjects newObject;
+		sceneObjects.push_back(newObject);
+		numberOfOptions++;
+	}
+	else
+	{
+		MenuManager::menuManager.OpenActionMenu(sceneObjects[currentOption].actions);
+	}
+}
+
+SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	numberOfOptions = sceneActions.size() + 1;
+}
+
+void SceneActionMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(16, 32 + 12 * currentOption, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	for (int i = 0; i < sceneActions.size(); i++)
+	{
+		auto currentAction = sceneActions[i];
+		if (currentAction->type == 0)
+		{
+			auto action = static_cast<CameraMove*>(currentAction);
+			text->RenderText("Camera move: " + intToString(action->position.x) + " " + intToString(action->position.y), 100, 100 + (i * 32), 1);
+		}
+	}
+	text->RenderText("New Action", 100, 100 + (sceneActions.size() * 32), 1);
+}
+
+void SceneActionMenu::SelectOption()
+{
+	if (currentOption == sceneActions.size())
+	{
+		MenuManager::menuManager.OpenCameraActionMenu(sceneActions);
+		//Place holder
+	/*	CameraMove* move = new CameraMove(0, glm::vec2(0));
+		sceneActions.push_back(move);
+		numberOfOptions++;*/
+	}
+}
+
+CameraActionMenu::CameraActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	cameraPosition = camera->getPosition();
+}
+
+void CameraActionMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(cameraPosition.x, cameraPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Press enter to save camera position", 100, 50, 1);
+	text->RenderText("Position: " + intToString(cameraPosition.x) + " " + intToString(cameraPosition.y), 600, 50, 1);
+}
+
+void CameraActionMenu::SelectOption()
+{
+	CameraMove* move = new CameraMove(0, cameraPosition);
+	sceneActions.push_back(move);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
+}
+
+void CameraActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	glm::ivec2 move(0);
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		move.y = -1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		move.y = 1;
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		move.x = 1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		move.x = -1;
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else
+	{
+		cameraPosition += move * TileManager::TILE_SIZE;
+		camera->setPosition(cameraPosition);
 	}
 }

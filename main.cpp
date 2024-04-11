@@ -100,7 +100,7 @@ struct UnitEvents : public Observer<Unit*>
 		displays.OnUnitLevel(lUnit);
 	}
 };
-
+Subject<int> roundSubject;
 struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
@@ -138,7 +138,7 @@ struct TurnEvents : public Observer<int>
 			turnDisplay = true;
 			turnUnit = 0;
 			currentRound++;
-			sceneManager.RoundEnded(currentRound);
+			roundSubject.notify(currentRound);
 		}
 		displays.ChangeTurn(currentTurn);
 	}
@@ -262,7 +262,8 @@ int main(int argc, char** argv)
 
 	camera.setPosition(glm::vec2(0.0f, 0.0f));
 	camera.update();
-
+	Scene scene;
+	sceneManager.scenes.push_back(&scene);
 	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
@@ -374,11 +375,12 @@ int main(int argc, char** argv)
 		{
 			if (inputManager.isKeyPressed(SDLK_BACKSPACE))
 			{
-				sceneManager.init();
+				//Doing this dumb thing for a minute
+				sceneManager.scenes[sceneManager.currentScene]->init();
 			}
-			if (sceneManager.playingScene)
+			if (sceneManager.scenes[sceneManager.currentScene]->playingScene)
 			{
-				sceneManager.Update(deltaTime, &playerManager, camera, inputManager);
+				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, camera, inputManager);
 			}
 			else if (displays.state != NONE)
 			{
@@ -619,6 +621,8 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		}
 	}
 
+	sceneManager.scenes[sceneManager.currentScene]->extraSetup(&roundSubject);
+
 	map.close();
 
 	levelWidth = xTiles * TileManager::TILE_SIZE;
@@ -672,9 +676,9 @@ void Draw()
 	{
 		DrawText();
 	}
-	if (sceneManager.textManager.active)
+	if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
 	{
-		sceneManager.textManager.Draw(Text);
+		sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
 	}
 
 	SDL_GL_SwapWindow(window);

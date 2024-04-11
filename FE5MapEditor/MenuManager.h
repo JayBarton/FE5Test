@@ -6,6 +6,11 @@ class TextRenderer;
 class Camera;
 class SpriteRenderer;
 
+struct SceneObjects
+{
+    std::vector<class SceneAction*> actions;
+};
+
 struct Menu
 {
     Menu() {}
@@ -39,7 +44,9 @@ struct MenuManager
     void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
     void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
     void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
-
+    void OpenSceneMenu(std::vector<SceneObjects>& sceneObjects);
+    void OpenActionMenu(std::vector<SceneAction*>& sceneActions);
+    void OpenCameraActionMenu(std::vector<SceneAction*>& sceneActions);
     void PreviousMenu();
     void ClearMenu();
 
@@ -136,4 +143,33 @@ struct ProfsMenu : public Menu
 
     std::vector<int>& profs;
     bool& edited;
+};
+
+struct SceneMenu : public Menu
+{
+    SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects>& sceneObjects);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+
+    std::vector<SceneObjects>& sceneObjects;
+};
+
+struct SceneActionMenu : public Menu
+{
+    SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+
+    std::vector<SceneAction*>& sceneActions;
+};
+
+struct CameraActionMenu : public Menu
+{
+    CameraActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    glm::vec2 cameraPosition;
+    std::vector<SceneAction*>& sceneActions;
 };

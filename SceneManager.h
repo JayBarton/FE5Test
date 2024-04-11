@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include "Globals.h"
+#include "SceneActions.h"
 #include "PathFinder.h"
 #include "TextAdvancer.h"
 #include <unordered_map>
@@ -10,50 +12,6 @@ using json = nlohmann::json;
 class Unit;
 class Camera;
 
-struct SceneAction
-{
-	int type;
-	SceneAction(int type) : type(type)
-	{
-	}
-};
-
-struct CameraMove : public SceneAction
-{
-	CameraMove(int type, glm::vec2 position) : SceneAction(type), position(position)
-	{
-	}
-	glm::vec2 position;
-};
-
-struct AddUnit : public SceneAction
-{
-	AddUnit(int type, int unitID, glm::vec2 start, glm::vec2 end) : SceneAction(type), unitID(unitID), start(start), end(end)
-	{
-	}
-	int unitID;
-	glm::vec2 start;
-	glm::vec2 end;
-};
-
-struct UnitMove : public SceneAction
-{
-	UnitMove(int type, int unitID, glm::vec2 end) : SceneAction(type), unitID(unitID), end(end)
-	{
-	}
-	int unitID;
-	glm::vec2 end;
-};
-
-//not really sure what we're doing with this one
-//Maybe it will point to a file the dialogue is in?
-struct DialogueAction : public SceneAction
-{
-	DialogueAction(int type, int ID) : SceneAction(type), ID(ID)
-	{}
-	int ID;
-};
-
 enum SceneState
 {
 	WAITING,
@@ -61,7 +19,7 @@ enum SceneState
 	UNIT_MOVE,
 	TEXT
 };
-struct SceneManager
+struct Scene
 {
 	const static int CAMERA_ACTION = 0;
 	const static int NEW_UNIT_ACTION = 1;
@@ -85,21 +43,28 @@ struct SceneManager
 	//No idea how I will do this going forward, but definitely not with this
 	std::unordered_map<int, std::string> nameMap;
 
-	SceneManager();
-	~SceneManager();
+	Scene();
+	~Scene();
+	//I imagine a lot of this will ne set up in the map editor, so this is temporary
+	void extraSetup(Subject<int>* subject);
 	void init();
-	void RoundEnded(int currentRound);
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
 	void Update(float deltaTime, class PlayerManager* playerManager, Camera& camera, class InputManager& inputManager);
 
 	void ClearActions();
 };
 
+struct SceneManager
+{
+	int currentScene = 0;
+	std::vector<Scene*> scenes;
+};
+
 struct Activation
 {
 	int type;
-	SceneManager* owner;
-	Activation(SceneManager* owner, int type) : type(type), owner(owner)
+	Scene* owner;
+	Activation(Scene* owner, int type) : type(type), owner(owner)
 	{}
 	virtual void CheckActivation() = 0;
 
@@ -109,10 +74,13 @@ struct EnemyTurnEnd : public Activation
 {
 	int currentRound;
 	int round;
-	EnemyTurnEnd(SceneManager* owner, int type, int round) : Activation(owner, type), round(round)
-	{
-		currentRound = 0;
-	}
+	//This has ended up as a bit of a mess, but it works...
+	//Need this for cleanup so roundEvents is properly deleted and removed from the subject observers vector
+	Subject<int>* subject = nullptr;
+	class RoundEvents* roundEvents = nullptr;
+	EnemyTurnEnd(Scene* owner, int type, int round);
+
+	~EnemyTurnEnd();
 
 	virtual void CheckActivation() override
 	{
@@ -122,5 +90,15 @@ struct EnemyTurnEnd : public Activation
 			owner->activation = nullptr;
 			delete this;
 		}
+	}
+};
+
+struct RoundEvents : public Observer<int>
+{
+	EnemyTurnEnd* enemyTurnEnd;
+	virtual void onNotify(int round)
+	{
+		enemyTurnEnd->currentRound = round;
+		enemyTurnEnd->CheckActivation();
 	}
 };

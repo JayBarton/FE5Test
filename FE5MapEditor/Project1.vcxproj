@@ -138,6 +138,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\InputManager.h" />
+    <ClInclude Include="..\SceneActions.h" />
+    <ClInclude Include="..\SceneManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="MenuManager.h" />
     <ClInclude Include="PlacementModes.h" />

@@ -16,6 +16,7 @@
 #include "../InputManager.h"
 #include "MenuManager.h"
 #include "PlacementModes.h"
+#include "../SceneActions.h"
 
 #include <vector>
 #include <map>
@@ -46,12 +47,10 @@ void saveMap();
 
 void editInput(SDL_Event& event, bool& isRunning);
 void switchMode();
-std::string intToString(int i);
 void Draw();
 void resizeWindow(int width, int height);
 
-
-enum State { MAIN_MENU, NEW_MAP, EDITING, SET_BACKGROUND, RESIZE_MAP, SET_WIDTH };
+enum State { MAIN_MENU, NEW_MAP, EDITING, SET_BACKGROUND, RESIZE_MAP, SET_WIDTH, SCENE_EDITING };
 
 State state = MAIN_MENU;
 
@@ -76,11 +75,6 @@ Object displayObject;
 
 int numberOfEnemies = 0;
 int numberOfStarts = 0;
-
-// The Width of the screen
-const GLuint SCREEN_WIDTH = 800;
-// The height of the screen
-const GLuint SCREEN_HEIGHT = 600;
 
 const int CAMERA_WIDTH = 256;
 const int CAMERA_HEIGHT = 224;
@@ -126,6 +120,9 @@ int levelHeight;
 bool loading = true; //not great but it works
 
 std::vector<std::string> classNames;
+
+
+std::vector<SceneObjects> sceneObjects;
 
 int main(int argc, char** argv)
 {
@@ -666,7 +663,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n" << starts << "\n";;
+    mapP << enemies << "\n" << starts << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);
@@ -721,6 +718,10 @@ void editInput(SDL_Event& event, bool& isRunning)
                 {
                     state = RESIZE_MAP;
                     typing = true;
+                }
+                else if (inputManager.isKeyPressed(SDLK_s))
+                {
+                    MenuManager::menuManager.OpenSceneMenu(sceneObjects);
                 }
             }
         }
@@ -799,13 +800,6 @@ void switchMode()
     delete editMode;
     editMode = newMode;
     displayObject.dimensions = glm::vec2(TILE_SIZE, TILE_SIZE);
-}
-
-std::string intToString(int i)
-{
-    std::stringstream s;
-    s << i;
-    return s.str();
 }
 
 void Draw()
