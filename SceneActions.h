@@ -1,5 +1,11 @@
 #pragma once
 #include <glm.hpp>
+
+const static int CAMERA_ACTION = 0;
+const static int NEW_UNIT_ACTION = 1;
+const static int MOVE_UNIT_ACTION = 2;
+const static int DIALOGUE_ACTION = 3;
+
 struct SceneAction
 {
 	int type;

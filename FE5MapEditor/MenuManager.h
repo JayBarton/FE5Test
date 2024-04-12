@@ -9,6 +9,14 @@ class SpriteRenderer;
 struct SceneObjects
 {
     std::vector<class SceneAction*> actions;
+    ~SceneObjects()
+    {
+        for (int i = 0; i < actions.size(); i++)
+        {
+            delete actions[i];
+        }
+        actions.clear();
+    }
 };
 
 struct Menu
@@ -46,7 +54,7 @@ struct MenuManager
     void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
     void OpenSceneMenu(std::vector<SceneObjects>& sceneObjects);
     void OpenActionMenu(std::vector<SceneAction*>& sceneActions);
-    void OpenCameraActionMenu(std::vector<SceneAction*>& sceneActions);
+    void SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions);
     void PreviousMenu();
     void ClearMenu();
 
@@ -159,7 +167,10 @@ struct SceneActionMenu : public Menu
     SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
     virtual void Draw() override;
     virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
+    int selectedAction = 0;
+    std::vector<std::string> actionNames;
     std::vector<SceneAction*>& sceneActions;
 };
 
@@ -171,5 +182,43 @@ struct CameraActionMenu : public Menu
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
     glm::vec2 cameraPosition;
+    std::vector<SceneAction*>& sceneActions;
+};
+
+struct NewUnitActionMenu : public Menu
+{
+    NewUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+    virtual void CancelOption() override;
+    int unitID;
+    bool setStart = true;
+    bool finished = false;
+    glm::vec2 startPosition;
+    glm::vec2 endPosition;
+    glm::vec2 cameraPosition;
+    std::vector<SceneAction*>& sceneActions;
+};
+
+struct MoveUnitActionMenu : public Menu
+{
+    MoveUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+    int unitID;
+    glm::vec2 endPosition;
+    glm::vec2 cameraPosition;
+    std::vector<SceneAction*>& sceneActions;
+};
+
+struct DialogueActionMenu : public Menu
+{
+    DialogueActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+    int dialogueID;
     std::vector<SceneAction*>& sceneActions;
 };

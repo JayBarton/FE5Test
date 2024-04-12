@@ -105,9 +105,24 @@ void MenuManager::OpenActionMenu(std::vector<SceneAction*>& sceneActions)
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
-void MenuManager::OpenCameraActionMenu(std::vector<SceneAction*>& sceneActions)
+void MenuManager::SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions)
 {
-	Menu* newMenu = new CameraActionMenu(text, camera, shapeVAO, sceneActions);
+	Menu* newMenu = nullptr;
+	switch (action)
+	{
+	case CAMERA_ACTION:
+		newMenu = new CameraActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case NEW_UNIT_ACTION:
+		newMenu = new NewUnitActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case MOVE_UNIT_ACTION:
+		newMenu = new MoveUnitActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case DIALOGUE_ACTION:
+		newMenu = new DialogueActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	}
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -858,6 +873,11 @@ void SceneMenu::SelectOption()
 SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
 {
 	numberOfOptions = sceneActions.size() + 1;
+	actionNames.resize(4);
+	actionNames[CAMERA_ACTION] = "Camera Action";
+	actionNames[NEW_UNIT_ACTION] = "New Unit Action";
+	actionNames[MOVE_UNIT_ACTION] = "Move Unit Action";
+	actionNames[DIALOGUE_ACTION] = "Dialogue Action";
 }
 
 void SceneActionMenu::Draw()
@@ -878,24 +898,65 @@ void SceneActionMenu::Draw()
 	for (int i = 0; i < sceneActions.size(); i++)
 	{
 		auto currentAction = sceneActions[i];
-		if (currentAction->type == 0)
+		if (currentAction->type == CAMERA_ACTION)
 		{
 			auto action = static_cast<CameraMove*>(currentAction);
 			text->RenderText("Camera move: " + intToString(action->position.x) + " " + intToString(action->position.y), 100, 100 + (i * 32), 1);
 		}
+		else if (currentAction->type == NEW_UNIT_ACTION)
+		{
+			auto action = static_cast<AddUnit*>(currentAction);
+			text->RenderText("New Unit, ID: " + intToString(action->unitID) + ", Start: " + intToString(action->start.x) + 
+				" " + intToString(action->start.y) + ", End: " + intToString(action->end.x) + " " + 
+				intToString(action->end.y), 100, 100 + (i * 32), 1);
+		}
+		else if (currentAction->type == MOVE_UNIT_ACTION)
+		{
+			auto action = static_cast<UnitMove*>(currentAction);
+
+			text->RenderText("Move Unit, ID: " + intToString(action->unitID) + ", End: " + intToString(action->end.x) + " " +
+				intToString(action->end.y), 100, 100 + (i * 32), 1);
+		}
+		else if (currentAction->type == DIALOGUE_ACTION)
+		{
+			auto action = static_cast<DialogueAction*>(currentAction);
+			text->RenderText("Dialogue, ID: " + intToString(action->ID), 100, 100 + (i * 32), 1);
+		}
 	}
+
+	text->RenderText("Action Menu", 100, 50, 1);
+	text->RenderText(actionNames[selectedAction], 300, 50, 1);
 	text->RenderText("New Action", 100, 100 + (sceneActions.size() * 32), 1);
+}
+
+void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		selectedAction++;
+		
+		if (selectedAction > DIALOGUE_ACTION)
+		{
+			selectedAction = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		selectedAction--;
+		if (selectedAction < 0)
+		{
+			selectedAction = DIALOGUE_ACTION;
+		}
+	}
 }
 
 void SceneActionMenu::SelectOption()
 {
 	if (currentOption == sceneActions.size())
 	{
-		MenuManager::menuManager.OpenCameraActionMenu(sceneActions);
-		//Place holder
-	/*	CameraMove* move = new CameraMove(0, glm::vec2(0));
-		sceneActions.push_back(move);
-		numberOfOptions++;*/
+		MenuManager::menuManager.SelectOptionMenu(selectedAction, sceneActions);
 	}
 }
 
@@ -963,5 +1024,265 @@ void CameraActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		cameraPosition += move * TileManager::TILE_SIZE;
 		camera->setPosition(cameraPosition);
+	}
+}
+
+NewUnitActionMenu::NewUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	unitID = 0;
+}
+
+void NewUnitActionMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(cameraPosition.x, cameraPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	if (setStart)
+	{
+		text->RenderText("Click where you want the unit to spawn", 100, 50, 1);
+	}
+	else
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(startPosition.x, startPosition.y, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 0.5f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		glm::vec2 drawPosition = glm::vec2(startPosition) + glm::vec2(2, 4);
+		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		text->RenderText("start", drawPosition.x, drawPosition.y, 1);
+
+		text->RenderText("Click where you want the unit to move to", 100, 50, 1);
+	}
+	text->RenderText("Position: " + intToString(cameraPosition.x) + " " + intToString(cameraPosition.y), 100, 100, 1);
+	text->RenderText("Start position: " + intToString(startPosition.x) + " " + intToString(startPosition.y), 600, 100, 1);
+	text->RenderText("End position: " + intToString(endPosition.x) + " " + intToString(endPosition.y), 600, 150, 1);
+	text->RenderText("Unit: " + intToString(unitID), 600, 200, 1);
+}
+
+void NewUnitActionMenu::SelectOption()
+{
+	if (setStart)
+	{
+		startPosition = cameraPosition;
+		setStart = false;
+	}
+	else
+	{
+		endPosition = cameraPosition;
+		finished = true;
+		AddUnit* move = new AddUnit(1, unitID, startPosition, endPosition);
+		sceneActions.push_back(move);
+		MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		CancelOption();
+	}
+}
+
+//I want to ultimately handle this input with the mouse, just reusing the code from the camera action for now.
+void NewUnitActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	glm::ivec2 move(0);
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		move.y = -1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		move.y = 1;
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		move.x = 1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		move.x = -1;
+	}
+	//Want to be able to display the unit name in the future
+	if (inputManager.isKeyPressed(SDLK_w))
+	{
+		unitID++;
+		if (unitID > 7)
+		{
+			unitID = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		unitID--;
+		if (unitID < 0)
+		{
+			unitID = 7;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else
+	{
+		cameraPosition += move * TileManager::TILE_SIZE;
+		camera->setPosition(cameraPosition);
+	}
+}
+
+void NewUnitActionMenu::CancelOption()
+{
+	if (setStart || finished)
+	{
+		Menu::CancelOption();
+	}
+	else
+	{
+		setStart = true;
+	}
+}
+
+MoveUnitActionMenu::MoveUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	unitID = 0;
+}
+
+void MoveUnitActionMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(cameraPosition.x, cameraPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Position: " + intToString(cameraPosition.x) + " " + intToString(cameraPosition.y), 100, 100, 1);
+	text->RenderText("End position: " + intToString(endPosition.x) + " " + intToString(endPosition.y), 600, 150, 1);
+	text->RenderText("Unit: " + intToString(unitID), 600, 200, 1);
+}
+
+void MoveUnitActionMenu::SelectOption()
+{
+	endPosition = cameraPosition;
+	UnitMove* move = new UnitMove(2, unitID, endPosition);
+	sceneActions.push_back(move);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
+}
+
+//I want to ultimately handle this input with the mouse, just reusing the code from the camera action for now.
+void MoveUnitActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	glm::ivec2 move(0);
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		move.y = -1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		move.y = 1;
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		move.x = 1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		move.x = -1;
+	}
+	//Want to be able to display the unit name in the future
+	if (inputManager.isKeyPressed(SDLK_w))
+	{
+		unitID++;
+		if (unitID > 7)
+		{
+			unitID = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		unitID--;
+		if (unitID < 0)
+		{
+			unitID = 7;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else
+	{
+		cameraPosition += move * TileManager::TILE_SIZE;
+		camera->setPosition(cameraPosition);
+	}
+}
+
+DialogueActionMenu::DialogueActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	dialogueID = 0;
+}
+
+void DialogueActionMenu::Draw()
+{
+	//Would like this to display the dialogue in question
+	text->RenderText("Dialogue: " + intToString(dialogueID), 600, 200, 1);
+}
+
+void DialogueActionMenu::SelectOption()
+{
+	DialogueAction* move = new DialogueAction(3, dialogueID);
+	sceneActions.push_back(move);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
+}
+
+//I want to ultimately handle this input with the mouse, just reusing the code from the camera action for now.
+void DialogueActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		dialogueID++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		dialogueID--;
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
 	}
 }

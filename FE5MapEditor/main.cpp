@@ -539,7 +539,7 @@ bool loadMap()
                 tObject.uvs = enemyUVs[type];
                 tObject.level = level;
                 tObject.growthRateID = growthID;
-                
+
                 inventory.resize(inventorySize);
                 for (int i = 0; i < inventorySize; i++)
                 {
@@ -603,7 +603,7 @@ bool loadMap()
                 objectStrings[position] = stream.str();
             }
         }
-        else if(thing == "Starts")
+        else if (thing == "Starts")
         {
             map >> numberOfStarts;
             for (size_t i = 0; i < numberOfStarts; i++)
@@ -618,6 +618,51 @@ bool loadMap()
                 objects[tObject.position] = tObject;
                 objectWriteTypes[tObject.position] = 3;
                 objectStrings[tObject.position] = stream.str();
+            }
+        }
+        else if (thing == "Scenes")
+        {
+            int numberOfScenes = 0;
+            map >> numberOfScenes;
+            sceneObjects.resize(numberOfScenes);
+            for (int i = 0; i < numberOfScenes; i++)
+            {
+                int numberOfActions = 0;
+                map >> numberOfActions;
+                auto& currentObject = sceneObjects[i];
+                currentObject.actions.resize(numberOfActions);
+                for (int c = 0; c < numberOfActions; c++)
+                {
+                    int actionType = 0;
+                    map >> actionType;
+                    if (actionType == CAMERA_ACTION)
+                    {
+                        glm::vec2 position;
+                        map >> position.x >> position.y;
+                        currentObject.actions[c] = new CameraMove(actionType, position);
+                    }
+                    else if (actionType == NEW_UNIT_ACTION)
+                    {
+                        int unitID;
+                        glm::vec2 start;
+                        glm::vec2 end;
+                        map >> unitID >> start.x >> start.y >> end.x >> end.y;
+                        currentObject.actions[c] = new AddUnit(actionType, unitID, start, end);
+                    }
+                    else if (actionType == MOVE_UNIT_ACTION)
+                    {
+                        int unitID;
+                        glm::vec2 end;
+                        map >> unitID >> end.x >> end.y;
+                        currentObject.actions[c] = new UnitMove(actionType, unitID, end);
+                    }
+                    else if (actionType == DIALOGUE_ACTION)
+                    {
+                        int dialogueID;
+                        map >> dialogueID;
+                        currentObject.actions[c] = new DialogueAction(actionType, dialogueID);
+                    }
+                }
             }
         }
     }
@@ -653,8 +698,42 @@ void saveMap()
             starts += "\n" + objectStrings[iter.first];
         }
     }
+    std::string scenes = "Scenes\n";
+    std::stringstream stream3;
+    stream3 << sceneObjects.size();
+    scenes += stream3.str();
+    for (int i = 0; i < sceneObjects.size(); i++)
+    {
+        auto& currentObject = sceneObjects[i];
+        scenes += "\n" + intToString(currentObject.actions.size()) + " ";
+        for (int c = 0; c < currentObject.actions.size(); c++)
+        {
+            auto currentAction = currentObject.actions[c];
+            scenes += intToString(currentAction->type) + " ";
+            if (currentAction->type == CAMERA_ACTION)
+            {
+                auto action = static_cast<CameraMove*>(currentAction);
+                scenes += intToString(action->position.x) + " " + intToString(action->position.y) + " ";
+            }
+            else if (currentAction->type == NEW_UNIT_ACTION)
+            {
+                auto action = static_cast<AddUnit*>(currentAction);
+                scenes += intToString(action->unitID) + " " + intToString(action->start.x) + " " + intToString(action->start.y) + " " + intToString(action->end.x) + " " + intToString(action->end.y) + " ";
+            }
+            else if (currentAction->type == MOVE_UNIT_ACTION)
+            {
+                auto action = static_cast<UnitMove*>(currentAction);
+                scenes += intToString(action->unitID) + " " + intToString(action->end.x) + " " + intToString(action->end.y) + " ";
+            }
+            else if (currentAction->type == DIALOGUE_ACTION)
+            {
+                auto action = static_cast<DialogueAction*>(currentAction);
+                scenes += intToString(action->ID) + " ";
+            }
+        }
+    }
 
-    map << enemies << "\n" << starts << "\n";
+    map << enemies << "\n" << starts << "\n" << scenes << "\n";
 
     map.close();
 
