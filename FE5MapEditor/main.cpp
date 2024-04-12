@@ -663,6 +663,14 @@ bool loadMap()
                         currentObject.actions[c] = new DialogueAction(actionType, dialogueID);
                     }
                 }
+                int activationType = 0;
+                map >> activationType;
+                if (activationType == 1)
+                {
+                    int round = 0;
+                    map >> round;
+                    currentObject.activation = new EnemyTurnEnd(activationType, round);
+                }
             }
         }
     }
@@ -731,6 +739,12 @@ void saveMap()
                 scenes += intToString(action->ID) + " ";
             }
         }
+        scenes += intToString(currentObject.activation->type) + " ";
+        if (currentObject.activation->type == 1)
+        {
+            auto activation = static_cast<EnemyTurnEnd*>(currentObject.activation);
+            scenes += intToString(activation->round) + " ";
+        }
     }
 
     map << enemies << "\n" << starts << "\n" << scenes << "\n";
@@ -742,7 +756,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n" << starts << "\n";
+    mapP << enemies << "\n" << starts << "\n" << scenes << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);

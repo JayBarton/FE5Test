@@ -10,15 +10,6 @@
 
 Scene::Scene()
 {
-	actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(176, 144)));
-	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 6, glm::vec2(32, 64), glm::vec2(80, 128)));
-	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 5, glm::vec2(32, 96), glm::vec2(64, 112)));
-	actions.push_back(new DialogueAction(DIALOGUE_ACTION, 1));
-	actions.push_back(new UnitMove(MOVE_UNIT_ACTION, 6, glm::vec2(80, 144)));
-	actions.push_back(new UnitMove(MOVE_UNIT_ACTION, 5, glm::vec2(80, 128)));
-	actions.push_back(new AddUnit(NEW_UNIT_ACTION, 7, glm::vec2(32, 80), glm::vec2(64, 112)));
-	actions.push_back(new DialogueAction(DIALOGUE_ACTION, 2));
-
 	//Completely temporary
 	nameMap[5] = "Dagda";
 	nameMap[6] = "Tania";

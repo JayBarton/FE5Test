@@ -619,6 +619,59 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		{
 			playerManager.LoadUnits(map);
 		}
+		else if (thing == "Scenes")
+		{
+			int numberOfScenes = 0;
+			map >> numberOfScenes;
+		//	sceneObjects.resize(numberOfScenes);
+		//	for (int i = 0; i < numberOfScenes; i++)
+			{
+				int numberOfActions = 0;
+				map >> numberOfActions;
+				auto& currentObject = sceneManager.scenes[0];
+				currentObject->actions.resize(numberOfActions);
+				for (int c = 0; c < numberOfActions; c++)
+				{
+					int actionType = 0;
+					map >> actionType;
+					if (actionType == CAMERA_ACTION)
+					{
+						glm::vec2 position;
+						map >> position.x >> position.y;
+						currentObject->actions[c] = new CameraMove(actionType, position);
+					}
+					else if (actionType == NEW_UNIT_ACTION)
+					{
+						int unitID;
+						glm::vec2 start;
+						glm::vec2 end;
+						map >> unitID >> start.x >> start.y >> end.x >> end.y;
+						currentObject->actions[c] = new AddUnit(actionType, unitID, start, end);
+					}
+					else if (actionType == MOVE_UNIT_ACTION)
+					{
+						int unitID;
+						glm::vec2 end;
+						map >> unitID >> end.x >> end.y;
+						currentObject->actions[c] = new UnitMove(actionType, unitID, end);
+					}
+					else if (actionType == DIALOGUE_ACTION)
+					{
+						int dialogueID;
+						map >> dialogueID;
+						currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
+					}
+				}
+				int activationType = 0;
+				map >> activationType;
+				if (activationType == 1)
+				{
+					int round = 0;
+					map >> round;
+					currentObject->activation = new EnemyTurnEnd(currentObject, activationType, round);
+				}
+			}
+		}
 	}
 
 	sceneManager.scenes[sceneManager.currentScene]->extraSetup(&roundSubject);

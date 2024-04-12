@@ -6,9 +6,25 @@ class TextRenderer;
 class Camera;
 class SpriteRenderer;
 
+struct Activation
+{
+    int type;
+    Activation(int type) : type(type)
+    {}
+};
+
+struct EnemyTurnEnd : public Activation
+{
+    int round;
+
+    EnemyTurnEnd(int type, int round) : Activation(type), round(round)
+    {}
+};
+
 struct SceneObjects
 {
     std::vector<class SceneAction*> actions;
+    Activation* activation = nullptr;
     ~SceneObjects()
     {
         for (int i = 0; i < actions.size(); i++)
@@ -53,7 +69,8 @@ struct MenuManager
     void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
     void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
     void OpenSceneMenu(std::vector<SceneObjects>& sceneObjects);
-    void OpenActionMenu(std::vector<SceneAction*>& sceneActions);
+    void OpenActionMenu(SceneObjects& sceneObject);
+    void OpenActivationMenu(SceneObjects& sceneObject);
     void SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions);
     void PreviousMenu();
     void ClearMenu();
@@ -164,14 +181,25 @@ struct SceneMenu : public Menu
 
 struct SceneActionMenu : public Menu
 {
-    SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
     virtual void Draw() override;
     virtual void SelectOption() override;
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
+    bool activationMode = false;
     int selectedAction = 0;
     std::vector<std::string> actionNames;
+    SceneObjects& sceneObject;
     std::vector<SceneAction*>& sceneActions;
+};
+
+struct SceneActivationMenu : public Menu
+{
+    SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+
+    SceneObjects& sceneObject;
 };
 
 struct CameraActionMenu : public Menu

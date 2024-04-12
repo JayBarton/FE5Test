@@ -99,9 +99,15 @@ void MenuManager::OpenSceneMenu(std::vector<SceneObjects>& sceneObjects)
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
-void MenuManager::OpenActionMenu(std::vector<SceneAction*>& sceneActions)
+void MenuManager::OpenActionMenu(SceneObjects& sceneObject)
 {
-	Menu* newMenu = new SceneActionMenu(text, camera, shapeVAO, sceneActions);
+	Menu* newMenu = new SceneActionMenu(text, camera, shapeVAO, sceneObject);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::OpenActivationMenu(SceneObjects& sceneObject)
+{
+	Menu* newMenu = new SceneActivationMenu(text, camera, shapeVAO, sceneObject);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -866,11 +872,11 @@ void SceneMenu::SelectOption()
 	}
 	else
 	{
-		MenuManager::menuManager.OpenActionMenu(sceneObjects[currentOption].actions);
+		MenuManager::menuManager.OpenActionMenu(sceneObjects[currentOption]);
 	}
 }
 
-SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject), sceneActions(sceneObject.actions)
 {
 	numberOfOptions = sceneActions.size() + 1;
 	actionNames.resize(4);
@@ -885,7 +891,14 @@ void SceneActionMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(16, 32 + 12 * currentOption, 0.0f));
+	if (activationMode)
+	{
+		model = glm::translate(model, glm::vec3(176, 32, 0.0f));
+	}
+	else
+	{
+		model = glm::translate(model, glm::vec3(16, 32 + 12 * currentOption, 0.0f));
+	}
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -927,6 +940,12 @@ void SceneActionMenu::Draw()
 	text->RenderText("Action Menu", 100, 50, 1);
 	text->RenderText(actionNames[selectedAction], 300, 50, 1);
 	text->RenderText("New Action", 100, 100 + (sceneActions.size() * 32), 1);
+	std::string activationModeString = "Activation Mode: ";
+	if (sceneObject.activation)
+	{
+		activationModeString += "Enemy turn end: " + intToString(2);
+	}
+	text->RenderText(activationModeString, 400, 100, 1);
 }
 
 void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -950,14 +969,44 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			selectedAction = DIALOGUE_ACTION;
 		}
 	}
+	else if (inputManager.isKeyPressed(SDLK_TAB))
+	{
+		activationMode = !activationMode;
+	}
 }
 
 void SceneActionMenu::SelectOption()
 {
-	if (currentOption == sceneActions.size())
+	if (activationMode)
+	{
+		if (sceneObject.activation == nullptr)
+		{
+			MenuManager::menuManager.OpenActivationMenu(sceneObject);
+		}
+	}
+	else if (currentOption == sceneActions.size())
 	{
 		MenuManager::menuManager.SelectOptionMenu(selectedAction, sceneActions);
 	}
+}
+
+SceneActivationMenu::SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject)
+{
+	numberOfOptions = 2;
+
+}
+
+void SceneActivationMenu::Draw()
+{
+	text->RenderText("Activation Menu", 100, 50, 1);
+	text->RenderText(intToString(currentOption), 100, 100, 1);
+
+}
+
+void SceneActivationMenu::SelectOption()
+{
+	sceneObject.activation = new EnemyTurnEnd(1, 2);
+	CancelOption();
 }
 
 CameraActionMenu::CameraActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
