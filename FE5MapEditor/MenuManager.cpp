@@ -42,13 +42,13 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 	if (inputManager.isKeyPressed(SDLK_z))
 	{
 		CancelOption();
-		currentOption = 0;
 	}
 }
 
 void Menu::CancelOption()
 {
 	MenuManager::menuManager.PreviousMenu();
+	currentOption = 0;
 }
 
 void Menu::ClearMenu()
@@ -908,6 +908,22 @@ void SceneActionMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+	if (swapAction >= 0)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(16, 32 + 12 * swapAction, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 5.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+
 	for (int i = 0; i < sceneActions.size(); i++)
 	{
 		auto currentAction = sceneActions[i];
@@ -969,9 +985,27 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			selectedAction = DIALOGUE_ACTION;
 		}
 	}
+	else if (inputManager.isKeyPressed(SDLK_DELETE))
+	{
+		if (activationMode)
+		{
+			//delete activation mode?
+			delete sceneObject.activation;
+			sceneObject.activation = nullptr;
+		}
+		else if (currentOption < sceneActions.size())
+		{
+			auto* it = sceneActions[currentOption];
+			sceneActions.erase(sceneActions.begin() + currentOption);
+			delete it;
+		}
+	}
 	else if (inputManager.isKeyPressed(SDLK_TAB))
 	{
-		activationMode = !activationMode;
+		if (swapAction < 0)
+		{
+			activationMode = !activationMode;
+		}
 	}
 }
 
@@ -987,6 +1021,32 @@ void SceneActionMenu::SelectOption()
 	else if (currentOption == sceneActions.size())
 	{
 		MenuManager::menuManager.SelectOptionMenu(selectedAction, sceneActions);
+	}
+	else
+	{
+		if (swapAction >= 0)
+		{
+			auto* temp = sceneActions[currentOption];
+			sceneActions[currentOption] = sceneActions[swapAction];
+			sceneActions[swapAction] = temp;
+			swapAction = -1;
+		}
+		else
+		{
+			swapAction = currentOption;
+		}
+	}
+}
+
+void SceneActionMenu::CancelOption()
+{
+	if (swapAction >= 0)
+	{
+		swapAction = -1;
+	}
+	else
+	{
+		Menu::CancelOption();
 	}
 }
 

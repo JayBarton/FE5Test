@@ -185,8 +185,10 @@ struct SceneActionMenu : public Menu
     virtual void Draw() override;
     virtual void SelectOption() override;
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+    virtual void CancelOption() override;
 
     bool activationMode = false;
+    int swapAction = -1;
     int selectedAction = 0;
     std::vector<std::string> actionNames;
     SceneObjects& sceneObject;
