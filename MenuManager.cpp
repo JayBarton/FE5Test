@@ -87,7 +87,6 @@ void UnitOptionsMenu::SelectOption()
 		auto playerUnit = cursor->selectedUnit;
 		for (int i = 0; i < playerUnit->weapons.size(); i++)
 		{
-
 			bool weaponInRange = false;
 			auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[i]);
 			if (playerUnit->canUse(weapon))
@@ -115,6 +114,33 @@ void UnitOptionsMenu::SelectOption()
 					}
 				}
 			}
+		}
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		break;
+	}
+	case CAPTURE:
+	{
+		std::vector<Item*> validWeapons;
+		std::vector<std::vector<Unit*>> unitsToAttack;
+		auto playerUnit = cursor->selectedUnit;
+		for (int i = 0; i < playerUnit->weapons.size(); i++)
+		{
+			bool weaponInRange = false;
+			auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[i]);
+			if (playerUnit->canUse(weapon))
+			{
+				if (1 <= weapon.maxRange && 1 >= weapon.minRange)
+				{
+					validWeapons.push_back(playerUnit->weapons[i]);
+				}
+			}
+		}
+		unitsToAttack.resize(validWeapons.size());
+		for (int i = 0; i < unitsToAttack.size(); i++)
+		{
+			unitsToAttack.resize(unitsInCaptureRange.size());
+			unitsToAttack[i] = unitsInCaptureRange;
 		}
 		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack);
 		MenuManager::menuManager.menus.push_back(newMenu);
@@ -203,6 +229,11 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Attack", xText, yOffset, 1);
 		yOffset += 30;
 	}
+	if (canCapture)
+	{
+		text->RenderText("Capture", xText, yOffset, 1);
+		yOffset += 30;
+	}
 	if (canTrade)
 	{
 		text->RenderText("Trade", xText, yOffset, 1);
@@ -232,14 +263,36 @@ void UnitOptionsMenu::GetOptions()
 {
 	currentOption = 0;
 	canAttack = false;
+	canCapture = false;
 	canDismount = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
 	unitsInRange = cursor->selectedUnit->inRangeUnits(1);
+	unitsInCaptureRange.clear();
 	if (unitsInRange.size() > 0)
 	{
 		canAttack = true;
 		optionsVector.push_back(ATTACK);
+		auto playerUnit = cursor->selectedUnit;
+		unitsInCaptureRange.reserve(unitsInRange.size());
+		for (int i = 0; i < unitsInRange.size(); i++)
+		{
+			auto currentUnit = unitsInRange[i];
+			if (!currentUnit->isMounted() && currentUnit->build < 20)
+			{
+				float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
+				distance /= TileManager::TILE_SIZE;
+				if (distance == 1 && (playerUnit->isMounted() || currentUnit->build < playerUnit->build))
+				{
+					unitsInCaptureRange.push_back(currentUnit);
+				}
+			}
+		}
+		if (unitsInCaptureRange.size() > 0)
+		{
+			canCapture = true;
+			optionsVector.push_back(CAPTURE);
+		}
 	}
 	tradeUnits = cursor->tradeRangeUnits();
 	if (tradeUnits.size() > 0)

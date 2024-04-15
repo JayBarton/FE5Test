@@ -93,9 +93,9 @@ struct TileMode : public EditMode
     void rightClick(int x, int y)
     {
         //Remove tile
-        TileManager::tileManager.placeTile(x, y, -1);
+        // Not currently in use
+      //  TileManager::tileManager.placeTile(x, y, -1);
     }
-    //TODO need a method to set a tile and attribute
     void leftClick(int x, int y)
     {
         TileManager::tileManager.placeTile(x, y, dObject->type);

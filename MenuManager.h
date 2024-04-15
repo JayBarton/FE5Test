@@ -53,14 +53,17 @@ struct UnitOptionsMenu : public Menu
 	const static int ATTACK = 3;
 	const static int TRADE = 4;
 	const static int MOUNT = 5;
+	const static int CAPTURE = 6;
 
 	std::vector<Unit*> unitsInRange;
+	std::vector<Unit*> unitsInCaptureRange;
 	std::vector<Unit*> tradeUnits;
 
 	bool canAttack = false;
 	bool canDismount = false;
 	bool canMount = false;
 	bool canTrade = false;
+	bool canCapture = false;
 };
 
 struct CantoOptionsMenu : public Menu
