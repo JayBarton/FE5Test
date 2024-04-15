@@ -158,6 +158,7 @@ void UnitOptionsMenu::SelectOption()
 		{
 			cursor->Wait();
 		}
+		playerUnit->carryingMalus = 1;
 		heldEnemy = false;
 		ClearMenu();
 
