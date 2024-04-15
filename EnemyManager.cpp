@@ -95,7 +95,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                         tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
                         enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
 
-                        int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
+                        int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
 
                         int damage = tempStats.attackDamage - otherDefense;
                         if (damage > maxDamage)
@@ -142,7 +142,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                         //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
                         enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
 
-                        int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
+                        int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
 
                         int damage = tempStats.attackDamage - otherDefense;
                         if (damage > maxDamage)
@@ -187,8 +187,8 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                 auto otherStats = otherUnit->CalculateBattleStats();
                 otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
 
-                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->defense : enemy->magic);
-                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->defense : enemy->magic);
+                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
+                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
                 if (damageTaken < previousDamage)
                 {
                     finalTarget = currentTarget;
@@ -270,8 +270,8 @@ void EnemyManager::ApproachNearest(glm::vec2& position, Unit* enemy)
         }
     }
     auto playerUnit = (*playerUnits)[index];
-    auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->move);
-    enemy->movementComponent.startMovement(path, enemy->move, false);
+    auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->getMove());
+    enemy->movementComponent.startMovement(path, enemy->getMove(), false);
     enemyMoving = true;
 }
 
@@ -525,7 +525,12 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                 skippedUnit = false;
                 while (currentEnemy < enemies.size() && !skippedUnit && !enemyMoving)
                 {
-                    if (enemy->stationary)
+                    if (enemy->isCarried)
+                    {
+                        NextUnit();
+                        skippedUnit = true;
+                    }
+                    else if (enemy->stationary)
                     {
                         StationaryUpdate(enemy, battleManager, camera);
                     }
@@ -658,7 +663,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
                     //at a closer ranger would do more damage.
                     //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
                     enemy->CalculateMagicDefense(weapon, tempStats, attackDistance);
-                    int otherDefense = tempStats.attackType == 0 ? otherUnit->defense : otherUnit->magic;
+                    int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
                     int damage = tempStats.attackDamage - otherDefense;
                     if (damage > maxDamage)
                     {
@@ -696,8 +701,8 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
                 auto otherStats = otherUnit->CalculateBattleStats();
                 otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
 
-                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->defense : enemy->magic);
-                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->defense : enemy->magic);
+                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
+                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
                 if (damageTaken < previousDamage)
                 {
                     finalTarget = currentTarget;
@@ -747,10 +752,10 @@ void EnemyManager::RangeActivation(Unit* enemy)
 {
     std::vector<Unit*> otherUnits;
     //Not crazy about this. Works for now
-    int range = enemy->move + enemy->maxRange + 1;
+    int range = enemy->getMove() + enemy->maxRange + 1;
     if (enemy->activationType > 1)
     {
-        range = enemy->move + enemy->maxRange;
+        range = enemy->getMove() + enemy->maxRange;
     }
     auto path = enemy->FindApproachMoveRange(otherUnits, range);
     if (otherUnits.size() > 0)
@@ -765,7 +770,7 @@ void EnemyManager::RangeActivation(Unit* enemy)
             auto position = enemy->sprite.getPosition();
             auto p = otherUnits[i]->sprite.getPosition();
             auto distance = (abs(position.x - p.x) + abs(position.y - p.y)) / TileManager::TILE_SIZE;
-            if (distance <= enemy->move + enemy->maxRange)
+            if (distance <= enemy->getMove() + enemy->maxRange)
             {
                 attackableUnits.push_back(otherUnits[i]);
             }
@@ -797,7 +802,7 @@ void EnemyManager::RangeActivation(Unit* enemy)
             }
             std::vector<glm::ivec2> followPath;
             glm::vec2 pathPoint = otherPosition;
-            while (path[pathPoint].moveCost > enemy->move)
+            while (path[pathPoint].moveCost > enemy->getMove())
             {
                 pathPoint = path[pathPoint].previousPosition;
             }

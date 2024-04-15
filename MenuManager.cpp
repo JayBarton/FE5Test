@@ -78,13 +78,13 @@ UnitOptionsMenu::UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Cam
 
 void UnitOptionsMenu::SelectOption()
 {
+	auto playerUnit = cursor->selectedUnit;
 	switch (optionsVector[currentOption])
 	{
 	case ATTACK:
 	{
 		std::vector<Item*> validWeapons;
 		std::vector<std::vector<Unit*>> unitsToAttack;
-		auto playerUnit = cursor->selectedUnit;
 		for (int i = 0; i < playerUnit->weapons.size(); i++)
 		{
 			bool weaponInRange = false;
@@ -123,7 +123,6 @@ void UnitOptionsMenu::SelectOption()
 	{
 		std::vector<Item*> validWeapons;
 		std::vector<std::vector<Unit*>> unitsToAttack;
-		auto playerUnit = cursor->selectedUnit;
 		for (int i = 0; i < playerUnit->weapons.size(); i++)
 		{
 			bool weaponInRange = false;
@@ -139,13 +138,30 @@ void UnitOptionsMenu::SelectOption()
 		unitsToAttack.resize(validWeapons.size());
 		for (int i = 0; i < unitsToAttack.size(); i++)
 		{
-			unitsToAttack.resize(unitsInCaptureRange.size());
 			unitsToAttack[i] = unitsInCaptureRange;
 		}
-		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack);
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack, true);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
+	case DROP:
+		break;
+	case RELEASE:
+		playerUnit->carriedUnit->isDead = true;
+		playerUnit->carriedUnit = nullptr;
+		if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
+		{
+			cursor->GetRemainingMove();
+			MenuManager::menuManager.mustWait = true;
+		}
+		else
+		{
+			cursor->Wait();
+		}
+		heldEnemy = false;
+		ClearMenu();
+
+		break;
 	case TRADE:
 	{
 		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, tradeUnits, MenuManager::menuManager.renderer);
@@ -157,8 +173,7 @@ void UnitOptionsMenu::SelectOption()
 		break;
 	case DISMOUNT:
 	{
-		auto unit = cursor->selectedUnit;
-		unit->MountAction(false);
+		playerUnit->MountAction(false);
 		canDismount = false;
 		optionsVector.erase(optionsVector.begin() + currentOption);
 		numberOfOptions--;
@@ -167,8 +182,7 @@ void UnitOptionsMenu::SelectOption()
 	}
 	case MOUNT:
 	{
-		auto unit = cursor->selectedUnit;
-		unit->MountAction(true);
+		playerUnit->MountAction(true);
 		canMount = false;
 		optionsVector.erase(optionsVector.begin() + currentOption);
 		numberOfOptions--;
@@ -234,6 +248,16 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Capture", xText, yOffset, 1);
 		yOffset += 30;
 	}
+	if (heldFriendly)
+	{
+		text->RenderText("Drop", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	else if (heldEnemy)
+	{
+		text->RenderText("Release", xText, yOffset, 1);
+		yOffset += 30;
+	}
 	if (canTrade)
 	{
 		text->RenderText("Trade", xText, yOffset, 1);
@@ -265,33 +289,52 @@ void UnitOptionsMenu::GetOptions()
 	canAttack = false;
 	canCapture = false;
 	canDismount = false;
+	heldFriendly = false;
+	heldEnemy = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
-	unitsInRange = cursor->selectedUnit->inRangeUnits(1);
+	auto playerUnit = cursor->selectedUnit;
+
+	unitsInRange = playerUnit->inRangeUnits(1);
 	unitsInCaptureRange.clear();
 	if (unitsInRange.size() > 0)
 	{
 		canAttack = true;
 		optionsVector.push_back(ATTACK);
-		auto playerUnit = cursor->selectedUnit;
-		unitsInCaptureRange.reserve(unitsInRange.size());
-		for (int i = 0; i < unitsInRange.size(); i++)
+		if (!playerUnit->carriedUnit)
 		{
-			auto currentUnit = unitsInRange[i];
-			if (!currentUnit->isMounted() && currentUnit->build < 20)
+			unitsInCaptureRange.reserve(unitsInRange.size());
+			for (int i = 0; i < unitsInRange.size(); i++)
 			{
-				float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
-				distance /= TileManager::TILE_SIZE;
-				if (distance == 1 && (playerUnit->isMounted() || currentUnit->build < playerUnit->build))
+				auto currentUnit = unitsInRange[i];
+				if (!currentUnit->isMounted() && currentUnit->getBuild() < 20)
 				{
-					unitsInCaptureRange.push_back(currentUnit);
+					float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
+					distance /= TileManager::TILE_SIZE;
+					if (distance == 1 && (playerUnit->isMounted() || currentUnit->getBuild() < playerUnit->getBuild()))
+					{
+						unitsInCaptureRange.push_back(currentUnit);
+					}
 				}
 			}
+			if (unitsInCaptureRange.size() > 0)
+			{
+				canCapture = true;
+				optionsVector.push_back(CAPTURE);
+			}
 		}
-		if (unitsInCaptureRange.size() > 0)
+	}
+	if (playerUnit->carriedUnit)
+	{
+		if (playerUnit->carriedUnit->team == playerUnit->team)
 		{
-			canCapture = true;
-			optionsVector.push_back(CAPTURE);
+			optionsVector.push_back(DROP);
+			heldFriendly = true;
+		}
+		else
+		{
+			optionsVector.push_back(RELEASE);
+			heldEnemy = true;
 		}
 	}
 	tradeUnits = cursor->tradeRangeUnits();
@@ -302,10 +345,9 @@ void UnitOptionsMenu::GetOptions()
 	}
 	optionsVector.push_back(ITEMS);
 	//if can dismount
-	auto unit = cursor->selectedUnit;
-	if (unit->mount)
+	if (playerUnit->mount)
 	{
-		if (unit->mount->mounted)
+		if (playerUnit->mount->mounted)
 		{
 			canDismount = true;
 			optionsVector.push_back(DISMOUNT);
@@ -660,8 +702,8 @@ void ItemUseMenu::GetOptions()
 	numberOfOptions = optionsVector.size();
 }
 
-SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units)
-	: ItemOptionsMenu(Cursor, Text, camera, shapeVAO)
+SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, bool capturing)
+	: ItemOptionsMenu(Cursor, Text, camera, shapeVAO), capturing(capturing)
 {
 	weapons = validWeapons;
 	unitsToAttack = units;
@@ -715,7 +757,7 @@ void SelectWeaponMenu::SelectOption()
 	{
 		std::cout << enemyUnits[i]->name << std::endl;
 	}
-	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, enemyUnits, MenuManager::menuManager.renderer);
+	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, enemyUnits, MenuManager::menuManager.renderer, capturing);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -742,11 +784,16 @@ void SelectWeaponMenu::GetBattleStats()
 	selectedStats = unit->CalculateBattleStats(weapons[currentOption]->ID);
 }
 
-SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, bool capturing) :
+	Menu(Cursor, Text, camera, shapeVAO), capturing(capturing)
 {
 	renderer = Renderer;
 	unitsToAttack = units;
-	CanEnemyCounter();
+	if (capturing)
+	{
+		cursor->selectedUnit->carryingMalus = 2;
+	}
+	CanEnemyCounter(capturing);
 
 	GetOptions();
 }
@@ -833,7 +880,7 @@ void SelectEnemyMenu::Draw()
 void SelectEnemyMenu::SelectOption()
 {
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
-	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter, *camera);
+	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter, *camera, false, capturing);
 	cursor->MoveUnitToTile();
 	if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
 	{
@@ -877,7 +924,17 @@ void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-void SelectEnemyMenu::CanEnemyCounter()
+void SelectEnemyMenu::CancelOption()
+{
+	//Obvious but stupid solution to resetting this malus after cancelling a capture action
+	if (capturing)
+	{
+		cursor->selectedUnit->carryingMalus = 1;
+	}
+	Menu::CancelOption();
+}
+
+void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 {
 	auto enemy = unitsToAttack[currentOption];
 	auto unit = cursor->selectedUnit;
@@ -898,8 +955,8 @@ void SelectEnemyMenu::CanEnemyCounter()
 	//int enemyDefense = enemy->defense;	
 	enemy->CalculateMagicDefense(enemyWeapon, enemyNormalStats, attackDistance);
 	unit->CalculateMagicDefense(unitWeapon, unitNormalStats, attackDistance);
-	int playerDefense = enemyNormalStats.attackType == 0 ? unit->defense : unit->magic;
-	int enemyDefense = unitNormalStats.attackType == 0 ? enemy->defense : enemy->magic;
+	int playerDefense = enemyNormalStats.attackType == 0 ? unit->getDefense() : unit->getMagic();
+	int enemyDefense = unitNormalStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic();
 
 	
 	//Magic resistance stat is just the unit's magic stat
@@ -987,8 +1044,8 @@ void SelectEnemyMenu::CanEnemyCounter()
 
 	enemyNormalStats.hitAccuracy = std::max(0, enemyNormalStats.hitAccuracy);
 
-	int unitCritEvade = unit->luck / 2;
-	int enemyCritEvade = enemy->luck / 2;
+	int unitCritEvade = unit->getLuck() / 2;
+	int enemyCritEvade = enemy->getLuck() / 2;
 
 	unitNormalStats.hitCrit -= enemyCritEvade;
 	enemyNormalStats.hitCrit -= unitCritEvade;
@@ -1439,21 +1496,22 @@ void UnitStatsViewMenu::Draw()
 		}
 		if (!examining)
 		{
+			//Going to need an indication of what stats are affected by modifiers
 			text->RenderText("Combat Stats", 54, 190, 1);
 			text->RenderText("STR", 48, 220, 0.8f);
-			text->RenderTextRight(intToString(unit->strength), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getStrength()), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("MAG", 48, 252, 0.8f);
-			text->RenderTextRight(intToString(unit->magic), 148, 252, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getMagic()), 148, 252, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("SKL", 48, 284, 0.8f);
-			text->RenderTextRight(intToString(unit->skill), 148, 284, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getSkill()), 148, 284, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("SPD", 48, 316, 0.8f);
-			text->RenderTextRight(intToString(unit->speed), 148, 316, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getSpeed()), 148, 316, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("LCK", 48, 348, 0.8f);
-			text->RenderTextRight(intToString(unit->luck), 148, 348, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getLuck()), 148, 348, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("DEF", 48, 380, 0.8f);
-			text->RenderTextRight(intToString(unit->defense), 148, 380, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getDefense()), 148, 380, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 			text->RenderText("CON", 48, 412, 0.8f);
-			text->RenderTextRight(intToString(unit->build), 148, 412, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderTextRight(intToString(unit->getBuild()), 148, 412, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
 		}
 		else
 		{

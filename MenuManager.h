@@ -54,6 +54,8 @@ struct UnitOptionsMenu : public Menu
 	const static int TRADE = 4;
 	const static int MOUNT = 5;
 	const static int CAPTURE = 6;
+	const static int DROP = 7;
+	const static int RELEASE = 8;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
@@ -64,6 +66,8 @@ struct UnitOptionsMenu : public Menu
 	bool canMount = false;
 	bool canTrade = false;
 	bool canCapture = false;
+	bool heldFriendly = false;
+	bool heldEnemy = false;
 };
 
 struct CantoOptionsMenu : public Menu
@@ -110,12 +114,13 @@ struct ItemUseMenu : public Menu
 
 struct SelectWeaponMenu : public ItemOptionsMenu
 {
-	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units);
+	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, bool capturing = false);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
+	bool capturing = false;
 	std::vector<Item*> weapons;
 	std::vector<std::vector<Unit*>> unitsToAttack;
 
@@ -136,13 +141,13 @@ struct DisplayedBattleStats
 
 struct SelectEnemyMenu : public Menu
 {
-	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, bool capturing = false);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
-
-	void CanEnemyCounter();
+	virtual void CancelOption();
+	void CanEnemyCounter(bool capturing = false);
 	//Using these so I can handle formatting once rather than doing it repeatedly in draw
 	//I think I am still going to need the normal battle stats for actual combat calculations
 	BattleStats enemyNormalStats;
@@ -153,6 +158,7 @@ struct SelectEnemyMenu : public Menu
 	std::vector<Unit*> unitsToAttack;
 	SpriteRenderer* renderer = nullptr;
 	bool enemyCanCounter = false;
+	bool capturing = false;
 };
 
 struct SelectTradeUnit : public Menu

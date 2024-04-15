@@ -64,7 +64,7 @@ struct Mount
 	int spd;
 	int def;
 	int mov;
-	bool mounted = true;
+	bool mounted;
 
 	int remainingMoves;
 };
@@ -124,6 +124,15 @@ struct Unit
 	int defense;
 	int build;
 	int move;
+
+	int mountStr = 0;
+	int mountSkl = 0;
+	int mountSpd = 0;
+	int mountDef = 0;
+	int mountMov = 0;
+
+	int carryingMalus = 1;
+
 	int level = 1;
 	int weaponProficiencies[10] = { 0 };
 	std::vector<int> uniqueWeapons;
@@ -152,7 +161,7 @@ struct Unit
 	bool isPromoted = false;
 
 	bool isDead = false;
-
+	bool isCarried = false;
 
 	//Not sure if this is staying here
 	bool active = false;
@@ -176,6 +185,8 @@ struct Unit
 	Subject<Unit*> subject;
 
 	Mount* mount = nullptr;
+
+	Unit* carriedUnit = nullptr;
 
 	std::mt19937 *gen = nullptr;
 	std::uniform_int_distribution<int> *distribution = nullptr;
@@ -215,6 +226,15 @@ struct Unit
 	void MountAction(bool on);
 
 	Item* GetEquippedItem();
+
+	int getStrength();
+	int getMagic();
+	int getSkill();
+	int getSpeed();
+	int getLuck();
+	int getDefense();
+	int getBuild();
+	int getMove();
 
 	BattleStats CalculateBattleStats(int weaponID = -1);
 	void CalculateMagicDefense(const WeaponData& unitWeapon, BattleStats& unitNormalStats, float attackDistance);

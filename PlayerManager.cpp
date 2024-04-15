@@ -57,8 +57,8 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		currentUnit++;
 	}
 	playerUnits[1]->movementType = Unit::FOOT;
-	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
-	playerUnits[0]->experience = 90;
+	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 2, 1, 3);
+	playerUnits[1]->MountAction(true);
 }
 
 Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)

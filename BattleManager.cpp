@@ -13,9 +13,10 @@
 #include "Cursor.h"
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
-	BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/)
+	BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
 	this->aiDelay = aiDelay;
+	this->capturing = capturing;
 	battleActive = true;
 	this->attacker = attacker;
 	this->defender = defender;
@@ -110,6 +111,15 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				EndAttack();
 			}
 		}
+		else if (unitCaptured)
+		{
+			//capture animation
+			deadUnit->isCarried = true;
+			TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+			deadUnit = nullptr;
+			unitCaptured = false;
+			EndAttack();
+		}
 		else
 		{
 			actionTimer += deltaTime;
@@ -132,7 +142,15 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				}
 				else if (deadUnit)
 				{
-					unitDied = true;
+					if (capturing)
+					{
+						attacker->carriedUnit = deadUnit;
+						unitCaptured = true;
+					}
+					else
+					{
+						unitDied = true;
+					}
 				}
 				else
 				{
@@ -192,7 +210,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 	}
 	auto crit = theseStats.hitCrit;
 	auto accuracy = theseStats.hitAccuracy;
-	int foeDefense = theseStats.attackType == 0 ? foe->defense : foe->magic;
+	int foeDefense = theseStats.attackType == 0 ? foe->getDefense() : foe->getMagic();
 	if (attack.wrathAttack)
 	{
 		std::cout << thisUnit->name << " activates wrath\n";
@@ -209,7 +227,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 			//prayer roll
 			auto roll = (*distribution)(*gen);
 			std::cout << "Prayer roll" << roll << std::endl;
-			if (roll <= foe->luck * 3)
+			if (roll <= foe->getLuck() * 3)
 			{
 				theseStats.hitAccuracy = 0;
 			}
@@ -267,7 +285,6 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 			otherUnit->currentHP = 0;
 			deadUnit = otherUnit;
 			battleQueue.clear();
-			//EndAttack();
 		}
 		std::cout << thisUnit->name << " Attacks\n";
 	}
@@ -280,6 +297,10 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 void BattleManager::EndAttack()
 {
 	battleActive = false;
+	if (capturing && !attacker->carriedUnit)
+	{
+		attacker->carryingMalus = 1;
+	}
 	subject.notify(attacker, defender);
 }
 

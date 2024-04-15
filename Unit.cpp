@@ -42,7 +42,7 @@ void Unit::placeUnit(int x, int y)
 
 void Unit::Update(float deltaTime)
 {
-    if (!isDead)
+    if (!isDead && !isCarried)
     {
         //this will presumably also handle animation at some point, and no point in animation dead units
     }
@@ -58,12 +58,15 @@ void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
 
 void Unit::Draw(SpriteRenderer* Renderer)
 {
-    if (!isDead)
+    if (!isDead && !isCarried)
     {
         ResourceManager::GetShader("sprite").Use();
         glm::vec3 color = sprite.color;
         glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
-
+        if (carriedUnit)
+        {
+            colorAndAlpha.z = 0;
+        }
         glm::vec2 position = sprite.getPosition();
         Renderer->setUVs(sprite.getUV());
         Texture2D texture = ResourceManager::GetTexture("sprites");
@@ -491,20 +494,20 @@ void Unit::MountAction(bool on)
         if (on)
         {
             mount->mounted = true;
-            strength += mount->str;
-            skill += mount->skl;
-            speed += mount->spd;
-            defense += mount->def;
-            move += mount->mov;
+            mountStr = mount->str;
+            mountSkl = mount->skl;
+            mountSpd = mount->spd;
+            mountDef = mount->def;
+            mountMov = mount->mov;
         }
         else
         {
             mount->mounted = false;
-            strength -= mount->str;
-            skill -= mount->skl;
-            speed -= mount->spd;
-            defense -= mount->def;
-            move -= mount->mov;
+            mountStr = 0;
+            mountSkl = 0;
+            mountSpd = 0;
+            mountDef = 0;
+            mountMov = 0;
         }
     }
 }
@@ -516,6 +519,64 @@ Item* Unit::GetEquippedItem()
         return inventory[equippedWeapon];
     }
     return nullptr;
+}
+
+int Unit::getStrength()
+{
+    return (strength + mountStr) / carryingMalus;
+}
+
+int Unit::getMagic()
+{
+    return magic / carryingMalus;
+}
+
+int Unit::getSkill()
+{
+    return (skill + mountSkl) / carryingMalus;
+}
+
+int Unit::getSpeed()
+{
+    return (speed + mountSpd) / carryingMalus;
+}
+
+int Unit::getLuck()
+{
+    return luck;
+}
+
+int Unit::getDefense()
+{
+    return (defense + mountDef) / carryingMalus;
+}
+
+int Unit::getBuild()
+{
+    return build;
+}
+
+int Unit::getMove()
+{
+    int malus = 1;
+    //If the carried character’s Build is more than half of the user’s Build (Build +5 if the user is mounted), Movement is also halved.
+    if (carriedUnit)
+    {
+        int buildCompare = getBuild();
+        if (isMounted())
+        {
+            buildCompare += 5;
+        }
+        else
+        {
+            buildCompare /= 2;
+        }
+        if (carriedUnit->build > buildCompare)
+        {
+            malus = carryingMalus;
+        }
+    }
+    return (move + mountMov) / malus;
 }
 
 BattleStats Unit::CalculateBattleStats(int weaponID)
@@ -542,28 +603,28 @@ BattleStats Unit::CalculateBattleStats(int weaponID)
             stats.attackDamage = 0;
             stats.hitAccuracy = 0;
             stats.hitCrit = 0;
-            stats.attackSpeed = speed;
-            stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
+            stats.attackSpeed = getSpeed();
+            stats.hitAvoid = stats.attackSpeed * 2 + getLuck() + charismaBonus;
         }
     }
     if (weaponID >= 0)
     {
         auto weapon = ItemManager::itemManager.weaponData[weaponID];
-        stats.attackDamage = weapon.might + (!weapon.isMagic ? strength : magic); //+ mag if the weapon is magic
+        stats.attackDamage = weapon.might + (!weapon.isMagic ? getStrength() : getMagic()); //+ mag if the weapon is magic
         stats.attackType = !weapon.isMagic ? 0 : 1;
-        stats.hitAccuracy = weapon.hit + skill * 2 + luck + charismaBonus;
-        stats.hitCrit = weapon.crit + skill;
-        int weight = weapon.weight - (!weapon.isMagic ? build : 0); //No build included if the weapon is magic
+        stats.hitAccuracy = weapon.hit + getSkill() * 2 + getLuck() + charismaBonus;
+        stats.hitCrit = weapon.crit + getSkill();
+        int weight = weapon.weight - (!weapon.isMagic ? getBuild() : 0); //No build included if the weapon is magic
         if (weight < 0)
         {
             weight = 0;
         }
-        stats.attackSpeed = speed - weight;
+        stats.attackSpeed = getSpeed() - weight;
         if (stats.attackSpeed < 0)
         {
             stats.attackSpeed = 0;
         }
-        stats.hitAvoid = stats.attackSpeed * 2 + luck + charismaBonus;
+        stats.hitAvoid = stats.attackSpeed * 2 + getLuck() + charismaBonus;
     }
     return stats;
 }
@@ -578,8 +639,8 @@ void Unit::CalculateMagicDefense(const WeaponData& unitWeapon, BattleStats& unit
         //so what I'm doing is just negating the previous damage calculation and using strength instead
         if (attackDistance == 1 && !unitWeapon.isTome)
         {
-            unitNormalStats.attackDamage -= magic;
-            unitNormalStats.attackDamage += strength;
+            unitNormalStats.attackDamage -= getMagic();
+            unitNormalStats.attackDamage += getStrength();
         }
         else
         {
@@ -624,7 +685,7 @@ void Unit::EndTurn()
     if (isMounted())
     {
         //Resetting remaining moves.
-        mount->remainingMoves = move;
+        mount->remainingMoves = getMove();
     }
 }
 
@@ -917,7 +978,7 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
             {
                 costs[checkingTile.x][checkingTile.y] = movementCost;
             }
-            if (movementCost <= move)
+            if (movementCost <= getMove())
             {
                 pathCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);
@@ -1126,7 +1187,7 @@ void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int m
     {
         if (owner->isMounted())
         {
-            owner->mount->remainingMoves = owner->move - moveCost;
+            owner->mount->remainingMoves = owner->getMove() - moveCost;
         }
     }
     getNewDirection();

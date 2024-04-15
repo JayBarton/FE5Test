@@ -210,7 +210,6 @@ void Cursor::GetUnitOptions()
 	if (remainingMove)
 	{
 		MenuManager::menuManager.AddMenu(4);
-
 	}
 	else
 	{

@@ -14,7 +14,7 @@ struct Attack
 class Camera;
 struct BattleManager
 {
-	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiAttack = false);
+	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
 
@@ -48,6 +48,8 @@ struct BattleManager
 	bool accostFired = false;
 	bool unitDied = false;
 	bool aiDelay = false;
+	bool capturing = false;
+	bool unitCaptured = false;
 
 	float delayTimer = 0.0f;
 	float delay = 0.75f;
