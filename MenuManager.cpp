@@ -1083,8 +1083,7 @@ void SelectTradeUnit::Draw()
 	{
 		boxHeight += (inventorySize + 1) * 30;
 	}
-	auto enemy = tradeUnit;
-	auto targetPosition = enemy->sprite.getPosition();
+	auto targetPosition = tradeUnit->sprite.getPosition();
 	int xText = 536;
 	int xIndicator = 169;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);

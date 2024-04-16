@@ -50,4 +50,5 @@ struct Cursor
 	void GetUnitOptions();
 
 	std::vector<Unit*> tradeRangeUnits();
+	void PushTradeUnit(std::vector<Unit*>& units, Unit*& unit);
 };

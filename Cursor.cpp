@@ -228,23 +228,40 @@ std::vector<Unit*> Cursor::tradeRangeUnits()
 	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
 	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
 	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
+	if (selectedUnit->carriedUnit)
+	{
+		units.push_back(selectedUnit->carriedUnit);
+	}
 	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(up.x, up.y, 0))
 	{
-		units.push_back(unit);
+		PushTradeUnit(units, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(down.x, down.y, 0))
 	{
-		units.push_back(unit);
+		PushTradeUnit(units, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(left.x, left.y, 0))
 	{
-		units.push_back(unit);
+		PushTradeUnit(units, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(right.x, right.y, 0))
 	{
-		units.push_back(unit);
+		PushTradeUnit(units, unit);
 	}
 	return units;
+}
+
+void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
+{
+	//This is how I'm resolving the above described bug. Not great but it works.
+	if (unit != selectedUnit)
+	{
+		units.push_back(unit);
+		if (unit->carriedUnit)
+		{
+			units.push_back(unit->carriedUnit);
+		}
+	}
 }
 
 void Cursor::CheckBounds()
