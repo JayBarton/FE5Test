@@ -56,16 +56,25 @@ struct UnitOptionsMenu : public Menu
 	const static int CAPTURE = 6;
 	const static int DROP = 7;
 	const static int RELEASE = 8;
+	const static int RESCUE = 9;
+	const static int TRANSFER = 10;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
 	std::vector<Unit*> tradeUnits;
+	std::vector<Unit*> rescueUnits;
+	std::vector<Unit*> transferUnits;
+
+	std::vector<glm::ivec2> dropPositions;
 
 	bool canAttack = false;
 	bool canDismount = false;
 	bool canMount = false;
 	bool canTrade = false;
 	bool canCapture = false;
+	bool canRescue = false;
+	bool canTransfer = false;
+
 	bool heldFriendly = false;
 	bool heldEnemy = false;
 };
@@ -171,6 +180,45 @@ struct SelectTradeUnit : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<Unit*> tradeUnits;
+	SpriteRenderer* renderer;
+};
+
+struct SelectRescueUnit : public Menu
+{
+	SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	std::vector<Unit*> rescueUnits;
+	SpriteRenderer* renderer;
+};
+
+struct SelectTransferUnit : public Menu
+{
+	SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	std::vector<Unit*> transferUnits;
+	SpriteRenderer* renderer;
+};
+
+struct DropMenu : public Menu
+{
+	DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<glm::ivec2>& positions, SpriteRenderer* Renderer);
+
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	std::vector<glm::ivec2>& positions;
 	SpriteRenderer* renderer;
 };
 

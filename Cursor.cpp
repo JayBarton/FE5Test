@@ -251,6 +251,32 @@ std::vector<Unit*> Cursor::tradeRangeUnits()
 	return units;
 }
 
+std::vector<glm::ivec2> Cursor::getDropPositions()
+{
+	std::vector < glm::ivec2 > dropPositions;
+	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
+
+	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
+	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
+	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
+	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
+	FindDropPosition(up, dropPositions);
+	FindDropPosition(down, dropPositions);
+	FindDropPosition(left, dropPositions);
+	FindDropPosition(right, dropPositions);
+	return dropPositions;
+}
+
+void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dropPositions)
+{
+	if (!TileManager::tileManager.outOfBounds(position.x, position.y) && 
+		!TileManager::tileManager.getUnit(position.x, position.y) && 
+		TileManager::tileManager.getTile(position.x, position.y)->properties.movementCost < 20)
+	{
+		dropPositions.push_back(position);
+	}
+}
+
 void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
 {
 	//This is how I'm resolving the above described bug. Not great but it works.

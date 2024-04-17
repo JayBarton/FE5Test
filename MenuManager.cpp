@@ -145,8 +145,13 @@ void UnitOptionsMenu::SelectOption()
 		break;
 	}
 	case DROP:
+	{
+		Menu* newMenu = new DropMenu(cursor, text, camera, shapeVAO, dropPositions, MenuManager::menuManager.renderer);
+		MenuManager::menuManager.menus.push_back(newMenu);
+	}
 		break;
 	case RELEASE:
+	{
 		playerUnit->carriedUnit->isDead = true;
 		playerUnit->carriedUnit = nullptr;
 		if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
@@ -161,8 +166,20 @@ void UnitOptionsMenu::SelectOption()
 		playerUnit->carryingMalus = 1;
 		heldEnemy = false;
 		ClearMenu();
-
 		break;
+	}
+	case RESCUE:
+	{
+		Menu* newMenu = new SelectRescueUnit(cursor, text, camera, shapeVAO, rescueUnits, MenuManager::menuManager.renderer);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		break;
+	}
+	case TRANSFER:
+	{
+		Menu* newMenu = new SelectTransferUnit(cursor, text, camera, shapeVAO, transferUnits, MenuManager::menuManager.renderer);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		break;
+	}
 	case TRADE:
 	{
 		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, tradeUnits, MenuManager::menuManager.renderer);
@@ -244,11 +261,6 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Attack", xText, yOffset, 1);
 		yOffset += 30;
 	}
-	if (canCapture)
-	{
-		text->RenderText("Capture", xText, yOffset, 1);
-		yOffset += 30;
-	}
 	if (heldFriendly)
 	{
 		text->RenderText("Drop", xText, yOffset, 1);
@@ -259,14 +271,32 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Release", xText, yOffset, 1);
 		yOffset += 30;
 	}
-	if (canTrade)
+	else
 	{
-		text->RenderText("Trade", xText, yOffset, 1);
+		if (canCapture)
+		{
+			text->RenderText("Capture", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		if (canRescue)
+		{
+			text->RenderText("Rescue", xText, yOffset, 1);
+			yOffset += 30;
+		}
+	}
+	if (canTransfer)
+	{
+		text->RenderText("Transfer", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	commands += "Items\n";
 	text->RenderText("Items", xText, yOffset, 1);
 	yOffset += 30;
+	if (canTrade)
+	{
+		text->RenderText("Trade", xText, yOffset, 1);
+		yOffset += 30;
+	}
 	if (canDismount)
 	{
 		commands += "Dismount\n";
@@ -292,6 +322,7 @@ void UnitOptionsMenu::GetOptions()
 	canDismount = false;
 	heldFriendly = false;
 	heldEnemy = false;
+	canTransfer = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
 	auto playerUnit = cursor->selectedUnit;
@@ -329,8 +360,12 @@ void UnitOptionsMenu::GetOptions()
 	{
 		if (playerUnit->carriedUnit->team == playerUnit->team)
 		{
-			optionsVector.push_back(DROP);
-			heldFriendly = true;
+			dropPositions = cursor->getDropPositions();
+			if (dropPositions.size() > 0)
+			{
+				optionsVector.push_back(DROP);
+				heldFriendly = true;
+			}
 		}
 		else
 		{
@@ -338,13 +373,55 @@ void UnitOptionsMenu::GetOptions()
 			heldEnemy = true;
 		}
 	}
+	optionsVector.push_back(ITEMS);
 	tradeUnits = cursor->tradeRangeUnits();
 	if (tradeUnits.size() > 0)
 	{
 		canTrade = true;
 		optionsVector.push_back(TRADE);
+		transferUnits.reserve(tradeUnits.size());
+		if (!playerUnit->carriedUnit)
+		{
+			rescueUnits.reserve(tradeUnits.size());
+			for (int i = 0; i < tradeUnits.size(); i++)
+			{
+				auto currentUnit = tradeUnits[i];
+				if (!currentUnit->isCarried)
+				{
+					if (!currentUnit->isMounted() && currentUnit->getBuild() < 20 && !currentUnit->carriedUnit)
+					{
+						float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
+						distance /= TileManager::TILE_SIZE;
+						if (currentUnit->getBuild() < playerUnit->getBuild())
+						{
+							rescueUnits.push_back(currentUnit);
+						}
+					}
+					else if (currentUnit->carriedUnit)
+					{
+						if (currentUnit->carriedUnit->getBuild() < playerUnit->getBuild())
+						{
+							transferUnits.push_back(currentUnit);
+						}
+					}
+				}
+			}
+			if (rescueUnits.size() > 0)
+			{
+				canRescue = true;
+				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, RESCUE);
+			}
+			if (transferUnits.size() > 0)
+			{
+				canTransfer = true;
+				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, TRANSFER);
+			}
+		}
+		else
+		{
+
+		}
 	}
-	optionsVector.push_back(ITEMS);
 	//if can dismount
 	if (playerUnit->mount)
 	{
@@ -1145,7 +1222,7 @@ void SelectTradeUnit::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = numberOfOptions - 1;
 		}
 	}
-	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
 		currentOption++;
 		if (currentOption >= numberOfOptions)
@@ -1725,5 +1802,271 @@ void ExtraMenu::SelectOption()
 		MenuManager::menuManager.subject.notify(0);
 		ClearMenu();
 		break;
+	}
+}
+
+SelectRescueUnit::SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) 
+	: Menu(Cursor, Text, camera, shapeVAO)
+{
+	renderer = Renderer;
+	rescueUnits = units;
+	GetOptions();
+}
+
+void SelectRescueUnit::Draw()
+{
+	auto rescueUnit = rescueUnits[currentOption];
+	int boxHeight = 98;
+
+	auto targetPosition = rescueUnit->sprite.getPosition();
+	int xText = 536;
+	int xIndicator = 169;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		xText = 32;
+		xIndicator = 7;
+	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+
+	int textHeight = 100;
+	text->RenderText(rescueUnit->name, xText, textHeight, 1);
+	textHeight += 30;
+	text->RenderText(rescueUnit->unitClass, xText, textHeight, 1);
+	textHeight += 30;
+	if (auto weapon = rescueUnit->GetEquippedItem())
+	{
+		text->RenderText(weapon->name, xText, textHeight, 1);
+	}
+	textHeight += 30;
+	text->RenderText(intToString(rescueUnit->level), xText + 40, textHeight, 1);
+	textHeight += 30;
+	text->RenderText("HP" + intToString(rescueUnit->maxHP) + "/" + intToString(rescueUnit->currentHP), xText, textHeight, 1);
+//	text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 100, textHeight, 1, 14);
+
+}
+
+void SelectRescueUnit::SelectOption()
+{
+	auto rescuedUnit = rescueUnits[currentOption];
+	auto playerUnit = cursor->selectedUnit;
+	playerUnit->carriedUnit = rescuedUnit;
+	rescuedUnit->isCarried = true;
+	TileManager::tileManager.removeUnit(rescuedUnit->sprite.getPosition().x, rescuedUnit->sprite.getPosition().y);
+	if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
+	{
+		cursor->GetRemainingMove();
+		MenuManager::menuManager.mustWait = true;
+	}
+	else
+	{
+		cursor->Wait();
+	}
+	playerUnit->carryingMalus = 2;
+	ClearMenu();
+}
+
+void SelectRescueUnit::GetOptions()
+{
+	numberOfOptions = rescueUnits.size();
+}
+
+void SelectRescueUnit::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+}
+
+DropMenu::DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<glm::ivec2>& positions, SpriteRenderer* Renderer) : 
+	Menu(Cursor, Text, camera, shapeVAO), positions(positions)
+{
+	renderer = Renderer;
+	GetOptions();
+}
+
+void DropMenu::Draw()
+{
+	auto targetPosition = positions[currentOption];
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+}
+
+void DropMenu::SelectOption()
+{
+	auto playerUnit = cursor->selectedUnit;
+	auto heldUnit = playerUnit->carriedUnit;
+	heldUnit->placeUnit(positions[currentOption].x, positions[currentOption].y);
+	heldUnit->isCarried = false;
+	playerUnit->carriedUnit = nullptr;
+	if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
+	{
+		cursor->GetRemainingMove();
+		MenuManager::menuManager.mustWait = true;
+	}
+	else
+	{
+		cursor->Wait();
+	}
+	playerUnit->carryingMalus = 1;
+	ClearMenu();
+}
+
+void DropMenu::GetOptions()
+{
+	numberOfOptions = positions.size();
+}
+
+void DropMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+}
+
+SelectTransferUnit::SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, camera, shapeVAO)
+{
+	renderer = Renderer;
+	transferUnits = units;
+	GetOptions();
+}
+
+void SelectTransferUnit::Draw()
+{
+	auto transferUnit = transferUnits[currentOption];
+	int boxHeight = 98;
+
+	auto targetPosition = transferUnit->sprite.getPosition();
+	int xText = 536;
+	int xIndicator = 169;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		xText = 32;
+		xIndicator = 7;
+	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+
+	int textHeight = 100;
+	text->RenderText(transferUnit->name, xText, textHeight, 1);
+	textHeight += 30;
+	text->RenderText(transferUnit->unitClass, xText, textHeight, 1);
+	textHeight += 30;
+	if (auto weapon = transferUnit->GetEquippedItem())
+	{
+		text->RenderText(weapon->name, xText, textHeight, 1);
+	}
+	textHeight += 30;
+	text->RenderText(intToString(transferUnit->level), xText + 40, textHeight, 1);
+	textHeight += 30;
+	text->RenderText("HP" + intToString(transferUnit->maxHP) + "/" + intToString(transferUnit->currentHP), xText, textHeight, 1);
+	//	text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 100, textHeight, 1, 14);
+}
+
+void SelectTransferUnit::SelectOption()
+{
+	auto transferUnit = transferUnits[currentOption];
+	auto heldUnit = transferUnit->carriedUnit;
+	auto playerUnit = cursor->selectedUnit;
+	playerUnit->carriedUnit = heldUnit;
+	transferUnit->carriedUnit = nullptr;
+
+	transferUnit->carryingMalus = 1;
+	playerUnit->carryingMalus = 2;
+	Menu::CancelOption();
+	MenuManager::menuManager.menus.back()->GetOptions();
+	MenuManager::menuManager.mustWait = true;
+}
+
+void SelectTransferUnit::GetOptions()
+{
+	numberOfOptions = transferUnits.size();
+}
+
+void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
 	}
 }
