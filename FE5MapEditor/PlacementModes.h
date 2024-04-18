@@ -26,6 +26,7 @@ struct Object
     bool bossBonus = false;
     bool sprite = true;
     int activationType = 0;
+    int sceneID = -1;
 
     std::vector<int> stats;
     std::vector<int> profs;
@@ -148,13 +149,13 @@ struct EnemyMode : public EditMode
 
     void leftClick(int x, int y);
 
-    void placeEnemy(int level, int growthRateID, const std::vector<int>& inventory, std::vector<int>& stats, bool editedStats, std::vector<int>& profs, bool editedProfs, int attackActivation, bool stationary, bool bossBonus)
+    void placeEnemy(int level, int growthRateID, const std::vector<int>& inventory, std::vector<int>& stats, bool editedStats, std::vector<int>& profs, bool editedProfs, int attackActivation, bool stationary, bool bossBonus, int sceneID)
     {
-        updateEnemy(level, growthRateID, inventory, dObject->type, stats, editedStats, profs, editedProfs, attackActivation, stationary, bossBonus);
+        updateEnemy(level, growthRateID, inventory, dObject->type, stats, editedStats, profs, editedProfs, attackActivation, stationary, bossBonus, sceneID);
         numberOfEnemies++;
     }
 
-    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type, std::vector<int>& stats, bool editedStats, std::vector<int>& profs, bool editedProfs, int attackActivation, bool stationary, bool bossBonus)
+    void updateEnemy(int level, int growthRateID, const std::vector<int>& inventory, int type, std::vector<int>& stats, bool editedStats, std::vector<int>& profs, bool editedProfs, int attackActivation, bool stationary, bool bossBonus, int sceneID)
     {
         glm::vec2 startPosition = dObject->position;
         dObject->type = type;
@@ -168,6 +169,7 @@ struct EnemyMode : public EditMode
         dObject->activationType = attackActivation;
         dObject->stationary = stationary;
         dObject->bossBonus = bossBonus;
+        dObject->sceneID = sceneID;
         objects[startPosition] = *dObject;
         std::stringstream objectStream;
         objectStream << type << " " << startPosition.x << " " << startPosition.y << " " << level << " " << growthRateID << " " << inventory.size();
@@ -192,6 +194,8 @@ struct EnemyMode : public EditMode
             }
         }
         objectStream << " " << attackActivation << " " << stationary << " " << bossBonus;
+
+        objectStream << " " << sceneID;
         objectWriteTypes[startPosition] = 1; //not sure which of these I'm using
 
         objectStrings[startPosition] = objectStream.str();

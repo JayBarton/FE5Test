@@ -122,7 +122,7 @@ bool loading = true; //not great but it works
 std::vector<std::string> classNames;
 
 
-std::vector<SceneObjects> sceneObjects;
+std::vector<SceneObjects*> sceneObjects;
 
 int main(int argc, char** argv)
 {
@@ -429,7 +429,10 @@ int main(int argc, char** argv)
         fps = fpsLimiter.end();
     }
 
-
+    for (int i = 0; i < sceneObjects.size(); i++)
+    {
+        delete sceneObjects[i];
+    }
     delete Renderer;
     delete Text;
     delete editMode;
@@ -574,6 +577,8 @@ bool loadMap()
 
                 map >> tObject.activationType >> tObject.stationary >> tObject.bossBonus;
 
+                map >> tObject.sceneID;
+
                 std::stringstream stream;
                 stream << type << " " << position.x << " " << position.y << " " << level << " " << growthID << " " << inventorySize;
                 for (int i = 0; i < inventorySize; i++)
@@ -597,6 +602,8 @@ bool loadMap()
                     }
                 }
                 stream << " " << tObject.activationType << " " << tObject.stationary << " " << tObject.bossBonus;
+
+                stream << " " << tObject.sceneID;
 
                 objects[position] = tObject;
                 objectWriteTypes[position] = ENEMY_WRITE;
@@ -629,8 +636,9 @@ bool loadMap()
             {
                 int numberOfActions = 0;
                 map >> numberOfActions;
-                auto& currentObject = sceneObjects[i];
-                currentObject.actions.resize(numberOfActions);
+                sceneObjects[i] = new SceneObjects;
+                auto currentObject = sceneObjects[i];
+                currentObject->actions.resize(numberOfActions);
                 for (int c = 0; c < numberOfActions; c++)
                 {
                     int actionType = 0;
@@ -639,7 +647,7 @@ bool loadMap()
                     {
                         glm::vec2 position;
                         map >> position.x >> position.y;
-                        currentObject.actions[c] = new CameraMove(actionType, position);
+                        currentObject->actions[c] = new CameraMove(actionType, position);
                     }
                     else if (actionType == NEW_UNIT_ACTION)
                     {
@@ -647,20 +655,20 @@ bool loadMap()
                         glm::vec2 start;
                         glm::vec2 end;
                         map >> unitID >> start.x >> start.y >> end.x >> end.y;
-                        currentObject.actions[c] = new AddUnit(actionType, unitID, start, end);
+                        currentObject->actions[c] = new AddUnit(actionType, unitID, start, end);
                     }
                     else if (actionType == MOVE_UNIT_ACTION)
                     {
                         int unitID;
                         glm::vec2 end;
                         map >> unitID >> end.x >> end.y;
-                        currentObject.actions[c] = new UnitMove(actionType, unitID, end);
+                        currentObject->actions[c] = new UnitMove(actionType, unitID, end);
                     }
                     else if (actionType == DIALOGUE_ACTION)
                     {
                         int dialogueID;
                         map >> dialogueID;
-                        currentObject.actions[c] = new DialogueAction(actionType, dialogueID);
+                        currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
                     }
                 }
                 int activationType = 0;
@@ -669,7 +677,7 @@ bool loadMap()
                 {
                     int round = 0;
                     map >> round;
-                    currentObject.activation = new EnemyTurnEnd(activationType, round);
+                    currentObject->activation = new EnemyTurnEnd(activationType, round);
                 }
             }
         }
@@ -712,11 +720,11 @@ void saveMap()
     scenes += stream3.str();
     for (int i = 0; i < sceneObjects.size(); i++)
     {
-        auto& currentObject = sceneObjects[i];
-        scenes += "\n" + intToString(currentObject.actions.size()) + " ";
-        for (int c = 0; c < currentObject.actions.size(); c++)
+        auto currentObject = sceneObjects[i];
+        scenes += "\n" + intToString(currentObject->actions.size()) + " ";
+        for (int c = 0; c < currentObject->actions.size(); c++)
         {
-            auto currentAction = currentObject.actions[c];
+            auto currentAction = currentObject->actions[c];
             scenes += intToString(currentAction->type) + " ";
             if (currentAction->type == CAMERA_ACTION)
             {
@@ -739,10 +747,10 @@ void saveMap()
                 scenes += intToString(action->ID) + " ";
             }
         }
-        scenes += intToString(currentObject.activation->type) + " ";
-        if (currentObject.activation->type == 1)
+        scenes += intToString(currentObject->activation->type) + " ";
+        if (currentObject->activation->type == 1)
         {
-            auto activation = static_cast<EnemyTurnEnd*>(currentObject.activation);
+            auto activation = static_cast<EnemyTurnEnd*>(currentObject->activation);
             scenes += intToString(activation->round) + " ";
         }
     }

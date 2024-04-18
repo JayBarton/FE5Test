@@ -68,7 +68,7 @@ struct MenuManager
     void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
     void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
     void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
-    void OpenSceneMenu(std::vector<SceneObjects>& sceneObjects);
+    void OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects);
     void OpenActionMenu(SceneObjects& sceneObject);
     void OpenActivationMenu(SceneObjects& sceneObject);
     void SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions);
@@ -128,6 +128,7 @@ struct EnemyMenu : public Menu
     bool bossBonus = false;
     //Could be an enum if I come up with other requirements
     int activationType = 0;
+    int sceneID = -1;
 
     std::string growthNames[6];
     std::string className;
@@ -172,11 +173,11 @@ struct ProfsMenu : public Menu
 
 struct SceneMenu : public Menu
 {
-    SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects>& sceneObjects);
+    SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects*>& sceneObjects);
     virtual void Draw() override;
     virtual void SelectOption() override;
 
-    std::vector<SceneObjects>& sceneObjects;
+    std::vector<SceneObjects*>& sceneObjects;
 };
 
 struct SceneActionMenu : public Menu

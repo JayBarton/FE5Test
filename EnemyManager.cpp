@@ -442,6 +442,8 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         
         map >> enemies[i]->activationType >> enemies[i]->stationary >> enemies[i]->boss;
 
+        map >> enemies[i]->sceneID;
+
         for (int c = 0; c < inventorySize; c++)
         {
             enemies[i]->addItem(inventory[c]);
@@ -1102,12 +1104,14 @@ void EnemyManager::EndTurn()
 
 }
 
-void EnemyManager::RemoveDeadUnits()
+void EnemyManager::RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits)
 {
     for (int i = 0; i < enemies.size(); i++)
     {
         if (enemies[i]->isDead)
         {
+            sceneUnits.erase(enemies[i]->sceneID);
+            delete enemies[i];
             enemies.erase(enemies.begin() + i);
             i--;
         }

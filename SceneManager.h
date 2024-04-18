@@ -25,10 +25,13 @@ struct Scene
 
 	bool playingScene = false;
 	int actionIndex = 0;
+	int ID = 0;
 	std::vector<SceneAction*> actions;
 	PathFinder pathFinder;
 	SceneState state = WAITING;
 	Unit* activeUnit = nullptr;
+	//Not crazy about this. Need some way of telling the scene manager what scene is playing
+	class SceneManager* owner = nullptr;
 
 	TextObject testText;
 	TextObject testText2;
@@ -40,7 +43,7 @@ struct Scene
 	void extraSetup(Subject<int>* subject);
 	void init();
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
-	void Update(float deltaTime, class PlayerManager* playerManager, Camera& camera, class InputManager& inputManager);
+	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, class InputManager& inputManager);
 
 	void ClearActions();
 };

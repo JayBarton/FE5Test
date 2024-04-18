@@ -30,18 +30,18 @@ void Scene::init()
 	testText2.charsPerLine = 55;
 	testText2.nextIndex = 55;
 	testText2.displayedPosition = testText2.position;
+	owner->currentScene = ID;
 }
 
 void Scene::extraSetup(Subject<int>* subject)
 {
-	auto type = new EnemyTurnEnd(this, 1, 2);
+	auto type = static_cast<EnemyTurnEnd*>(activation);
 	type->roundEvents->enemyTurnEnd = type;
 	type->subject = subject;
 	subject->addObserver(type->roundEvents);
-	activation = type;
 }
 
-void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera, InputManager& inputManager)
+void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, InputManager& inputManager)
 {
 	if (state!= WAITING)
 	{
@@ -61,7 +61,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 		case UNIT_MOVE:
 			if (activeUnit->movementComponent.moving)
 			{
-				//	activeUnit->UpdateMovement(deltaTime, inputManager);
+				activeUnit->UpdateMovement(deltaTime, inputManager);
 			}
 			else
 			{
@@ -107,7 +107,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 		case MOVE_UNIT_ACTION:
 		{
 			auto action = static_cast<UnitMove*>(currentAction);
-			for (int i = 0; i < playerManager->playerUnits.size(); i++)
+		/*	for (int i = 0; i < playerManager->playerUnits.size(); i++)
 			{
 				auto thisUnit = playerManager->playerUnits[i];
 				if (thisUnit->sceneID == action->unitID)
@@ -115,7 +115,8 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 					activeUnit = thisUnit;
 					break;
 				}
-			}
+			}*/
+			activeUnit = sceneUnits[action->unitID];
 			auto position = activeUnit->sprite.getPosition();
 			TileManager::tileManager.removeUnit(position.x, position.y);
 			auto path = pathFinder.findPath(position, action->end, 99);
@@ -135,10 +136,10 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 				if (ID == action->ID)
 				{
 					auto dialogues = text["dialogue"];
-					Unit* speaker = nullptr;
 					for (const auto& dialogue : dialogues)
 					{
-						for (int i = 0; i < playerManager->playerUnits.size(); i++)
+						Unit* speaker = sceneUnits[dialogue["speaker"]];
+						/*for (int i = 0; i < playerManager->playerUnits.size(); i++)
 						{
 							auto thisUnit = playerManager->playerUnits[i];
 							if (thisUnit->sceneID == dialogue["speaker"])
@@ -146,7 +147,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 								speaker = thisUnit;
 								break;
 							}
-						}
+						}*/
 						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"]});
 					}
 					break;

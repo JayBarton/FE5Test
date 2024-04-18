@@ -84,6 +84,8 @@ EnemyManager enemyManager;
 
 InfoDisplays displays;
 
+std::unordered_map<int, Unit*> sceneUnits;
+
 float unitSpeed = 2.5f;
 
 int currentRound = 0;
@@ -109,11 +111,13 @@ struct TurnEvents : public Observer<int>
 		{
 			if (playerManager.playerUnits[i]->isDead)
 			{
+				sceneUnits.erase(playerManager.playerUnits[i]->sceneID);
+				delete playerManager.playerUnits[i];
 				playerManager.playerUnits.erase(playerManager.playerUnits.begin() + i);
 				i--;
 			}
 		}
-		enemyManager.RemoveDeadUnits();
+		enemyManager.RemoveDeadUnits(sceneUnits);
 		if (ID == 0)
 		{
 			cursor.focusedUnit = nullptr;
@@ -262,8 +266,7 @@ int main(int argc, char** argv)
 
 	camera.setPosition(glm::vec2(0.0f, 0.0f));
 	camera.update();
-	Scene scene;
-	sceneManager.scenes.push_back(&scene);
+
 	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
@@ -307,7 +310,7 @@ int main(int argc, char** argv)
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	displays.subject.addObserver(postBattleEvents);
-	playerManager.init(&gen, &distribution, unitEvents);
+	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 
 	loadMap("2.map", unitEvents);
 
@@ -380,7 +383,7 @@ int main(int argc, char** argv)
 			}
 			if (sceneManager.scenes[sceneManager.currentScene]->playingScene)
 			{
-				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, camera, inputManager);
+				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager);
 			}
 			else if (displays.state != NONE)
 			{
@@ -490,8 +493,13 @@ int main(int argc, char** argv)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 		}
-		playerManager.Update(deltaTime, inputManager);
-
+		//This check is just for how I'm handling moving in scenes for now, it NEEDS to go later
+		//What I would like is for the movement update to be handled individually, as it is with the enemy manager
+		//These two update functions are basically just going to handle animations
+		if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
+		{
+			playerManager.Update(deltaTime, inputManager);
+		}
 		if (!camera.moving)
 		{
 			enemyManager.UpdateEnemies(deltaTime);
@@ -508,6 +516,10 @@ int main(int argc, char** argv)
 	delete Text;
 	enemyManager.Clear();
 	playerManager.Clear();
+	for (int i = 0; i < sceneManager.scenes.size(); i++)
+	{
+		delete sceneManager.scenes[i];
+	}
 	/*for (int i = 0; i < soundEffects.size(); i++)
 	{
 		for (int c = 0; c < soundEffects[i].size(); c++)
@@ -614,6 +626,15 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		else if (thing == "Enemies")
 		{
 			enemyManager.SetUp(map, &gen, &distribution, &playerManager.playerUnits);
+			//proof of concept
+			for (int i = 0; i < enemyManager.enemies.size(); i++)
+			{
+				auto unit = enemyManager.enemies[i];
+				if (unit->sceneID >= 0)
+				{
+					sceneUnits[unit->sceneID] = unit;
+				}
+			}
 		}
 		else if (thing == "Starts")
 		{
@@ -623,12 +644,15 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		{
 			int numberOfScenes = 0;
 			map >> numberOfScenes;
-		//	sceneObjects.resize(numberOfScenes);
-		//	for (int i = 0; i < numberOfScenes; i++)
+			sceneManager.scenes.resize(numberOfScenes);
+			for (int i = 0; i < numberOfScenes; i++)
 			{
 				int numberOfActions = 0;
 				map >> numberOfActions;
-				auto& currentObject = sceneManager.scenes[0];
+				sceneManager.scenes[i] = new Scene();
+				auto currentObject = sceneManager.scenes[i];
+				currentObject->ID = i;
+				currentObject->owner = &sceneManager;
 				currentObject->actions.resize(numberOfActions);
 				for (int c = 0; c < numberOfActions; c++)
 				{
@@ -675,6 +699,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 
 	sceneManager.scenes[sceneManager.currentScene]->extraSetup(&roundSubject);
+	sceneManager.scenes[1]->extraSetup(&roundSubject);
 
 	map.close();
 

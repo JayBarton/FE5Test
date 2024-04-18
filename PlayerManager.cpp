@@ -9,13 +9,13 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents)
+void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents, std::unordered_map<int, Unit*>* sceneUnits)
 {
 	playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
 	this->gen = gen;
 	this->distribution = distribution;
 	this->unitEvents = unitEvents;
-
+	this->sceneUnits = sceneUnits;
 	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
 	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
 	weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
@@ -83,6 +83,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			Unit* newUnit = new Unit(unitClass, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
 			newUnit->sceneID = ID;
 			newUnit->level = stats["Level"];
+			(*sceneUnits)[newUnit->sceneID] = newUnit;
 
 			json growths = unit["GrowthRates"];
 			HP = growths["HP"];

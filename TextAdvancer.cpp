@@ -28,7 +28,7 @@ void TextObjectManager::init()
 	currentLine = 0;
 	textObjects[focusedObject].text = textLines[currentLine].text;
 	//Proof of concept. Should be error checking here probably
-	textLines[currentLine].speaker->sprite.color.g = 0;
+	textLines[currentLine].speaker->sprite.color.r = 0;
 	active = false;
 }
 
@@ -44,12 +44,12 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 			{
 				active = false;
 				waitingOnInput = false;
-				textLines[currentLine].speaker->sprite.color.g = 1;
+				textLines[currentLine].speaker->sprite.color.r = 1;
 
 			}
 			else
 			{
-				textLines[currentLine].speaker->sprite.color.g = 1;
+				textLines[currentLine].speaker->sprite.color.r = 1;
 				currentLine++;
 				if (currentLine < textLines.size())
 				{
@@ -60,7 +60,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 						textObjects[focusedObject].displayedPosition = textObjects[focusedObject].position;
 					}
 					textObjects[focusedObject].text = textLines[currentLine].text;
-					textLines[currentLine].speaker->sprite.color.g = 0;
+					textLines[currentLine].speaker->sprite.color.r = 0;
 					textObjects[focusedObject].index = 0;
 				}
 				waitingOnInput = false;

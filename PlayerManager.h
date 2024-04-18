@@ -11,8 +11,9 @@ struct PlayerManager
 	std::mt19937* gen;
 	std::uniform_int_distribution<int>* distribution;
 	Observer<class Unit*>* unitEvents;
+	std::unordered_map<int, Unit*>* sceneUnits;
 
-	void init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents);
+	void init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents, std::unordered_map<int, Unit*>* sceneUnits);
 	void Update(float deltaTime, class InputManager& inputManager);
 
 	void LoadUnits(std::ifstream& map);

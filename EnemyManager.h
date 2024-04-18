@@ -83,7 +83,7 @@ struct EnemyManager
 	void FinishMove();
 	void UpdateEnemies(float deltaTime);
 	void EndTurn();
-	void RemoveDeadUnits();
+	void RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits);
 	void Clear();
 	Unit* GetCurrentUnit();
 	std::vector<Unit*> GetOtherUnits(Unit* enemy);

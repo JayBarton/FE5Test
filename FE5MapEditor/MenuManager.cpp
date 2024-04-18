@@ -93,7 +93,7 @@ void MenuManager::AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& w
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
-void MenuManager::OpenSceneMenu(std::vector<SceneObjects>& sceneObjects)
+void MenuManager::OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects)
 {
 	Menu* newMenu = new SceneMenu(text, camera, shapeVAO, sceneObjects);
 	MenuManager::menuManager.menus.push_back(newMenu);
@@ -202,6 +202,7 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 		activationType = object->activationType;
 		stationary = object->stationary;
 		bossBonus = object->bossBonus;
+		sceneID = object->sceneID;
 	}
 	else
 	{
@@ -334,6 +335,8 @@ void EnemyMenu::Draw()
 				text->RenderText(item.name, 500, 230 + 30 * i + 1, 1);
 			}
 		}
+		text->RenderText("sceneID: " + intToString(sceneID), 200, 550, 1);
+
 	}
 	else if (page == 1)
 	{
@@ -423,11 +426,11 @@ void EnemyMenu::SelectOption()
 {
 	if (object)
 	{
-		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats, weaponProficiencies, editedProfs, activationType, stationary, bossBonus);
+		mode->updateEnemy(level, growthRateID, inventory, object->type, baseStats, editedStats, weaponProficiencies, editedProfs, activationType, stationary, bossBonus, sceneID);
 	}
 	else
 	{
-		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats, weaponProficiencies, editedProfs, activationType, stationary, bossBonus);
+		mode->placeEnemy(level, growthRateID, inventory, baseStats, editedStats, weaponProficiencies, editedProfs, activationType, stationary, bossBonus, sceneID);
 	}
 	CancelOption();
 }
@@ -454,7 +457,7 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 
 	}
-	if (inputManager.isKeyPressed(SDLK_DOWN))
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
 		if (page == 0)
 		{
@@ -544,6 +547,15 @@ void EnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			page = 0;
 		}
 		currentOption = 0;
+	}
+	//Just putting this here for now because I'm lazy, need a better way of handling this ultimately
+	else if (inputManager.isKeyPressed(SDLK_w))
+	{
+		sceneID++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		sceneID--;
 	}
 }
 
@@ -834,7 +846,7 @@ void ProfsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-SceneMenu::SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects>& sceneObjects) : Menu(Text, camera, shapeVAO), sceneObjects(sceneObjects)
+SceneMenu::SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects*>& sceneObjects) : Menu(Text, camera, shapeVAO), sceneObjects(sceneObjects)
 {
 	numberOfOptions = sceneObjects.size() + 1;
 }
@@ -866,13 +878,13 @@ void SceneMenu::SelectOption()
 {
 	if (currentOption == sceneObjects.size())
 	{
-		SceneObjects newObject;
+		SceneObjects* newObject = new SceneObjects;
 		sceneObjects.push_back(newObject);
 		numberOfOptions++;
 	}
 	else
 	{
-		MenuManager::menuManager.OpenActionMenu(sceneObjects[currentOption]);
+		MenuManager::menuManager.OpenActionMenu(*sceneObjects[currentOption]);
 	}
 }
 
@@ -959,7 +971,11 @@ void SceneActionMenu::Draw()
 	std::string activationModeString = "Activation Mode: ";
 	if (sceneObject.activation)
 	{
-		activationModeString += "Enemy turn end: " + intToString(2);
+		if (sceneObject.activation->type == 1)
+		{
+			auto activation = static_cast<EnemyTurnEnd*>(sceneObject.activation);
+			activationModeString += "Enemy turn end: " + intToString(activation->round);
+		}
 	}
 	text->RenderText(activationModeString, 400, 100, 1);
 }
@@ -1325,10 +1341,12 @@ void MoveUnitActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		move.x = -1;
 	}
 	//Want to be able to display the unit name in the future
+	//Not really sure how to handle this, since I need to account for any potential unit on any team
+	//A lot of this is rough manually setting, which is annoying
 	if (inputManager.isKeyPressed(SDLK_w))
 	{
 		unitID++;
-		if (unitID > 7)
+		if (unitID > 99)
 		{
 			unitID = 0;
 		}
@@ -1338,7 +1356,7 @@ void MoveUnitActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		unitID--;
 		if (unitID < 0)
 		{
-			unitID = 7;
+			unitID = 99;
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_RETURN))
