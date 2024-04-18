@@ -10,10 +10,7 @@
 
 Scene::Scene()
 {
-	//Completely temporary
-	nameMap[5] = "Dagda";
-	nameMap[6] = "Tania";
-	nameMap[7] = "Marty";
+
 }
 
 Scene::~Scene()
@@ -113,7 +110,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 			for (int i = 0; i < playerManager->playerUnits.size(); i++)
 			{
 				auto thisUnit = playerManager->playerUnits[i];
-				if (thisUnit->name == nameMap[action->unitID])
+				if (thisUnit->sceneID == action->unitID)
 				{
 					activeUnit = thisUnit;
 					break;
@@ -138,9 +135,19 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, Camera& camera
 				if (ID == action->ID)
 				{
 					auto dialogues = text["dialogue"];
+					Unit* speaker = nullptr;
 					for (const auto& dialogue : dialogues)
 					{
-						textManager.textLines.push_back(SpeakerText{ dialogue["location"], dialogue["speech"]});
+						for (int i = 0; i < playerManager->playerUnits.size(); i++)
+						{
+							auto thisUnit = playerManager->playerUnits[i];
+							if (thisUnit->sceneID == dialogue["speaker"])
+							{
+								speaker = thisUnit;
+								break;
+							}
+						}
+						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"]});
 					}
 					break;
 				}

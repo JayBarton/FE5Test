@@ -43,7 +43,10 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					//Can't move to where you already are, so just treat as a movement of 0 and open options
 					if (unitCurrentPosition == position)
 					{
-						std::cout << "Unit options here\n";
+						if (selectedUnit->isMounted())
+						{
+							selectedUnit->mount->remainingMoves = selectedUnit->getMove();
+						}
 						foundTiles.clear();
 						costTile.clear();
 						attackTiles.clear();
@@ -69,6 +72,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 							attackTiles.clear();
 							costTile.clear();
 							movingUnit = true;
+							auto unitPosition = selectedUnit->sprite.getPosition();
+							TileManager::tileManager.removeUnit(unitPosition.x, unitPosition.y);
 							selectedUnit->movementComponent.startMovement(drawnPath, path[position].moveCost, remainingMove);
 						}
 					}
@@ -102,12 +107,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		{
 			if (selectedUnit)
 			{
-				if (remainingMove)
-				{
-					position = previousPosition;
-					camera.SetMove(position);
-				}
-				else
+				if (!remainingMove)
 				{
 					selectedUnit->ClearPathData();
 					focusedUnit = selectedUnit;
@@ -116,9 +116,9 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					attackTiles.clear();
 					path.clear();
 					costTile.clear();
-					position = previousPosition;
-					camera.SetMove(position);
 				}
+				position = previousPosition;
+				camera.SetMove(position);
 			}
 		}
 
@@ -279,14 +279,10 @@ void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dro
 
 void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
 {
-	//This is how I'm resolving the above described bug. Not great but it works.
-	if (unit != selectedUnit)
+	units.push_back(unit);
+	if (unit->carriedUnit)
 	{
-		units.push_back(unit);
-		if (unit->carriedUnit)
-		{
-			units.push_back(unit->carriedUnit);
-		}
+		units.push_back(unit->carriedUnit);
 	}
 }
 
@@ -383,6 +379,7 @@ void Cursor::UndoMove()
 {
 	selectedUnit->ClearPathData();
 	position = previousPosition;
+	selectedUnit->placeUnit(position.x, position.y);
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 	focusedUnit = selectedUnit;
 	selectedUnit = nullptr;

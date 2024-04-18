@@ -34,10 +34,6 @@ struct Scene
 	TextObject testText2;
 	TextObjectManager textManager;
 
-	//completely temporary, just using it to find units for right now.
-	//No idea how I will do this going forward, but definitely not with this
-	std::unordered_map<int, std::string> nameMap;
-
 	Scene();
 	~Scene();
 	//I imagine a lot of this will ne set up in the map editor, so this is temporary

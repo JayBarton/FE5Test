@@ -338,7 +338,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         int def = stats["Def"];
         int bld = stats["Bld"];
         int mov = stats["Mov"];
-        unitBases[currentUnit] = Unit(name, name, HP, str, mag, skl, spd, lck, def, bld, mov);
+        unitBases[currentUnit] = Unit(name, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
 
         json weaponProf = enemy["WeaponProf"];
         for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)

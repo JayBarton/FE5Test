@@ -101,8 +101,8 @@ struct Unit
 	const static int FLYING = 2;
 
 	Unit();
-	Unit(std::string Class, std::string Name, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
-		unitClass(Class), name(Name), maxHP(HP), strength(str), magic(mag), skill(skl), speed(spd), luck(lck), defense(def), build(bld), move(mov)
+	Unit(std::string Class, std::string Name, int ID, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
+		unitClass(Class), name(Name), ID(ID), maxHP(HP), strength(str), magic(mag), skill(skl), speed(spd), luck(lck), defense(def), build(bld), move(mov)
 	{
 		currentHP = maxHP;
 		movementType = FOOT;
@@ -115,6 +115,9 @@ struct Unit
 	//Unit properties
 	std::string name;
 	std::string unitClass; //Not really sure what I'm doing with this
+	int ID;
+	//Using this for scene actions/dialogue. This is mainly for the rare case in which a generic enemy does something in a scene
+	int sceneID = -1;
 	int maxHP;
 	int strength;
 	int magic;
