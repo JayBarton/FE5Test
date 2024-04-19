@@ -11,7 +11,7 @@
 ******************************************************************/
 
 #include "SpriteRenderer.h"
-
+#include "ResourceManager.h"
 SpriteRenderer::SpriteRenderer(Shader &shader)
 {
     this->shader = shader;
@@ -23,7 +23,7 @@ SpriteRenderer::~SpriteRenderer()
     glDeleteVertexArrays(1, &this->quadVAO);
 }
 
-void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color, float fade, bool grey)
+void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color, float fade, bool grey, int team)
 {
 	// Prepare transformations
 	this->shader.Use();
@@ -44,9 +44,13 @@ void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float ro
     this->shader.SetFloat("fadeFactor", fade);
 	// Render textured quad
 	this->shader.SetVector4f("spriteColor", color);
-
+    this->shader.SetInteger("paletteRow", team);
 	glActiveTexture(GL_TEXTURE0);
 	texture.Bind();
+
+    Texture2D texture2 = ResourceManager::GetTexture("palette");
+    glActiveTexture(GL_TEXTURE1);
+    texture2.Bind();
 
 	glBindVertexArray(this->quadVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

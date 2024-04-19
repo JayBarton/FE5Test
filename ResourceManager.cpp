@@ -41,6 +41,12 @@ Texture2D ResourceManager::LoadTexture(const GLchar *file, std::string name)
     return Textures[name];
 }
 
+Texture2D ResourceManager::LoadTexture2(const GLchar* file, std::string name)
+{
+    Textures[name] = loadTextureFromFile2(file);
+    return Textures[name];
+}
+
 Texture2D ResourceManager::GetTexture(std::string name)
 {
     return Textures[name];
@@ -150,5 +156,61 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar *file)
     texture.Generate(surface->w, surface->h, (unsigned char*)surface->pixels);
     // And finally free image data
     SDL_FreeSurface(surface);
+    return texture;
+}
+
+//Okay, the plan here is for palette swapping. The idea is I go through my sprite sheet, find the pixels that match my palette,
+//and then set the r component of this texture to the index on the palette. I can then use that index to draw the proper palette.
+//This was a massive pain in the ass which is a shame because I don't know if I'll keep it. We'll see how long it takes to run this once the
+//Sprite sheet is larger, since I imagine it will be quite large, it might be faster to just have a duplicate sprite sheet.
+Texture2D ResourceManager::loadTextureFromFile2(const GLchar* file)
+{
+    // Create Texture object
+    Texture2D texture;
+    // Load image
+    SDL_Surface* surface = IMG_Load(file);
+    SDL_Surface* paletteSurface = IMG_Load("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png");
+    if (surface == NULL)
+    {
+        printf("Unable to load image %s! SDL_image Error: %s\n", file, IMG_GetError());
+    }
+    if (surface->format->BytesPerPixel == 4)
+    {
+        texture.Internal_Format = GL_RGBA;
+        texture.Image_Format = GL_RGBA;
+    }
+    // Calculate palette index for each pixel and encode it into the pixel data
+    Uint32* palettePixels = (Uint32*)paletteSurface->pixels;
+
+    Uint32* pixels = (Uint32*)surface->pixels;
+    for (int y = 0; y < surface->h; ++y) {
+        for (int x = 0; x < surface->w; ++x) {
+            Uint32 pixel = pixels[y * surface->w + x];
+
+            Uint8 r, g, b, a;
+            SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
+
+            //What we are doing here is looping through all of our colors in the first row of our palette and matching them with
+            //The colors on our texture. When the match we write the index to the r channel
+            for (int i = 0; i < 16; ++i) 
+            {
+                Uint32 palettePixel = palettePixels[i];
+                Uint8 paletteR, paletteG, paletteB, paletteA;
+                SDL_GetRGBA(palettePixel, paletteSurface->format, &paletteR, &paletteG, &paletteB, &paletteA);
+
+                if (r == paletteR && g == paletteG && b == paletteB) {
+                    //I barely understand this. 0xFFFFFF00 means keep everything except for the r channel, set r to 0. 
+                    //The FFs correspond to ABG and the 00 to R. No idea why it's backwards. And then I think the | i is setting anything not FF'd to i.
+                    pixels[y * surface->w + x] = (pixel & 0xFFFFFF00) | i;
+                    break; 
+                }
+            }
+        }
+    }
+    // Now generate texture
+    texture.Generate(surface->w, surface->h, (unsigned char*)surface->pixels);
+    // And finally free image data
+    SDL_FreeSurface(surface);
+    SDL_FreeSurface(paletteSurface);
     return texture;
 }

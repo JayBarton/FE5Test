@@ -268,13 +268,14 @@ int main(int argc, char** argv)
 	camera.update();
 
 	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
-	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "instance");
+	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/instanceFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("sprite").Use().SetInteger("palette", 1);
 	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
 
 	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
@@ -288,7 +289,8 @@ int main(int argc, char** argv)
 
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
-	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
+	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("sprite");

@@ -3,18 +3,18 @@ in vec2 TextureCoordinates;
 out vec4 color;
 
 uniform sampler2D image;
+uniform sampler2D palette;
 uniform vec4 spriteColor;
 uniform float u_colorFactor;
 uniform float fadeFactor;
+uniform int paletteRow;
 
 void main()
 {    
-
-    vec4 sample = vec4(spriteColor) * texture(image, TextureCoordinates);
-	float grey = 0.21 * sample.r + 0.71 * sample.g + 0.07 * sample.b;
-	color = vec4(sample.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), sample.a);
-//	color = mix(color, vec4(0.5f), fadeFactor);
-//	color.a = sample.a;
-	
-	//color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    vec4 sample = spriteColor * texture(image, TextureCoordinates);
+	vec2 index = vec2(sample.r*16.0, paletteRow/4.0);
+	vec4 indexedColor = texture(palette, index);
+	indexedColor.a = sample.a;
+	float grey = 0.21 * indexedColor.r + 0.71 * indexedColor.g + 0.07 * indexedColor.b;
+	color = vec4(indexedColor.rgb * (1.0 - u_colorFactor) + (grey * u_colorFactor), indexedColor.a);
 }  
