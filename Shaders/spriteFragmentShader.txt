@@ -12,7 +12,7 @@ uniform int paletteRow;
 void main()
 {    
     vec4 sample = spriteColor * texture(image, TextureCoordinates);
-	vec2 index = vec2(sample.r*16.0, paletteRow/4.0);
+	vec2 index = vec2(sample.r, paletteRow/4.0);
 	vec4 indexedColor = texture(palette, index);
 	indexedColor.a = sample.a;
 	float grey = 0.21 * indexedColor.r + 0.71 * indexedColor.g + 0.07 * indexedColor.b;
