@@ -32,7 +32,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
         Target currentTarget;
 
         auto otherUnit = otherUnits[i];
-        auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+        auto otherWeapon = otherUnit->GetEquippedWeapon();
         currentTarget.attackPositions = ValidAdjacentPositions(otherUnit, path, enemy->minRange, enemy->maxRange);
         if (currentTarget.attackPositions.size() > 0)
         {
@@ -180,8 +180,8 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
             else if (currentTarget.priority == finalTarget.priority)
             {
                 auto previousUnit = otherUnits[finalTarget.ID];
-                auto previousWeapon = previousUnit->GetWeaponData(previousUnit->GetEquippedItem());
-                auto foeWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                auto previousWeapon = previousUnit->GetEquippedWeapon();
+                auto foeWeapon = otherUnit->GetEquippedWeapon();
                 auto previousStats = previousUnit->CalculateBattleStats();
                 previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
                 auto otherStats = otherUnit->CalculateBattleStats();
@@ -499,7 +499,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                         //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
                         //before the battle actually starts
                         auto otherStats = otherUnit->CalculateBattleStats();
-                        auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                        auto weapon = otherUnit->GetEquippedWeapon();
                         otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
                         battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
                     }
@@ -637,7 +637,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             Target currentTarget;
 
             auto otherUnit = otherUnits[i];
-            auto otherWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+            auto otherWeapon = otherUnit->GetEquippedWeapon();
             currentTarget.ID = i;
             //Next want to check how much damage this enemy can do to the other unit
             //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
@@ -696,8 +696,8 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             else if (currentTarget.priority == finalTarget.priority)
             {
                 auto previousUnit = otherUnits[finalTarget.ID];
-                auto previousWeapon = previousUnit->GetWeaponData(previousUnit->GetEquippedItem());
-                auto foeWeapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+                auto previousWeapon = previousUnit->GetEquippedWeapon();
+                auto foeWeapon = otherUnit->GetEquippedWeapon();
                 auto previousStats = previousUnit->CalculateBattleStats();
                 previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
                 auto otherStats = otherUnit->CalculateBattleStats();
@@ -730,7 +730,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             otherUnit = otherUnits[finalTarget.ID];
 
             auto otherStats = otherUnit->CalculateBattleStats();
-            auto weapon = otherUnit->GetWeaponData(otherUnit->GetEquippedItem());
+            auto weapon = otherUnit->GetEquippedWeapon();
             attackRange = finalTarget.range;
             otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
             battleStats = finalTarget.battleStats;

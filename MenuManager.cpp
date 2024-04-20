@@ -1018,7 +1018,7 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 	auto unit = cursor->selectedUnit;
 	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
 	attackDistance /= TileManager::TILE_SIZE;
-	auto enemyWeapon = enemy->GetWeaponData(enemy->GetEquippedItem());
+	auto enemyWeapon = enemy->GetEquippedWeapon();
 	enemyCanCounter = false;
 	if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
 	{
@@ -1525,7 +1525,7 @@ void UnitStatsViewMenu::Draw()
 	{
 		text->RenderTextRight(intToString(battleStats.attackDamage), 542, 64, 1, 14);
 		text->RenderTextRight(intToString(battleStats.hitAccuracy), 542, 96, 1, 14);
-		auto weapon = unit->GetWeaponData(unit->GetEquippedItem());
+		auto weapon = unit->GetEquippedWeapon();
 		if (weapon.maxRange == weapon.minRange)
 		{
 			text->RenderTextRight(intToString(weapon.maxRange), 542, 128, 1, 14);

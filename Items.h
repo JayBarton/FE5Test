@@ -46,6 +46,10 @@ struct WeaponData
 	int weight = 0;
 	bool isMagic = false;
 	bool isTome = false;
+	bool consecutive = false;
+	bool flyEffect = false;
+	bool horseEffect = false;
+	bool armorEffect = false;
 	int bonus = 0; //No idea how this is going to work
 };
 class Unit;

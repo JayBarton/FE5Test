@@ -39,8 +39,8 @@ void ItemManager::LoadItems()
 
 void ItemManager::LoadWeaponData()
 {
-	io::CSVReader<12, io::trim_chars<' '>, io::no_quote_escape<':'>> in("weapons.csv");
-	in.read_header(io::ignore_extra_column, "ID", "type", "rank", "hit", "might", "crit", "maxRange", "minRange", "weight", "isMagic", "isTome", "bonus");
+	io::CSVReader<16, io::trim_chars<' '>, io::no_quote_escape<':'>> in("weapons.csv");
+	in.read_header(io::ignore_extra_column, "ID", "type", "rank", "hit", "might", "crit", "maxRange", "minRange", "weight", "isMagic", "isTome", "bonus", "consecutive", "flyEffect", "horseEffect", "armorEffect");
 	int ID;
 	int type;
 	int rank;
@@ -53,8 +53,12 @@ void ItemManager::LoadWeaponData()
 	int isMagic;
 	int isTome;
 	int bonus;
-	while (in.read_row(ID, type, rank, hit, might, crit, maxRange, minRange, weight, isMagic, isTome, bonus)) {
-		weaponData[ID] = { type, rank, hit, might, crit, maxRange, minRange, weight, bool(isMagic), bool(isTome), bonus };
+	int consecutive;
+	int flyEffect;
+	int horseEffect;
+	int armorEffect;
+	while (in.read_row(ID, type, rank, hit, might, crit, maxRange, minRange, weight, isMagic, isTome, bonus, consecutive, flyEffect, horseEffect, armorEffect)) {
+		weaponData[ID] = { type, rank, hit, might, crit, maxRange, minRange, weight, bool(isMagic), bool(isTome), bool(consecutive), bool(flyEffect), bool(horseEffect), bool(armorEffect), bonus };
 	}
 }
 

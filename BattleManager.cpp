@@ -32,6 +32,10 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	battleQueue.reserve(3);
 
 	battleQueue.push_back(Attack{1, 0});
+	if (attacker->GetEquippedWeapon().consecutive)
+	{
+		battleQueue.push_back(Attack{ 1, 0 });
+	}
 	if (canDefenderAttack)
 	{
 		Attack defenderAttack{ 0 };
@@ -47,6 +51,10 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 					defenderAttack.wrathAttack = true;
 				}
 				battleQueue.push_back(defenderAttack);
+				if (defender->GetEquippedWeapon().consecutive)
+				{
+					battleQueue.push_back(Attack{ 0, 0 });
+				}
 			}
 			else
 			{
@@ -55,6 +63,10 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 					battleQueue[0].wrathAttack = true;
 				}
 				battleQueue.insert(battleQueue.begin(), defenderAttack);
+				if (defender->GetEquippedWeapon().consecutive)
+				{
+					battleQueue.insert(battleQueue.begin(), Attack{ 0, 0 });
+				}
 			}
 		}
 		else
@@ -64,11 +76,19 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 				defenderAttack.wrathAttack = true;
 			}
 			battleQueue.push_back(defenderAttack);
+			if (defender->GetEquippedWeapon().consecutive)
+			{
+				battleQueue.push_back(Attack{ 0, 0 });
+			}
 		}
 	}
 	if (attackerStats.attackSpeed >= defenderStats.attackSpeed + 4)
 	{
 		battleQueue.push_back(Attack{ 1, 0 });
+		if (attacker->GetEquippedWeapon().consecutive)
+		{
+			battleQueue.push_back(Attack{ 1, 0 });
+		}
 	}
 	else if (defenderStats.attackSpeed >= attackerStats.attackSpeed + 4)
 	{
@@ -76,6 +96,10 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		if (canDefenderAttack)
 		{
 			battleQueue.push_back(Attack{ 0, 0 });
+			if (defender->GetEquippedWeapon().consecutive)
+			{
+				battleQueue.push_back(Attack{ 0, 0 });
+			}
 		}
 	}
 	accostQueue = battleQueue;

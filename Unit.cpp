@@ -520,6 +520,11 @@ Item* Unit::GetEquippedItem()
     return nullptr;
 }
 
+WeaponData Unit::GetEquippedWeapon()
+{
+    return GetWeaponData(GetEquippedItem());
+}
+
 int Unit::getStrength()
 {
     return (strength + mountStr) / carryingMalus;

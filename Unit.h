@@ -229,6 +229,7 @@ struct Unit
 	void MountAction(bool on);
 
 	Item* GetEquippedItem();
+	WeaponData GetEquippedWeapon();
 
 	int getStrength();
 	int getMagic();
