@@ -304,7 +304,10 @@ std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
 
 void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits)
 {
-    UVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
+    UVs.resize(3);
+    UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
     std::vector<Unit> unitBases;
     unitBases.resize(4);
     this->playerUnits = playerUnits;
@@ -450,8 +453,8 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         }
 
         enemies[i]->placeUnit(position.x, position.y);
-        enemies[i]->sprite.uv = &UVs;
-       // enemies[i]->sprite.color = glm::vec3(1.0f, 0.0f, 0.0f);
+        enemies[i]->sprite.uv = &UVs[enemies[i]->ID];
+
     }
   //  enemies[14]->currentHP = 14;
   //  enemies[0]->move = 6;
@@ -1085,11 +1088,11 @@ void EnemyManager::FinishMove()
     state = GET_TARGET;
 }
 
-void EnemyManager::UpdateEnemies(float deltaTime)
+void EnemyManager::UpdateEnemies(float deltaTime, int idleFrame)
 {
     for (int i = 0; i < enemies.size(); i++)
     {
-        enemies[i]->Update(deltaTime);
+        enemies[i]->Update(deltaTime, idleFrame);
     }
 }
 

@@ -95,6 +95,13 @@ bool turnDisplay = false;
 //Ugh. To handle healing units on turn transition
 int turnUnit = 0;
 
+int idleFrame = 0;
+int idleAnimationDirection = 1;
+float timeForFrame = 0.0f;
+
+float testFrame = 0;
+int testwh = 0;
+
 struct UnitEvents : public Observer<Unit*>
 {
 	virtual void onNotify(Unit* lUnit)
@@ -376,6 +383,41 @@ int main(int argc, char** argv)
 			}
 		}
 
+		timeForFrame += deltaTime;
+		float animationDelay = 0.0f;
+		//animationDelay = (3 / 60.0f) * 2;
+		animationDelay = 0.27f;
+		testFrame += deltaTime;
+		if (timeForFrame >= animationDelay)
+		{
+			testwh += 1;
+			timeForFrame = 0;
+			if (idleAnimationDirection > 0)
+			{
+				if (idleFrame < 2)
+				{
+					idleFrame++;
+				}
+				else
+				{
+					idleAnimationDirection = -1;
+					idleFrame--;
+				}
+			}
+			else
+			{
+				if (idleFrame > 0)
+				{
+					idleFrame--;
+				}
+				else
+				{
+					idleAnimationDirection = 1;
+					idleFrame++;
+				}
+			}
+		}
+
 		if (MenuManager::menuManager.menus.size() == 0)
 		{
 			if (inputManager.isKeyPressed(SDLK_BACKSPACE))
@@ -500,11 +542,11 @@ int main(int argc, char** argv)
 		//These two update functions are basically just going to handle animations
 		if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
 		{
-			playerManager.Update(deltaTime, inputManager);
+			playerManager.Update(deltaTime, idleFrame, inputManager);
 		}
 		if (!camera.moving)
 		{
-			enemyManager.UpdateEnemies(deltaTime);
+			enemyManager.UpdateEnemies(deltaTime, idleFrame);
 		}
 		camera.update();
 

@@ -60,7 +60,7 @@ struct EnemyManager
 
 	ActionState state = GET_TARGET;
 
-	std::vector<glm::vec4> UVs;
+	std::vector<std::vector<glm::vec4>> UVs;
 	std::vector<Unit*>* playerUnits;
 
 	PathFinder pathFinder;
@@ -81,7 +81,7 @@ struct EnemyManager
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
 	void FinishMove();
-	void UpdateEnemies(float deltaTime);
+	void UpdateEnemies(float deltaTime, int idleFrame);
 	void EndTurn();
 	void RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits);
 	void Clear();

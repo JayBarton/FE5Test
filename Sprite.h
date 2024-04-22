@@ -111,6 +111,8 @@ public:
 
     void playAnimation(float delta, int numberOfFrames, bool doubleFrames);
     bool playAnimationOnce(float delta, int numberOfFrames, bool doubleFrames);
+    //Will play the animation and then reverse it
+    bool playAnimationReverse(float delta, int numberOfFrames, bool doubleFrames);
 
     void checkMatrixUpdate();
 
@@ -127,9 +129,10 @@ public:
     float alpha = 1.0f;
     float timeForFrame = 0.0f;
 
-
     glm::vec3 color;
     std::vector<glm::vec4>*  uv = nullptr;
+    //For sprites that are not 16x16, but still need to be position at such locations.
+    glm::vec2 drawOffset = glm::vec2(0);
 
     Sprite *parent = nullptr;
 

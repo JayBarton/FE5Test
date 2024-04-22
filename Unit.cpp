@@ -40,10 +40,11 @@ void Unit::placeUnit(int x, int y)
     sprite.SetPosition(glm::vec2(x, y));
 }
 
-void Unit::Update(float deltaTime)
+void Unit::Update(float deltaTime, int idleFrame)
 {
     if (!isDead && !isCarried)
     {
+        sprite.currentFrame = idleFrame;
         //this will presumably also handle animation at some point, and no point in animation dead units
     }
 }
@@ -68,6 +69,7 @@ void Unit::Draw(SpriteRenderer* Renderer)
             colorAndAlpha.z = 0;
         }
         glm::vec2 position = sprite.getPosition();
+        position += sprite.drawOffset;
         Renderer->setUVs(sprite.getUV());
         Texture2D texture = ResourceManager::GetTexture("sprites");
         Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team);

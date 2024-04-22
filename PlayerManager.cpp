@@ -11,7 +11,22 @@ using json = nlohmann::json;
 
 void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents, std::unordered_map<int, Unit*>* sceneUnits)
 {
-	playerUVs = ResourceManager::GetTexture("sprites").GetUVs(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
+	playerUVs.resize(8);
+	//Leif
+	playerUVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	//Finn
+	playerUVs[1] = ResourceManager::GetTexture("sprites").GetUVs(0, 80, TileManager::TILE_SIZE, 20, 3, 1);
+	//Eyvale
+	playerUVs[2] = ResourceManager::GetTexture("sprites").GetUVs(45, 64, 15, TileManager::TILE_SIZE, 3, 1);
+	//Halvan/Othin
+	playerUVs[3] = ResourceManager::GetTexture("sprites").GetUVs(0, 64, 15, TileManager::TILE_SIZE, 3, 1);
+	playerUVs[4] = ResourceManager::GetTexture("sprites").GetUVs(0, 64, 15, TileManager::TILE_SIZE, 3, 1);
+	//Dagda
+	playerUVs[5] = ResourceManager::GetTexture("sprites").GetUVs(96, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	//Tanya
+	playerUVs[6] = ResourceManager::GetTexture("sprites").GetUVs(0, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	//Marty
+	playerUVs[6] = ResourceManager::GetTexture("sprites").GetUVs(48, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
 	this->gen = gen;
 	this->distribution = distribution;
 	this->unitEvents = unitEvents;
@@ -28,11 +43,11 @@ void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* 
 	weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
 }
 
-void PlayerManager::Update(float deltaTime, InputManager& inputManager)
+void PlayerManager::Update(float deltaTime, int idleFrame, InputManager& inputManager)
 {
 	for (int i = 0; i < playerUnits.size(); i++)
 	{
-		playerUnits[i]->Update(deltaTime);
+		playerUnits[i]->Update(deltaTime, idleFrame);
 		playerUnits[i]->UpdateMovement(deltaTime, inputManager);
 	}
 }
@@ -59,6 +74,15 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 2, 1, 3);
 	playerUnits[1]->MountAction(true);
+	playerUnits[1]->sprite.setSize(glm::vec2(16, 20));
+	playerUnits[1]->sprite.drawOffset = glm::vec2(0, -4);
+	playerUnits[2]->sprite.setSize(glm::vec2(15, 16));
+	playerUnits[2]->sprite.drawOffset = glm::vec2(1, 0);
+	playerUnits[3]->sprite.setSize(glm::vec2(15, 16));
+	playerUnits[3]->sprite.drawOffset = glm::vec2(1, 0);
+	playerUnits[4]->sprite.setSize(glm::vec2(15, 16));
+	playerUnits[4]->sprite.drawOffset = glm::vec2(1, 0);
+
 }
 
 Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
@@ -129,7 +153,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			}
 			newUnit->subject.addObserver(unitEvents);
 			newUnit->init(gen, distribution);
-			newUnit->sprite.uv = &playerUVs;
+			newUnit->sprite.uv = &playerUVs[ID];
 			newUnit->placeUnit(position.x, position.y);
 			return newUnit;
 		}
