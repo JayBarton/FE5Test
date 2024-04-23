@@ -122,18 +122,16 @@ void SpriteBatch::createRenderBatches()
         theOffset++;
     }
 
+    glBindVertexArray(vao);
+
     glGenTextures(1, &model_matrix_tbo);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_BUFFER, model_matrix_tbo);
     glGenBuffers(1, &model_matrix_buffer);
-    glBindVertexArray(vao);
     glBindBuffer(GL_TEXTURE_BUFFER, model_matrix_buffer);
-    //glBufferData(GL_TEXTURE_BUFFER, instancePositions.size() * sizeof(glm::mat4), &instancePositions[0], GL_STATIC_DRAW);
-
     glBufferData(GL_TEXTURE_BUFFER, theSprites.size()* sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
-    glBufferSubData(GL_TEXTURE_BUFFER, 0, models.size() * sizeof(glm::mat4),  models.data());
-
     glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, model_matrix_buffer);
+    glBufferSubData(GL_TEXTURE_BUFFER, 0, models.size() * sizeof(glm::mat4), models.data());
 
     glGenTextures(1, &uvTBO);
     glActiveTexture(GL_TEXTURE2);

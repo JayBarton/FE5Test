@@ -40,17 +40,10 @@ void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float ro
 	model = glm::scale(model, glm::vec3(size, 0.0f)); // Last scale
 
 	this->shader.SetMatrix4("model", model);
-    this->shader.SetFloat("u_colorFactor", grey);
-    this->shader.SetFloat("fadeFactor", fade);
 	// Render textured quad
 	this->shader.SetVector4f("spriteColor", color);
-    this->shader.SetInteger("paletteRow", team);
 	glActiveTexture(GL_TEXTURE0);
 	texture.Bind();
-
-    Texture2D texture2 = ResourceManager::GetTexture("palette");
-    glActiveTexture(GL_TEXTURE1);
-    texture2.Bind();
 
 	glBindVertexArray(this->quadVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

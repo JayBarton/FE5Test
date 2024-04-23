@@ -7,6 +7,7 @@
 #include <sstream>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include "SBatch.h"
 using json = nlohmann::json;
 
 void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents, std::unordered_map<int, Unit*>* sceneUnits)
@@ -176,6 +177,14 @@ void PlayerManager::Draw(SpriteRenderer* Renderer)
 	for (int i = 0; i < playerUnits.size(); i++)
 	{
 		playerUnits[i]->Draw(Renderer);
+	}
+}
+
+void PlayerManager::Draw(SBatch* Batch)
+{
+	for (int i = 0; i < playerUnits.size(); i++)
+	{
+		playerUnits[i]->Draw(Batch);
 	}
 }
 

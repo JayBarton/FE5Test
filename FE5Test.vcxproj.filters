@@ -96,6 +96,9 @@
     <ClInclude Include="SceneActions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SBatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -171,6 +174,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PlayerManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SBatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

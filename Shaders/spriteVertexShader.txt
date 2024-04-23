@@ -3,23 +3,53 @@ layout (location = 0) in vec2 vertex;
 
 out vec2 TextureCoordinates;
 
-uniform vec2 uvs[6];
-uniform mat4 model;
+const int INSTANCE_COUNT = 100;
+uniform int instanceOffset;
+
+uniform vec4 uvs[INSTANCE_COUNT];
+uniform mat4 model[INSTANCE_COUNT];
+uniform vec4 spriteColor[INSTANCE_COUNT];
+uniform float u_colorFactor[INSTANCE_COUNT];
+uniform float fadeFactor[INSTANCE_COUNT];
+uniform int paletteRow[INSTANCE_COUNT];
 uniform mat4 projection;
+
+out vec4 c;
+out float uc;
+out float ff;
+flat out int pr;
 
 void main()
 {
+	int index = gl_InstanceID + instanceOffset;
 	const vec2 position [6] = vec2[]
 	(
-	    vec2(0.0f, 1.0f),
-        vec2(1.0f, 0.0f),
-        vec2(0.0f, 0.0f),
+		vec2(0.0f, 1.0f),
+		vec2(1.0f, 0.0f),
+		vec2(0.0f, 0.0f),
 
-        vec2(0.0f, 1.0f),
-        vec2(1.0f, 1.0f),
-        vec2(1.0f, 0.0f)
+		vec2(0.0f, 1.0f),
+		vec2(1.0f, 1.0f),
+		vec2(1.0f, 0.0f)
 	);
 	
-   TextureCoordinates = uvs[gl_VertexID];
-   gl_Position = projection * model * vec4(position[gl_VertexID], 0.0, 1.0);
+	vec4 uv =  uvs[index];
+	
+	vec2 uvCoords[6] = vec2[]
+	(
+		vec2(uv.x, uv.w),
+		vec2(uv.y, uv.z),
+		vec2(uv.x, uv.z),
+		
+		vec2(uv.x, uv.w),
+		vec2(uv.y, uv.w),
+		vec2(uv.y, uv.z)
+	);
+	c = spriteColor[index];
+	uc = u_colorFactor[index];
+	ff = fadeFactor[index];
+	pr = paletteRow[index];
+
+	TextureCoordinates = uvCoords[gl_VertexID];
+	gl_Position = projection * model[index] * vec4(position[gl_VertexID], 0.0, 1.0);
 }

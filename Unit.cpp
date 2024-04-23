@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "Globals.h"
 #include "InputManager.h"
+#include "SBatch.h"
 #include <SDL.h>
 
 Unit::Unit()
@@ -73,6 +74,19 @@ void Unit::Draw(SpriteRenderer* Renderer)
         Renderer->setUVs(sprite.getUV());
         Texture2D texture = ResourceManager::GetTexture("sprites");
         Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team);
+    }
+}
+
+void Unit::Draw(SBatch* Batch)
+{
+    if (!isDead && !isCarried)
+    {
+        Texture2D texture = ResourceManager::GetTexture("sprites");
+        glm::vec3 color = sprite.color;
+        glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
+        glm::vec2 position = sprite.getPosition();
+        position += sprite.drawOffset;
+        Batch->addToBatch(texture.ID, position, sprite.getSize(), colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team, sprite.getUV());
     }
 }
 

@@ -151,6 +151,7 @@
     <ClInclude Include="PlayerManager.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
+    <ClInclude Include="SBatch.h" />
     <ClInclude Include="SceneActions.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Shader.h" />
@@ -179,6 +180,7 @@
     <ClCompile Include="PlayerManager.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SATCollision.cpp" />
+    <ClCompile Include="SBatch.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Sprite.cpp" />

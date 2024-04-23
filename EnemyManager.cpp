@@ -5,7 +5,7 @@
 #include "BattleManager.h"
 #include "Camera.h"
 #include "PathFinder.h"
-
+#include "SBatch.h"
 
 #include <algorithm>
 #include <fstream>  
@@ -467,6 +467,14 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	{
 		enemies[i]->Draw(renderer);
 	}
+}
+
+void EnemyManager::Draw(SBatch* Batch)
+{
+    for (int i = 0; i < enemies.size(); i++)
+    {
+        enemies[i]->Draw(Batch);
+    }
 }
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)

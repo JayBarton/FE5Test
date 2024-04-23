@@ -21,6 +21,7 @@ struct PlayerManager
 	void AddUnit(int unitID, glm::vec2& position);
 
 	void Draw(class SpriteRenderer* Renderer);
+	void Draw(class SBatch* Batch);
 
 	void Clear();
 };

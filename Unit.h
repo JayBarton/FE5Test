@@ -198,6 +198,7 @@ struct Unit
 	void Update(float deltaTime, int idleFrame);
 	void UpdateMovement(float deltaTime, InputManager& inputManager);
 	void Draw(SpriteRenderer* Renderer);
+	void Draw(class SBatch* Renderer);
 
 	bool Dying(float deltaTime);
 

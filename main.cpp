@@ -25,6 +25,8 @@
 #include "Globals.h"
 #include "InfoDisplays.h"
 
+#include "SBatch.h"
+
 #include "csv.h"
 #include <nlohmann/json.hpp>
 
@@ -85,6 +87,8 @@ EnemyManager enemyManager;
 InfoDisplays displays;
 
 std::unordered_map<int, Unit*> sceneUnits;
+
+SBatch Batch;
 
 float unitSpeed = 2.5f;
 
@@ -222,7 +226,7 @@ std::uniform_int_distribution<int> distribution(0, 99);
 int main(int argc, char** argv)
 {
 	init();
-
+	Batch.init();
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastFrame = 0.0f;
 
@@ -275,6 +279,7 @@ int main(int argc, char** argv)
 	camera.update();
 
 	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
+	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/normalSpriteFragmentShader.txt", nullptr, "Nsprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/instanceFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
@@ -284,6 +289,9 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("sprite").Use().SetInteger("palette", 1);
 	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
+
+	ResourceManager::GetShader("Nsprite").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
 
 	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
@@ -300,7 +308,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
 
 	Shader myShader;
-	myShader = ResourceManager::GetShader("sprite");
+	myShader = ResourceManager::GetShader("Nsprite");
 	Renderer = new SpriteRenderer(myShader);
 
 	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
@@ -780,8 +788,13 @@ void Draw()
 		DrawUnitRanges();
 
 		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-		playerManager.Draw(Renderer);
-		enemyManager.Draw(Renderer);
+		Batch.begin();
+		playerManager.Draw(&Batch);
+		enemyManager.Draw(&Batch);
+		Batch.end();
+		Batch.renderBatch();
+
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 		if (currentTurn == 0)
 		{
 			Renderer->setUVs(cursor.uvs[1]);
