@@ -83,6 +83,9 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			{
 				previousPosition = position;
 				selectedUnit = focusedUnit;
+				selectedUnit->focused = true;
+				selectedUnit->sprite.currentFrame = 3;
+				selectedUnit->sprite.startingFrame = 3;
 				focusedUnit = nullptr;
 				path = selectedUnit->FindUnitMoveRange();
 				foundTiles = selectedUnit->foundTiles;
@@ -111,6 +114,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				{
 					selectedUnit->ClearPathData();
 					focusedUnit = selectedUnit;
+					selectedUnit->focused = false;
+					selectedUnit->moveAnimate = false;
 					selectedUnit = nullptr;
 					foundTiles.clear();
 					attackTiles.clear();
@@ -348,6 +353,8 @@ void Cursor::FinishMove()
 	path.clear();
 	selectedUnit->hasMoved = true;
 	focusedUnit = selectedUnit;
+	selectedUnit->focused = false;
+	selectedUnit->moveAnimate = false;
 	selectedUnit = nullptr;
 	remainingMove = false;
 }
@@ -382,6 +389,8 @@ void Cursor::UndoMove()
 	selectedUnit->placeUnit(position.x, position.y);
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 	focusedUnit = selectedUnit;
+	selectedUnit->focused = false;
+	selectedUnit->moveAnimate = false;
 	selectedUnit = nullptr;
 	foundTiles.clear();
 	attackTiles.clear();

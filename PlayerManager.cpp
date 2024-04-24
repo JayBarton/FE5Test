@@ -14,20 +14,40 @@ void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* 
 {
 	playerUVs.resize(8);
 	//Leif
+	/*
+	* AB.reserve( A.size() + B.size() ); // preallocate memory
+AB.insert( AB.end(), A.begin(), A.end() );
+AB.insert( AB.end(), B.begin(), B.end() );
+	*/
 	playerUVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	auto extras = ResourceManager::GetTexture("movesprites").GetUVs(0, 0, 32, 32, 4, 4);
+	playerUVs[0].insert(playerUVs[0].end(), extras.begin(), extras.end());
 	//Finn
 	playerUVs[1] = ResourceManager::GetTexture("sprites").GetUVs(0, 80, TileManager::TILE_SIZE, 20, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 0, 32, 32, 4, 4);
+	playerUVs[1].insert(playerUVs[1].end(), extras.begin(), extras.end());
 	//Eyvale
 	playerUVs[2] = ResourceManager::GetTexture("sprites").GetUVs(45, 64, 15, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(384, 128, 32, 32, 4, 4);
+	playerUVs[2].insert(playerUVs[2].end(), extras.begin(), extras.end());
 	//Halvan/Othin
 	playerUVs[3] = ResourceManager::GetTexture("sprites").GetUVs(0, 64, 15, TileManager::TILE_SIZE, 3, 1);
 	playerUVs[4] = ResourceManager::GetTexture("sprites").GetUVs(0, 64, 15, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 0, 32, 32, 4, 4);
+	playerUVs[3].insert(playerUVs[3].end(), extras.begin(), extras.end());
+	playerUVs[4].insert(playerUVs[4].end(), extras.begin(), extras.end());
 	//Dagda
 	playerUVs[5] = ResourceManager::GetTexture("sprites").GetUVs(96, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(512, 0, 32, 32, 4, 4);
+	playerUVs[5].insert(playerUVs[5].end(), extras.begin(), extras.end());
 	//Tanya
 	playerUVs[6] = ResourceManager::GetTexture("sprites").GetUVs(0, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(512, 128, 32, 32, 4, 4);
+	playerUVs[6].insert(playerUVs[6].end(), extras.begin(), extras.end());
 	//Marty
-	playerUVs[6] = ResourceManager::GetTexture("sprites").GetUVs(48, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	playerUVs[7] = ResourceManager::GetTexture("sprites").GetUVs(48, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(384, 0, 32, 32, 4, 4);
+	playerUVs[7].insert(playerUVs[7].end(), extras.begin(), extras.end());
 	this->gen = gen;
 	this->distribution = distribution;
 	this->unitEvents = unitEvents;
@@ -72,6 +92,8 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		playerUnits[currentUnit] = newUnit;
 		currentUnit++;
 	}
+	/*	playerUnits[0]->sprite.setSize(glm::vec2(32, 32));
+	playerUnits[0]->sprite.drawOffset = glm::vec2(-8, -8);*/
 	playerUnits[1]->movementType = Unit::FOOT;
 	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 2, 1, 3);
 	playerUnits[1]->MountAction(true);

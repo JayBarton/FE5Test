@@ -305,6 +305,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
+	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
 
 	Shader myShader;
@@ -561,7 +562,7 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
-		//std::cout << fps << std::endl;
+	//	std::cout << fps << std::endl;
 	}
 
 	delete Renderer;

@@ -306,8 +306,14 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 {
     UVs.resize(3);
     UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
+    UVs[0].insert(UVs[0].end(), extras.begin(), extras.end());
     UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 128, 32, 32, 4, 4);
+    UVs[1].insert(UVs[1].end(), extras.begin(), extras.end());
     UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    extras = ResourceManager::GetTexture("movesprites").GetUVs(256, 0, 32, 32, 4, 4);
+    UVs[2].insert(UVs[2].end(), extras.begin(), extras.end());
     std::vector<Unit> unitBases;
     unitBases.resize(4);
     this->playerUnits = playerUnits;

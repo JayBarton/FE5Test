@@ -159,6 +159,12 @@ struct Unit
 
 	int movementType;
 
+	//0 left, 1 up, 2 right, 3 down
+	int facing = 0;
+
+	bool focused = false;;
+	bool moveAnimate = false;
+
 	bool hasMoved = false;
 	//Also for experience calculations, but probably unneeded for this project
 	bool isPromoted = false;

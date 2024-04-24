@@ -45,7 +45,15 @@ void Unit::Update(float deltaTime, int idleFrame)
 {
     if (!isDead && !isCarried)
     {
-        sprite.currentFrame = idleFrame;
+        if (focused || moveAnimate)
+        {
+         //   sprite.currentFrame = 4;
+            sprite.playAnimation(deltaTime, 4, true);
+        }
+        else
+        {
+            sprite.currentFrame = idleFrame;
+        }
         //this will presumably also handle animation at some point, and no point in animation dead units
     }
 }
@@ -85,8 +93,22 @@ void Unit::Draw(SBatch* Batch)
         glm::vec3 color = sprite.color;
         glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
         glm::vec2 position = sprite.getPosition();
-        position += sprite.drawOffset;
-        Batch->addToBatch(texture.ID, position, sprite.getSize(), colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team, sprite.getUV());
+        glm::vec2 size;
+        if (focused || moveAnimate)
+        {
+            size = glm::vec2(32, 32);
+            position += glm::vec2(-8, -8);
+            texture = ResourceManager::GetTexture("movesprites");
+
+        }
+        else
+        {
+            size = sprite.getSize();
+            position += sprite.drawOffset;
+
+        }
+
+        Batch->addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team, sprite.getUV());
     }
 }
 
@@ -1203,6 +1225,8 @@ void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int m
     end = 0;
     current = path.size() - 1;
     moving = true;
+    owner->focused = false;
+    owner->moveAnimate = true;
     if (!remainingMove)
     {
         if (owner->isMounted())
@@ -1235,6 +1259,26 @@ void MovementComponent::getNewDirection()
         else
         {
             direction = glm::normalize(nextNode - previousNode);
+            if (direction.x > 0)
+            {
+                owner->sprite.currentFrame = 11;
+                owner->sprite.startingFrame = 11;
+            }
+            else if (direction.x < 0)
+            {
+                owner->sprite.currentFrame = 3;
+                owner->sprite.startingFrame = 3;
+            }
+            else if (direction.y < 0)
+            {
+                owner->sprite.currentFrame = 7;
+                owner->sprite.startingFrame = 7;
+            }
+            else if(direction.y > 0)
+            {
+                owner->sprite.currentFrame = 15;
+                owner->sprite.startingFrame = 15;
+            }
         }
     }
 }

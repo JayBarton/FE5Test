@@ -129,11 +129,10 @@ void SBatch::createRenderBatches()
 
 void SBatch::renderBatch()
 {
-    glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(vao);
     for (int i = 0; i < renderBatches.size(); i++)
     {
-
+        glActiveTexture(GL_TEXTURE0);
         ResourceManager::GetShader("sprite").Use().SetInteger("instanceOffset", renderBatches[i].offSet);
         glBindTexture(GL_TEXTURE_2D, renderBatches[i].textureID);
         Texture2D texture2 = ResourceManager::GetTexture("palette");
