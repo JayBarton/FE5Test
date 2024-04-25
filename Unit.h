@@ -77,6 +77,7 @@ struct MovementComponent
 	class Unit* owner = nullptr;
 	glm::vec2 nextNode;
 	glm::vec2 direction;
+	glm::vec2 previousDirection;
 	std::vector<glm::ivec2> path;
 	int current;
 	int end;

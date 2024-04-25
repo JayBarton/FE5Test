@@ -40,10 +40,14 @@ struct Cursor
 	void CheckBounds();
 	void Move(int x, int y, bool held = false);
 
+	void ClearTiles();
+	void ClearSelected();
+
 	void Wait();
 	void FinishMove();
 	void MoveUnitToTile();
 	void GetRemainingMove();
+	void Undo();
 	void UndoMove();
 	void UndoRemainingMove();
 

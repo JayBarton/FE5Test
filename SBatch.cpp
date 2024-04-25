@@ -146,6 +146,8 @@ void SBatch::renderBatch()
 
 bool SBatch::compareTexture(const bSprite& a, const bSprite& b)
 {
-   // return (a.textureID < b.textureID);
+    if (a.textureID != b.textureID) {
+        return a.textureID < b.textureID;
+    }
     return a.spritePosition.y < b.spritePosition.y;
 }

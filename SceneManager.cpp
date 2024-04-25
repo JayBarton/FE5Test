@@ -65,8 +65,9 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			}
 			else
 			{
-				auto adsfga = activeUnit->sprite.getPosition();
-				activeUnit->placeUnit(adsfga.x, adsfga.y);
+				auto position = activeUnit->sprite.getPosition();
+				activeUnit->placeUnit(position.x, position.y);
+				activeUnit->moveAnimate = false;
 				activeUnit = nullptr;
 				actionIndex++;
 				state = WAITING;
@@ -107,15 +108,6 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 		case MOVE_UNIT_ACTION:
 		{
 			auto action = static_cast<UnitMove*>(currentAction);
-		/*	for (int i = 0; i < playerManager->playerUnits.size(); i++)
-			{
-				auto thisUnit = playerManager->playerUnits[i];
-				if (thisUnit->sceneID == action->unitID)
-				{
-					activeUnit = thisUnit;
-					break;
-				}
-			}*/
 			activeUnit = sceneUnits[action->unitID];
 			auto position = activeUnit->sprite.getPosition();
 			TileManager::tileManager.removeUnit(position.x, position.y);

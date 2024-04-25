@@ -69,7 +69,7 @@ void PlayerManager::Update(float deltaTime, int idleFrame, InputManager& inputMa
 	for (int i = 0; i < playerUnits.size(); i++)
 	{
 		playerUnits[i]->Update(deltaTime, idleFrame);
-		playerUnits[i]->UpdateMovement(deltaTime, inputManager);
+	//	playerUnits[i]->UpdateMovement(deltaTime, inputManager);
 	}
 }
 

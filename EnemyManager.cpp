@@ -169,10 +169,6 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
             {
                 finalTarget = currentTarget;
             }
-            if (currentTarget.priority == 0)
-            {
-                int a = 2;
-            }
             //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
             //In that case, check which unit will do less damage on counter
             //Priority of 0 at this point would suggest zero damage will be dealt
@@ -245,6 +241,26 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
         attackRange = finalTarget.range;
         battleStats = finalTarget.battleStats;
         enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
+        if (enemy->sprite.getPosition().y < otherUnit->sprite.getPosition().y)
+        {
+            enemy->sprite.currentFrame = 15;
+            enemy->sprite.startingFrame = 15;
+        }
+        else if (enemy->sprite.getPosition().y > otherUnit->sprite.getPosition().y)
+        {
+            enemy->sprite.currentFrame = 7;
+            enemy->sprite.startingFrame = 7;
+        }
+        else if (enemy->sprite.getPosition().x < otherUnit->sprite.getPosition().x)
+        {
+            enemy->sprite.currentFrame = 11;
+            enemy->sprite.startingFrame = 11;
+        }
+        else
+        {
+            enemy->sprite.currentFrame = 3;
+            enemy->sprite.startingFrame = 3;
+        }
         enemyMoving = true;
     }
 }
@@ -1096,6 +1112,7 @@ void EnemyManager::CantoMove()
 void EnemyManager::FinishMove()
 {
     enemies[currentEnemy]->hasMoved = true;
+    enemies[currentEnemy]->moveAnimate = false;
     enemyMoving = false;
     NextUnit();
 

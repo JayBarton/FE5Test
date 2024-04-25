@@ -181,6 +181,10 @@ struct PostBattleEvents : public Observer<int>
 		if (ID == 0)
 		{
 			battleManager.EndBattle(&cursor, &enemyManager, camera);
+			//Real brute force here
+			battleManager.defender->moveAnimate = false;
+			battleManager.defender->sprite.currentFrame = idleFrame;
+
 		}
 		//player used an item
 		else if (ID == 1)
@@ -549,7 +553,7 @@ int main(int argc, char** argv)
 		//This check is just for how I'm handling moving in scenes for now, it NEEDS to go later
 		//What I would like is for the movement update to be handled individually, as it is with the enemy manager
 		//These two update functions are basically just going to handle animations
-		if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
+		//if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
 		{
 			playerManager.Update(deltaTime, idleFrame, inputManager);
 		}

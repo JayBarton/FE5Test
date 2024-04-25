@@ -36,6 +36,7 @@ struct BattleManager
 	BattleStats defenderStats;
 
 	glm::vec2 cameraStart;
+	glm::vec2 battleDirection;
 
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;

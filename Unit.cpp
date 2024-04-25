@@ -45,6 +45,10 @@ void Unit::Update(float deltaTime, int idleFrame)
 {
     if (!isDead && !isCarried)
     {
+        if (sprite.startingFrame == 3)
+        {
+            int a = 2;
+        }
         if (focused || moveAnimate)
         {
          //   sprite.currentFrame = 4;
@@ -94,6 +98,10 @@ void Unit::Draw(SBatch* Batch)
         glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
         glm::vec2 position = sprite.getPosition();
         glm::vec2 size;
+        if (sprite.startingFrame == 3)
+        {
+            int a = 2;
+        }
         if (focused || moveAnimate)
         {
             size = glm::vec2(32, 32);
@@ -1234,6 +1242,7 @@ void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int m
             owner->mount->remainingMoves = owner->getMove() - moveCost;
         }
     }
+    previousDirection = glm::vec2(0);
     getNewDirection();
 }
 
@@ -1258,26 +1267,35 @@ void MovementComponent::getNewDirection()
         }
         else
         {
+            //This doesn't work because this gets called for every node, thus resetting the animation every node.
             direction = glm::normalize(nextNode - previousNode);
-            if (direction.x > 0)
+            if (direction != previousDirection)
             {
-                owner->sprite.currentFrame = 11;
-                owner->sprite.startingFrame = 11;
-            }
-            else if (direction.x < 0)
-            {
-                owner->sprite.currentFrame = 3;
-                owner->sprite.startingFrame = 3;
-            }
-            else if (direction.y < 0)
-            {
-                owner->sprite.currentFrame = 7;
-                owner->sprite.startingFrame = 7;
-            }
-            else if(direction.y > 0)
-            {
-                owner->sprite.currentFrame = 15;
-                owner->sprite.startingFrame = 15;
+                if (direction.x > 0)
+                {
+                    owner->facing = 2;
+                    owner->sprite.currentFrame = 11;
+                    owner->sprite.startingFrame = 11;
+                }
+                else if (direction.x < 0)
+                {
+                    owner->facing = 0;
+                    owner->sprite.currentFrame = 3;
+                    owner->sprite.startingFrame = 3;
+                }
+                else if (direction.y < 0)
+                {
+                    owner->facing = 1;
+                    owner->sprite.currentFrame = 7;
+                    owner->sprite.startingFrame = 7;
+                }
+                else if (direction.y > 0)
+                {
+                    owner->facing = 3;
+                    owner->sprite.currentFrame = 15;
+                    owner->sprite.startingFrame = 15;
+                }
+                previousDirection = direction;
             }
         }
     }

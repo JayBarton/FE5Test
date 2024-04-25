@@ -108,11 +108,44 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		accostQueue[i].wrathAttack = false;
 		accostQueue[i].vantageAttack = false;
 	}
+	
 	camera.SetCenter(defender->sprite.getPosition());
+	//U G H
+	if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
+	{
+		attacker->sprite.currentFrame = 15;
+		attacker->sprite.startingFrame = 15;
+		defender->sprite.currentFrame = 7;
+		defender->sprite.startingFrame = 7;
+	}
+	else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
+	{
+		attacker->sprite.currentFrame = 7;
+		attacker->sprite.startingFrame = 7;
+		defender->sprite.currentFrame = 15;
+		defender->sprite.startingFrame = 15;
+	}
+	else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
+	{
+		attacker->sprite.currentFrame = 11;
+		attacker->sprite.startingFrame = 11;
+		defender->sprite.currentFrame = 3;
+		defender->sprite.startingFrame = 3;
+	}
+	else
+	{
+		attacker->sprite.currentFrame = 3;
+		attacker->sprite.startingFrame = 3;
+		defender->sprite.currentFrame = 11;
+		defender->sprite.startingFrame = 11;
+	}
+	attacker->moveAnimate = true;
+	defender->moveAnimate = true;
 }
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
 {
+	std::cout << defender->sprite.startingFrame << std::endl;
 	if (aiDelay)
 	{
 		delayTimer += deltaTime;

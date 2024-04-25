@@ -12,6 +12,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 {
 	if (movingUnit)
 	{
+		selectedUnit->UpdateMovement(deltaTime, inputManager);
 		if (!selectedUnit->movementComponent.moving)
 		{
 			movingUnit = false;
@@ -27,11 +28,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				//If this is an enemy unit, stop drawing its range, and if over another unit focus on it
 				if (selectedUnit->team == 1)
 				{
-					selectedUnit = nullptr;
-					foundTiles.clear();
-					attackTiles.clear();
-					path.clear();
-					costTile.clear();
+					ClearTiles();
 					if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
 					{
 						focusedUnit = tile->occupiedBy;
@@ -112,15 +109,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			{
 				if (!remainingMove)
 				{
-					selectedUnit->ClearPathData();
-					focusedUnit = selectedUnit;
-					selectedUnit->focused = false;
-					selectedUnit->moveAnimate = false;
-					selectedUnit = nullptr;
-					foundTiles.clear();
-					attackTiles.clear();
-					path.clear();
-					costTile.clear();
+					Undo();
 				}
 				position = previousPosition;
 				camera.SetMove(position);
@@ -130,6 +119,22 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
 	}
+}
+
+void Cursor::ClearTiles()
+{
+	ClearSelected();
+	foundTiles.clear();
+	attackTiles.clear();
+	path.clear();
+	costTile.clear();
+}
+
+void Cursor::ClearSelected()
+{
+	selectedUnit->focused = false;
+	selectedUnit->moveAnimate = false;
+	selectedUnit = nullptr;
 }
 
 void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
@@ -353,9 +358,7 @@ void Cursor::FinishMove()
 	path.clear();
 	selectedUnit->hasMoved = true;
 	focusedUnit = selectedUnit;
-	selectedUnit->focused = false;
-	selectedUnit->moveAnimate = false;
-	selectedUnit = nullptr;
+	ClearSelected();
 	remainingMove = false;
 }
 
@@ -382,21 +385,20 @@ void Cursor::GetRemainingMove()
 	costTile = selectedUnit->costTile;
 }
 
-void Cursor::UndoMove()
+void Cursor::Undo()
 {
 	selectedUnit->ClearPathData();
+	focusedUnit = selectedUnit;
+	ClearTiles();
+}
+
+void Cursor::UndoMove()
+{
 	position = previousPosition;
 	selectedUnit->placeUnit(position.x, position.y);
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
-	focusedUnit = selectedUnit;
-	selectedUnit->focused = false;
-	selectedUnit->moveAnimate = false;
-	selectedUnit = nullptr;
-	foundTiles.clear();
-	attackTiles.clear();
-	path.clear();
-	costTile.clear();
 	drawnPath.clear();
+	Undo();
 }
 
 void Cursor::UndoRemainingMove()
