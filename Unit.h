@@ -69,9 +69,7 @@ struct Mount
 	int remainingMoves;
 };
 
-//I am not sure this needs to be a component of the unit. Since only one unit will ever be moving at a time,
-//and all of them will move in the same way, I wonder if I can't just have this be a stand alone struct that
-//is used to move any unit.
+//While I am still not sure if this needs to be standalone, multiple units can in fact move at one time in some circumstances
 struct MovementComponent
 {
 	class Unit* owner = nullptr;

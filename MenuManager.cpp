@@ -379,6 +379,8 @@ void UnitOptionsMenu::GetOptions()
 	}
 	optionsVector.push_back(ITEMS);
 	tradeUnits = cursor->tradeRangeUnits();
+	rescueUnits.clear();
+	transferUnits.clear();
 	if (tradeUnits.size() > 0)
 	{
 		canTrade = true;
@@ -394,8 +396,6 @@ void UnitOptionsMenu::GetOptions()
 				{
 					if (!currentUnit->isMounted() && currentUnit->getBuild() < 20 && !currentUnit->carriedUnit)
 					{
-						float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
-						distance /= TileManager::TILE_SIZE;
 						if (currentUnit->getBuild() < playerUnit->getBuild())
 						{
 							rescueUnits.push_back(currentUnit);
@@ -423,7 +423,25 @@ void UnitOptionsMenu::GetOptions()
 		}
 		else
 		{
-
+			for (int i = 0; i < tradeUnits.size(); i++)
+			{
+				auto currentUnit = tradeUnits[i];
+				if (!currentUnit->isCarried)
+				{
+					if (!currentUnit->carriedUnit)
+					{
+						if (playerUnit->carriedUnit->getBuild() < currentUnit->getBuild())
+						{
+							transferUnits.push_back(currentUnit);
+						}
+					}
+				}
+			}
+			if (transferUnits.size() > 0)
+			{
+				canTransfer = true;
+				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, TRANSFER);
+			}
 		}
 	}
 	//if can dismount
@@ -2040,13 +2058,25 @@ void SelectTransferUnit::Draw()
 void SelectTransferUnit::SelectOption()
 {
 	auto transferUnit = transferUnits[currentOption];
-	auto heldUnit = transferUnit->carriedUnit;
 	auto playerUnit = cursor->selectedUnit;
-	playerUnit->carriedUnit = heldUnit;
-	transferUnit->carriedUnit = nullptr;
+	if (playerUnit->carriedUnit != nullptr)
+	{
+		auto heldUnit = playerUnit->carriedUnit;
+		transferUnit->carriedUnit = heldUnit;
+		playerUnit->carriedUnit = nullptr;
+		transferUnit->carryingMalus = 2;
+		playerUnit->carryingMalus = 1;
+	}
+	else
+	{
+		auto heldUnit = transferUnit->carriedUnit;
+		playerUnit->carriedUnit = heldUnit;
+		transferUnit->carriedUnit = nullptr;
+		transferUnit->carryingMalus = 1;
+		playerUnit->carryingMalus = 2;
+	}
 
-	transferUnit->carryingMalus = 1;
-	playerUnit->carryingMalus = 2;
+
 	Menu::CancelOption();
 	MenuManager::menuManager.menus.back()->GetOptions();
 	MenuManager::menuManager.mustWait = true;

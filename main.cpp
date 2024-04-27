@@ -90,6 +90,7 @@ std::unordered_map<int, Unit*> sceneUnits;
 
 SBatch Batch;
 
+//Global
 float unitSpeed = 2.5f;
 
 int currentRound = 0;
@@ -550,14 +551,12 @@ int main(int argc, char** argv)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 		}
-		//This check is just for how I'm handling moving in scenes for now, it NEEDS to go later
-		//What I would like is for the movement update to be handled individually, as it is with the enemy manager
 		//These two update functions are basically just going to handle animations
 		//if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
 		{
 			playerManager.Update(deltaTime, idleFrame, inputManager);
 		}
-		if (!camera.moving)
+		//if (!camera.moving)
 		{
 			enemyManager.UpdateEnemies(deltaTime, idleFrame);
 		}

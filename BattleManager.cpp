@@ -145,7 +145,6 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
 {
-	std::cout << defender->sprite.startingFrame << std::endl;
 	if (aiDelay)
 	{
 		delayTimer += deltaTime;

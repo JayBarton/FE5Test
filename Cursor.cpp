@@ -224,8 +224,6 @@ void Cursor::GetUnitOptions()
 	}
 }
 
-//There is a bug here caused by the fact that the selected unit does not actually move tiles until the move has been confirmed,
-//which means the selected unit can actually show up as an in range trade unit if it only moves one space.
 std::vector<Unit*> Cursor::tradeRangeUnits()
 {
 	std::vector<Unit*> units;
@@ -268,9 +266,10 @@ std::vector<glm::ivec2> Cursor::getDropPositions()
 	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
 	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
 	FindDropPosition(up, dropPositions);
+	FindDropPosition(right, dropPositions);
 	FindDropPosition(down, dropPositions);
 	FindDropPosition(left, dropPositions);
-	FindDropPosition(right, dropPositions);
+
 	return dropPositions;
 }
 
