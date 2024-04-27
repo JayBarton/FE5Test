@@ -241,25 +241,29 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
         attackRange = finalTarget.range;
         battleStats = finalTarget.battleStats;
         enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
-        if (enemy->sprite.getPosition().y < otherUnit->sprite.getPosition().y)
+        //Just proof of concept hopefully. Need this to fix the correct sprite displaying when the enemy attacks without moving.
+        if (glm::ivec2(enemy->sprite.getPosition()) == path[attackPosition].position)
         {
-            enemy->sprite.currentFrame = 15;
-            enemy->sprite.startingFrame = 15;
-        }
-        else if (enemy->sprite.getPosition().y > otherUnit->sprite.getPosition().y)
-        {
-            enemy->sprite.currentFrame = 7;
-            enemy->sprite.startingFrame = 7;
-        }
-        else if (enemy->sprite.getPosition().x < otherUnit->sprite.getPosition().x)
-        {
-            enemy->sprite.currentFrame = 11;
-            enemy->sprite.startingFrame = 11;
-        }
-        else
-        {
-            enemy->sprite.currentFrame = 3;
-            enemy->sprite.startingFrame = 3;
+            if (enemy->sprite.getPosition().y < otherUnit->sprite.getPosition().y)
+            {
+                enemy->sprite.currentFrame = 15;
+                enemy->sprite.startingFrame = 15;
+            }
+            else if (enemy->sprite.getPosition().y > otherUnit->sprite.getPosition().y)
+            {
+                enemy->sprite.currentFrame = 7;
+                enemy->sprite.startingFrame = 7;
+            }
+            else if (enemy->sprite.getPosition().x < otherUnit->sprite.getPosition().x)
+            {
+                enemy->sprite.currentFrame = 11;
+                enemy->sprite.startingFrame = 11;
+            }
+            else
+            {
+                enemy->sprite.currentFrame = 3;
+                enemy->sprite.startingFrame = 3;
+            }
         }
         enemyMoving = true;
     }
@@ -476,7 +480,16 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UVs[enemies[i]->ID];
-
+        //I'm thinking I will move the anim data to its own json, so I won't need to go through here again.
+        for (const auto& enemy : bases) 
+        {
+            int ID = enemy["ID"];
+            if (ID == enemies[i]->ID)
+            {
+                auto animData = enemy["AnimData"];
+                enemies[i]->focusedFacing = animData["FocusFace"];
+            }
+        }
     }
   //  enemies[14]->currentHP = 14;
   //  enemies[0]->move = 6;

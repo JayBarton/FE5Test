@@ -80,9 +80,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			{
 				previousPosition = position;
 				selectedUnit = focusedUnit;
-				selectedUnit->focused = true;
-				selectedUnit->sprite.currentFrame = 3;
-				selectedUnit->sprite.startingFrame = 3;
+				selectedUnit->SetFocus();
 				focusedUnit = nullptr;
 				path = selectedUnit->FindUnitMoveRange();
 				foundTiles = selectedUnit->foundTiles;
@@ -132,7 +130,6 @@ void Cursor::ClearTiles()
 
 void Cursor::ClearSelected()
 {
-	selectedUnit->focused = false;
 	selectedUnit->moveAnimate = false;
 	selectedUnit = nullptr;
 }

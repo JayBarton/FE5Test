@@ -69,7 +69,6 @@ void PlayerManager::Update(float deltaTime, int idleFrame, InputManager& inputMa
 	for (int i = 0; i < playerUnits.size(); i++)
 	{
 		playerUnits[i]->Update(deltaTime, idleFrame);
-	//	playerUnits[i]->UpdateMovement(deltaTime, inputManager);
 	}
 }
 
@@ -131,6 +130,8 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			newUnit->sceneID = ID;
 			newUnit->level = stats["Level"];
 			(*sceneUnits)[newUnit->sceneID] = newUnit;
+			auto animData = unit["AnimData"];
+			newUnit->focusedFacing = animData["FocusFace"];
 
 			json growths = unit["GrowthRates"];
 			HP = growths["HP"];

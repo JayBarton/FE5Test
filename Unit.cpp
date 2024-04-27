@@ -49,7 +49,7 @@ void Unit::Update(float deltaTime, int idleFrame)
         {
             int a = 2;
         }
-        if (focused || moveAnimate)
+        if (moveAnimate)
         {
          //   sprite.currentFrame = 4;
             sprite.playAnimation(deltaTime, 4, true);
@@ -68,6 +68,13 @@ void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
     {
         movementComponent.Update(deltaTime, inputManager);
     }
+}
+
+void Unit::SetFocus()
+{
+    sprite.currentFrame = 3 + (focusedFacing * 4);
+    sprite.startingFrame = sprite.currentFrame;
+    moveAnimate = true;
 }
 
 void Unit::Draw(SpriteRenderer* Renderer)
@@ -102,7 +109,7 @@ void Unit::Draw(SBatch* Batch)
         {
             int a = 2;
         }
-        if (focused || moveAnimate)
+        if (moveAnimate)
         {
             size = glm::vec2(32, 32);
             position += glm::vec2(-8, -8);
@@ -335,7 +342,6 @@ void Unit::addItem(int ID)
                 if (equippedWeapon < 0)
                 {
                     equippedWeapon = inventory.size() - 1;
-                 //   tryEquip(inventory.size() - 1);
                 }
             }
         }
@@ -1233,7 +1239,6 @@ void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int m
     end = 0;
     current = path.size() - 1;
     moving = true;
-    owner->focused = false;
     owner->moveAnimate = true;
     if (!remainingMove)
     {
@@ -1338,4 +1343,17 @@ void MovementComponent::Update(float deltaTime, InputManager& inputManager)
             owner->sprite.SetPosition(newPosition);
         }
     }
+}
+
+std::vector<Item*> Unit::GetOrderedWeapons()
+{
+    std::vector<Item*> oWeapons;
+    oWeapons.reserve(inventory.size());
+    std::copy_if(inventory.begin(), inventory.end(), std::back_inserter(oWeapons),
+        [](const Item* item) 
+        { 
+            return item->isWeapon; 
+        }
+    );
+    return oWeapons;
 }

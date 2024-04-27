@@ -150,7 +150,7 @@ struct DisplayedBattleStats
 
 struct SelectEnemyMenu : public Menu
 {
-	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, bool capturing = false);
+	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, int selectedWeapon, bool capturing = false);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
@@ -164,6 +164,7 @@ struct SelectEnemyMenu : public Menu
 	DisplayedBattleStats enemyStats;
 	DisplayedBattleStats playerStats;
 
+	int selectedWeapon;
 	std::vector<Unit*> unitsToAttack;
 	SpriteRenderer* renderer = nullptr;
 	bool enemyCanCounter = false;

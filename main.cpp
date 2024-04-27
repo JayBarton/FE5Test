@@ -756,7 +756,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 
 	sceneManager.scenes[sceneManager.currentScene]->extraSetup(&roundSubject);
-	sceneManager.scenes[1]->extraSetup(&roundSubject);
+	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 
 	map.close();
 

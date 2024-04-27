@@ -127,6 +127,10 @@ struct EnemyMenu : public Menu
 
     bool bossBonus = false;
     //Could be an enum if I come up with other requirements
+    //Current types:
+    //0 = within attack range
+    //1 = within a WALKING range of attack range + x. X is currently 1. Walking range means the unit has to be able to reach here by walking, so not through walls
+    //2 = within attack WALKING range. So even if a range unit can hit the unit through a wall or something, if they cannot walk to the unit, they cannot attack
     int activationType = 0;
     int sceneID = -1;
 

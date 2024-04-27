@@ -28,9 +28,7 @@ void TextObjectManager::init()
 	currentLine = 0;
 	textObjects[focusedObject].text = textLines[currentLine].text;
 	//Proof of concept. Should be error checking here probably
-	textLines[currentLine].speaker->sprite.currentFrame = 3;
-	textLines[currentLine].speaker->sprite.startingFrame = 3;
-	textLines[currentLine].speaker->moveAnimate = true;
+	textLines[currentLine].speaker->SetFocus();
 	active = false;
 }
 
@@ -61,9 +59,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 						textObjects[focusedObject].displayedPosition = textObjects[focusedObject].position;
 					}
 					textObjects[focusedObject].text = textLines[currentLine].text;
-					textLines[currentLine].speaker->sprite.currentFrame = 3;
-					textLines[currentLine].speaker->sprite.startingFrame = 3;
-					textLines[currentLine].speaker->moveAnimate = true;
+					textLines[currentLine].speaker->SetFocus();
 					textObjects[focusedObject].index = 0;
 				}
 				waitingOnInput = false;

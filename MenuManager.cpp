@@ -85,10 +85,14 @@ void UnitOptionsMenu::SelectOption()
 	{
 		std::vector<Item*> validWeapons;
 		std::vector<std::vector<Unit*>> unitsToAttack;
-		for (int i = 0; i < playerUnit->weapons.size(); i++)
+		//Have a bug here where since the weapon array does not reorder on reequip, this can put things in an odd ordering
+		//If I have weapon A equipped and it is a valid weapon, it should be the first in my list. But it is possible weapon B will be first if it is
+		//First in this list. Need to resolve this.
+		auto playerWeapons = playerUnit->GetOrderedWeapons();
+		for (int i = 0; i < playerWeapons.size(); i++)
 		{
 			bool weaponInRange = false;
-			auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[i]);
+			auto weapon = playerUnit->GetWeaponData(playerWeapons[i]);
 			if (playerUnit->canUse(weapon))
 			{
 				for (int c = 0; c < unitsInRange.size(); c++)
@@ -104,7 +108,7 @@ void UnitOptionsMenu::SelectOption()
 							weaponInRange = true;
 							std::vector<Unit*> fuck;
 							unitsToAttack.push_back(fuck);
-							validWeapons.push_back(playerUnit->weapons[i]);
+							validWeapons.push_back(playerWeapons[i]);
 							unitsToAttack.back().push_back(currentUnit);
 						}
 						else
@@ -821,12 +825,13 @@ void SelectWeaponMenu::Draw()
 void SelectWeaponMenu::SelectOption()
 {
 	Unit* unit = cursor->selectedUnit;
+	int selectedWeapon = 0;
 	for (int i = 0; i < unit->inventory.size(); i++)
 	{
 		if (weapons[currentOption] == unit->inventory[i])
 		{
-			unit->equipWeapon(i);
-			GetBattleStats();
+			selectedWeapon = i;
+	//		unit->equipWeapon(i);
 			break;
 		}
 	}
@@ -835,7 +840,7 @@ void SelectWeaponMenu::SelectOption()
 	{
 		std::cout << enemyUnits[i]->name << std::endl;
 	}
-	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, enemyUnits, MenuManager::menuManager.renderer, capturing);
+	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, enemyUnits, MenuManager::menuManager.renderer, selectedWeapon, capturing);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -862,8 +867,8 @@ void SelectWeaponMenu::GetBattleStats()
 	selectedStats = unit->CalculateBattleStats(weapons[currentOption]->ID);
 }
 
-SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, bool capturing) :
-	Menu(Cursor, Text, camera, shapeVAO), capturing(capturing)
+SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, int selectedWeapon, bool capturing) :
+	Menu(Cursor, Text, camera, shapeVAO), selectedWeapon(selectedWeapon), capturing(capturing)
 {
 	renderer = Renderer;
 	unitsToAttack = units;
@@ -958,6 +963,7 @@ void SelectEnemyMenu::Draw()
 void SelectEnemyMenu::SelectOption()
 {
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
+	cursor->selectedUnit->equipWeapon(selectedWeapon);
 	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter, *camera, false, capturing);
 	cursor->MoveUnitToTile();
 	if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
@@ -1010,6 +1016,7 @@ void SelectEnemyMenu::CancelOption()
 		cursor->selectedUnit->carryingMalus = 1;
 	}
 	Menu::CancelOption();
+	Menu::CancelOption();
 }
 
 void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
@@ -1027,8 +1034,8 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 
 	enemyNormalStats = enemy->CalculateBattleStats();
 
-	unitNormalStats = unit->CalculateBattleStats();
-	auto unitWeapon = unit->GetWeaponData(unit->inventory[unit->equippedWeapon]);
+	unitNormalStats = unit->CalculateBattleStats(unit->inventory[selectedWeapon]->ID);
+	auto unitWeapon = unit->GetWeaponData(unit->inventory[selectedWeapon]);
 	//int playerDefense = unit->defense;
 	//int enemyDefense = enemy->defense;	
 	enemy->CalculateMagicDefense(enemyWeapon, enemyNormalStats, attackDistance);

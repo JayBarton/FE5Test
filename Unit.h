@@ -162,8 +162,9 @@ struct Unit
 
 	//0 left, 1 up, 2 right, 3 down
 	int facing = 0;
+	int focusedFacing = 0;
 
-	bool focused = false;;
+	//bool focused = false;;
 	bool moveAnimate = false;
 
 	bool hasMoved = false;
@@ -202,6 +203,7 @@ struct Unit
 	std::uniform_int_distribution<int> *distribution = nullptr;
 
 	void placeUnit(int x, int y);
+	void SetFocus();
 	void Update(float deltaTime, int idleFrame);
 	void UpdateMovement(float deltaTime, InputManager& inputManager);
 	void Draw(SpriteRenderer* Renderer);
@@ -266,6 +268,8 @@ struct Unit
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
 	//Temporary, just using to visualize the path taken
 	std::vector<glm::ivec2> drawnPath;
+
+	std::vector<Item*> GetOrderedWeapons();
 
 	void StartTurn(class InfoDisplays& displays, class Camera* camera);
 	void EndTurn();

@@ -17,7 +17,10 @@
       "WeaponProf": {
         "Lance": 1
       },
-      "ClassPower":  2 
+      "ClassPower": 2,
+      "AnimData": {
+        "FocusFace": 0
+      }
     },
     {
       "ID": 1,
@@ -36,7 +39,10 @@
       "WeaponProf": {
         "Bow": 1
       },
-      "ClassPower":  2 
+      "ClassPower": 2,
+      "AnimData": {
+        "FocusFace": 2
+      }
     },
     {
       "ID": 2,
@@ -54,6 +60,9 @@
       },
       "WeaponProf": {
         "Sword": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
       }
     },
     {
@@ -113,7 +122,10 @@
         "Sword": 3
       },
       "SpecialWeapons": [ 6 ],
-      "Skills": [ 1 ]
+      "Skills": [ 1 ],
+      "AnimData": {
+        "FocusFace": 3
+      }
     },
     {
       "ID": 1,
@@ -151,7 +163,10 @@
         "Sword": 2
       },
       "SpecialWeapons": [ 7 ],
-      "Skills": [ 0 ]
+      "Skills": [ 0 ],
+      "AnimData": {
+        "FocusFace": 0
+      }
     },
     {
       "ID": 2,
@@ -187,7 +202,10 @@
       "WeaponProf": {
         "Sword": 5
       },
-      "Skills": [ 1 ]
+      "Skills": [ 1 ],
+      "AnimData": {
+        "FocusFace": 2
+      }
     },
     {
       "ID": 3,
@@ -223,7 +241,10 @@
       "WeaponProf": {
         "Axe": 2
       },
-      "Skills": [ 3 ]
+      "Skills": [ 3 ],
+      "AnimData": {
+        "FocusFace": 0
+      }
     },
     {
       "ID": 4,
@@ -259,7 +280,10 @@
       "WeaponProf": {
         "Axe": 1
       },
-      "Skills": [ 2 ]
+      "Skills": [ 2 ],
+      "AnimData": {
+        "FocusFace": 0
+      }
     },
     {
       "ID": 5,
@@ -296,7 +320,10 @@
         "Axe": 5,
         "Bow": 1
       },
-      "Skills": [ 4 ]
+      "Skills": [ 4 ],
+      "AnimData": {
+        "FocusFace": 3
+      }
     },
     {
       "ID": 6,
@@ -332,7 +359,10 @@
       "WeaponProf": {
         "Bow": 1
       },
-      "ClassPower": 2
+      "ClassPower": 2,
+      "AnimData": {
+        "FocusFace": 2
+      }
     },
     {
       "ID": 7,
@@ -367,6 +397,9 @@
       "Inventory": [ 13 ],
       "WeaponProf": {
         "Axe": 2
+      },
+      "AnimData": {
+        "FocusFace": 3
       }
     }
   ]
