@@ -105,10 +105,6 @@ void Unit::Draw(SBatch* Batch)
         glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
         glm::vec2 position = sprite.getPosition();
         glm::vec2 size;
-        if (sprite.startingFrame == 3)
-        {
-            int a = 2;
-        }
         if (moveAnimate)
         {
             size = glm::vec2(32, 32);

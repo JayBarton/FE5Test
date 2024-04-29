@@ -5,7 +5,8 @@
 
 #include <GL/glew.h>
 
-#include "ResourceManager.h"
+#include "..\ResourceManager.h"
+#include "..\SBatch.h"
 #include "SpriteRenderer.h"
 #include "Camera.h"
 #include "Timing.h"
@@ -69,7 +70,7 @@ std::unordered_map<glm::vec2, Object, vec2Hash2> objects;
 std::unordered_map<glm::vec2, std::string, vec2Hash2> objectStrings;
 std::unordered_map<glm::vec2, int, vec2Hash2> objectWriteTypes;
 
-std::vector<glm::vec4> enemyUVs;
+std::vector<std::vector<glm::vec4>> enemyUVs;
 
 Object displayObject;
 
@@ -124,9 +125,17 @@ std::vector<std::string> classNames;
 
 std::vector<SceneObjects*> sceneObjects;
 
+SBatch Batch;
+int idleFrame = 0;
+int idleAnimationDirection = 1;
+float timeForFrame = 0.0f;
+
+float testFrame = 0;
+
 int main(int argc, char** argv)
 {
     init();
+    Batch.init();
 
     inputText.resize(2);
 
@@ -189,24 +198,35 @@ int main(int argc, char** argv)
 
     glBindVertexArray(0);
 
-    ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "sprite");
+    ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/spriteFragmentShader.txt", nullptr, "spriteTiles");
+    ResourceManager::LoadShader("E:/Damon/dev stuff/FE5Test/Shaders/spriteVertexShader.txt", "E:/Damon/dev stuff/FE5Test/Shaders/spriteFragmentShader.txt", nullptr, "sprite");
+
     ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
    // ResourceManager::LoadTexture("spritesheet.png", "sprites");
     ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
-    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
+    ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
+    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
+
 
     ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
     ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 
     ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
+    ResourceManager::GetShader("sprite").Use().SetInteger("palette", 1);
     ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
 
+    ResourceManager::GetShader("spriteTiles").Use().SetInteger("image", 0);
+    ResourceManager::GetShader("spriteTiles").SetMatrix4("projection", camera.getCameraMatrix());
+
     Shader myShader;
-    myShader = ResourceManager::GetShader("sprite");
+    myShader = ResourceManager::GetShader("spriteTiles");
     Renderer = new SpriteRenderer(myShader);
 
-    enemyUVs = ResourceManager::GetTexture("sprites").GetUVs(TILE_SIZE, TILE_SIZE);
+    enemyUVs.resize(3);
+    enemyUVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    enemyUVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    enemyUVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
 
     editMode = new TileMode(&displayObject);
 
@@ -372,6 +392,7 @@ int main(int argc, char** argv)
         {
             isRunning = false;
         }
+
         if (MenuManager::menuManager.menus.size() > 0)
         {
             MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
@@ -420,6 +441,39 @@ int main(int argc, char** argv)
                 {
                     saveTimer = 0.0f;
                     saveDisplay = false;
+                }
+            }
+        }
+
+        timeForFrame += deltaTime;
+        float animationDelay = 0.0f;
+        animationDelay = 0.27f;
+        testFrame += deltaTime;
+        if (timeForFrame >= animationDelay)
+        {
+            timeForFrame = 0;
+            if (idleAnimationDirection > 0)
+            {
+                if (idleFrame < 2)
+                {
+                    idleFrame++;
+                }
+                else
+                {
+                    idleAnimationDirection = -1;
+                    idleFrame--;
+                }
+            }
+            else
+            {
+                if (idleFrame > 0)
+                {
+                    idleFrame--;
+                }
+                else
+                {
+                    idleAnimationDirection = 1;
+                    idleFrame++;
                 }
             }
         }
@@ -910,22 +964,32 @@ void Draw()
 
     if (state != State::NEW_MAP && state != State::MAIN_MENU)
     {
+        ResourceManager::GetShader("spriteTiles").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
         TileManager::tileManager.showTiles(Renderer, camera);
 
         ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+        Batch.begin();
 
-        Texture2D texture = ResourceManager::GetTexture("sprites");
-        int help = 0;
+        //Should separate objects into units and other things since this is getting ridiculous
         for (auto& iter : objects)
         {
             if (iter.second.sprite)
             {
-                Renderer->setUVs(iter.second.uvs);
-                Renderer->DrawSprite(texture, iter.second.position, 0.0f, iter.second.dimensions);
+                //   Renderer->setUVs(iter.second.uvs);
+                 //  Renderer->DrawSprite(texture, iter.second.position, 0.0f, iter.second.dimensions);
+                Texture2D texture = ResourceManager::GetTexture("sprites");
+                glm::vec4 colorAndAlpha = glm::vec4(1);
+                glm::vec2 position = iter.second.position;
+                glm::vec2 size;
+
+                size = glm::vec2(16);
+              //  position += sprite.drawOffset;
+
+                Batch.addToBatch(texture.ID, position, size, colorAndAlpha, 0, false, 1, iter.second.uvs[idleFrame]);
             }
             else
             {
-                help++;
                 ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
                 ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
                 glm::mat4 model = glm::mat4();
@@ -963,9 +1027,9 @@ void Draw()
             }
             else if(editMode->type == EditMode::ENEMY)
             {
-                Renderer->setUVs(displayObject.uvs);
                 Texture2D displayTexture = ResourceManager::GetTexture("sprites");
-                Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
+                Batch.addToBatch(displayTexture.ID, displayObject.position, displayObject.dimensions, glm::vec4(1), 0, false, 1, displayObject.uvs[idleFrame]);
+
                 if (editMode->type == EditMode::ENEMY)
                 {
                     Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
@@ -992,7 +1056,8 @@ void Draw()
                 drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
                 Text->RenderText(intToString(editMode->currentElement), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
             }
-
+            Batch.end();
+            Batch.renderBatch();
             Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
 
             Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);

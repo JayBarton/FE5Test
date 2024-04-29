@@ -19,7 +19,7 @@
 #include <gtx/rotate_vector.hpp>
 
 #include "Texture.h"
-#include "Shader.h"
+#include "..\Shader.h"
 
 class SpriteRenderer
 {

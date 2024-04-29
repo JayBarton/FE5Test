@@ -16,7 +16,7 @@ struct Object
     int type;
     glm::vec2 position;
     glm::vec2 dimensions = glm::vec2(TileManager::tileManager.TILE_SIZE, TileManager::tileManager.TILE_SIZE);
-    glm::vec4 uvs;
+    std::vector<glm::vec4> uvs;
 
     int level;
     int growthRateID;
@@ -120,7 +120,7 @@ struct EnemyMode : public EditMode
     EnemyMode(Object* obj, std::unordered_map<glm::vec2, Object, vec2Hash2>& objects,
     std::unordered_map<glm::vec2, std::string, vec2Hash2>& objectStrings,
     std::unordered_map<glm::vec2, int, vec2Hash2>& objectWriteTypes,
-        int& numEnemies, std::vector<glm::vec4>& enemyUVs) : EditMode(obj), numberOfEnemies(numEnemies), uvs(enemyUVs), objects(objects), objectStrings(objectStrings), objectWriteTypes(objectWriteTypes)
+        int& numEnemies, std::vector<std::vector<glm::vec4>>& enemyUVs) : EditMode(obj), numberOfEnemies(numEnemies), uvs(enemyUVs), objects(objects), objectStrings(objectStrings), objectWriteTypes(objectWriteTypes)
     {
         facing = RIGHT;
         maxElement = NUMBER_OF_ENEMIES - 1;
@@ -132,7 +132,7 @@ struct EnemyMode : public EditMode
     std::unordered_map<glm::vec2, Object, vec2Hash2>& objects;
     std::unordered_map<glm::vec2, std::string, vec2Hash2>& objectStrings;
     std::unordered_map<glm::vec2, int, vec2Hash2>& objectWriteTypes;
-    std::vector<glm::vec4>& uvs;
+    std::vector<std::vector<glm::vec4>>& uvs;
 
     int& numberOfEnemies;
     void rightClick(int x, int y)

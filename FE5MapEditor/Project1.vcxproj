@@ -138,15 +138,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\InputManager.h" />
+    <ClInclude Include="..\ResourceManager.h" />
+    <ClInclude Include="..\SBatch.h" />
     <ClInclude Include="..\SceneActions.h" />
     <ClInclude Include="..\SceneManager.h" />
+    <ClInclude Include="..\Shader.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="MenuManager.h" />
     <ClInclude Include="PlacementModes.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="SpriteRenderer.h" />
     <ClInclude Include="TextRenderer.h" />
@@ -157,13 +158,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\InputManager.cpp" />
+    <ClCompile Include="..\ResourceManager.cpp" />
+    <ClCompile Include="..\SBatch.cpp" />
+    <ClCompile Include="..\Shader.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="PlacementModes.cpp" />
-    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SATCollision.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteRenderer.cpp" />
     <ClCompile Include="TextRenderer.cpp" />

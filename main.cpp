@@ -105,7 +105,6 @@ int idleAnimationDirection = 1;
 float timeForFrame = 0.0f;
 
 float testFrame = 0;
-int testwh = 0;
 
 struct UnitEvents : public Observer<Unit*>
 {
@@ -399,12 +398,10 @@ int main(int argc, char** argv)
 
 		timeForFrame += deltaTime;
 		float animationDelay = 0.0f;
-		//animationDelay = (3 / 60.0f) * 2;
 		animationDelay = 0.27f;
 		testFrame += deltaTime;
 		if (timeForFrame >= animationDelay)
 		{
-			testwh += 1;
 			timeForFrame = 0;
 			if (idleAnimationDirection > 0)
 			{

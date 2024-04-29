@@ -3,9 +3,9 @@
 
 #include "Tile.h"
 
-#include "Shader.h"
+#include "..\Shader.h"
 #include "SpriteRenderer.h"
-#include "ResourceManager.h"
+#include "..\ResourceManager.h"
 #include <GL/glew.h>
 
 
