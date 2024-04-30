@@ -1075,13 +1075,27 @@ SceneActivationMenu::SceneActivationMenu(TextRenderer* Text, Camera* camera, int
 void SceneActivationMenu::Draw()
 {
 	text->RenderText("Activation Menu", 100, 50, 1);
-	text->RenderText(intToString(currentOption), 100, 100, 1);
+	if (currentOption == TALK)
+	{
+		text->RenderText("Talk", 100, 100, 1);
 
+	}
+	else if (currentOption == ENEMY_TURN_END)
+	{
+		text->RenderText("Enemy Turn End", 100, 100, 1);
+	}
 }
 
 void SceneActivationMenu::SelectOption()
 {
-	sceneObject.activation = new EnemyTurnEnd(1, 2);
+	if (currentOption == TALK)
+	{
+
+	}
+	else if (currentOption = ENEMY_TURN_END)
+	{
+		sceneObject.activation = new EnemyTurnEnd(1, 2);
+	}
 	CancelOption();
 }
 

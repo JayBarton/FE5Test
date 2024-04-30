@@ -378,7 +378,8 @@ void UnitOptionsMenu::GetOptions()
 		}
 	}
 	optionsVector.push_back(ITEMS);
-	tradeUnits = cursor->tradeRangeUnits();
+	std::vector<Unit*> talkUnits;
+	cursor->GetAdjacentUnits(tradeUnits, talkUnits);
 	rescueUnits.clear();
 	transferUnits.clear();
 	if (tradeUnits.size() > 0)

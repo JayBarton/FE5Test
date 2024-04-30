@@ -202,6 +202,8 @@ struct SceneActionMenu : public Menu
 
 struct SceneActivationMenu : public Menu
 {
+    const static int ENEMY_TURN_END = 1;
+    const static int TALK = 0;
     SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
     virtual void Draw() override;
     virtual void SelectOption() override;

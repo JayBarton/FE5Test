@@ -802,7 +802,7 @@ void saveMap()
             }
         }
         scenes += intToString(currentObject->activation->type) + " ";
-        if (currentObject->activation->type == 1)
+        if (currentObject->activation->type == SceneActivationMenu::ENEMY_TURN_END)
         {
             auto activation = static_cast<EnemyTurnEnd*>(currentObject->activation);
             scenes += intToString(activation->round) + " ";
@@ -1056,8 +1056,6 @@ void Draw()
                 drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
                 Text->RenderText(intToString(editMode->currentElement), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
             }
-            Batch.end();
-            Batch.renderBatch();
             Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
 
             Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
@@ -1083,6 +1081,8 @@ void Draw()
                 Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
             }
         }
+        Batch.end();
+        Batch.renderBatch();
     }
     else
     {

@@ -224,9 +224,10 @@ void Cursor::GetUnitOptions()
 	}
 }
 
-std::vector<Unit*> Cursor::tradeRangeUnits()
+void Cursor::GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>& talkUnits)
 {
-	std::vector<Unit*> units;
+	tradeUnits.clear();
+	talkUnits.clear();
 	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
 
 	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
@@ -235,25 +236,26 @@ std::vector<Unit*> Cursor::tradeRangeUnits()
 	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
 	if (selectedUnit->carriedUnit)
 	{
-		units.push_back(selectedUnit->carriedUnit);
+		tradeUnits.push_back(selectedUnit->carriedUnit);
 	}
-	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(up.x, up.y, 0))
+	if (Unit* unit = TileManager::tileManager.getUnit(up.x, up.y))
 	{
-		PushTradeUnit(units, unit);
+		PushTradeUnit(tradeUnits, unit);
+		//Will also check if the unit is talkable.
+		//Since you can possibly talk to a unit on any team, need this to be separate
 	}
-	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(down.x, down.y, 0))
+	if (Unit* unit = TileManager::tileManager.getUnit(down.x, down.y))
 	{
-		PushTradeUnit(units, unit);
+		PushTradeUnit(tradeUnits, unit);
 	}
-	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(left.x, left.y, 0))
+	if (Unit* unit = TileManager::tileManager.getUnit(left.x, left.y))
 	{
-		PushTradeUnit(units, unit);
+		PushTradeUnit(tradeUnits, unit);
 	}
-	if (Unit* unit = TileManager::tileManager.getUnitOnTeam(right.x, right.y, 0))
+	if (Unit* unit = TileManager::tileManager.getUnit(right.x, right.y))
 	{
-		PushTradeUnit(units, unit);
+		PushTradeUnit(tradeUnits, unit);
 	}
-	return units;
 }
 
 std::vector<glm::ivec2> Cursor::getDropPositions()
@@ -285,10 +287,13 @@ void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dro
 
 void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
 {
-	units.push_back(unit);
-	if (unit->carriedUnit)
+	if (unit->team == 0)
 	{
-		units.push_back(unit->carriedUnit);
+		units.push_back(unit);
+		if (unit->carriedUnit)
+		{
+			units.push_back(unit->carriedUnit);
+		}
 	}
 }
 
