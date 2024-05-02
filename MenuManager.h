@@ -187,6 +187,19 @@ struct SelectTradeUnit : public Menu
 	SpriteRenderer* renderer;
 };
 
+struct SelectTalkMenu : public Menu
+{
+	SelectTalkMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void GetOptions() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	std::vector<Unit*> talkUnits;
+	SpriteRenderer* renderer;
+};
+
 struct SelectRescueUnit : public Menu
 {
 	SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);

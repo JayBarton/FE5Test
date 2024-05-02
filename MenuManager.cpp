@@ -213,9 +213,11 @@ void UnitOptionsMenu::SelectOption()
 		break;
 	}
 	case TALK:
-		playerUnit->talkData[0].scene->activation->CheckActivation();
-		ClearMenu();
+	{
+		Menu* newMenu = new SelectTalkMenu(cursor, text, camera, shapeVAO, talkUnits, MenuManager::menuManager.renderer);
+		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
+	}
 	//Wait
 	default:
 		cursor->Wait();
@@ -1252,6 +1254,94 @@ void SelectTradeUnit::GetOptions()
 }
 
 void SelectTradeUnit::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+}
+
+SelectTalkMenu::SelectTalkMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	renderer = Renderer;
+	talkUnits = units;
+	GetOptions();
+}
+
+void SelectTalkMenu::Draw()
+{
+	auto talkUnit = talkUnits[currentOption];
+
+	auto targetPosition = talkUnit->sprite.getPosition();
+	int xText = 536;
+	int xIndicator = 169;
+	int boxHeight = 96;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		xText = 32;
+		xIndicator = 7;
+	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(80, boxHeight, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+
+	int textHeight = 100;
+	text->RenderText(talkUnit->name, xText, textHeight, 1);
+	textHeight += 30;
+	text->RenderText(talkUnit->unitClass, xText, textHeight, 1);
+	textHeight += 30;
+	if (auto weapon = talkUnit->GetEquippedItem())
+	{
+		text->RenderText(weapon->name, xText, textHeight, 1);
+	}
+	textHeight += 30;
+	text->RenderText(intToString(talkUnit->level), xText + 40, textHeight, 1);
+	textHeight += 30;
+	text->RenderText("HP" + intToString(talkUnit->maxHP) + "/" + intToString(talkUnit->currentHP), xText, textHeight, 1);
+}
+
+void SelectTalkMenu::SelectOption()
+{
+	cursor->selectedUnit->talkData[0].scene->activation->CheckActivation();
+	ClearMenu();
+}
+
+void SelectTalkMenu::GetOptions()
+{
+	numberOfOptions = talkUnits.size();
+}
+
+void SelectTalkMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
