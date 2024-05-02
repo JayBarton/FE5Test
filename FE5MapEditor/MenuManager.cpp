@@ -111,6 +111,12 @@ void MenuManager::OpenActivationMenu(SceneObjects& sceneObject)
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
+void MenuManager::OpenTalkMenu(SceneObjects& sceneObject)
+{
+	Menu* newMenu = new TalkActivationMenu(text, camera, shapeVAO, sceneObject);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
 void MenuManager::SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions)
 {
 	Menu* newMenu = nullptr;
@@ -976,6 +982,11 @@ void SceneActionMenu::Draw()
 			auto activation = static_cast<EnemyTurnEnd*>(sceneObject.activation);
 			activationModeString += "Enemy turn end: " + intToString(activation->round);
 		}
+		else if (sceneObject.activation->type == 0)
+		{
+			auto activation = static_cast<TalkActivation*>(sceneObject.activation);
+			activationModeString += "Talk: Talker: " + intToString(activation->talker) + " Listener: " + intToString(activation->listener);
+		}
 	}
 	text->RenderText(activationModeString, 400, 100, 1);
 }
@@ -1090,14 +1101,90 @@ void SceneActivationMenu::SelectOption()
 {
 	if (currentOption == TALK)
 	{
-
+		MenuManager::menuManager.OpenTalkMenu(sceneObject);
 	}
 	else if (currentOption = ENEMY_TURN_END)
 	{
-		sceneObject.activation = new EnemyTurnEnd(1, 2);
+		sceneObject.activation = new EnemyTurnEnd(ENEMY_TURN_END, 2);
+		CancelOption();
 	}
-	CancelOption();
 }
+
+TalkActivationMenu::TalkActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject)
+{
+	numberOfOptions = 2;
+
+}
+
+void TalkActivationMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(32 + 32 * !setTalker, 56, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Talk Activation Menu", 100, 50, 1);
+
+	text->RenderText("Talker: " + intToString(talker), 100, 200, 1);
+	text->RenderText("Listener: " + intToString(listener), 200, 200, 1);
+}
+
+void TalkActivationMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_RIGHT) || inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		setTalker = !setTalker;
+	}
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		if (setTalker)
+		{
+			talker++;
+		}
+		else
+		{
+			listener++;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		if (setTalker)
+		{
+			talker--;
+		}
+		else
+		{
+			listener--;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+}
+
+
+void TalkActivationMenu::SelectOption()
+{
+	sceneObject.activation = new TalkActivation(0, talker, listener);
+
+	Menu::CancelOption();
+	Menu::CancelOption();
+}
+
 
 CameraActionMenu::CameraActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
 {

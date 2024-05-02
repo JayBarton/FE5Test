@@ -727,7 +727,14 @@ bool loadMap()
                 }
                 int activationType = 0;
                 map >> activationType;
-                if (activationType == 1)
+                if (activationType == 0)
+                {
+                    int talker = 0;
+                    int listener = 0;
+                    map >> talker >> listener;
+                    currentObject->activation = new TalkActivation(activationType, talker, listener);
+                }
+                else if (activationType == 1)
                 {
                     int round = 0;
                     map >> round;
@@ -802,6 +809,11 @@ void saveMap()
             }
         }
         scenes += intToString(currentObject->activation->type) + " ";
+        if (currentObject->activation->type == SceneActivationMenu::TALK)
+        {
+            auto activation = static_cast<TalkActivation*>(currentObject->activation);
+            scenes += intToString(activation->talker) + " " + intToString(activation->listener) + " ";
+        }
         if (currentObject->activation->type == SceneActivationMenu::ENEMY_TURN_END)
         {
             auto activation = static_cast<EnemyTurnEnd*>(currentObject->activation);

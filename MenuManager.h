@@ -58,10 +58,12 @@ struct UnitOptionsMenu : public Menu
 	const static int RELEASE = 8;
 	const static int RESCUE = 9;
 	const static int TRANSFER = 10;
+	const static int TALK = 11;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
 	std::vector<Unit*> tradeUnits;
+	std::vector<Unit*> talkUnits;
 	std::vector<Unit*> rescueUnits;
 	std::vector<Unit*> transferUnits;
 
@@ -74,6 +76,7 @@ struct UnitOptionsMenu : public Menu
 	bool canCapture = false;
 	bool canRescue = false;
 	bool canTransfer = false;
+	bool canTalk = false;
 
 	bool heldFriendly = false;
 	bool heldEnemy = false;

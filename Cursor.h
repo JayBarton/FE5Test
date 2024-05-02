@@ -57,4 +57,5 @@ struct Cursor
 	std::vector<glm::ivec2> getDropPositions();
 	void FindDropPosition(glm::ivec2& up, std::vector<glm::ivec2>& dropPositions);
 	void PushTradeUnit(std::vector<Unit*>& units, Unit*& unit);
+	void PushTalkUnit(std::vector<Unit*>& units, Unit*& unit);
 };

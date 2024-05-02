@@ -6,6 +6,7 @@
 #include "Items.h"
 #include "BattleManager.h"
 #include "Tile.h"
+#include "SceneManager.h"
 
 #include "Globals.h"
 
@@ -211,6 +212,10 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.mustWait = true;
 		break;
 	}
+	case TALK:
+		playerUnit->talkData[0].scene->activation->CheckActivation();
+		ClearMenu();
+		break;
 	//Wait
 	default:
 		cursor->Wait();
@@ -259,6 +264,11 @@ void UnitOptionsMenu::Draw()
 	glBindVertexArray(0);
 	//Just a little test with new line
 	std::string commands = "";
+	if (canTalk)
+	{
+		text->RenderText("Talk", xText, yOffset, 1);
+		yOffset += 30;
+	}
 	if (canAttack)
 	{
 		commands += "Attack\n";
@@ -378,7 +388,6 @@ void UnitOptionsMenu::GetOptions()
 		}
 	}
 	optionsVector.push_back(ITEMS);
-	std::vector<Unit*> talkUnits;
 	cursor->GetAdjacentUnits(tradeUnits, talkUnits);
 	rescueUnits.clear();
 	transferUnits.clear();
@@ -444,6 +453,11 @@ void UnitOptionsMenu::GetOptions()
 				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, TRANSFER);
 			}
 		}
+	}
+	if (talkUnits.size() > 0)
+	{
+		canTalk = true;
+		optionsVector.insert(optionsVector.begin(), TALK);
 	}
 	//if can dismount
 	if (playerUnit->mount)

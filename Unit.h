@@ -85,6 +85,12 @@ struct MovementComponent
 	void Update(float deltaTime, InputManager& inputManager);
 };
 
+struct TalkData
+{
+	class Scene* scene;
+	int talkTarget;
+};
+
 class WeaponData;
 struct Unit
 {
@@ -266,6 +272,8 @@ struct Unit
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
 	//Temporary, just using to visualize the path taken
 	std::vector<glm::ivec2> drawnPath;
+
+	std::vector<TalkData> talkData;
 
 	std::vector<Item*> GetOrderedWeapons();
 

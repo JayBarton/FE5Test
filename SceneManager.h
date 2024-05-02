@@ -43,7 +43,8 @@ struct Scene
 	void extraSetup(Subject<int>* subject);
 	void init();
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
-	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, class InputManager& inputManager);
+	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
+		Camera& camera, class InputManager& inputManager, class Cursor& cursor);
 
 	void ClearActions();
 };
@@ -84,6 +85,21 @@ struct EnemyTurnEnd : public Activation
 			owner->activation = nullptr;
 			delete this;
 		}
+	}
+};
+
+struct TalkActivation : public Activation
+{
+	int talker;
+	int listener;
+
+	TalkActivation(Scene* owner, int type, int talker, int listener);
+	virtual void CheckActivation() override
+	{
+		owner->textManager.talkActivated = true;
+		owner->init();
+		owner->activation = nullptr;
+		delete this;
 	}
 };
 

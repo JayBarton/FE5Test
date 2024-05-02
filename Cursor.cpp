@@ -241,20 +241,23 @@ void Cursor::GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>
 	if (Unit* unit = TileManager::tileManager.getUnit(up.x, up.y))
 	{
 		PushTradeUnit(tradeUnits, unit);
-		//Will also check if the unit is talkable.
 		//Since you can possibly talk to a unit on any team, need this to be separate
+		PushTalkUnit(talkUnits, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnit(down.x, down.y))
 	{
 		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnit(left.x, left.y))
 	{
 		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnit(right.x, right.y))
 	{
 		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
 	}
 }
 
@@ -296,7 +299,16 @@ void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
 		}
 	}
 }
-
+void Cursor::PushTalkUnit(std::vector<Unit*>& units, Unit*& unit)
+{
+	for (int i = 0; i < selectedUnit->talkData.size(); i++)
+	{
+		if (unit->sceneID == selectedUnit->talkData[i].talkTarget)
+		{
+			units.push_back(unit);
+		}
+	}
+}
 void Cursor::CheckBounds()
 {
 	if (position.x < TileManager::TILE_SIZE)

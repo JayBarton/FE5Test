@@ -4,6 +4,7 @@
 #include "PlayerManager.h"
 #include "PathFinder.h"
 #include "InputManager.h"
+#include "Cursor.h"
 
 #include <sstream>
 #include <fstream>
@@ -41,7 +42,7 @@ void Scene::extraSetup(Subject<int>* subject)
 	subject->addObserver(type->roundEvents);
 }
 
-void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, InputManager& inputManager)
+void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, InputManager& inputManager, Cursor& cursor)
 {
 	if (state!= WAITING)
 	{
@@ -74,7 +75,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			}
 			break;
 		case TEXT:
-			textManager.Update(deltaTime, inputManager);
+			textManager.Update(deltaTime, inputManager, cursor);
 			if (!textManager.active)
 			{
 				actionIndex++;
@@ -131,15 +132,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					for (const auto& dialogue : dialogues)
 					{
 						Unit* speaker = sceneUnits[dialogue["speaker"]];
-						/*for (int i = 0; i < playerManager->playerUnits.size(); i++)
-						{
-							auto thisUnit = playerManager->playerUnits[i];
-							if (thisUnit->sceneID == dialogue["speaker"])
-							{
-								speaker = thisUnit;
-								break;
-							}
-						}*/
+
 						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"]});
 					}
 					break;
@@ -186,4 +179,8 @@ EnemyTurnEnd::EnemyTurnEnd(Scene* owner, int type, int round) : Activation(owner
 EnemyTurnEnd::~EnemyTurnEnd()
 {
 	subject->removeObserver(roundEvents);
+}
+
+TalkActivation::TalkActivation(Scene* owner, int type, int talker, int listener) : Activation(owner, type), talker(talker), listener(listener)
+{
 }

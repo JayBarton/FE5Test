@@ -34,6 +34,7 @@ struct TextObjectManager
 	bool waitingOnInput = false;
 	bool removingText = false;
 	bool active = false;
+	bool talkActivated = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -48,6 +49,6 @@ struct TextObjectManager
 
 	TextObjectManager();
 	void init();
-	void Update(float deltaTime, class InputManager& inputManager);
+	void Update(float deltaTime, class InputManager& inputManager, class Cursor& cursor);
 	void Draw(TextRenderer* textRenderer);
 };

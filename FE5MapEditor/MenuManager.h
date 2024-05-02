@@ -21,6 +21,14 @@ struct EnemyTurnEnd : public Activation
     {}
 };
 
+struct TalkActivation : public Activation
+{
+    int talker;
+    int listener;
+    TalkActivation(int type, int talker, int listener) : Activation(type), talker(talker), listener(listener)
+    {}
+};
+
 struct SceneObjects
 {
     std::vector<class SceneAction*> actions;
@@ -71,6 +79,7 @@ struct MenuManager
     void OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects);
     void OpenActionMenu(SceneObjects& sceneObject);
     void OpenActivationMenu(SceneObjects& sceneObject);
+    void OpenTalkMenu(SceneObjects& sceneObject);
     void SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions);
     void PreviousMenu();
     void ClearMenu();
@@ -207,6 +216,22 @@ struct SceneActivationMenu : public Menu
     SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
     virtual void Draw() override;
     virtual void SelectOption() override;
+
+    SceneObjects& sceneObject;
+};
+
+struct TalkActivationMenu : public Menu
+{
+    TalkActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    bool setTalker = true;
+    //The default initiator of the dialogue
+    int talker = 0;
+    //Who the talker is talking to
+    int listener = 0;
 
     SceneObjects& sceneObject;
 };

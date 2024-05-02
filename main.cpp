@@ -428,19 +428,18 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-
-		if (MenuManager::menuManager.menus.size() == 0)
+		if (inputManager.isKeyPressed(SDLK_BACKSPACE))
 		{
-			if (inputManager.isKeyPressed(SDLK_BACKSPACE))
-			{
-				//Doing this dumb thing for a minute
-				sceneManager.scenes[sceneManager.currentScene]->init();
-			}
-			if (sceneManager.scenes[sceneManager.currentScene]->playingScene)
-			{
-				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager);
-			}
-			else if (displays.state != NONE)
+			//Doing this dumb thing for a minute
+			sceneManager.scenes[sceneManager.currentScene]->init();
+		}
+		if (sceneManager.scenes[sceneManager.currentScene]->playingScene)
+		{
+			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor);
+		}
+		else if (MenuManager::menuManager.menus.size() == 0)
+		{
+			if (displays.state != NONE)
 			{
 				if (camera.moving)
 				{
@@ -741,7 +740,21 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				}
 				int activationType = 0;
 				map >> activationType;
-				if (activationType == 1)
+				if (activationType == 0)
+				{
+					int talker = 0;
+					int listener = 0;
+					map >> talker >> listener;
+					//Add a reference to this scene to the talking unit
+					//Probably don't need this scene to exist at all if the talker is not in the level
+					if (sceneUnits.count(talker))
+					{
+						currentObject->activation = new TalkActivation(currentObject, activationType, talker, listener);
+						sceneUnits[talker]->talkData.push_back({ currentObject, listener });
+					}
+
+				}
+				else if (activationType == 1)
 				{
 					int round = 0;
 					map >> round;
@@ -773,6 +786,7 @@ void Draw()
 
 	bool fullScreenMenu = false;
 	bool drawingMenu = false;
+	
 	if (MenuManager::menuManager.menus.size() > 0)
 	{
 		drawingMenu = true;
@@ -803,18 +817,21 @@ void Draw()
 			Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 		}
 	}
-	if (drawingMenu)
-	{
-		auto menu = MenuManager::menuManager.menus.back();
-		menu->Draw();
-	}
-	if (!fullScreenMenu)
-	{
-		DrawText();
-	}
 	if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
 	{
 		sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
+	}
+	else
+	{
+		if (drawingMenu)
+		{
+			auto menu = MenuManager::menuManager.menus.back();
+			menu->Draw();
+		}
+		if (!fullScreenMenu)
+		{
+			DrawText();
+		}
 	}
 
 	SDL_GL_SwapWindow(window);

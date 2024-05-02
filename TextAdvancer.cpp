@@ -4,6 +4,8 @@
 #include "TextRenderer.h"
 #include "Globals.h"
 #include "Unit.h"
+#include "Cursor.h"
+#include "MenuManager.h"
 #include <SDL.h>
 
 TextObject::TextObject()
@@ -28,11 +30,14 @@ void TextObjectManager::init()
 	currentLine = 0;
 	textObjects[focusedObject].text = textLines[currentLine].text;
 	//Proof of concept. Should be error checking here probably
-	textLines[currentLine].speaker->SetFocus();
+	if (!talkActivated)
+	{
+		textLines[currentLine].speaker->SetFocus();
+	}
 	active = false;
 }
 
-void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
+void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Cursor& cursor)
 {
 	if (waitingOnInput)
 	{
@@ -44,11 +49,31 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 			{
 				active = false;
 				waitingOnInput = false;
-				textLines[currentLine].speaker->moveAnimate = false;
+				if (talkActivated)
+				{
+					//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
+					//But it is worth noting I think
+					if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
+					{
+						cursor.GetRemainingMove();
+						MenuManager::menuManager.mustWait = true;
+					}
+					else
+					{
+						cursor.Wait();
+					}
+				}
+				else
+				{
+					textLines[currentLine].speaker->moveAnimate = false;
+				}
 			}
 			else
 			{
-				textLines[currentLine].speaker->moveAnimate = false;
+				if (!talkActivated)
+				{
+					textLines[currentLine].speaker->moveAnimate = false;
+				}
 				currentLine++;
 				if (currentLine < textLines.size())
 				{
@@ -59,7 +84,10 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 						textObjects[focusedObject].displayedPosition = textObjects[focusedObject].position;
 					}
 					textObjects[focusedObject].text = textLines[currentLine].text;
-					textLines[currentLine].speaker->SetFocus();
+					if (!talkActivated)
+					{
+						textLines[currentLine].speaker->SetFocus();
+					}
 					textObjects[focusedObject].index = 0;
 				}
 				waitingOnInput = false;
