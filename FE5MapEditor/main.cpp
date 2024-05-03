@@ -124,6 +124,7 @@ std::vector<std::string> classNames;
 
 
 std::vector<SceneObjects*> sceneObjects;
+std::vector<VisitObjects> visitObjects;
 
 SBatch Batch;
 int idleFrame = 0;
@@ -742,6 +743,25 @@ bool loadMap()
                 }
             }
         }
+        else if (thing == "Visits")
+        {
+            int numberOfVisits = 0;
+            map >> numberOfVisits;
+            visitObjects.resize(numberOfVisits);
+            for (int i = 0; i < numberOfVisits; i++)
+            {
+                map >> visitObjects[i].position.x >> visitObjects[i].position.y;
+                int numberOfIDs = 0;
+                map >> numberOfIDs;
+                for (int c = 0; c < numberOfIDs; c++)
+                {
+                    int unitID = 0;
+                    int sceneID = 0;
+                    map >> unitID >> sceneID;
+                    visitObjects[i].sceneMap[unitID] = sceneID;
+                }
+            }
+        }
     }
     map.close();
     return good;
@@ -756,13 +776,9 @@ void saveMap()
     map << "\n";
     std::string enemies = "Enemies\n";
     std::string starts = "Starts\n";
-    std::stringstream stream;
-    stream << numberOfEnemies;
-    enemies += stream.str();
+    enemies += intToString(numberOfEnemies);
 
-    std::stringstream stream2;
-    stream2 << numberOfStarts;
-    starts += stream2.str();
+    starts += intToString(numberOfStarts);
 
     for (auto& iter : objectWriteTypes)
     {
@@ -776,9 +792,7 @@ void saveMap()
         }
     }
     std::string scenes = "Scenes\n";
-    std::stringstream stream3;
-    stream3 << sceneObjects.size();
-    scenes += stream3.str();
+    scenes += intToString(sceneObjects.size());
     for (int i = 0; i < sceneObjects.size(); i++)
     {
         auto currentObject = sceneObjects[i];
@@ -820,8 +834,25 @@ void saveMap()
             scenes += intToString(activation->round) + " ";
         }
     }
+    std::string visit = "Visits\n";
+    visit += intToString(visitObjects.size());
+    for (int i = 0; i < visitObjects.size(); i++)
+    {
+        /*
+        *         auto currentObject = sceneObjects[i];
+        scenes += "\n" + intToString(currentObject->actions.size()) + " ";
+        for (int c = 0; c < currentObject->actions.size(); c++)
+        */
+        auto currentVisit = visitObjects[i];
+        visit += "\n" + intToString(currentVisit.position.x) + " " + intToString(currentVisit.position.y) + " " + intToString(currentVisit.sceneMap.size()) + " ";
 
-    map << enemies << "\n" << starts << "\n" << scenes << "\n";
+        for (const auto& pair : currentVisit.sceneMap)
+        {
+            visit += intToString(pair.first) + " " + intToString(pair.second) + " ";
+        }
+    }
+
+    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n";
 
     map.close();
 
@@ -888,7 +919,7 @@ void editInput(SDL_Event& event, bool& isRunning)
                 }
                 else if (inputManager.isKeyPressed(SDLK_s))
                 {
-                    MenuManager::menuManager.OpenSceneMenu(sceneObjects);
+                    MenuManager::menuManager.OpenSceneMenu(sceneObjects, visitObjects);
                 }
             }
         }

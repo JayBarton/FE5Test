@@ -29,6 +29,12 @@ struct TalkActivation : public Activation
     {}
 };
 
+/*struct VisitActivation : public Activation
+{
+    glm::ivec2 position;
+    int expectedID = -1;
+};*/
+
 struct SceneObjects
 {
     std::vector<class SceneAction*> actions;
@@ -41,6 +47,13 @@ struct SceneObjects
         }
         actions.clear();
     }
+};
+
+struct VisitObjects
+{
+    glm::ivec2 position;
+    //Key is the ID the unit that activates this visit, the value will be the index in the scene vector of the scene to play
+    std::unordered_map<int, int> sceneMap;
 };
 
 struct Menu
@@ -76,8 +89,9 @@ struct MenuManager
     void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
     void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
     void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
-    void OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects);
+    void OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects, std::vector<VisitObjects>& visitObjects);
     void OpenActionMenu(SceneObjects& sceneObject);
+    void OpenVisitMenu(VisitObjects& visitObject);
     void OpenActivationMenu(SceneObjects& sceneObject);
     void OpenTalkMenu(SceneObjects& sceneObject);
     void SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions);
@@ -186,11 +200,28 @@ struct ProfsMenu : public Menu
 
 struct SceneMenu : public Menu
 {
-    SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects*>& sceneObjects);
+    SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects*>& sceneObjects, std::vector<VisitObjects>& visitObjects);
     virtual void Draw() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
     virtual void SelectOption() override;
 
+    bool addingScene = true;
     std::vector<SceneObjects*>& sceneObjects;
+    std::vector<VisitObjects>& visitObjects;
+};
+
+struct VisitMenu : public Menu
+{
+    VisitMenu(TextRenderer* Text, Camera* camera, int shapeVAO, VisitObjects& visitObject);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+    virtual void CancelOption() override;
+    int unitID = -1;
+    int sceneID = 0;
+    bool settingPosition = true;
+    glm::vec2 cameraPosition;
+    VisitObjects& visitObject;
 };
 
 struct SceneActionMenu : public Menu

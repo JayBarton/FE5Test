@@ -93,15 +93,21 @@ void MenuManager::AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& w
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
-void MenuManager::OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects)
+void MenuManager::OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects, std::vector<VisitObjects>& visitObjects)
 {
-	Menu* newMenu = new SceneMenu(text, camera, shapeVAO, sceneObjects);
+	Menu* newMenu = new SceneMenu(text, camera, shapeVAO, sceneObjects, visitObjects);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
 void MenuManager::OpenActionMenu(SceneObjects& sceneObject)
 {
 	Menu* newMenu = new SceneActionMenu(text, camera, shapeVAO, sceneObject);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::OpenVisitMenu(VisitObjects& visitObject)
+{
+	Menu* newMenu = new VisitMenu(text, camera, shapeVAO, visitObject);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -293,12 +299,7 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
 	}
 }
-std::string intToString2(int i)
-{
-	std::stringstream s;
-	s << i;
-	return s.str();
-}
+
 void EnemyMenu::Draw()
 {
 	if (page == 0)
@@ -319,18 +320,18 @@ void EnemyMenu::Draw()
 
 		text->RenderText("Basics", 528, TileManager::TILE_SIZE, 1);
 
-		text->RenderText("Level : " + intToString2(level), 100, 200, 1);
+		text->RenderText("Level : " + intToString(level), 100, 200, 1);
 		auto growths = unitGrowths[growthRateID];
 		text->RenderText("Growth Pattern: " + growthNames[growthRateID], 200, 200, 1);
 
-		text->RenderText("HP: " + intToString2(growths.maxHP), 200, 230, 1);
-		text->RenderText("Str: " + intToString2(growths.strength), 200, 260, 1);
-		text->RenderText("Mag: " + intToString2(growths.magic), 200, 290, 1);
-		text->RenderText("Skl: " + intToString2(growths.skill), 200, 320, 1);
-		text->RenderText("Spd: " + intToString2(growths.speed), 200, 350, 1);
-		text->RenderText("Lck: " + intToString2(growths.luck), 200, 380, 1);
-		text->RenderText("Def: " + intToString2(growths.defense), 200, 410, 1);
-		text->RenderText("Bld: " + intToString2(growths.build), 200, 440, 1);
+		text->RenderText("HP: " + intToString(growths.maxHP), 200, 230, 1);
+		text->RenderText("Str: " + intToString(growths.strength), 200, 260, 1);
+		text->RenderText("Mag: " + intToString(growths.magic), 200, 290, 1);
+		text->RenderText("Skl: " + intToString(growths.skill), 200, 320, 1);
+		text->RenderText("Spd: " + intToString(growths.speed), 200, 350, 1);
+		text->RenderText("Lck: " + intToString(growths.luck), 200, 380, 1);
+		text->RenderText("Def: " + intToString(growths.defense), 200, 410, 1);
+		text->RenderText("Bld: " + intToString(growths.build), 200, 440, 1);
 
 		text->RenderText("Inventory", 500, 200, 1);
 		if (!inInventory)
@@ -362,25 +363,25 @@ void EnemyMenu::Draw()
 
 		text->RenderText("Stats and Profciencies", 528, TileManager::TILE_SIZE, 1);
 
-		text->RenderText("Level : " + intToString2(level), 100, 200, 1);
+		text->RenderText("Level : " + intToString(level), 100, 200, 1);
 		text->RenderText("Stats", 200, 200, 1);
 
-		text->RenderText("HP: " + intToString2(baseStats[0]), 200, 230, 1);
-		text->RenderText("Str: " + intToString2(baseStats[1]), 200, 260, 1);
-		text->RenderText("Mag: " + intToString2(baseStats[2]), 200, 290, 1);
-		text->RenderText("Skl: " + intToString2(baseStats[3]), 200, 320, 1);
-		text->RenderText("Spd: " + intToString2(baseStats[4]), 200, 350, 1);
-		text->RenderText("Lck: " + intToString2(baseStats[5]), 200, 380, 1);
-		text->RenderText("Def: " + intToString2(baseStats[6]), 200, 410, 1);
-		text->RenderText("Bld: " + intToString2(baseStats[7]), 200, 440, 1);
-		text->RenderText("Mov: " + intToString2(baseStats[8]), 200, 470, 1);
+		text->RenderText("HP: " + intToString(baseStats[0]), 200, 230, 1);
+		text->RenderText("Str: " + intToString(baseStats[1]), 200, 260, 1);
+		text->RenderText("Mag: " + intToString(baseStats[2]), 200, 290, 1);
+		text->RenderText("Skl: " + intToString(baseStats[3]), 200, 320, 1);
+		text->RenderText("Spd: " + intToString(baseStats[4]), 200, 350, 1);
+		text->RenderText("Lck: " + intToString(baseStats[5]), 200, 380, 1);
+		text->RenderText("Def: " + intToString(baseStats[6]), 200, 410, 1);
+		text->RenderText("Bld: " + intToString(baseStats[7]), 200, 440, 1);
+		text->RenderText("Mov: " + intToString(baseStats[8]), 200, 470, 1);
 
 		text->RenderText("Weapon Profciencies", 500, 200, 1);
 		int offset = 30;
 		for (int i = 0; i < 10; i++)
 		{
 			text->RenderText(weaponNamesArray[i], 500, 200 + offset, 1);
-			text->RenderText(intToString2(weaponProficiencies[i]), 580, 200 + offset, 1);
+			text->RenderText(intToString(weaponProficiencies[i]), 580, 200 + offset, 1);
 			offset += 30;
 		}
 	}
@@ -706,14 +707,14 @@ void InventoryMenu::Draw()
 		{
 			auto item = items[inventory[i]];
 			text->RenderText(item.name, 500, 230 + 30 * i + 1, 1);
-			text->RenderTextRight(intToString2(item.maxUses), 628, 230 + 30 * i + 1, 1, 14);
+			text->RenderTextRight(intToString(item.maxUses), 628, 230 + 30 * i + 1, 1, 14);
 		}
 	}
 	if (currentItem >= 0)
 	{
 		auto item = items[currentItem];
 		text->RenderText(item.name, 500, 230 + 30 * currentSlot + 1, 1, glm::vec3(1.0f, 1.0f, 0.0f));
-		text->RenderTextRight(intToString2(item.maxUses), 628, 230 + 30 * currentSlot + 1, 1, 14, glm::vec3(1.0f, 1.0f, 0.0f));
+		text->RenderTextRight(intToString(item.maxUses), 628, 230 + 30 * currentSlot + 1, 1, 14, glm::vec3(1.0f, 1.0f, 0.0f));
 
 	}
 
@@ -852,7 +853,8 @@ void ProfsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-SceneMenu::SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects*>& sceneObjects) : Menu(Text, camera, shapeVAO), sceneObjects(sceneObjects)
+SceneMenu::SceneMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneObjects*>& sceneObjects, std::vector<VisitObjects>& visitObjects) :
+	Menu(Text, camera, shapeVAO), sceneObjects(sceneObjects), visitObjects(visitObjects)
 {
 	numberOfOptions = sceneObjects.size() + 1;
 }
@@ -862,7 +864,7 @@ void SceneMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(16, 32 + 12 * currentOption, 0.0f));
+	model = glm::translate(model, glm::vec3(16 + 64 *!addingScene, 32 + 12 * currentOption, 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -878,23 +880,220 @@ void SceneMenu::Draw()
 	}
 	text->RenderText("New Scene", 100, 100 + (sceneObjects.size() * 32), 1);
 
+	for (int i = 0; i < visitObjects.size(); i++)
+	{
+		text->RenderText("Visit Location: " + intToString(visitObjects[i].position.x) + ", " + intToString(visitObjects[i].position.y),
+			300, 100 + (i * 32), 1);
+		int xOffset = 500;
+		for (const auto& pair : visitObjects[i].sceneMap)
+		{
+			text->RenderText(intToString(pair.first), xOffset, 100 + (i * 32), 1);
+			xOffset += 32;
+		}
+	}
+	text->RenderText("New Visit", 300, 100 + (visitObjects.size() * 32), 1);
+}
+
+void SceneMenu::CheckInput(class InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT) || inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		addingScene = !addingScene;
+		currentOption = 0;
+	}
 }
 
 void SceneMenu::SelectOption()
 {
-	if (currentOption == sceneObjects.size())
+	if (addingScene)
 	{
-		SceneObjects* newObject = new SceneObjects;
-		sceneObjects.push_back(newObject);
-		numberOfOptions++;
+		if (currentOption == sceneObjects.size())
+		{
+			SceneObjects* newObject = new SceneObjects;
+			sceneObjects.push_back(newObject);
+			numberOfOptions++;
+		}
+		else
+		{
+			MenuManager::menuManager.OpenActionMenu(*sceneObjects[currentOption]);
+		}
 	}
 	else
 	{
-		MenuManager::menuManager.OpenActionMenu(*sceneObjects[currentOption]);
+		if (currentOption == visitObjects.size())
+		{
+			VisitObjects visitObject = VisitObjects();
+			visitObjects.push_back(visitObject);
+			numberOfOptions++;
+		}
+		else
+		{
+			//Open visit menu
+			MenuManager::menuManager.OpenVisitMenu(visitObjects[currentOption]);
+		}
 	}
 }
 
-SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject), sceneActions(sceneObject.actions)
+VisitMenu::VisitMenu(TextRenderer* Text, Camera* camera, int shapeVAO, VisitObjects& visitObject) :
+	Menu(Text, camera, shapeVAO), visitObject(visitObject)
+{
+	if (visitObject.position.x > 0 && visitObject.position.y > 0)
+	{
+		cameraPosition = visitObject.position;
+	}
+	else
+	{
+		cameraPosition = camera->getPosition();
+	}
+}
+
+void VisitMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(cameraPosition.x, cameraPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	if (settingPosition)
+	{
+		text->RenderText("Click where you want the visit location", 100, 50, 1);
+	}
+	else
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(visitObject.position.x, visitObject.position.y, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 0.5f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		glm::vec2 drawPosition = glm::vec2(visitObject.position) + glm::vec2(2, 4);
+		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		text->RenderText("start", drawPosition.x, drawPosition.y, 1);
+		text->RenderText("Current: " + intToString(unitID) + " " + intToString(sceneID), 100, 100, 1);
+		text->RenderText("Use the enter key to confirm new scene pairs. Space bar to confirm.", 100, 50, 1);
+	}
+	int yOffset = 150;
+	for (const auto& pair : visitObject.sceneMap) 
+	{
+		text->RenderText(intToString(pair.first) + " " + intToString(pair.second), 100, yOffset, 1);
+		yOffset += 30;
+	}
+}
+
+void VisitMenu::SelectOption()
+{
+	if (settingPosition)
+	{
+		visitObject.position = cameraPosition;
+		settingPosition = false;
+	}
+	else
+	{
+		visitObject.sceneMap[unitID] = sceneID;
+	}
+}
+
+void VisitMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	glm::ivec2 move(0);
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		move.y = -1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		move.y = 1;
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		move.x = 1;
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		move.x = -1;
+	}
+	//Want to be able to display the unit name in the future
+	if (inputManager.isKeyPressed(SDLK_w))
+	{
+		unitID++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		unitID--;
+		if (unitID < -1)
+		{
+			unitID = -1;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_e))
+	{
+		sceneID++;
+
+	}
+	else if (inputManager.isKeyPressed(SDLK_d))
+	{
+		sceneID--;
+		if (sceneID < 0)
+		{
+			sceneID = 0;
+		}
+	}
+	if (!settingPosition)
+	{
+		if (inputManager.isKeyPressed(SDLK_DELETE))
+		{
+			visitObject.sceneMap.erase(unitID);
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_SPACE))
+	{
+		Menu::CancelOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else
+	{
+		cameraPosition += move * TileManager::TILE_SIZE;
+		camera->setPosition(cameraPosition);
+	}
+}
+
+void VisitMenu::CancelOption()
+{
+	if (settingPosition)
+	{
+		Menu::CancelOption();
+	}
+	else
+	{
+		settingPosition = true;
+	}
+}
+
+SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : 
+	Menu(Text, camera, shapeVAO), sceneObject(sceneObject), sceneActions(sceneObject.actions)
 {
 	numberOfOptions = sceneActions.size() + 1;
 	actionNames.resize(4);
