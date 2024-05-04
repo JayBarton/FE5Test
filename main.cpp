@@ -87,6 +87,7 @@ EnemyManager enemyManager;
 InfoDisplays displays;
 
 std::unordered_map<int, Unit*> sceneUnits;
+std::vector<VisitObject> visitObjects;
 
 SBatch Batch;
 
@@ -760,6 +761,32 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 					map >> round;
 					currentObject->activation = new EnemyTurnEnd(currentObject, activationType, round);
 				}
+				else if (activationType == 2)
+				{
+					currentObject->activation = new VisitActivation(currentObject, activationType);
+
+				}
+			}
+		}
+		else if (thing == "Visits")
+		{
+			int numberOfVisits = 0;
+			map >> numberOfVisits;
+			visitObjects.resize(numberOfVisits);
+			for (int i = 0; i < numberOfVisits; i++)
+			{
+				glm::ivec2 position;
+				map >> position.x >> position.y;
+				int numberOfIDs = 0;
+				map >> numberOfIDs;
+				for (int c = 0; c < numberOfIDs; c++)
+				{
+					int unitID = 0;
+					int sceneID = 0;
+					map >> unitID >> sceneID;
+					visitObjects[i].sceneMap[unitID] = sceneManager.scenes[sceneID];
+				}
+				TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);
 			}
 		}
 	}

@@ -103,6 +103,18 @@ struct TalkActivation : public Activation
 	}
 };
 
+struct VisitActivation : public Activation
+{
+	VisitActivation(Scene* owner, int type);
+	virtual void CheckActivation() override
+	{
+		owner->textManager.talkActivated = true;
+		owner->init();
+		owner->activation = nullptr;
+		delete this;
+	}
+};
+
 struct RoundEvents : public Observer<int>
 {
 	EnemyTurnEnd* enemyTurnEnd;

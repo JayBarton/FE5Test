@@ -218,6 +218,20 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
+	case VISIT:
+	{
+		auto position = playerUnit->sprite.getPosition();
+		auto visit = TileManager::tileManager.getVisit(position.x, position.y);
+		int sceneID = -1;
+		if (visit->sceneMap.count(playerUnit->sceneID))
+		{
+			sceneID = playerUnit->sceneID;
+		}
+		visit->sceneMap[sceneID]->activation->CheckActivation();
+		ClearMenu();
+
+		break;
+	}
 	//Wait
 	default:
 		cursor->Wait();
@@ -275,6 +289,11 @@ void UnitOptionsMenu::Draw()
 	{
 		commands += "Attack\n";
 		text->RenderText("Attack", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	if (canVisit)
+	{
+		text->RenderText("Visit", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	if (heldFriendly)
@@ -339,9 +358,11 @@ void UnitOptionsMenu::GetOptions()
 	heldFriendly = false;
 	heldEnemy = false;
 	canTransfer = false;
+	canVisit = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
 	auto playerUnit = cursor->selectedUnit;
+	auto playerPosition = playerUnit->sprite.getPosition();
 
 	unitsInRange = playerUnit->inRangeUnits(1);
 	unitsInCaptureRange.clear();
@@ -357,7 +378,7 @@ void UnitOptionsMenu::GetOptions()
 				auto currentUnit = unitsInRange[i];
 				if (!currentUnit->isMounted() && currentUnit->getBuild() < 20)
 				{
-					float distance = abs(currentUnit->sprite.getPosition().x - playerUnit->sprite.getPosition().x) + abs(currentUnit->sprite.getPosition().y - playerUnit->sprite.getPosition().y);
+					float distance = abs(currentUnit->sprite.getPosition().x - playerPosition.x) + abs(currentUnit->sprite.getPosition().y - playerPosition.y);
 					distance /= TileManager::TILE_SIZE;
 					if (distance == 1 && (playerUnit->isMounted() || currentUnit->getBuild() < playerUnit->getBuild()))
 					{
@@ -371,6 +392,11 @@ void UnitOptionsMenu::GetOptions()
 				optionsVector.push_back(CAPTURE);
 			}
 		}
+	}
+	if (TileManager::tileManager.getVisit(playerPosition.x, playerPosition.y))
+	{
+		canVisit = true;
+		optionsVector.push_back(VISIT);
 	}
 	if (playerUnit->carriedUnit)
 	{

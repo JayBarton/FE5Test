@@ -1186,6 +1186,10 @@ void SceneActionMenu::Draw()
 			auto activation = static_cast<TalkActivation*>(sceneObject.activation);
 			activationModeString += "Talk: Talker: " + intToString(activation->talker) + " Listener: " + intToString(activation->listener);
 		}
+		else if (sceneObject.activation->type == 2)
+		{
+			activationModeString += "Visit";
+		}
 	}
 	text->RenderText(activationModeString, 400, 100, 1);
 }
@@ -1278,7 +1282,7 @@ void SceneActionMenu::CancelOption()
 
 SceneActivationMenu::SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject)
 {
-	numberOfOptions = 2;
+	numberOfOptions = 3;
 
 }
 
@@ -1294,6 +1298,10 @@ void SceneActivationMenu::Draw()
 	{
 		text->RenderText("Enemy Turn End", 100, 100, 1);
 	}
+	else if (currentOption == VISIT)
+	{
+		text->RenderText("Visit", 100, 100, 1);
+	}
 }
 
 void SceneActivationMenu::SelectOption()
@@ -1302,9 +1310,14 @@ void SceneActivationMenu::SelectOption()
 	{
 		MenuManager::menuManager.OpenTalkMenu(sceneObject);
 	}
-	else if (currentOption = ENEMY_TURN_END)
+	else if (currentOption == ENEMY_TURN_END)
 	{
 		sceneObject.activation = new EnemyTurnEnd(ENEMY_TURN_END, 2);
+		CancelOption();
+	}
+	else if (currentOption == VISIT)
+	{
+		sceneObject.activation = new Activation(VISIT);
 		CancelOption();
 	}
 }

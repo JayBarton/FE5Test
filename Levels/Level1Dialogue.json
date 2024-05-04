@@ -49,6 +49,41 @@
           "speech": "I better get back to where I started!<1"
         }
       ]
+    },
+    {
+      "ID": 4,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "This is the first verse<1"
+        }
+      ]
+    },
+    {
+      "ID": 5,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "This is the second verse<1"
+        }
+      ]
+    },
+    {
+      "ID": 6,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "And this is the chorus<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Or perhaps it's a bridge?<1"
+        }
+      ]
     }
   ]
 }

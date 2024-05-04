@@ -62,6 +62,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 					{
 						cursor.Wait();
 					}
+					talkActivated = false;
 				}
 				else
 				{

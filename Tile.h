@@ -3,6 +3,13 @@
 #include <glm.hpp>
 #include <string>
 #include "Unit.h"
+
+struct VisitObject
+{
+    //Key is the ID the unit that activates this visit, the value will be the index in the scene vector of the scene to play
+    std::unordered_map<int, class Scene*> sceneMap;
+};
+
 struct TileProperties
 {
     //Not sure if this should be a string but it is for now
@@ -24,6 +31,7 @@ struct Tile
     int y;
     TileProperties properties;
     Unit* occupiedBy = nullptr;
+    VisitObject* visitSpot = nullptr;
 };
 
 #endif // TILE_H

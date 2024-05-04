@@ -59,9 +59,11 @@ public :
 	//probably not keeping this as I don't actually need it probably
 	int getType(int x, int y);
 
-	Tile * getTile(int x, int y);
+	Tile* getTile(int x, int y);
     Unit* getUnit(int x, int y);
     Unit* getUnitOnTeam(int x, int y, int team);
+    VisitObject* getVisit(int x, int y);
+
     glm::vec4 getTileBox(int xPosition, int yPosition);
 
     void PositionToTile(int &x, int &y);
@@ -72,6 +74,8 @@ public :
 
     void placeUnit(int x, int y, Unit* unit);
     void removeUnit(int x, int y);
+
+    void placeVisit(int x, int y, VisitObject* visit);
 
     //called when the program stops running, clears the tiles
     void clearTiles();

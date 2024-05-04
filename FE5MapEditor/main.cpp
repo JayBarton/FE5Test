@@ -861,7 +861,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n" << starts << "\n" << scenes << "\n";
+    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);

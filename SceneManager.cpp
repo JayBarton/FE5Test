@@ -184,3 +184,8 @@ EnemyTurnEnd::~EnemyTurnEnd()
 TalkActivation::TalkActivation(Scene* owner, int type, int talker, int listener) : Activation(owner, type), talker(talker), listener(listener)
 {
 }
+
+VisitActivation::VisitActivation(Scene* owner, int type) : Activation(owner, type)
+{
+
+}

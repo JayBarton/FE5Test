@@ -166,6 +166,11 @@ void TileManager::removeUnit(int x, int y)
     getTile(x, y)->occupiedBy = nullptr;
 }
 
+void TileManager::placeVisit(int x, int y, VisitObject* visit)
+{
+    getTile(x, y)->visitSpot = visit;
+}
+
 bool TileManager::outOfBounds(int x, int y)
 {
     bool out = false;
@@ -218,6 +223,15 @@ Unit* TileManager::getUnitOnTeam(int x, int y, int team)
     if (unit && unit->team == team)
     {
         return unit;
+    }
+    return nullptr;
+}
+
+VisitObject* TileManager::getVisit(int x, int y)
+{
+    if (Tile* tile = getTile(x, y))
+    {
+        return tile->visitSpot;
     }
     return nullptr;
 }

@@ -59,6 +59,7 @@ struct UnitOptionsMenu : public Menu
 	const static int RESCUE = 9;
 	const static int TRANSFER = 10;
 	const static int TALK = 11;
+	const static int VISIT = 12;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
@@ -77,6 +78,7 @@ struct UnitOptionsMenu : public Menu
 	bool canRescue = false;
 	bool canTransfer = false;
 	bool canTalk = false;
+	bool canVisit = false;
 
 	bool heldFriendly = false;
 	bool heldEnemy = false;
