@@ -18,7 +18,7 @@ class TileManager
 private :
 
     //Tile constants
-    static const int TILE_SPRITES = 30;
+    static const int TILE_SPRITES = 31;
 
     static const int LEVEL_START_X = 0;
     static const int LEVEL_START_Y = 0;
@@ -49,7 +49,7 @@ public :
 
     //load and set the tiles
     bool setTiles(std::ifstream &tileMap, int width, int height);
-
+    void reDraw();
     //check if a position is out of bounds
     bool outOfBounds(int x, int y);
 

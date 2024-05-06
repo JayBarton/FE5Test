@@ -7,7 +7,9 @@
 struct VisitObject
 {
     //Key is the ID the unit that activates this visit, the value will be the index in the scene vector of the scene to play
+    glm::ivec2 position;
     std::unordered_map<int, class Scene*> sceneMap;
+    bool toDelete = false;
 };
 
 struct TileProperties
@@ -29,6 +31,7 @@ struct Tile
     //We'll see about this one
     int x;
     int y;
+    int uvID;
     TileProperties properties;
     Unit* occupiedBy = nullptr;
     VisitObject* visitSpot = nullptr;

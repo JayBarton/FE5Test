@@ -151,7 +151,14 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 	else
 	{
 		playingScene = false;
-		ClearActions();
+		if (repeat)
+		{
+			actionIndex = 0;
+		}
+		else
+		{
+			ClearActions();
+		}
 	}
 }
 
@@ -168,6 +175,12 @@ void Scene::ClearActions()
 		delete activation;
 	}
 	activation = nullptr;
+
+	if (visit)
+	{
+		visit->toDelete = true;
+		visit = nullptr;
+	}
 }
 
 EnemyTurnEnd::EnemyTurnEnd(Scene* owner, int type, int round) : Activation(owner, type), round(round)

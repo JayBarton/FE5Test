@@ -39,6 +39,7 @@ struct SceneObjects
 {
     std::vector<class SceneAction*> actions;
     Activation* activation = nullptr;
+    bool repeat = false;
     ~SceneObjects()
     {
         for (int i = 0; i < actions.size(); i++)

@@ -18,7 +18,6 @@ SpriteBatch::~SpriteBatch()
 }
 void SpriteBatch::init()
 {
-
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 

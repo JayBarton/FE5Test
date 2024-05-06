@@ -1358,7 +1358,21 @@ void SelectTalkMenu::Draw()
 
 void SelectTalkMenu::SelectOption()
 {
-	cursor->selectedUnit->talkData[0].scene->activation->CheckActivation();
+	auto sceneID = talkUnits[currentOption]->sceneID;
+	auto talkData = cursor->selectedUnit->talkData;
+	int index = 0;
+	//would really like a better way of doing this
+	for (int i = 0; i < talkData.size(); i++)
+	{
+		if (sceneID == talkData[i].talkTarget)
+		{
+			index = i;
+			break;
+		}
+	}
+	cursor->selectedUnit->talkData[index].scene->activation->CheckActivation();
+	cursor->selectedUnit->talkData[index] = cursor->selectedUnit->talkData.back();
+	cursor->selectedUnit->talkData.pop_back();
 	ClearMenu();
 }
 

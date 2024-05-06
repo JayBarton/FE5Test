@@ -559,6 +559,20 @@ int main(int argc, char** argv)
 		}
 		camera.update();
 
+		//ugh
+		for (int i = 0; i < visitObjects.size(); i++)
+		{
+			if (visitObjects[i].toDelete)
+			{
+				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->visitSpot = nullptr;
+				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->uvID = 30;
+				TileManager::tileManager.reDraw();
+				visitObjects[i].sceneMap.clear();
+				visitObjects.erase(visitObjects.begin() + i);
+				i--;
+			}
+		}
+
 		Draw();
 
 		fps = fpsLimiter.end();
@@ -784,7 +798,14 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 					int unitID = 0;
 					int sceneID = 0;
 					map >> unitID >> sceneID;
+					visitObjects[i].position = position;
 					visitObjects[i].sceneMap[unitID] = sceneManager.scenes[sceneID];
+					//temp
+					if (unitID == -1)
+					{
+						sceneManager.scenes[sceneID]->repeat = true;
+					}
+					sceneManager.scenes[sceneID]->visit = &visitObjects[i];
 				}
 				TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);
 			}

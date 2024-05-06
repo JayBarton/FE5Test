@@ -1191,7 +1191,19 @@ void SceneActionMenu::Draw()
 			activationModeString += "Visit";
 		}
 	}
+
 	text->RenderText(activationModeString, 400, 100, 1);
+	std::string repeatText = "Repeat? : ";
+	if (sceneObject.repeat)
+	{
+		repeatText += "Yes";
+	}
+	else
+	{
+		repeatText += "No";
+	}
+	text->RenderText(repeatText, 100, 500, 1);
+
 }
 
 void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -1236,6 +1248,10 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			activationMode = !activationMode;
 		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_r))
+	{
+		sceneObject.repeat = !sceneObject.repeat;
 	}
 }
 

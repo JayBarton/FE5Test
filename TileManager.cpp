@@ -58,7 +58,6 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
     spriteBatch.init();
     spriteBatch.begin();
     Texture2D displayTexture = ResourceManager::GetTexture("tiles");
-    //std::cout << afe;
     //Initialize the tiles
     for (int i = 0; i < totalTiles; i++)
     {
@@ -106,7 +105,7 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
                 ID = 0;
             }
             auto properties = tileTypes[ID];
-            tiles[i] = { x, y, properties };
+            tiles[i] = { x, y, tileType, properties };
             spriteBatch.addToBatch(displayTexture.ID, glm::vec2(x, y), TILE_SIZE, TILE_SIZE, uvs[tileType]);
         }
         //If we don't recognize the tile type
@@ -154,6 +153,25 @@ void TileManager::showTiles(SpriteRenderer * renderer, Camera& camera)
 
         }
     }*/
+}
+
+//Using this to redraw tiles when their uvs change, as is the case with visit tiles
+//I don't know if this would be an acceptable solution if tiles were animated, but we don't currently have any that are.
+void TileManager::reDraw()
+{
+    spriteBatch.init();
+    spriteBatch.begin();
+    Texture2D displayTexture = ResourceManager::GetTexture("tiles");
+    for (int i = 0; i < totalTiles; i++)
+    {
+        int tileType = tiles[i].uvID;
+
+        if (tileType >= -1 && tileType < TILE_SPRITES)
+        {
+            spriteBatch.addToBatch(displayTexture.ID, glm::vec2(tiles[i].x, tiles[i].y), TILE_SIZE, TILE_SIZE, uvs[tileType]);
+        }
+    }
+    spriteBatch.end();
 }
 
 void TileManager::placeUnit(int x, int y, Unit* unit)

@@ -24,6 +24,7 @@ struct Scene
 	struct Activation* activation = nullptr;
 
 	bool playingScene = false;
+	bool repeat = false;
 	int actionIndex = 0;
 	int ID = 0;
 	std::vector<SceneAction*> actions;
@@ -32,6 +33,8 @@ struct Scene
 	Unit* activeUnit = nullptr;
 	//Not crazy about this. Need some way of telling the scene manager what scene is playing
 	class SceneManager* owner = nullptr;
+
+	class VisitObject* visit = nullptr;
 
 	TextObject testText;
 	TextObject testText2;
@@ -75,6 +78,7 @@ struct EnemyTurnEnd : public Activation
 	class RoundEvents* roundEvents = nullptr;
 	EnemyTurnEnd(Scene* owner, int type, int round);
 
+	//need virtual destructor
 	~EnemyTurnEnd();
 
 	virtual void CheckActivation() override
