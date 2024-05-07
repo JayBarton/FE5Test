@@ -211,7 +211,7 @@ struct Unit
 	void Update(float deltaTime, int idleFrame);
 	void UpdateMovement(float deltaTime, InputManager& inputManager);
 	void Draw(SpriteRenderer* Renderer);
-	void Draw(class SBatch* Renderer);
+	void Draw(class SBatch* Renderer, glm::vec2 position = glm::vec2(-1));
 
 	bool Dying(float deltaTime);
 

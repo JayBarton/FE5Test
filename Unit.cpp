@@ -96,14 +96,17 @@ void Unit::Draw(SpriteRenderer* Renderer)
     }
 }
 
-void Unit::Draw(SBatch* Batch)
+void Unit::Draw(SBatch* Batch, glm::vec2 position)
 {
     if (!isDead && !isCarried)
     {
         Texture2D texture = ResourceManager::GetTexture("sprites");
         glm::vec3 color = sprite.color;
         glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, sprite.alpha);
-        glm::vec2 position = sprite.getPosition();
+        if (position.x == -1)
+        {
+            position = sprite.getPosition();
+        }
         glm::vec2 size;
         if (moveAnimate)
         {

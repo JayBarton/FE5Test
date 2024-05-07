@@ -9,6 +9,7 @@
 #include "SceneManager.h"
 
 #include "Globals.h"
+#include "SBatch.h"
 
 #include <SDL.h>
 
@@ -1668,11 +1669,15 @@ void UnitStatsViewMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+	
+	//Would like to not use batch here it's just easier without writing a new function/shader
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-
-	renderer->setUVs(unit->sprite.getUV());
-	Texture2D displayTexture = ResourceManager::GetTexture("sprites");
-	renderer->DrawSprite(displayTexture, glm::vec2(16), 0.0f, cursor->dimensions);
+	SBatch Batch;
+	Batch.init();
+	Batch.begin();
+	unit->Draw(&Batch, glm::vec2(16));
+	Batch.end();
+	Batch.renderBatch();
 
 	text->RenderText(unit->name, 110, 64, 1);
 	text->RenderText(unit->unitClass, 48, 96, 1); 
