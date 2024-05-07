@@ -114,8 +114,6 @@ struct VisitActivation : public Activation
 	{
 		owner->textManager.talkActivated = true;
 		owner->init();
-		owner->activation = nullptr;
-		delete this;
 	}
 };
 

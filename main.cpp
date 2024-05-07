@@ -778,8 +778,9 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				else if (activationType == 2)
 				{
 					currentObject->activation = new VisitActivation(currentObject, activationType);
-
 				}
+
+				map >> currentObject->repeat;
 			}
 		}
 		else if (thing == "Visits")
@@ -800,11 +801,6 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 					map >> unitID >> sceneID;
 					visitObjects[i].position = position;
 					visitObjects[i].sceneMap[unitID] = sceneManager.scenes[sceneID];
-					//temp
-					if (unitID == -1)
-					{
-						sceneManager.scenes[sceneID]->repeat = true;
-					}
 					sceneManager.scenes[sceneID]->visit = &visitObjects[i];
 				}
 				TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);

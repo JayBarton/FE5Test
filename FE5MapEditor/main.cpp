@@ -741,6 +741,11 @@ bool loadMap()
                     map >> round;
                     currentObject->activation = new EnemyTurnEnd(activationType, round);
                 }
+                else
+                {
+                    currentObject->activation = new Activation(2);
+                }
+                map >> currentObject->repeat;
             }
         }
         else if (thing == "Visits")
@@ -833,6 +838,7 @@ void saveMap()
             auto activation = static_cast<EnemyTurnEnd*>(currentObject->activation);
             scenes += intToString(activation->round) + " ";
         }
+        scenes += intToString(currentObject->repeat) + " ";
     }
     std::string visit = "Visits\n";
     visit += intToString(visitObjects.size());
