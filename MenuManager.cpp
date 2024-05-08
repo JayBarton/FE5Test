@@ -7,19 +7,19 @@
 #include "BattleManager.h"
 #include "Tile.h"
 #include "SceneManager.h"
+#include "PlayerManager.h"
 
 #include "Globals.h"
 #include "SBatch.h"
 
 #include <SDL.h>
-
-
 #include <sstream>
 #include <algorithm> 
 
 Menu::Menu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : cursor(Cursor), text(Text), camera(Camera), shapeVAO(shapeVAO)
 {
 }
+
 void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (inputManager.isKeyPressed(SDLK_UP))
@@ -30,7 +30,7 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = numberOfOptions - 1;
 		}
 	}
-	if (inputManager.isKeyPressed(SDLK_DOWN))
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
 		currentOption++;
 		if (currentOption >= numberOfOptions)
@@ -38,11 +38,11 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = 0;
 		}
 	}
-	if (inputManager.isKeyPressed(SDLK_RETURN))
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
 	}
-	if (inputManager.isKeyPressed(SDLK_z))
+	else if (inputManager.isKeyPressed(SDLK_z))
 	{
 		CancelOption();
 		currentOption = 0;
@@ -435,6 +435,7 @@ void UnitOptionsMenu::GetOptions()
 				{
 					if (!currentUnit->isMounted() && currentUnit->getBuild() < 20 && !currentUnit->carriedUnit)
 					{
+						//Not accounting for mounted selected unit, should be able to pickup without this check
 						if (currentUnit->getBuild() < playerUnit->getBuild())
 						{
 							rescueUnits.push_back(currentUnit);
@@ -670,7 +671,7 @@ void ItemOptionsMenu::GetBattleStats()
 }
 
 MenuManager MenuManager::menuManager;
-void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager)
+void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager)
 {
 	renderer = Renderer;
 	cursor = Cursor;
@@ -678,6 +679,7 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	camera = Camera;
 	this->battleManager = battleManager;
 	this->shapeVAO = shapeVAO;
+	this->playerManager = playerManager;
 }
 
 void MenuManager::AddMenu(int ID)
@@ -1950,8 +1952,11 @@ void ExtraMenu::SelectOption()
 	switch (currentOption)
 	{
 	case UNIT:
-		std::cout << "Unit menu\n";
+	{
+		Menu* newMenu = new UnitListMenu(cursor, text, camera, shapeVAO);
+		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
+	}
 	case STATUS:
 		std::cout << "Status menu\n";
 
@@ -2226,7 +2231,6 @@ void SelectTransferUnit::SelectOption()
 		playerUnit->carryingMalus = 2;
 	}
 
-
 	Menu::CancelOption();
 	MenuManager::menuManager.menus.back()->GetOptions();
 	MenuManager::menuManager.mustWait = true;
@@ -2255,5 +2259,259 @@ void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			currentOption = 0;
 		}
+	}
+}
+
+UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	numberOfOptions = MenuManager::menuManager.playerManager->playerUnits.size();
+	fullScreen = true;
+	playerUnitsCopy = std::vector<Unit*>(MenuManager::menuManager.playerManager->playerUnits);
+	pageSortOptions.resize(6);
+	pageSortOptions[GENERAL] = 6;
+	pageSortOptions[EQUIPMENT] = 5;
+	pageSortOptions[COMBAT_STATS] = 8;
+	pageSortOptions[PERSONAL] = 5;
+	pageSortOptions[WEAPON_RANKS] = 11;
+	pageSortOptions[SKILLS] = 2;
+}
+
+// Mysteriously, in FE5 sorting by name actually sorts by the original unit placement, not by name
+template<typename T>
+void sortVector(std::vector<Unit*>& vec, T Unit::* member) 
+{
+	std::sort(vec.begin(), vec.end(), [=](const Unit* a, const Unit* b) 
+		{
+		return a->*member < b->*member;
+		});
+}
+
+
+void UnitListMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	if (!sortMode)
+	{
+		model = glm::translate(model, glm::vec3(0, 56 + (16 * currentOption), 0.0f));
+	}
+	else
+	{
+		//This sucks dude in FE5 it varies by page
+		model = glm::translate(model, glm::vec3(16, 40, 0.0f));
+	}
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	SBatch Batch;
+	Batch.init();
+	Batch.begin();
+
+	std::string pageName = "";
+	switch (currentPage)
+	{
+	case GENERAL:
+		pageName = "General Data";
+		text->RenderText("Class", 202, 96, 1);
+		text->RenderText("LV", 480, 96, 1);
+		text->RenderText("EX", 560, 96, 1);
+		text->RenderText("HP/MHP", 690, 96, 1);
+
+		for (int i = 0; i < numberOfOptions; i++)
+		{
+			auto unit = playerUnitsCopy[i];
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+
+			int textY = 162 + 42 * i;
+			text->RenderText(unit->name, 106, textY, 1.0f);
+
+			text->RenderText(unit->unitClass, 202, textY, 1.0f);
+			text->RenderTextRight(intToString(unit->level), 480, textY, 1.0f, 14);
+			text->RenderTextRight(intToString(unit->experience), 560, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderText(intToString(unit->currentHP) + "/", 690, textY, 1.0f);
+			text->RenderText(intToString(unit->maxHP), 720, textY, 1.0f, glm::vec3(0.8f, 1.0f, 0.8f));
+		}
+		break;
+	case EQUIPMENT:
+		pageName = "Equipment";
+		text->RenderText("Equip", 300, 96, 1);
+		text->RenderText("Attack", 475, 96, 1);
+		text->RenderText("Hit", 600, 96, 1);
+		text->RenderText("Avoid", 700, 96, 1);
+
+		for (int i = 0; i < numberOfOptions; i++)
+		{
+			auto unit = playerUnitsCopy[i];
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+
+			int textY = 162 + 42 * i;
+			text->RenderText(unit->name, 106, textY, 1.0f);
+			//Should probably just save the battle stats to an array rather than recalculating them here over and over...
+			auto battleStats = unit->CalculateBattleStats();
+			text->RenderText(unit->GetEquippedItem()->name, 300, textY, 1.0f); //need to account for no equipped
+			text->RenderTextRight(intToString(battleStats.attackDamage), 500, textY, 1, 14);
+			text->RenderTextRight(intToString(battleStats.hitAccuracy), 575, textY, 1, 14);
+			text->RenderTextRight(intToString(battleStats.hitAvoid), 700, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+		}
+		break;
+	case COMBAT_STATS:
+		pageName = "Combat Stats";
+		text->RenderText("Str", 250, 96, 1);
+		text->RenderText("Mag", 325, 96, 1);
+		text->RenderText("Skill", 400, 96, 1);
+		text->RenderText("Speed", 475, 96, 1);
+		text->RenderText("Luck", 550, 96, 1);
+		text->RenderText("Def", 625, 96, 1);
+		text->RenderText("Con", 700, 96, 1);
+
+		for (int i = 0; i < numberOfOptions; i++)
+		{
+			auto unit = playerUnitsCopy[i];
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+
+			int textY = 166 + 42 * i;
+			text->RenderText(unit->name, 106, textY, 1.0f);
+			text->RenderTextRight(intToString(unit->getStrength()), 275, textY, 1, 14);
+			text->RenderTextRight(intToString(unit->getMagic()), 350, textY, 1, 14);
+			text->RenderTextRight(intToString(unit->getSkill()), 425, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(unit->getSpeed()), 500, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(unit->getLuck()), 575, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(unit->getDefense()), 650, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(unit->getBuild()), 725, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+		}
+		break;
+	case PERSONAL:
+		pageName = "Personal Data";
+		text->RenderText("Move", 275, 96, 1);
+		text->RenderText("Fatg", 350, 96, 1);
+		text->RenderText("Status", 450, 96, 1);
+		text->RenderText("Trvlr", 600, 96, 1);
+
+		for (int i = 0; i < numberOfOptions; i++)
+		{
+			auto unit = playerUnitsCopy[i];
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+
+			int textY = 166 + 42 * i;
+			text->RenderText(unit->name, 106, textY, 1.0f);
+			text->RenderTextRight(intToString(unit->getMove()), 300, textY, 1, 14);
+			text->RenderTextRight("--", 350, textY, 1, 14);
+			text->RenderText("----", 450, textY, 1);
+			if (unit->carriedUnit)
+			{
+				text->RenderText(unit->carriedUnit->name, 600, textY, 1);
+			}
+			else
+			{
+				text->RenderText("-----", 600, textY, 1);
+			}
+		}
+		break;
+	case WEAPON_RANKS:
+		pageName = "Weapon Ranks";
+		break;
+	case SKILLS:
+		pageName = "Skills";
+		break;
+	}
+	Batch.end();
+	Batch.renderBatch();
+	text->RenderTextCenter(pageName, 106, 29, 1, 40, glm::vec3(0.9f, 0.9f, 1.0f));
+	text->RenderText("Name", 106, 96, 1);
+	text->RenderText("Name", 471, 29, 1); //sort type
+	text->RenderText(intToString(currentPage + 1) , 700, 29, 1);
+	text->RenderText("/", 711, 29, 1);
+	text->RenderText(intToString(numberOfPages), 723, 29, 1);
+
+
+}
+
+void UnitListMenu::SelectOption()
+{
+	if (!sortMode)
+	{
+		cursor->position = playerUnitsCopy[currentOption]->sprite.getPosition();
+		cursor->focusedUnit = playerUnitsCopy[currentOption];
+		ClearMenu();
+	}
+	else
+	{
+		sortVector(playerUnitsCopy, &Unit::unitClass);
+	}
+}
+
+void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			sortMode = true;
+			//Set to sort mode
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		currentOption++;
+		if (sortMode)
+		{
+			sortMode = false;
+		}
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = numberOfOptions;
+		}
+	}
+	//Check if sort mode
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentPage++;
+		if (currentPage >= numberOfPages - 1)
+		{
+			currentPage = numberOfPages -1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentPage--;
+		if (currentPage < 0)
+		{
+			currentPage = 0;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_SPACE))
+	{
+		MenuManager::menuManager.AddUnitStatMenu(playerUnitsCopy[currentOption]);
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
 	}
 }

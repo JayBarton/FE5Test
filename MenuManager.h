@@ -287,9 +287,30 @@ struct ExtraMenu : public Menu
 	virtual void SelectOption() override;
 };
 
+struct UnitListMenu : public Menu
+{
+	const static int GENERAL = 0;
+	const static int EQUIPMENT = 1;
+	const static int COMBAT_STATS = 2;
+	const static int PERSONAL = 3;
+	const static int WEAPON_RANKS = 4;
+	const static int SKILLS = 5;
+
+	UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	int currentPage = 0;
+	int numberOfPages = 6;
+	bool sortMode = false;
+	std::vector<int> pageSortOptions;
+	std::vector<Unit*> playerUnitsCopy;
+};
+
 struct MenuManager
 {
-	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager);
+	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager, class PlayerManager* playerManager);
 
 	void AddMenu(int menuID);
 
@@ -305,6 +326,7 @@ struct MenuManager
 	Camera* camera = nullptr;
 	SpriteRenderer* renderer = nullptr;
 	BattleManager* battleManager = nullptr;
+	PlayerManager* playerManager = nullptr;
 
 	Subject<int> subject;
 

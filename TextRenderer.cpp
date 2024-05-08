@@ -191,6 +191,13 @@ void TextRenderer::RenderTextRight(std::string text, GLfloat x, GLfloat y, GLflo
     GLfloat startX = x  + (containerWidth - GetTextWidth(text, scale));
     RenderText(text, startX, y, scale, color);
 }
+
+void TextRenderer::RenderTextCenter(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color)
+{
+    GLfloat startX = x + (containerWidth - GetTextWidth(text, scale)) / 2.0f;
+    RenderText(text, startX, y, scale, color);
+}
+
 int TextRenderer::GetTextWidth(std::string text, GLfloat scale)
 {
   //  scale *= 30.0f / 256.0f;
