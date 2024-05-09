@@ -43,12 +43,11 @@ void Unit::placeUnit(int x, int y)
 
 void Unit::Update(float deltaTime, int idleFrame)
 {
-    if (!isDead && !isCarried)
+    //this will presumably also handle animation at some point, and no point in animation dead units
+    //Not sure what I'm doing with dead units as the plan is not for them to hang around and get cleared at turn start, want to change that
+    //Need to figure out a better way to handle animating units in menus, disabling this check for now
+   // if (!isDead && !isCarried)
     {
-        if (sprite.startingFrame == 3)
-        {
-            int a = 2;
-        }
         if (moveAnimate)
         {
          //   sprite.currentFrame = 4;
@@ -58,7 +57,6 @@ void Unit::Update(float deltaTime, int idleFrame)
         {
             sprite.currentFrame = idleFrame;
         }
-        //this will presumably also handle animation at some point, and no point in animation dead units
     }
 }
 
@@ -96,9 +94,9 @@ void Unit::Draw(SpriteRenderer* Renderer)
     }
 }
 
-void Unit::Draw(SBatch* Batch, glm::vec2 position)
+void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
 {
-    if (!isDead && !isCarried)
+    if (drawAnyway || (!isDead && !isCarried))
     {
         Texture2D texture = ResourceManager::GetTexture("sprites");
         glm::vec3 color = sprite.color;

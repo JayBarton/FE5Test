@@ -301,11 +301,18 @@ struct UnitListMenu : public Menu
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
+	void CloseAndSaveView();
+
+	void SortView();
+
 	int currentPage = 0;
 	int numberOfPages = 6;
+	int sortType = 0;
+	int sortIndicator = 0;
 	bool sortMode = false;
 	std::vector<int> pageSortOptions;
-	std::vector<Unit*> playerUnitsCopy;
+	std::vector<std::string> sortNames;
+	std::vector <std::pair<Unit*, BattleStats>> unitData;
 };
 
 struct MenuManager
@@ -334,6 +341,8 @@ struct MenuManager
 	bool mustWait = false;
 
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
+
+	int unitViewSortType;
 
 	static MenuManager menuManager;
 };

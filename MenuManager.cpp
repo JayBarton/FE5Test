@@ -436,14 +436,14 @@ void UnitOptionsMenu::GetOptions()
 					if (!currentUnit->isMounted() && currentUnit->getBuild() < 20 && !currentUnit->carriedUnit)
 					{
 						//Not accounting for mounted selected unit, should be able to pickup without this check
-						if (currentUnit->getBuild() < playerUnit->getBuild())
+						if (playerUnit->isMounted() || currentUnit->getBuild() < playerUnit->getBuild())
 						{
 							rescueUnits.push_back(currentUnit);
 						}
 					}
 					else if (currentUnit->carriedUnit)
 					{
-						if (currentUnit->carriedUnit->getBuild() < playerUnit->getBuild())
+						if (playerUnit->isMounted() || currentUnit->carriedUnit->getBuild() < playerUnit->getBuild())
 						{
 							transferUnits.push_back(currentUnit);
 						}
@@ -470,7 +470,7 @@ void UnitOptionsMenu::GetOptions()
 				{
 					if (!currentUnit->carriedUnit)
 					{
-						if (playerUnit->carriedUnit->getBuild() < currentUnit->getBuild())
+						if (currentUnit->isMounted() || playerUnit->carriedUnit->getBuild() < currentUnit->getBuild())
 						{
 							transferUnits.push_back(currentUnit);
 						}
@@ -1677,7 +1677,7 @@ void UnitStatsViewMenu::Draw()
 	SBatch Batch;
 	Batch.init();
 	Batch.begin();
-	unit->Draw(&Batch, glm::vec2(16));
+	unit->Draw(&Batch, glm::vec2(16), true);
 	Batch.end();
 	Batch.renderBatch();
 
@@ -2266,7 +2266,18 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 {
 	numberOfOptions = MenuManager::menuManager.playerManager->playerUnits.size();
 	fullScreen = true;
-	playerUnitsCopy = std::vector<Unit*>(MenuManager::menuManager.playerManager->playerUnits);
+	unitData.resize(numberOfOptions);
+	for (int i = 0; i < numberOfOptions; i++)
+	{
+		auto unit = MenuManager::menuManager.playerManager->playerUnits[i];
+		unitData[i] = std::make_pair(unit, unit->CalculateBattleStats());
+	}
+	if (MenuManager::menuManager.unitViewSortType > 0)
+	{
+		sortType = MenuManager::menuManager.unitViewSortType;
+		SortView();
+	}
+
 	pageSortOptions.resize(6);
 	pageSortOptions[GENERAL] = 6;
 	pageSortOptions[EQUIPMENT] = 5;
@@ -2274,18 +2285,28 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	pageSortOptions[PERSONAL] = 5;
 	pageSortOptions[WEAPON_RANKS] = 11;
 	pageSortOptions[SKILLS] = 2;
-}
 
-// Mysteriously, in FE5 sorting by name actually sorts by the original unit placement, not by name
-template<typename T>
-void sortVector(std::vector<Unit*>& vec, T Unit::* member) 
-{
-	std::sort(vec.begin(), vec.end(), [=](const Unit* a, const Unit* b) 
-		{
-		return a->*member < b->*member;
-		});
+	sortNames.resize(30);
+	sortNames[0] = "Name";
+	sortNames[1] = "Class";
+	sortNames[2] = "LV";
+	sortNames[3] = "EX";
+	sortNames[4] = "HP";
+	sortNames[5] = "MHP";
+	sortNames[6] = "Name";
+	sortNames[7] = "Equip";
+	sortNames[8] = "Attack";
+	sortNames[9] = "Hit";
+	sortNames[10] = "Avoid";
+	sortNames[11] = "Name";
+	sortNames[12] = "Str";
+	sortNames[13] = "Mag";
+	sortNames[14] = "Skill";
+	sortNames[15] = "Speed";
+	sortNames[16] = "Luck";
+	sortNames[17] = "Def";
+	sortNames[18] = "Con";
 }
-
 
 void UnitListMenu::Draw()
 {
@@ -2311,7 +2332,7 @@ void UnitListMenu::Draw()
 	else
 	{
 		//This sucks dude in FE5 it varies by page
-		model = glm::translate(model, glm::vec3(16, 40, 0.0f));
+		model = glm::translate(model, glm::vec3(16 + (16 * sortIndicator), 40, 0.0f));
 	}
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
@@ -2340,8 +2361,8 @@ void UnitListMenu::Draw()
 
 		for (int i = 0; i < numberOfOptions; i++)
 		{
-			auto unit = playerUnitsCopy[i];
-			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+			auto unit = unitData[i].first;
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
 			int textY = 162 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
@@ -2362,13 +2383,13 @@ void UnitListMenu::Draw()
 
 		for (int i = 0; i < numberOfOptions; i++)
 		{
-			auto unit = playerUnitsCopy[i];
-			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+			auto unit = unitData[i].first;
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
 			int textY = 162 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
 			//Should probably just save the battle stats to an array rather than recalculating them here over and over...
-			auto battleStats = unit->CalculateBattleStats();
+			auto battleStats = unitData[i].second;
 			text->RenderText(unit->GetEquippedItem()->name, 300, textY, 1.0f); //need to account for no equipped
 			text->RenderTextRight(intToString(battleStats.attackDamage), 500, textY, 1, 14);
 			text->RenderTextRight(intToString(battleStats.hitAccuracy), 575, textY, 1, 14);
@@ -2387,8 +2408,8 @@ void UnitListMenu::Draw()
 
 		for (int i = 0; i < numberOfOptions; i++)
 		{
-			auto unit = playerUnitsCopy[i];
-			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+			auto unit = unitData[i].first;
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
 			int textY = 166 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
@@ -2410,8 +2431,8 @@ void UnitListMenu::Draw()
 
 		for (int i = 0; i < numberOfOptions; i++)
 		{
-			auto unit = playerUnitsCopy[i];
-			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i));
+			auto unit = unitData[i].first;
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
 			int textY = 166 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
@@ -2439,25 +2460,35 @@ void UnitListMenu::Draw()
 	Batch.renderBatch();
 	text->RenderTextCenter(pageName, 106, 29, 1, 40, glm::vec3(0.9f, 0.9f, 1.0f));
 	text->RenderText("Name", 106, 96, 1);
-	text->RenderText("Name", 471, 29, 1); //sort type
+	text->RenderText(sortNames[sortType], 471, 29, 1); //sort type
 	text->RenderText(intToString(currentPage + 1) , 700, 29, 1);
 	text->RenderText("/", 711, 29, 1);
 	text->RenderText(intToString(numberOfPages), 723, 29, 1);
-
-
 }
 
 void UnitListMenu::SelectOption()
 {
 	if (!sortMode)
 	{
-		cursor->position = playerUnitsCopy[currentOption]->sprite.getPosition();
-		cursor->focusedUnit = playerUnitsCopy[currentOption];
-		ClearMenu();
+		cursor->position = unitData[currentOption].first->sprite.getPosition();
+		cursor->focusedUnit = unitData[currentOption].first;
+		CloseAndSaveView();
 	}
 	else
 	{
-		sortVector(playerUnitsCopy, &Unit::unitClass);
+		//Mysteriously, sorting by name in FE5 actually sorts by the default unit order
+		if (sortIndicator == 0)
+		{
+			for (int i = 0; i < unitData.size(); i++)
+			{
+				auto unit = MenuManager::menuManager.playerManager->playerUnits[i];
+				unitData[i] = std::make_pair(unit, unit->CalculateBattleStats());
+			}
+		}
+		else
+		{
+			SortView();
+		}
 	}
 }
 
@@ -2484,21 +2515,58 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = numberOfOptions;
 		}
 	}
-	//Check if sort mode
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	if (sortMode)
 	{
-		currentPage++;
-		if (currentPage >= numberOfPages - 1)
+		if (inputManager.isKeyPressed(SDLK_RIGHT))
 		{
-			currentPage = numberOfPages -1;
+			if (currentPage < numberOfPages)
+			{
+				sortIndicator++;
+				if (sortIndicator > pageSortOptions[currentPage] - 1)
+				{
+					sortIndicator = 0;
+					currentPage++;
+				}
+				sortType++;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			if (currentPage >= 0)
+			{
+				sortIndicator--;
+				if (sortIndicator < 0)
+				{
+					currentPage--;
+					sortIndicator = pageSortOptions[currentPage] - 1;
+				}
+				sortType--;
+			}
 		}
 	}
-	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	else
 	{
-		currentPage--;
-		if (currentPage < 0)
+		if (inputManager.isKeyPressed(SDLK_RIGHT))
 		{
-			currentPage = 0;
+			sortType -= sortIndicator;
+			sortType += pageSortOptions[currentPage];
+			currentPage++;
+			if (currentPage >= numberOfPages - 1)
+			{
+				currentPage = numberOfPages - 1;
+			}
+			sortIndicator = 0;
+		}
+		else if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			currentPage--;
+			if (currentPage < 0)
+			{
+				currentPage = 0;
+			}
+			sortType -= sortIndicator;
+			sortType -= pageSortOptions[currentPage];
+			sortIndicator = 0;
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_RETURN))
@@ -2507,11 +2575,119 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 	else if (inputManager.isKeyPressed(SDLK_SPACE))
 	{
-		MenuManager::menuManager.AddUnitStatMenu(playerUnitsCopy[currentOption]);
+		MenuManager::menuManager.AddUnitStatMenu(unitData[currentOption].first);
 	}
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{
-		CancelOption();
-		currentOption = 0;
+		CloseAndSaveView();
+	}
+}
+
+void UnitListMenu::CloseAndSaveView()
+{
+	if (sortIndicator > 0)
+	{
+		MenuManager::menuManager.unitViewSortType = sortType;
+	}
+	else
+	{
+		MenuManager::menuManager.unitViewSortType = 0;
+	}
+	ClearMenu();
+}
+
+void UnitListMenu::SortView()
+{
+	switch (sortType)
+	{
+	case 1:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.first->unitClass < b.first->unitClass;
+			});
+		break;
+	case 2:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.first->level > b.first->level;
+			});
+		break;
+	case 3:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.first->experience > b.first->experience;
+			});
+		break;
+	case 4:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.first->currentHP > b.first->currentHP;
+			});
+		break;
+	case 5:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.first->maxHP < b.first->maxHP;
+			});
+		break;
+	case 7:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.first->GetEquippedItem()->name < b.first->GetEquippedItem()->name;
+			});
+		break;
+	case 8:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.second.attackDamage > b.second.attackDamage;
+			});
+		break;
+	case 9:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.second.hitAccuracy > b.second.hitAccuracy;
+			});
+		break;
+	case 10:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b)
+			{
+				return a.second.hitAvoid > b.second.hitAvoid;
+			});
+		break;
+	case 12:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getStrength() > b.first->getStrength();
+			});
+		break;
+	case 13:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getMagic() > b.first->getMagic();
+			});
+		break;
+	case 14:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getSkill() > b.first->getSkill();
+			});
+		break;
+	case 15:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getSpeed() > b.first->getSpeed();
+			});
+		break;
+	case 16:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getLuck() > b.first->getLuck();
+			});
+		break;
+	case 17:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getDefense() > b.first->getDefense();
+			});
+		break;
+	case 18:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getBuild() > b.first->getBuild();
+			});
+		break;
 	}
 }

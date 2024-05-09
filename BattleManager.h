@@ -59,4 +59,5 @@ struct BattleManager
 	std::vector<Attack> accostQueue;
 
 	Subject<Unit*, Unit*> subject;
+	Subject<Unit*> unitDiedSubject;
 };

@@ -119,16 +119,7 @@ struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
-		for (int i = 0; i < playerManager.playerUnits.size(); i++)
-		{
-			if (playerManager.playerUnits[i]->isDead)
-			{
-				sceneUnits.erase(playerManager.playerUnits[i]->sceneID);
-				delete playerManager.playerUnits[i];
-				playerManager.playerUnits.erase(playerManager.playerUnits.begin() + i);
-				i--;
-			}
-		}
+		//Going to need instant feedback on enemy deaths in the future, but with how enemy manager's update works currently that won't work right now
 		enemyManager.RemoveDeadUnits(sceneUnits);
 		if (ID == 0)
 		{
@@ -175,6 +166,20 @@ struct BattleEvents : public Observer<Unit*, Unit*>
 	}
 };
 
+struct DeathEvent : public Observer<Unit*>
+{
+	virtual void onNotify(Unit* deadUnit)
+	{
+		if (deadUnit->team == 0)
+		{
+			auto it = std::find(playerManager.playerUnits.begin(), playerManager.playerUnits.end(), deadUnit);
+			sceneUnits.erase(deadUnit->sceneID);
+			playerManager.playerUnits.erase(it);
+			delete deadUnit;
+		}
+	}
+};
+
 struct PostBattleEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
@@ -185,7 +190,7 @@ struct PostBattleEvents : public Observer<int>
 			//Real brute force here
 			battleManager.defender->moveAnimate = false;
 			battleManager.defender->sprite.currentFrame = idleFrame;
-
+			
 		}
 		//player used an item
 		else if (ID == 1)
@@ -328,10 +333,12 @@ int main(int argc, char** argv)
 	UnitEvents* unitEvents = new UnitEvents();
 	TurnEvents* turnEvents = new TurnEvents();
 	BattleEvents* battleEvents = new BattleEvents();
+	DeathEvent* deathEvents = new DeathEvent();
 	PostBattleEvents* postBattleEvents = new PostBattleEvents();
 	ItemEvents* itemEvents = new ItemEvents();
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
+	battleManager.unitDiedSubject.addObserver(deathEvents);
 	displays.subject.addObserver(postBattleEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 
@@ -599,6 +606,7 @@ int main(int argc, char** argv)
 	delete turnEvents;
 	delete battleEvents;
 	delete postBattleEvents;
+	delete deathEvents;
 	delete itemEvents;
 //	unit.subject.observers.clear();
 

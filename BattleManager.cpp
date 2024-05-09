@@ -162,9 +162,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			{
 				deadUnit->isDead = true;
 				TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+				EndAttack();
+				unitDiedSubject.notify(deadUnit);
 				deadUnit = nullptr;
 				unitDied = false;
-				EndAttack();
 			}
 		}
 		else if (unitCaptured)
@@ -297,7 +298,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= accuracy)
+	if (roll <= 100)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		if (crit > 0)
