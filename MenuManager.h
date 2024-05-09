@@ -315,6 +315,13 @@ struct UnitListMenu : public Menu
 	std::vector <std::pair<Unit*, BattleStats>> unitData;
 };
 
+struct StatusMenu : public Menu
+{
+	StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+};
+
 struct MenuManager
 {
 	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager, class PlayerManager* playerManager);

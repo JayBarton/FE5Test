@@ -1958,9 +1958,11 @@ void ExtraMenu::SelectOption()
 		break;
 	}
 	case STATUS:
-		std::cout << "Status menu\n";
-
+	{
+		Menu* newMenu = new StatusMenu(cursor, text, camera, shapeVAO);
+		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
+	}
 	case OPTIONS:
 		if (unitSpeed < 5)
 		{
@@ -2286,7 +2288,7 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	pageSortOptions[WEAPON_RANKS] = 11;
 	pageSortOptions[SKILLS] = 2;
 
-	sortNames.resize(30);
+	sortNames.resize(35);
 	sortNames[0] = "Name";
 	sortNames[1] = "Class";
 	sortNames[2] = "LV";
@@ -2306,6 +2308,24 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	sortNames[16] = "Luck";
 	sortNames[17] = "Def";
 	sortNames[18] = "Con";
+	sortNames[19] = "Name";
+	sortNames[20] = "Move";
+	sortNames[21] = "Fatg";
+	sortNames[22] = "Status";
+	sortNames[23] = "Trvlr";
+	sortNames[24] = "Name";
+
+	//Weapon Profs will actually be represented by images
+	sortNames[25] = "Sword";
+	sortNames[26] = "Axe";
+	sortNames[27] = "Lance";
+	sortNames[28] = "Bow";
+	sortNames[29] = "Staff";
+	sortNames[30] = "Fire";
+	sortNames[31] = "Thunder";
+	sortNames[32] = "Wind";
+	sortNames[33] = "Light";
+	sortNames[34] = "Dark";
 }
 
 void UnitListMenu::Draw()
@@ -2689,5 +2709,130 @@ void UnitListMenu::SortView()
 			return a.first->getBuild() > b.first->getBuild();
 			});
 		break;
+	case 20:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->getMove() > b.first->getMove();
+			});
+		break;
+	case 25:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_SWORD] > b.first->weaponProficiencies[WeaponData::TYPE_SWORD];
+			});
+		break;
+	case 26:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_AXE] > b.first->weaponProficiencies[WeaponData::TYPE_AXE];
+			});
+		break;
+	case 27:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_LANCE] > b.first->weaponProficiencies[WeaponData::TYPE_LANCE];
+			});
+		break;
+	case 28:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_BOW] > b.first->weaponProficiencies[WeaponData::TYPE_BOW];
+			});
+		break;
+	case 29:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_STAFF] > b.first->weaponProficiencies[WeaponData::TYPE_STAFF];
+			});
+		break;
+	case 30:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_FIRE] > b.first->weaponProficiencies[WeaponData::TYPE_FIRE];
+			});
+		break;
+	case 31:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_THUNDER] > b.first->weaponProficiencies[WeaponData::TYPE_THUNDER];
+			});
+		break;
+	case 32:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_WIND] > b.first->weaponProficiencies[WeaponData::TYPE_WIND];
+			});
+		break;
+	case 33:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_LIGHT] > b.first->weaponProficiencies[WeaponData::TYPE_LIGHT];
+			});
+		break;
+	case 34:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->weaponProficiencies[WeaponData::TYPE_DARK] > b.first->weaponProficiencies[WeaponData::TYPE_DARK];
+			});
+		break;
 	}
+}
+
+StatusMenu::StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	numberOfOptions = 2;
+	fullScreen = true;
+}
+
+void StatusMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 200 + (16 * currentOption), 0.0f));
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Objective", 25, 96, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("Captures/Wins", 25, 182, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("Turn", 150, 225, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("Funds", 425, 225, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+
+	text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 0, 26, 1, 744); //Chapter Tile Goes here
+	text->RenderTextCenter("Sieze the manor's gate", 171, 91, 1, 40); //Objective goes here
+
+	text->RenderText("Combatants", 100, 310, 1);
+	text->RenderText("Commander", 400, 310, 1);
+
+	text->RenderText(MenuManager::menuManager.playerManager->playerUnits[0]->name, 100, 375, 1);
+	text->RenderText("-----", 100, 431, 1);
+
+	text->RenderText(MenuManager::menuManager.playerManager->playerUnits[0]->name, 450, 396, 1);
+	text->RenderText(MenuManager::menuManager.playerManager->playerUnits[0]->unitClass, 400, 439, 1);
+	text->RenderText("HP", 400, 530, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText(intToString(MenuManager::menuManager.playerManager->playerUnits[0]->currentHP), 475, 530, 1);
+	text->RenderText("/", 500, 530, 1);
+	text->RenderText(intToString(MenuManager::menuManager.playerManager->playerUnits[0]->maxHP), 515, 530, 1);
+	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->playerUnits[0]->level), 575, 487, 1, 14);
+
+
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	SBatch Batch;
+	Batch.init();
+	Batch.begin();
+	MenuManager::menuManager.playerManager->playerUnits[0]->Draw(&Batch, glm::vec2(128, 144), true);
+	Batch.end();
+	Batch.renderBatch();
+
+}
+
+void StatusMenu::SelectOption()
+{
 }
