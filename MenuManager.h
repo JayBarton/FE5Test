@@ -322,6 +322,25 @@ struct StatusMenu : public Menu
 	virtual void SelectOption() override;
 };
 
+struct OptionsMenu : public Menu
+{
+	OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	int top = 117;
+	int bottom = 501;
+	int distance = 64;
+
+	int indicatorY = 40;
+	int indicatorIncrement = 24;
+	float yOffset = 0;
+	float goal;
+	bool up = false;;
+	bool down = false;
+};
+
 struct MenuManager
 {
 	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager, class PlayerManager* playerManager);

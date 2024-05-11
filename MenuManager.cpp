@@ -1665,7 +1665,7 @@ void UnitStatsViewMenu::Draw()
 
 	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
 
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
@@ -1964,17 +1964,21 @@ void ExtraMenu::SelectOption()
 		break;
 	}
 	case OPTIONS:
-		if (unitSpeed < 5)
-		{
-			unitSpeed = 5.0f;
-			std::cout << "Speed up\n";
-		}
-		else
-		{
-			std::cout << "Speed down\n";
-			unitSpeed = 2.5f;
-		}
+	{
+		Menu* newMenu = new OptionsMenu(cursor, text, camera, shapeVAO);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		/*	if (unitSpeed < 5)
+			{
+				unitSpeed = 5.0f;
+				std::cout << "Speed up\n";
+			}
+			else
+			{
+				std::cout << "Speed down\n";
+				unitSpeed = 2.5f;
+			}*/
 		break;
+	}
 	case SUSPEND:
 		std::cout << "Suspend menu\n";
 
@@ -2337,7 +2341,7 @@ void UnitListMenu::Draw()
 
 	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
 
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
@@ -2782,7 +2786,7 @@ void StatusMenu::Draw()
 
 	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
 
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
@@ -2835,4 +2839,214 @@ void StatusMenu::Draw()
 
 void StatusMenu::SelectOption()
 {
+}
+
+OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+{
+	numberOfOptions = 9;
+	fullScreen = true;
+}
+
+void OptionsMenu::Draw()
+{
+	//Appears to be a bit of black around/under the main background on the edges, keep in mind
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.3f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(8, indicatorY, 0.0f));
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	int optionNameX = 125;
+	int selectionXStart = 400;
+	//Distance of about 64 for each option
+	text->RenderText("Animations", optionNameX, 117 - (yOffset), 1);
+	text->RenderText("Normal", selectionXStart, 117 - (yOffset), 1);
+	int xOffset = 0;
+	xOffset += selectionXStart + text->GetTextWidth("Normal", 1) + 50;
+	text->RenderText("Map", xOffset, 117 - (yOffset), 1);
+	xOffset += text->GetTextWidth("Map", 1) + 50;
+	text->RenderText("By Unit", xOffset, 117 - (yOffset), 1);
+
+	text->RenderText("Terrain Window", optionNameX, 181 - (yOffset), 1);
+	text->RenderText("On", selectionXStart, 181 - (yOffset), 1);
+	text->RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 181 - (yOffset), 1);
+
+	text->RenderText("Autocursor", optionNameX, 245 - (yOffset), 1);
+	text->RenderText("On", selectionXStart, 245 - (yOffset), 1);
+	text->RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1);
+
+	text->RenderText("Text Speed", optionNameX, 309 - (yOffset), 1);
+	text->RenderText("Slow", selectionXStart, 309 - (yOffset), 1);
+	xOffset = 0;
+	xOffset += selectionXStart + text->GetTextWidth("Slow", 1) + 50;
+	text->RenderText("Normal", xOffset, 309 - (yOffset), 1);
+	xOffset += text->GetTextWidth("Normal", 1) + 50;
+	text->RenderText("Fast", xOffset, 309 - (yOffset), 1);
+
+	text->RenderText("Unit Speed", optionNameX, 373 - (yOffset), 1);
+	if (unitSpeed < 5)
+	{
+		text->RenderText("Normal", selectionXStart, 373 - (yOffset), 1, glm::vec3(0.77, 0.92, 1.0f));
+		text->RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, glm::vec3(0.64f));
+	}
+	else
+	{
+		text->RenderText("Normal", selectionXStart, 373 - (yOffset), 1, glm::vec3(0.64f));
+		text->RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, glm::vec3(0.77, 0.92, 1.0f));
+	}
+
+	text->RenderText("Audio", optionNameX, 437 - (yOffset), 1);
+	text->RenderText("Stereo", selectionXStart, 437 - (yOffset), 1);
+	text->RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1);
+
+	text->RenderText("Music", optionNameX, 501 - (yOffset), 1);
+	text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
+	text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
+	text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 193, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 31, 0.0f));
+
+	ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.2f, 0.2f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//Drawing this again so it is drawn over the text; this is temporary, I'll find a better way of handling this later
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.3f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Configuration", 159, 26, 1);
+
+}
+
+void OptionsMenu::SelectOption()
+{
+}
+
+void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = 0;
+		}
+		else
+		{
+			indicatorY -= indicatorIncrement;
+			if (indicatorY < 40)
+			{
+				indicatorY = 40;
+				up = true;
+				goal = yOffset - 64;
+			}
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		currentOption++;
+		if (currentOption > numberOfOptions)
+		{
+			currentOption = numberOfOptions;
+		}
+		else
+		{
+			indicatorY += indicatorIncrement;
+			if (indicatorY > 160)
+			{
+				indicatorY = 160;
+				down = true;
+				goal = yOffset + 64;
+			}
+		}
+	}
+
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		if (currentOption == 4)
+		{
+			unitSpeed = 5;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		if (currentOption == 4)
+		{
+			unitSpeed = 2.5f;
+		}
+	}
+	int rate = 960;
+	if (down)
+	{
+		yOffset += rate * deltaTime;
+		if (yOffset >= goal)
+		{
+			yOffset = goal;
+			down = false;
+		}
+	}
+	else if (up)
+	{
+		yOffset -= rate * deltaTime;
+		if (yOffset <= goal)
+		{
+			yOffset = goal;
+			up = false;
+		}
+	}
+
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		ClearMenu();
+	}
 }
