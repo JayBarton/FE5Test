@@ -154,6 +154,7 @@
     <ClInclude Include="SBatch.h" />
     <ClInclude Include="SceneActions.h" />
     <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="SpriteBatch.h" />
@@ -182,6 +183,7 @@
     <ClCompile Include="SATCollision.cpp" />
     <ClCompile Include="SBatch.cpp" />
     <ClCompile Include="SceneManager.cpp" />
+    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteBatch.cpp" />

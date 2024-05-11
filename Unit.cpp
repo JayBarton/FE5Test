@@ -8,6 +8,7 @@
 #include "Globals.h"
 #include "InputManager.h"
 #include "SBatch.h"
+#include "Settings.h"
 #include <SDL.h>
 
 Unit::Unit()
@@ -1305,7 +1306,7 @@ void MovementComponent::getNewDirection()
 
 void MovementComponent::Update(float deltaTime, InputManager& inputManager)
 {
-    float speed = unitSpeed;
+    float speed = Settings::settings.unitSpeed;
     if (inputManager.isKeyDown(SDLK_RETURN))
     {
         speed = heldSpeed;

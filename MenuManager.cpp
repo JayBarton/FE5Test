@@ -11,6 +11,7 @@
 
 #include "Globals.h"
 #include "SBatch.h"
+#include "Settings.h"
 
 #include <SDL.h>
 #include <sstream>
@@ -2891,44 +2892,36 @@ void OptionsMenu::Draw()
 	int selectionXStart = 400;
 	//Distance of about 64 for each option
 	text->RenderText("Animations", optionNameX, 117 - (yOffset), 1);
-	text->RenderText("Normal", selectionXStart, 117 - (yOffset), 1);
+	RenderText("Normal", selectionXStart, 117 - (yOffset), 1, Settings::settings.mapAnimations == 0);
 	int xOffset = 0;
 	xOffset += selectionXStart + text->GetTextWidth("Normal", 1) + 50;
-	text->RenderText("Map", xOffset, 117 - (yOffset), 1);
+	RenderText("Map", xOffset, 117 - (yOffset), 1, Settings::settings.mapAnimations == 1);
 	xOffset += text->GetTextWidth("Map", 1) + 50;
-	text->RenderText("By Unit", xOffset, 117 - (yOffset), 1);
+	RenderText("By Unit", xOffset, 117 - (yOffset), 1, Settings::settings.mapAnimations == 2);
 
 	text->RenderText("Terrain Window", optionNameX, 181 - (yOffset), 1);
-	text->RenderText("On", selectionXStart, 181 - (yOffset), 1);
-	text->RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 181 - (yOffset), 1);
+	RenderText("On", selectionXStart, 181 - (yOffset), 1, Settings::settings.showTerrain);
+	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 181 - (yOffset), 1, !Settings::settings.showTerrain);
 
 	text->RenderText("Autocursor", optionNameX, 245 - (yOffset), 1);
-	text->RenderText("On", selectionXStart, 245 - (yOffset), 1);
-	text->RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1);
+	RenderText("On", selectionXStart, 245 - (yOffset), 1, Settings::settings.autoCursor);
+	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1, !Settings::settings.autoCursor);
 
 	text->RenderText("Text Speed", optionNameX, 309 - (yOffset), 1);
-	text->RenderText("Slow", selectionXStart, 309 - (yOffset), 1);
+	RenderText("Slow", selectionXStart, 309 - (yOffset), 1, Settings::settings.textSpeed == 0);
 	xOffset = 0;
 	xOffset += selectionXStart + text->GetTextWidth("Slow", 1) + 50;
-	text->RenderText("Normal", xOffset, 309 - (yOffset), 1);
+	RenderText("Normal", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 1);
 	xOffset += text->GetTextWidth("Normal", 1) + 50;
-	text->RenderText("Fast", xOffset, 309 - (yOffset), 1);
+	RenderText("Fast", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 2);
 
 	text->RenderText("Unit Speed", optionNameX, 373 - (yOffset), 1);
-	if (unitSpeed < 5)
-	{
-		text->RenderText("Normal", selectionXStart, 373 - (yOffset), 1, glm::vec3(0.77, 0.92, 1.0f));
-		text->RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, glm::vec3(0.64f));
-	}
-	else
-	{
-		text->RenderText("Normal", selectionXStart, 373 - (yOffset), 1, glm::vec3(0.64f));
-		text->RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, glm::vec3(0.77, 0.92, 1.0f));
-	}
+	RenderText("Normal", selectionXStart, 373 - (yOffset), 1, Settings::settings.unitSpeed < 5);
+	RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, Settings::settings.unitSpeed >= 5);
 
 	text->RenderText("Audio", optionNameX, 437 - (yOffset), 1);
-	text->RenderText("Stereo", selectionXStart, 437 - (yOffset), 1);
-	text->RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1);
+	RenderText("Stereo", selectionXStart, 437 - (yOffset), 1, Settings::settings.sterero);
+	RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1, !Settings::settings.sterero);
 
 	text->RenderText("Music", optionNameX, 501 - (yOffset), 1);
 	text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
@@ -3009,16 +3002,66 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 
 	if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		if (currentOption == 4)
+		switch (currentOption)
 		{
-			unitSpeed = 5;
+		case 0:
+			Settings::settings.mapAnimations++;
+			if (Settings::settings.mapAnimations > 2)
+			{
+				Settings::settings.mapAnimations = 2;
+			}
+			break;
+		case 1:
+			Settings::settings.showTerrain = false;
+			break;
+		case 2:
+			Settings::settings.autoCursor = false;
+			break;
+		case 3:
+			Settings::settings.textSpeed++;
+			if (Settings::settings.textSpeed > 2)
+			{
+				Settings::settings.textSpeed = 2;
+			}
+			break;
+		case 4:
+			Settings::settings.unitSpeed = 5;
+			break;
+		case 5:
+			Settings::settings.sterero = false;
+			break;
 		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		if (currentOption == 4)
+		switch (currentOption)
 		{
-			unitSpeed = 2.5f;
+		case 0:
+			Settings::settings.mapAnimations--;
+			if (Settings::settings.mapAnimations < 0)
+			{
+				Settings::settings.mapAnimations = 0;
+			}
+			break;
+		case 1:
+			Settings::settings.showTerrain = true;
+			break;
+		case 2:
+			Settings::settings.autoCursor = true;
+			break;
+		case 3:
+			Settings::settings.textSpeed--;
+			if (Settings::settings.textSpeed < 0)
+			{
+				Settings::settings.textSpeed = 0;
+			}
+			break;
+		case 4:
+			Settings::settings.unitSpeed = 2.5f;
+			break;
+		case 5:
+			Settings::settings.sterero = true;
+			break;
 		}
 	}
 	int rate = 960;
@@ -3049,4 +3092,12 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		ClearMenu();
 	}
+}
+
+void OptionsMenu::RenderText(std::string toWrite, float x, float y, float scale, bool selected)
+{
+	glm::vec3 grey = glm::vec3(0.64f);
+	glm::vec3 selectedColor = glm::vec3(0.77, 0.92, 1.0f);
+	glm::vec3 color = selected ? selectedColor : grey;
+	text->RenderText(toWrite, x, y, 1, color);
 }

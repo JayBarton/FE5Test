@@ -329,6 +329,8 @@ struct OptionsMenu : public Menu
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
+	void RenderText(std::string toWrite, float x, float y, float scale, bool selected);
+
 	int top = 117;
 	int bottom = 501;
 	int distance = 64;

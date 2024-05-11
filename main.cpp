@@ -24,6 +24,7 @@
 
 #include "Globals.h"
 #include "InfoDisplays.h"
+#include "Settings.h"
 
 #include "SBatch.h"
 
@@ -479,8 +480,11 @@ int main(int argc, char** argv)
 							if (turnUnit >= playerManager.playerUnits.size())
 							{
 								turnUnit = 0;
-								cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
-								cursor.focusedUnit = playerManager.playerUnits[0];
+								if (Settings::settings.autoCursor)
+								{
+									cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
+									cursor.focusedUnit = playerManager.playerUnits[0];
+								}
 								camera.SetMove(cursor.position);
 								turnTransition = false;
 							}
@@ -956,21 +960,23 @@ void DrawText()
 	}
 	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
 	{
-		auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
-
-		//Going to need to look into a better way of handling UI placement at some point
-		int xStart = SCREEN_WIDTH;
 		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
-		if (fixedPosition.x >= camera.screenWidth * 0.5f)
+		if (Settings::settings.showTerrain)
 		{
-			xStart = 178;
-		}
-		Text->RenderText(tile.name, xStart - 110, 20, 1);
-		Text->RenderText("DEF", xStart - 120, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
-		Text->RenderText(intToString(tile.defense), xStart - 95, 50, 0.7f);
-		Text->RenderText("AVO", xStart - 85, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
-		Text->RenderText(intToString(tile.avoid) + "%", xStart - 60, 50, 0.7f);
+			auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 
+			//Going to need to look into a better way of handling UI placement at some point
+			int xStart = SCREEN_WIDTH;
+			if (fixedPosition.x >= camera.screenWidth * 0.5f)
+			{
+				xStart = 178;
+			}
+			Text->RenderText(tile.name, xStart - 110, 20, 1);
+			Text->RenderText("DEF", xStart - 120, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
+			Text->RenderText(intToString(tile.defense), xStart - 95, 50, 0.7f);
+			Text->RenderText("AVO", xStart - 85, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
+			Text->RenderText(intToString(tile.avoid) + "%", xStart - 60, 50, 0.7f);
+		}
 		if (auto unit = cursor.focusedUnit)
 		{
 			int yOffset = 24;
