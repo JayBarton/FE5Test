@@ -229,8 +229,6 @@ struct ItemEvents : public Observer<Unit*, int>
 };
 void loadMap(std::string nextMap, UnitEvents* unitEvents);
 
-void LoadPlayerUnits(std::ifstream& map, UnitEvents* unitEvents);
-
 std::mt19937 gen;
 //gen.seed(1);
 std::uniform_int_distribution<int> distribution(0, 99);

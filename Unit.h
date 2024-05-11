@@ -263,7 +263,7 @@ struct Unit
 	//Both of these are used to draw the movement and attack range of a unit
 	std::vector<glm::ivec2> foundTiles;
 	std::vector<glm::ivec2> attackTiles;
-	std::vector<glm::ivec2> edgeTiles;
+	std::vector<glm::ivec2> endTiles;
 	//Using this to allow enemies to trade with each other
 	std::vector<Unit*> tradeUnits;
 	//Temporary, just using to visualize tile costs
@@ -290,9 +290,9 @@ struct Unit
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> FindRemainingMoveRange();
 	void CheckRemainingAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
 
-	void CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked);
-	void CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
-
+	bool CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
+	//FUCKING ANOTHER ONE AHHHHHH
+	void CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs);
 
 	//More horrible duplicate code
 	//Really don't like how I have three versions of this, but each of them is different enough that it's hard to figure out how I could make them generic
@@ -301,6 +301,7 @@ struct Unit
 
 	//Seriously, another one.
 	//REALLY need to find a better way of doing this shit
+	//Using this one to find units that are within adjacent attack range
 	std::vector<Unit*> inRangeUnits(int team);
 	void CheckRangeTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units, int team);
 

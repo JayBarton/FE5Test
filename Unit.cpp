@@ -766,55 +766,59 @@ std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
         glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
         glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
 
-        CheckAdjacentTiles(up, checked, checking, current, costs);
-        CheckAdjacentTiles(down, checked, checking, current, costs);
-        CheckAdjacentTiles(right, checked, checking, current, costs);
-        CheckAdjacentTiles(left, checked, checking, current, costs);
+        bool upCheck = CheckAdjacentTiles(up, checked, checking, current, costs);
+        bool downCheck = CheckAdjacentTiles(down, checked, checking, current, costs);
+        bool rightCheck = CheckAdjacentTiles(right, checked, checking, current, costs);
+        bool leftCheck = CheckAdjacentTiles(left, checked, checking, current, costs);
+
+        if (upCheck || downCheck || rightCheck || leftCheck)
+        {
+            auto p = glm::ivec2(current.position) * TileManager::TILE_SIZE;
+            endTiles.push_back(p);
+        }
     }
-    if (maxRange > 1)
+    checked.clear();
+    checked.resize(TileManager::tileManager.levelWidth);
+    for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
     {
-        checked.clear();
-        checked.resize(TileManager::tileManager.levelWidth);
-        for (int i = 0; i < TileManager::tileManager.levelWidth; i++)
+        checked[i].resize(TileManager::tileManager.levelHeight);
+    }
+    for (int i = 0; i < foundTiles.size(); i++)
+    {
+        auto current = foundTiles[i] / TileManager::TILE_SIZE;
+        checked[current.x][current.y] = true;
+    }
+    for (int i = 0; i < endTiles.size(); i++)
+    {
+        auto tile = TileManager::tileManager.getTile(endTiles[i].x, endTiles[i].y);
+        int cost = 0;
+        if (tile->occupiedBy && tile->occupiedBy != this)
         {
-            checked[i].resize(TileManager::tileManager.levelHeight);
+            cost = 1;
         }
-        for (int i = 0; i < attackTiles.size(); i++)
+        pathCell first = { endTiles[i] / 16, cost };
+
+        addToOpenSet(first, checking, checked, costs);
+    }
+    //Checking attackable tiles
+    if (maxRange > 0)
+    {
+        while (checking.size() > 0)
         {
-            auto current = attackTiles[i] / TileManager::TILE_SIZE;
-            checked[current.x][current.y] = true;
-        }
-        std::vector<glm::ivec2> searchingAttacks = attackTiles;
-        for (int i = 0; i < searchingAttacks.size(); i++)
-        {
-            auto current = searchingAttacks[i] / TileManager::TILE_SIZE;
-            for (int c = 1; c < maxRange; c++)
-            {
-                glm::ivec2 up = glm::ivec2(current.x, current.y - c);
-                glm::ivec2 down = glm::ivec2(current.x, current.y + c);
-                glm::ivec2 left = glm::ivec2(current.x - c, current.y);
-                glm::ivec2 right = glm::ivec2(current.x + c, current.y);
-                CheckExtraRange(up, checked);
-                CheckExtraRange(down, checked);
-                CheckExtraRange(left, checked);
-                CheckExtraRange(right, checked);
-            }
-        }
-        //Really stupid, using so I don't draw attack tiles the unit cannot reach
-        for (int i = 0; i < edgeTiles.size(); i++)
-        {
-            auto current = edgeTiles[i] / TileManager::TILE_SIZE;
-            for (int c = 0; c < maxRange-1; c++)
-            {
-                glm::ivec2 up = glm::ivec2(current.x, current.y - c);
-                glm::ivec2 down = glm::ivec2(current.x, current.y + c);
-                glm::ivec2 left = glm::ivec2(current.x - c, current.y);
-                glm::ivec2 right = glm::ivec2(current.x + c, current.y);
-                CheckExtraRange(up, checked);
-                CheckExtraRange(down, checked);
-                CheckExtraRange(left, checked);
-                CheckExtraRange(right, checked);
-            }
+            auto current = checking[0];
+            removeFromOpenList(checking);
+            int cost = current.moveCost;
+            glm::vec2 checkPosition = current.position;
+
+            glm::vec2 up = glm::vec2(checkPosition.x, checkPosition.y - 1);
+            glm::vec2 down = glm::vec2(checkPosition.x, checkPosition.y + 1);
+            glm::vec2 left = glm::vec2(checkPosition.x - 1, checkPosition.y);
+            glm::vec2 right = glm::vec2(checkPosition.x + 1, checkPosition.y);
+
+            CheckAttackableTiles(up, checked, checking, current, costs);
+            CheckAttackableTiles(down, checked, checking, current, costs);
+            CheckAttackableTiles(right, checked, checking, current, costs);
+            CheckAttackableTiles(left, checked, checking, current, costs);
         }
     }
     return path;
@@ -853,7 +857,7 @@ void Unit::ClearPathData()
 {
     foundTiles.clear();
     attackTiles.clear();
-    edgeTiles.clear();
+    endTiles.clear();
     tradeUnits.clear();
     path.clear();
     costTile.clear();
@@ -998,32 +1002,14 @@ void Unit::CheckRemainingAdjacentTiles(glm::vec2& checkingTile, std::vector<std:
     }
 }
 
-void Unit::CheckExtraRange(glm::ivec2& checkingTile, std::vector<std::vector<bool>>& checked)
+bool Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs)
 {
-    glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
-    if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
-    {
-        if (path.find(tilePosition) == path.end() && checked[checkingTile.x][checkingTile.y] == false)
-        {
-            checked[checkingTile.x][checkingTile.y] = true;
-            attackTiles.push_back(tilePosition);
-        }
-    }
-}
-
-void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs)
-{
+    bool edge = false;
     glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
     if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
     {
         int mCost = startCell.moveCost;
         auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
-        auto p2 = glm::ivec2(startCell.position) * TileManager::TILE_SIZE;
-        auto thisTile2 = TileManager::tileManager.getTile(p2.x, p2.y);
-        if (thisTile->properties.name == "Cliff")
-        {
-            int a = 2;
-        }
         int movementCost = mCost + thisTile->properties.movementCost;
         //This is just a test, will not be keeping long term
         if (getMovementType() == Unit::FLYING)
@@ -1065,31 +1051,10 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
             }
             else
             {
-                //U G H. Doing this to prevent it from adding dupes to the vector
-                //Need to make sure this isn't breaking trade units down below
-                if (distance >= 0)
+                edge = true;
+                //No idea if this is even still working to prevent dupes
+                if (distance == 50)
                 {
-                    if (maxRange > 0)
-                    {
-                        auto p = glm::ivec2(startCell.position) * TileManager::TILE_SIZE;
-                        auto thisTile = TileManager::tileManager.getTile(p.x, p.y);
-                        //Only want to have attack tiles if they are actually in range of where the unit can reach
-                        //This does not work properly with ranges greater than one, so it's still a work in progress.
-                        auto otherUnit = thisTile->occupiedBy;
-                        if (!otherUnit || otherUnit == this)
-                        {
-                            attackTiles.push_back(tilePosition);
-                            //Stupid thing I'm doing to prevent dupes.
-                            costs[checkingTile.x][checkingTile.y] = -1;
-                        }
-                        else
-                        {
-                            if (maxRange > 1)
-                            {
-                                edgeTiles.push_back(tilePosition);
-                            }
-                        }
-                    }
                     if (otherUnit && otherUnit != this && otherUnit->team == team)
                     {
                         tradeUnits.push_back(otherUnit);
@@ -1098,6 +1063,7 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
             }
         }
     }
+    return edge;
 }
 
 std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindApproachMoveRange(std::vector<Unit*>& foundUnits, int range)
@@ -1259,6 +1225,31 @@ void Unit::CheckRangeTiles(glm::vec2& checkingTile, std::vector<std::vector<bool
                 pathCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);
                 foundTiles.push_back(tilePosition);
+            }
+        }
+    }
+}
+
+void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs)
+{
+    glm::ivec2 tilePosition = glm::ivec2(checkingTile) * TileManager::TILE_SIZE;
+    if (!TileManager::tileManager.outOfBounds(tilePosition.x, tilePosition.y))
+    {
+        int mCost = startCell.moveCost;
+        int movementCost = mCost + 1;
+        auto distance = costs[checkingTile.x][checkingTile.y];
+        if (!checked[checkingTile.x][checkingTile.y])
+        {
+            //No idea if this is even needed here, I suspect not
+            if (movementCost < distance)
+            {
+                costs[checkingTile.x][checkingTile.y] = movementCost;
+            }
+            if (movementCost <= maxRange)
+            {
+                pathCell newCell{ checkingTile, movementCost };
+                addToOpenSet(newCell, checking, checked, costs);
+                attackTiles.push_back(tilePosition);
             }
         }
     }
