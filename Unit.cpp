@@ -800,6 +800,22 @@ std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
                 CheckExtraRange(right, checked);
             }
         }
+        //Really stupid, using so I don't draw attack tiles the unit cannot reach
+        for (int i = 0; i < edgeTiles.size(); i++)
+        {
+            auto current = edgeTiles[i] / TileManager::TILE_SIZE;
+            for (int c = 0; c < maxRange-1; c++)
+            {
+                glm::ivec2 up = glm::ivec2(current.x, current.y - c);
+                glm::ivec2 down = glm::ivec2(current.x, current.y + c);
+                glm::ivec2 left = glm::ivec2(current.x - c, current.y);
+                glm::ivec2 right = glm::ivec2(current.x + c, current.y);
+                CheckExtraRange(up, checked);
+                CheckExtraRange(down, checked);
+                CheckExtraRange(left, checked);
+                CheckExtraRange(right, checked);
+            }
+        }
     }
     return path;
 }
@@ -837,6 +853,7 @@ void Unit::ClearPathData()
 {
     foundTiles.clear();
     attackTiles.clear();
+    edgeTiles.clear();
     tradeUnits.clear();
     path.clear();
     costTile.clear();
@@ -1001,6 +1018,12 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
     {
         int mCost = startCell.moveCost;
         auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
+        auto p2 = glm::ivec2(startCell.position) * TileManager::TILE_SIZE;
+        auto thisTile2 = TileManager::tileManager.getTile(p2.x, p2.y);
+        if (thisTile->properties.name == "Cliff")
+        {
+            int a = 2;
+        }
         int movementCost = mCost + thisTile->properties.movementCost;
         //This is just a test, will not be keeping long term
         if (getMovementType() == Unit::FLYING)
@@ -1026,7 +1049,7 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
                     tradeUnits.push_back(otherUnit);
                 }
             }
-            
+
             //This is a weird thing that is only needed to get the attack range, I hope to remove it at some point.
             if (movementCost < distance)
             {
@@ -1042,24 +1065,34 @@ void Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
             }
             else
             {
-                if (maxRange > 0)
+                //U G H. Doing this to prevent it from adding dupes to the vector
+                //Need to make sure this isn't breaking trade units down below
+                if (distance >= 0)
                 {
-                    //U G H. Doing this to prevent it from adding dupes to the vector
-                    if (distance == 50)
+                    if (maxRange > 0)
                     {
                         auto p = glm::ivec2(startCell.position) * TileManager::TILE_SIZE;
                         auto thisTile = TileManager::tileManager.getTile(p.x, p.y);
                         //Only want to have attack tiles if they are actually in range of where the unit can reach
                         //This does not work properly with ranges greater than one, so it's still a work in progress.
                         auto otherUnit = thisTile->occupiedBy;
-                      //  if (!otherUnit)
+                        if (!otherUnit || otherUnit == this)
                         {
                             attackTiles.push_back(tilePosition);
+                            //Stupid thing I'm doing to prevent dupes.
+                            costs[checkingTile.x][checkingTile.y] = -1;
                         }
-                        if (otherUnit && otherUnit != this && otherUnit->team == team)
+                        else
                         {
-                            tradeUnits.push_back(otherUnit);
+                            if (maxRange > 1)
+                            {
+                                edgeTiles.push_back(tilePosition);
+                            }
                         }
+                    }
+                    if (otherUnit && otherUnit != this && otherUnit->team == team)
+                    {
+                        tradeUnits.push_back(otherUnit);
                     }
                 }
             }
