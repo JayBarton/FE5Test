@@ -56,6 +56,8 @@ struct SceneManager
 {
 	int currentScene = 0;
 	std::vector<Scene*> scenes;
+
+	bool PlayingScene();
 };
 
 struct Activation

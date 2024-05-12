@@ -440,7 +440,7 @@ int main(int argc, char** argv)
 			//Doing this dumb thing for a minute
 			sceneManager.scenes[sceneManager.currentScene]->init();
 		}
-		if (sceneManager.scenes[sceneManager.currentScene]->playingScene)
+		if(sceneManager.PlayingScene())
 		{
 			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor);
 		}
@@ -784,6 +784,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 					int round = 0;
 					map >> round;
 					currentObject->activation = new EnemyTurnEnd(currentObject, activationType, round);
+					currentObject->extraSetup(&roundSubject);
 				}
 				else if (activationType == 2)
 				{
@@ -818,7 +819,6 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		}
 	}
 
-	sceneManager.scenes[sceneManager.currentScene]->extraSetup(&roundSubject);
 	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 
 	map.close();
@@ -871,7 +871,7 @@ void Draw()
 			Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 		}
 	}
-	if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+	if (sceneManager.scenes.size() > 0 && sceneManager.scenes[sceneManager.currentScene]->textManager.active)
 	{
 		sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
 	}

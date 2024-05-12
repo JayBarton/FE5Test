@@ -202,3 +202,12 @@ VisitActivation::VisitActivation(Scene* owner, int type) : Activation(owner, typ
 {
 
 }
+
+bool SceneManager::PlayingScene()
+{
+	if (scenes.size() > 0 && scenes[currentScene]->playingScene)
+	{
+		return true;
+	}
+	return false;
+}

@@ -791,6 +791,9 @@ std::unordered_map<glm::vec2, pathCell, vec2Hash> Unit::FindUnitMoveRange()
     for (int i = 0; i < endTiles.size(); i++)
     {
         auto tile = TileManager::tileManager.getTile(endTiles[i].x, endTiles[i].y);
+        //Plan for this is so we can avoid showing attack tiles if the tile needed to attack from them is blocked,
+        // but this still doesn't work because it only checks the adjacent edge tile and not the tiles that are adjacent to that.
+        // Cannot believe how difficult this is.
         int cost = 0;
         if (tile->occupiedBy && tile->occupiedBy != this)
         {
@@ -1249,7 +1252,42 @@ void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector
             {
                 pathCell newCell{ checkingTile, movementCost };
                 addToOpenSet(newCell, checking, checked, costs);
-                attackTiles.push_back(tilePosition);
+                //This is a real brute force method for handling how units with a minimum range greater than 1(archers) handle being surrounded
+                // If endTiles.size is smaller than the entire path, we're all good
+                // if it is equal to it, it means that every node on our path is an edge tile
+                // If the unit's min range is 1, we're again fine. If it is not, we check the endTiles and see if any of them are greater than or
+                // equal to the min range. If they are, we add them.
+                if (endTiles.size() < path.size())
+                {
+                    attackTiles.push_back(tilePosition);
+                }
+                else if (endTiles.size() == path.size())
+                {
+                    if (minRange == 1)
+                    {
+                        attackTiles.push_back(tilePosition);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < endTiles.size(); i++)
+                        {
+                            auto check = endTiles[i] / 16;
+                            auto distance = abs(check.x - checkingTile.x) + abs(check.y - checkingTile.y);
+                            if (distance >= minRange)
+                            {
+                                attackTiles.push_back(tilePosition);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (minRange == 1 || movementCost >= minRange)
+                    {
+                        attackTiles.push_back(tilePosition);
+                    }
+                }
             }
         }
     }
