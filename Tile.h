@@ -24,6 +24,8 @@ struct TileProperties
     int movementCost;
     //Need this for healing tiles, not sure how this will work though.
     int bonus;
+    //The color displayed on the minimap. Want to move this to a separate structure I think
+    glm::vec3 miniMapColor;
 };
 
 struct Tile

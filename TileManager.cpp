@@ -29,13 +29,13 @@ void TileManager::setUp(int width, int height)
     tiles = new Tile[totalTiles];
 
     tileTypes.resize(7);
-    tileTypes[0] = { "Plains", 0, 0, 1, 0 };
-    tileTypes[1] = { "--", 20, 5, 20, 0 };
-    tileTypes[2] = { "House", 10, 1, 1, 0 };
-    tileTypes[3] = { "Peak", 40, 5, 20, 0 };
-    tileTypes[4] = {"Forest", 20, 2, 2, 0 };
-    tileTypes[5] = {"Cliff", 0, 0, 20, 0 };
-    tileTypes[6] = {"Gate", 30, 10, 1, 1 };
+    tileTypes[0] = { "Plains", 0, 0, 1, 0, glm::vec3(0.321, 0.667, 0.321)};
+    tileTypes[1] = { "--", 20, 5, 20, 0, glm::vec3(0.29, 0.286, 0.29)};
+    tileTypes[2] = { "House", 10, 1, 1, 0, glm::vec3(1, 0.38, 0.709)};
+    tileTypes[3] = { "Peak", 40, 5, 20, 0, glm::vec3(0.388, 0.188, 0.03)};
+    tileTypes[4] = {"Forest", 20, 2, 2, 0, glm::vec3(0.129, 0.411, 0.192)};
+    tileTypes[5] = {"Cliff", 0, 0, 20, 0, glm::vec3(0.129, 0.411, 0.192) };
+    tileTypes[6] = {"Gate", 30, 10, 1, 1, glm::vec3(1, 0.38, 0.709) };
 
   /*  tileTypes[2] = {2, "Mountain", 30, 5, 2, 0};
     tileTypes[5] = { 5, "Road", 0, 0, 1, 0 };*/

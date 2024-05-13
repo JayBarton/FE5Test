@@ -27,6 +27,7 @@
 #include "Settings.h"
 
 #include "SBatch.h"
+#include "ShapeBatch.h"
 
 #include "csv.h"
 #include <nlohmann/json.hpp>
@@ -291,9 +292,13 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/normalSpriteFragmentShader.txt", nullptr, "Nsprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/instanceFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
+	ResourceManager::LoadShader("Shaders/shapeInstanceVertexShader.txt", "Shaders/shapeInstanceFragmentShader.txt", nullptr, "shapeInstance");
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
 
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("sprite").Use().SetInteger("palette", 1);
@@ -585,7 +590,7 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
-	//	std::cout << fps << std::endl;
+		//std::cout << fps << std::endl;
 	}
 
 	delete Renderer;
@@ -887,6 +892,55 @@ void Draw()
 			DrawText();
 		}
 	}
+
+	ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
+	int x = 256 * 0.5f - (TileManager::tileManager.rowTiles * 2);
+	int y = 224 * 0.5f - (TileManager::tileManager.columnTiles * 2);
+	int startY = y;
+	int startX = x;
+	ShapeBatch shapeBatch;
+	shapeBatch.init();
+	shapeBatch.begin();
+	//Going to want to batch this, since this is quite a few draw calls
+	for (int i = 0; i < TileManager::tileManager.totalTiles; i++)
+	{
+		shapeBatch.addToBatch(glm::vec2(x, y), 4, 4, TileManager::tileManager.tiles[i].properties.miniMapColor);
+		x += 4;
+		if (x >= levelWidth/4 + startX)
+		{
+			//Move back
+			x = startX;
+
+			//Move to the next row
+			y += 4;
+		}
+	}
+
+	for (int i = 0; i < enemyManager.enemies.size(); i++)
+	{
+		auto position = enemyManager.enemies[i]->sprite.getPosition();
+		position /= 16;
+		position *= 4;
+		position += glm::vec2(startX, startY);
+		shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y), 2, 1, glm::vec3(1, 0, 0));
+		shapeBatch.addToBatch(glm::vec2(position.x, position.y + 1), 4, 2, glm::vec3(1, 0, 0));
+		shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y + 3), 2, 1, glm::vec3(1, 0, 0));
+	}
+
+	for (int i = 0; i < playerManager.playerUnits.size(); i++)
+	{
+		auto position = playerManager.playerUnits[i]->sprite.getPosition();
+		position /= 16;
+		position *= 4;
+		position += glm::vec2(startX, startY);
+		shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y), 2, 1, glm::vec3(0, 0, 1));
+		shapeBatch.addToBatch(glm::vec2(position.x, position.y + 1), 4, 2, glm::vec3(0, 0, 1));
+		shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y + 3), 2, 1, glm::vec3(0, 0, 1));
+	}
+
+	shapeBatch.end();
+	shapeBatch.renderBatch();
 
 	SDL_GL_SwapWindow(window);
 
