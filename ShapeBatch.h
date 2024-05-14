@@ -16,17 +16,6 @@ public:
     glm::vec3 color;
 };
 
-class RenderBatchShape
-{
-public:
-
-    RenderBatchShape(GLuint theOffset, GLuint verticies) : offSet(theOffset), numberOfVerticies(verticies)
-    {
-    }
-    GLuint offSet;
-    GLuint numberOfVerticies;
-};
-
 class ShapeBatch
 {
 public:
@@ -39,6 +28,8 @@ public:
     void createRenderBatches();
     void renderBatch();
 
+    int numberOfShapes;
+
 protected:
 private:
   //  static bool compareTexture(const BatchSprite& a, const BatchSprite& b);
@@ -46,6 +37,5 @@ private:
     GLuint vao;
 
     std::vector<BatchShape> theShapes;
-    std::vector<RenderBatchShape> renderBatches;
     std::vector<glm::mat4> models;
 };
