@@ -77,7 +77,7 @@ void ShapeBatch::createRenderBatches()
     models[currentSprite] = model;
     colors[currentSprite] = theShapes[currentSprite].color;
     theOffset++;
-
+    numberOfShapes++;
     for (currentSprite = 1; currentSprite < theShapes.size(); currentSprite++)
     {
 

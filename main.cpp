@@ -28,6 +28,7 @@
 
 #include "SBatch.h"
 #include "ShapeBatch.h"
+#include "Minimap.h"
 
 #include "csv.h"
 #include <nlohmann/json.hpp>
@@ -93,6 +94,8 @@ std::vector<VisitObject> visitObjects;
 
 SBatch Batch;
 
+Minimap minimap;
+
 //Global
 float unitSpeed = 2.5f;
 
@@ -100,14 +103,6 @@ int currentRound = 0;
 int currentTurn = 0;
 bool turnTransition = false;
 bool turnDisplay = false;
-
-//Going to move this to a separate struct later
-bool showMiniMap = false;
-bool miniMapHeld = false;
-
-glm::vec2 miniMapLocation;
-
-float flashEffect = 0.0f;
 
 //Ugh. To handle healing units on turn transition
 int turnUnit = 0;
@@ -337,7 +332,8 @@ int main(int argc, char** argv)
 
 	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
 
-	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(TILE_SIZE, TILE_SIZE);
+	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(0, 0, TILE_SIZE, TILE_SIZE, 2, 1, 2);
+	minimap.cursorUvs = ResourceManager::GetTexture("cursor").GetUVs(32, 0, 70, 62, 2, 1, 2);
 	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
 	Text = new TextRenderer(800, 600);
@@ -531,12 +527,11 @@ int main(int argc, char** argv)
 					//nesting getting a little deep here
 					else if (currentTurn == 0)
 					{
-						if (!showMiniMap)
+						if (!minimap.show)
 						{
 							if (inputManager.isKeyPressed(SDLK_m))
 							{
-								showMiniMap = true;
-								miniMapLocation = camera.getPosition();
+								minimap.show = true;
 							}
 							//Oh man I hate this
 							if (!camera.moving)
@@ -556,61 +551,13 @@ int main(int argc, char** argv)
 						{
 							if (inputManager.isKeyPressed(SDLK_m) || inputManager.isKeyPressed(SDLK_z))
 							{
-								showMiniMap = false;
+								minimap.show = false;
+								cursor.position = camera.getPosition();
 							}
 							else
 							{
-								flashEffect += 1.5f * deltaTime;
-								if (flashEffect >= 0.7f)
-								{
-									flashEffect = 0.0f;
-								}
-								if (inputManager.isKeyDown(SDLK_RETURN))
-								{
-									miniMapHeld = true;
-								}
-								else if (inputManager.isKeyReleased(SDLK_RETURN))
-								{
-									miniMapHeld = false;
-								}
-								int xDirection = 0;
-								int yDirection = 0;
-								if (inputManager.isKeyDown(SDLK_RIGHT))
-								{
-									xDirection = 1;
-								}
-								if (inputManager.isKeyDown(SDLK_LEFT))
-								{
-									xDirection = -1;
-								}
-								if (inputManager.isKeyDown(SDLK_UP))
-								{
-									yDirection = -1;
-								}
-								if (inputManager.isKeyDown(SDLK_DOWN))
-								{
-									yDirection = 1;
-								}
-								miniMapLocation = glm::ivec2(miniMapLocation) + glm::ivec2(xDirection, yDirection) * TileManager::TILE_SIZE;
-								if (miniMapLocation.x < TileManager::TILE_SIZE)
-								{
-									miniMapLocation.x = TileManager::TILE_SIZE;
-								}
-								else if (miniMapLocation.x + TileManager::TILE_SIZE > TileManager::tileManager.levelWidth - TileManager::TILE_SIZE)
-								{
-									miniMapLocation.x = TileManager::tileManager.levelWidth - TileManager::TILE_SIZE * 2;
-								}
-								if (miniMapLocation.y < TileManager::TILE_SIZE)
-								{
-									miniMapLocation.y = TileManager::TILE_SIZE;
-								}
-								else if (miniMapLocation.y + TileManager::TILE_SIZE > TileManager::tileManager.levelHeight - TileManager::TILE_SIZE)
-								{
-									miniMapLocation.y = TileManager::tileManager.levelHeight - TileManager::TILE_SIZE * 2;
-								}
+								minimap.Update(inputManager, deltaTime, camera);
 							}
-							camera.setPosition(miniMapLocation);
-
 						}
 					}
 					else
@@ -964,86 +911,13 @@ void Draw()
 			auto menu = MenuManager::menuManager.menus.back();
 			menu->Draw();
 		}
-		if (!fullScreenMenu && !showMiniMap)
+		if (!fullScreenMenu && !minimap.show)
 		{
 			DrawText();
 		}
 	}
-
-	if (showMiniMap)
-	{
-		float transparent = 1.0f;
-		if (miniMapHeld)
-		{
-			transparent = 0.4f;
-		}
-		else
-		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 0.55f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-			model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
-		}
-
-		ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		ResourceManager::GetShader("shapeInstance").SetFloat("alpha", transparent);
-		int x = 256 * 0.5f - (TileManager::tileManager.rowTiles * 2);
-		int y = 224 * 0.5f - (TileManager::tileManager.columnTiles * 2);
-		int startY = y;
-		int startX = x;
-		ShapeBatch shapeBatch;
-		shapeBatch.init();
-		shapeBatch.begin();
-		//Going to want to batch this, since this is quite a few draw calls
-		for (int i = 0; i < TileManager::tileManager.totalTiles; i++)
-		{
-			shapeBatch.addToBatch(glm::vec2(x, y), 4, 4, glm::vec3(TileManager::tileManager.tiles[i].properties.miniMapColor));
-			x += 4;
-			if (x >= levelWidth / 4 + startX)
-			{
-				//Move back
-				x = startX;
-
-				//Move to the next row
-				y += 4;
-			}
-		}
-
-		for (int i = 0; i < enemyManager.enemies.size(); i++)
-		{
-			auto position = enemyManager.enemies[i]->sprite.getPosition();
-			position /= 16;
-			position *= 4;
-			position += glm::vec2(startX, startY);
-			shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y), 2, 1, glm::vec3(1, flashEffect, flashEffect));
-			shapeBatch.addToBatch(glm::vec2(position.x, position.y + 1), 4, 2, glm::vec3(1, flashEffect, flashEffect));
-			shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y + 3), 2, 1, glm::vec3(1, flashEffect, flashEffect));
-		}
-
-		for (int i = 0; i < playerManager.playerUnits.size(); i++)
-		{
-			auto position = playerManager.playerUnits[i]->sprite.getPosition();
-			position /= 16;
-			position *= 4;
-			position += glm::vec2(startX, startY);
-			shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y), 2, 1, glm::vec3(flashEffect, flashEffect, 1));
-			shapeBatch.addToBatch(glm::vec2(position.x, position.y + 1), 4, 2, glm::vec3(flashEffect, flashEffect, 1));
-			shapeBatch.addToBatch(glm::vec2(position.x + 1, position.y + 3), 2, 1, glm::vec3(flashEffect, flashEffect, 1));
-		}
-
-		shapeBatch.end();
-		shapeBatch.renderBatch();
-	}
+	minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
 	SDL_GL_SwapWindow(window);
-
 }
 
 void DrawUnitRanges()
