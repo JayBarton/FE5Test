@@ -108,6 +108,9 @@
     <ClInclude Include="Minimap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Vendor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">

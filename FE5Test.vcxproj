@@ -168,6 +168,7 @@
     <ClInclude Include="TileManager.h" />
     <ClInclude Include="Timing.h" />
     <ClInclude Include="Unit.h" />
+    <ClInclude Include="Vendor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BattleManager.cpp" />

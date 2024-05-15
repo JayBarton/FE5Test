@@ -60,6 +60,7 @@ struct UnitOptionsMenu : public Menu
 	const static int TRANSFER = 10;
 	const static int TALK = 11;
 	const static int VISIT = 12;
+	const static int VENDOR = 13;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
@@ -79,6 +80,7 @@ struct UnitOptionsMenu : public Menu
 	bool canTransfer = false;
 	bool canTalk = false;
 	bool canVisit = false;
+	bool canBuy = false;
 
 	bool heldFriendly = false;
 	bool heldEnemy = false;
@@ -341,6 +343,19 @@ struct OptionsMenu : public Menu
 	float goal;
 	bool up = false;;
 	bool down = false;
+};
+
+struct VendorMenu : public Menu
+{
+	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, class Vendor* vendor);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	Unit* buyer;
+	Vendor* vendor;
+
+	bool buying = true;
 };
 
 struct MenuManager

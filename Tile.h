@@ -37,6 +37,7 @@ struct Tile
     TileProperties properties;
     Unit* occupiedBy = nullptr;
     VisitObject* visitSpot = nullptr;
+    class Vendor* vendor = nullptr;
 };
 
 #endif // TILE_H

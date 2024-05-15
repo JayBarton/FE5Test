@@ -30,6 +30,8 @@
 #include "ShapeBatch.h"
 #include "Minimap.h"
 
+#include "Vendor.h"
+
 #include "csv.h"
 #include <nlohmann/json.hpp>
 
@@ -91,6 +93,8 @@ InfoDisplays displays;
 
 std::unordered_map<int, Unit*> sceneUnits;
 std::vector<VisitObject> visitObjects;
+
+Vendor vendor;
 
 SBatch Batch;
 
@@ -847,6 +851,8 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 			}
 		}
 	}
+	vendor.items.push_back(0);
+	TileManager::tileManager.placeVendor(48, 272, &vendor);
 
 	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 

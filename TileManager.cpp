@@ -9,6 +9,7 @@
 #include <gtc/matrix_transform.hpp>
 #include "Camera.h"
 #include "Unit.h"
+#include "Vendor.h"
 
 TileManager TileManager::tileManager;
 
@@ -189,6 +190,11 @@ void TileManager::placeVisit(int x, int y, VisitObject* visit)
     getTile(x, y)->visitSpot = visit;
 }
 
+void TileManager::placeVendor(int x, int y, Vendor* vendor)
+{
+    getTile(x, y)->vendor = vendor;
+}
+
 bool TileManager::outOfBounds(int x, int y)
 {
     bool out = false;
@@ -250,6 +256,15 @@ VisitObject* TileManager::getVisit(int x, int y)
     if (Tile* tile = getTile(x, y))
     {
         return tile->visitSpot;
+    }
+    return nullptr;
+}
+
+Vendor* TileManager::getVendor(int x, int y)
+{
+    if (Tile* tile = getTile(x, y))
+    {
+        return tile->vendor;
     }
     return nullptr;
 }

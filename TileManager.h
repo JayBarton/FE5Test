@@ -63,6 +63,7 @@ public :
     Unit* getUnit(int x, int y);
     Unit* getUnitOnTeam(int x, int y, int team);
     VisitObject* getVisit(int x, int y);
+    struct Vendor* getVendor(int x, int y);
 
     glm::vec4 getTileBox(int xPosition, int yPosition);
 
@@ -76,6 +77,7 @@ public :
     void removeUnit(int x, int y);
 
     void placeVisit(int x, int y, VisitObject* visit);
+    void placeVendor(int x, int y, Vendor* vendor);
 
     //called when the program stops running, clears the tiles
     void clearTiles();

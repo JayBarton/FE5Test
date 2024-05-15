@@ -8,6 +8,7 @@
 #include "Tile.h"
 #include "SceneManager.h"
 #include "PlayerManager.h"
+#include "Vendor.h"
 
 #include "Globals.h"
 #include "SBatch.h"
@@ -234,6 +235,14 @@ void UnitOptionsMenu::SelectOption()
 
 		break;
 	}
+	case VENDOR:
+	{
+		auto position = playerUnit->sprite.getPosition();
+		auto vendor = TileManager::tileManager.getVendor(position.x, position.y);
+		Menu* newMenu = new VendorMenu(cursor, text, camera, shapeVAO, playerUnit, vendor);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		break;
+	}
 	//Wait
 	default:
 		cursor->Wait();
@@ -296,6 +305,11 @@ void UnitOptionsMenu::Draw()
 	if (canVisit)
 	{
 		text->RenderText("Visit", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	else if (canBuy)
+	{
+		text->RenderText("Vendor", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	if (heldFriendly)
@@ -361,6 +375,7 @@ void UnitOptionsMenu::GetOptions()
 	heldEnemy = false;
 	canTransfer = false;
 	canVisit = false;
+	canBuy = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
 	auto playerUnit = cursor->selectedUnit;
@@ -399,6 +414,11 @@ void UnitOptionsMenu::GetOptions()
 	{
 		canVisit = true;
 		optionsVector.push_back(VISIT);
+	}
+	else if (TileManager::tileManager.getVendor(playerPosition.x, playerPosition.y))
+	{
+		canBuy = true;
+		optionsVector.push_back(VENDOR);
 	}
 	if (playerUnit->carriedUnit)
 	{
@@ -3100,4 +3120,151 @@ void OptionsMenu::RenderText(std::string toWrite, float x, float y, float scale,
 	glm::vec3 selectedColor = glm::vec3(0.77, 0.92, 1.0f);
 	glm::vec3 color = selected ? selectedColor : grey;
 	text->RenderText(toWrite, x, y, 1, color);
+}
+
+VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, Vendor* vendor) : 
+	Menu(Cursor, Text, camera, shapeVAO), buyer(buyer), vendor(vendor)
+{
+	fullScreen = true;
+
+	/*io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description");
+	int ID;
+	std::string name;
+	int maxUses;
+	int useID;
+	int isWeapon;
+	int canDrop;
+	std::string description;
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description))
+	{
+		//csv reader reads in new lines wrong for whatever reason, this fixes it.
+		size_t found = description.find("\\n");
+		while (found != std::string::npos)
+		{
+			description.replace(found, 2, "\n");
+			found = description.find("\\n", found + 1);
+		}
+		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
+	}*/
+}
+
+void VendorMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 80, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.2f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 80, 0.0f));
+
+	model = glm::scale(model, glm::vec3(80, 144, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.258f, 0.188f, 0.16f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(80, 80, 0.0f));
+
+	model = glm::scale(model, glm::vec3(176, 144, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.358f, 0.188f, 0.16f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(144 + (46 * !buying), 50, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Buy", 500, 133, 1);
+	text->RenderText("Sell", 646, 133, 1);
+
+	int xPos = 375;
+	int yPos = 246;
+	auto items = ItemManager::itemManager.items;
+	if (buying)
+	{
+		for (int i = 0; i < vendor->items.size(); i++)
+		{
+			auto item = items[vendor->items[i]];
+			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
+			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
+			text->RenderTextRight(intToString(600), 675, yPos + 43 * i + 1, 1, 28); //price
+		}
+	}
+	else
+	{
+		for (int i = 0; i < buyer->inventory.size(); i++)
+		{
+			auto item = items[buyer->inventory[i]->ID];
+			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
+			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
+			text->RenderTextRight(intToString(1100), 675, yPos + 43 * i + 1, 1, 28); //price
+
+		}
+	}
+}
+
+void VendorMenu::SelectOption()
+{
+
+}
+
+void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		buying = false;
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		buying = true;
+	}
 }
