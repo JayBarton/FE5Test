@@ -207,8 +207,7 @@ int TextRenderer::GetTextWidth(std::string text, GLfloat scale)
     {
         Character ch = Characters[*c];
 
-        GLfloat w = ch.Size.x * scale;
-        GLfloat h = ch.Size.y * scale;
+        GLfloat w = (ch.Advance >> 6) * scale;
         width += w;
     }
     return width;

@@ -3126,27 +3126,6 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	Menu(Cursor, Text, camera, shapeVAO), buyer(buyer), vendor(vendor)
 {
 	fullScreen = true;
-
-	/*io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
-	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description");
-	int ID;
-	std::string name;
-	int maxUses;
-	int useID;
-	int isWeapon;
-	int canDrop;
-	std::string description;
-	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description))
-	{
-		//csv reader reads in new lines wrong for whatever reason, this fixes it.
-		size_t found = description.find("\\n");
-		while (found != std::string::npos)
-		{
-			description.replace(found, 2, "\n");
-			found = description.find("\\n", found + 1);
-		}
-		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
-	}*/
 }
 
 void VendorMenu::Draw()
@@ -3220,7 +3199,7 @@ void VendorMenu::Draw()
 			auto item = items[vendor->items[i]];
 			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
 			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
-			text->RenderTextRight(intToString(600), 675, yPos + 43 * i + 1, 1, 28); //price
+			text->RenderTextRight(intToString(item.value), 675, yPos + 43 * i + 1, 1, 40); //price
 		}
 	}
 	else
@@ -3230,8 +3209,14 @@ void VendorMenu::Draw()
 			auto item = items[buyer->inventory[i]->ID];
 			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
 			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
-			text->RenderTextRight(intToString(1100), 675, yPos + 43 * i + 1, 1, 28); //price
-
+			if (item.value > 0)
+			{
+				text->RenderTextRight(intToString(item.value * 0.5f), 675, yPos + 43 * i + 1, 1, 40);
+			}
+			else
+			{
+				text->RenderTextRight("----", 675, yPos + 43 * i + 1, 1, 40);
+			}
 		}
 	}
 }

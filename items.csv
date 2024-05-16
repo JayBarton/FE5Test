@@ -1,17 +1,17 @@
-:ID:name:maxUses:useID:isWeapon:canDrop:description
-0:0:Herb:3:0::1:Heals all HP
-1:1:Iron Sword:40:-1:1:1:
-2:2:Light Brand:60:0:1::Used to heal all all HP\nRanged, Luck+10
-3:3:Iron Bow:40:-1:1:1:Effective against flying enemies
-4:4:Short Bow:20:-1:1:1:Effective against flying enemies
-5:5:Iron Blade:30:-1:1:1:
-6:6:Flame Sword:40:-1:1:1:Casts Fire at range\nMag+5
-7:7:Door Key:1:1::1:Opens doors
-8:8:Iron Axe:30:-1:1:1:
-9:9:Brave Lance:60:-1:1:1:Consecutive Attacks\nLuck+10
-10:10:Short Lance:20:-1:1:1:
-11:11:Javelin:20:-1:1:1:Can attack at Range
-12:12:Long Sword:30:-1:1:1:
-13:13:Steel Axe:25:-1:1:1:
-14:14:Hammer:20:-1:1:1:Effective against Armored enemies
-15:15:Hand Axe:20:-1:1:1:Can attack at Range
+:ID:name:maxUses:useID:isWeapon:canDrop:description:value
+0:0:Herb:3:0::1:Heals all HP:600
+1:1:Iron Sword:40:-1:1:1::2200
+2:2:Light Brand:60:0:1::Used to heal all all HP\nRanged, Luck+10:0
+3:3:Iron Bow:40:-1:1:1:Effective against flying enemies:2200
+4:4:Short Bow:20:-1:1:1:Effective against flying enemies:800
+5:5:Iron Blade:30:-1:1:1::2000
+6:6:Flame Sword:40:-1:1:1:Casts Fire at range\nMag+5:8200
+7:7:Door Key:1:1::1:Opens doors:500
+8:8:Iron Axe:30:-1:1:1::1100
+9:9:Brave Lance:60:-1:1:1:Consecutive Attacks\nLuck+10:0
+10:10:Short Lance:20:-1:1:1::800
+11:11:Javelin:20:-1:1:1:Can attack at Range:1200
+12:12:Long Sword:30:-1:1:1::1400
+13:13:Steel Axe:25:-1:1:1::1700
+14:14:Hammer:20:-1:1:1:Effective against Armored enemies:1200
+15:15:Hand Axe:20:-1:1:1:Can attack at Range:1000

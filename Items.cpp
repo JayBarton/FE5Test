@@ -15,16 +15,17 @@ void ItemManager::SetUpItems()
 
 void ItemManager::LoadItems()
 {
-	io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<':'>> in("items.csv");
-	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description");
+	io::CSVReader<8, io::trim_chars<' '>, io::no_quote_escape<':'>> in("items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description", "value");
 	int ID;
 	std::string name;
 	int maxUses;
 	int useID;
 	int isWeapon;
 	int canDrop;
+	int value;
 	std::string description;
-	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description)) 
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description, value)) 
 	{
 		//csv reader reads in new lines wrong for whatever reason, this fixes it.
 		size_t found = description.find("\\n");
@@ -33,7 +34,7 @@ void ItemManager::LoadItems()
 			description.replace(found, 2, "\n");
 			found = description.find("\\n", found + 1);
 		}
-		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
+		items.push_back({ ID, name, maxUses, maxUses, useID, value, bool(isWeapon), bool(canDrop), description });
 	}
 }
 

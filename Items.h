@@ -12,6 +12,7 @@ struct Item
 	int maxUses;
 	int remainingUses;
 	int useID;
+	int value;
 	bool isWeapon;
 	bool canDrop = true;
 	std::string description;
