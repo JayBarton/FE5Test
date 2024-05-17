@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Unit.h"
+#include "TextAdvancer.h"
 class Cursor;
 class TextRenderer;
 class Camera;
@@ -351,11 +352,17 @@ struct VendorMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+	virtual void CancelOption() override;
 
 	Unit* buyer;
 	Vendor* vendor;
 
+	TextObjectManager textManager;
+	TextObject testText;
+
 	bool buying = true;
+	bool inStore = false;
+	bool leaving = false;
 };
 
 struct MenuManager

@@ -35,6 +35,7 @@ struct TextObjectManager
 	bool removingText = false;
 	bool active = false;
 	bool talkActivated = false;
+	bool showAnyway = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -48,7 +49,8 @@ struct TextObjectManager
 	std::vector<TextObject> textObjects;
 
 	TextObjectManager();
-	void init();
+	void init(int line = 0);
 	void Update(float deltaTime, class InputManager& inputManager, class Cursor& cursor);
 	void Draw(TextRenderer* textRenderer);
+	bool ShowText();
 };

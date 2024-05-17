@@ -1665,7 +1665,7 @@ void TradeMenu::CancelOption()
 	{
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.PreviousMenu();
-		MenuManager::menuManager.menus.back()->GetOptions();
+		MenuManager::menuManager.menus.back()->currentOption = 0;
 	}
 }
 
@@ -1810,30 +1810,28 @@ void UnitStatsViewMenu::Draw()
 				int offSet = 30;
 				auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
 
-				int xStatName = 48;
-				int xStatValue = 88;
+				int xStatName = 100;
+				int xStatValue = 200;
 				text->RenderText("Type", xStatName, yPosition, 1);
 				text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
-				text->RenderText("Atk", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(battleStats.attackDamage), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
 				text->RenderText("Hit", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(battleStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Might", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 				text->RenderText("Crit", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(battleStats.hitCrit), xStatValue, yPosition, 1, 14);
+				text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
-				text->RenderText("Avo", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(battleStats.hitAvoid), xStatValue, yPosition, 1, 14);
+				text->RenderText("Range", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Weight", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 14);
 				yPosition += offSet;
 			}
-			if (true)
-			{
-				int a = 2;
-			}
-			text->RenderText(inventory[currentOption]->description, 48, yPosition, 1);
-
+			text->RenderText(inventory[currentOption]->description, 50, yPosition, 1);
 		}
 
 	}
@@ -1924,7 +1922,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			if (moved)
 			{
 				auto inventory = unit->inventory;
-				battleStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
+			//	battleStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
 			}
 		}
 	}
@@ -3126,6 +3124,25 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	Menu(Cursor, Text, camera, shapeVAO), buyer(buyer), vendor(vendor)
 {
 	fullScreen = true;
+	numberOfOptions = vendor->items.size();
+
+	textManager.textLines.clear();
+
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Got a selection of GOOD things on sale, stranger.<2"});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya buyin'?<2"});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya sellin'?<2"});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Is that all stranger?<2"});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Come back any time<3"});
+
+	testText.position = glm::vec2(275.0f, 48.0f);
+	testText.displayedPosition = testText.position;
+	testText.charsPerLine = 55;
+	testText.nextIndex = 55;
+
+	textManager.textObjects.clear();
+	textManager.textObjects.push_back(testText);
+	textManager.init();
+	textManager.active = true;
 }
 
 void VendorMenu::Draw()
@@ -3144,8 +3161,6 @@ void VendorMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0, 80, 0.0f));
 
@@ -3158,8 +3173,6 @@ void VendorMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(80, 80, 0.0f));
 
@@ -3172,22 +3185,33 @@ void VendorMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(144 + (46 * !buying), 50, 0.0f));
+	if (inStore)
+	{
+		model = glm::translate(model, glm::vec3(88, 92 + 16 * currentOption, 0.0f));
+	}
+	else
+	{
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+		model = glm::translate(model, glm::vec3(144 + (46 * !buying), 50, 0.0f));
+	}
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+	if (!textManager.active)
+	{
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
 
-	text->RenderText("Buy", 500, 133, 1);
-	text->RenderText("Sell", 646, 133, 1);
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+	if (!textManager.active && !inStore)
+	{
+		text->RenderText("Buy", 500, 133, 1);
+		text->RenderText("Sell", 646, 133, 1);
+	}
 
 	int xPos = 375;
 	int yPos = 246;
@@ -3206,12 +3230,12 @@ void VendorMenu::Draw()
 	{
 		for (int i = 0; i < buyer->inventory.size(); i++)
 		{
-			auto item = items[buyer->inventory[i]->ID];
-			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
-			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
-			if (item.value > 0)
+			auto item = buyer->inventory[i];
+			text->RenderText(item->name, xPos, yPos + 43 * i + 1, 1);
+			text->RenderTextRight(intToString(item->remainingUses), 575, yPos + 43 * i + 1, 1, 14);
+			if (item->value > 0)
 			{
-				text->RenderTextRight(intToString(item.value * 0.5f), 675, yPos + 43 * i + 1, 1, 40);
+				text->RenderTextRight(intToString(item->value * 0.5f), 675, yPos + 43 * i + 1, 1, 40);
 			}
 			else
 			{
@@ -3219,37 +3243,145 @@ void VendorMenu::Draw()
 			}
 		}
 	}
+
+	if (inStore)
+	{
+		Item currentItem;
+		if (buying)
+		{
+			currentItem = items[vendor->items[currentOption]];
+		}
+		else
+		{
+			currentItem = *buyer->inventory[currentOption];
+		}
+		int yPosition = 246;
+		if (currentItem.isWeapon)
+		{
+			int offSet = 30;
+			auto weaponData = ItemManager::itemManager.weaponData[currentItem.ID];
+
+			int xStatName = 50;
+			int xStatValue = 150;
+			text->RenderText("Type", xStatName, yPosition, 1);
+			text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Hit", xStatName, yPosition, 1);
+			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Might", xStatName, yPosition, 1);
+			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Crit", xStatName, yPosition, 1);
+			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Range", xStatName, yPosition, 1);
+			text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Weight", xStatName, yPosition, 1);
+			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 14);
+			yPosition += offSet;
+		}
+		else
+		{
+			text->RenderText(currentItem.description, 50, yPosition, 1);
+		}
+	}
+
+	if (textManager.ShowText())
+	{
+		textManager.Draw(text);
+	}
 }
 
 void VendorMenu::SelectOption()
 {
-
+	if (!inStore)
+	{
+		inStore = true;
+		if (buying)
+		{
+			textManager.init(1);
+		}
+		else
+		{
+			textManager.init(2);
+		}
+		textManager.textObjects[0].displayedText = "";
+		textManager.active = true;
+	}
 }
 
 void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (inputManager.isKeyPressed(SDLK_UP))
+	if (textManager.active)
 	{
-		currentOption--;
-		if (currentOption < 0)
+		textManager.Update(deltaTime, inputManager, *cursor);
+	}
+	else if (leaving)
+	{
+		Menu::CancelOption();
+
+	}
+	else
+	{
+		if (inStore)
 		{
-			currentOption = numberOfOptions - 1;
+			if (inputManager.isKeyPressed(SDLK_UP))
+			{
+				currentOption--;
+				if (currentOption < 0)
+				{
+					currentOption = numberOfOptions - 1;
+				}
+			}
+			else if (inputManager.isKeyPressed(SDLK_DOWN))
+			{
+				currentOption++;
+				if (currentOption >= numberOfOptions)
+				{
+					currentOption = 0;
+				}
+			}
+		}
+		else
+		{
+			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			{
+				buying = false;
+				numberOfOptions = buyer->inventory.size();
+			}
+			else if (inputManager.isKeyPressed(SDLK_LEFT))
+			{
+				buying = true;
+				numberOfOptions = vendor->items.size();
+			}
+		}
+		if (inputManager.isKeyPressed(SDLK_RETURN))
+		{
+			SelectOption();
+		}
+		else if (inputManager.isKeyPressed(SDLK_z))
+		{
+			CancelOption();
 		}
 	}
-	else if (inputManager.isKeyPressed(SDLK_DOWN))
+}
+
+void VendorMenu::CancelOption()
+{
+	if (inStore)
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		inStore = false;
+		textManager.init(3);
+		textManager.textObjects[0].displayedText = "";
+		textManager.active = true;
 	}
-	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else
 	{
-		buying = false;
-	}
-	else if (inputManager.isKeyPressed(SDLK_LEFT))
-	{
-		buying = true;
+		textManager.init(4);
+		textManager.textObjects[0].displayedText = "";
+		textManager.active = true;
+		leaving = true;
 	}
 }

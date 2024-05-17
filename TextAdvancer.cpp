@@ -25,14 +25,17 @@ TextObjectManager::TextObjectManager()
 	delay = normalDelay;
 }
 
-void TextObjectManager::init()
+void TextObjectManager::init(int line/* = 0 */ )
 {
-	currentLine = 0;
+	currentLine = line;
 	textObjects[focusedObject].text = textLines[currentLine].text;
 	//Proof of concept. Should be error checking here probably
-	if (!talkActivated)
+	if (textLines[currentLine].speaker)
 	{
-		textLines[currentLine].speaker->SetFocus();
+		if (!talkActivated)
+		{
+			textLines[currentLine].speaker->SetFocus();
+		}
 	}
 	active = false;
 }
@@ -68,6 +71,13 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 				{
 					textLines[currentLine].speaker->moveAnimate = false;
 				}
+			}
+			else if (nextOption == 3)
+			{
+				active = false;
+				waitingOnInput = false;
+				showAnyway = true;
+				textObjects[focusedObject].index = 0;
 			}
 			else
 			{
@@ -131,8 +141,17 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 				char nextChar = currentObject->text[currentObject->index];
 				if (nextChar == '<')
 				{
-					waitingOnInput = true;
 					nextOption = currentObject->text[currentObject->index + 1] - '0';
+					if (nextOption == 2)
+					{
+						active = false;
+						showAnyway = true;
+						textObjects[focusedObject].index = 0;
+					}
+					else
+					{
+						waitingOnInput = true;
+					}
 				}
 			}
 		}
@@ -145,4 +164,9 @@ void TextObjectManager::Draw(TextRenderer* textRenderer)
 	{
 		textObjects[i].Draw(textRenderer);
 	}
+}
+
+bool TextObjectManager::ShowText()
+{
+	return active || showAnyway;
 }
