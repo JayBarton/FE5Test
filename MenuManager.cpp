@@ -3133,6 +3133,12 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya sellin'?<2"});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Is that all stranger?<2"});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Come back any time<3"});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Ahhh, I'll buy it at a HIGH price.<2" });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Hehehe, thank you.<2" });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Good choice, stranger.<2" });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough cash, stranger.<2" });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough space, stranger.<2" });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "You've got nothing to sell, stranger.<2" });
 
 	testText.position = glm::vec2(275.0f, 48.0f);
 	testText.displayedPosition = testText.position;
@@ -3143,6 +3149,8 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	textManager.textObjects.push_back(testText);
 	textManager.init();
 	textManager.active = true;
+
+	state = GREETING;
 }
 
 void VendorMenu::Draw()
@@ -3186,31 +3194,35 @@ void VendorMenu::Draw()
 	glBindVertexArray(0);
 
 	model = glm::mat4();
-	if (inStore)
-	{
-		model = glm::translate(model, glm::vec3(88, 92 + 16 * currentOption, 0.0f));
-	}
-	else
-	{
-
-		model = glm::translate(model, glm::vec3(144 + (46 * !buying), 50, 0.0f));
-	}
-
 	if (!textManager.active)
 	{
+		switch (state)
+		{
+		case GREETING:
+			model = glm::translate(model, glm::vec3(144 + (46 * !buying), 50, 0.0f));
+			text->RenderText("Buy", 500, 133, 1);
+			text->RenderText("Sell", 646, 133, 1);
+			break;
+		case BUYING:
+			model = glm::translate(model, glm::vec3(88, 92 + 16 * currentOption, 0.0f));
+			break;
+		case SELLING:
+			model = glm::translate(model, glm::vec3(88, 92 + 16 * currentOption, 0.0f));
+			break;
+		case CONFIRMING:
+			model = glm::translate(model, glm::vec3(144 + (46 * !confirm), 50, 0.0f));
+			text->RenderText("Yes", 500, 133, 1);
+			text->RenderText("No", 646, 133, 1);
+			break;
+		}
 		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+		ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
 
 		ResourceManager::GetShader("shape").SetMatrix4("model", model);
 		glBindVertexArray(shapeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
-	}
-	if (!textManager.active && !inStore)
-	{
-		text->RenderText("Buy", 500, 133, 1);
-		text->RenderText("Sell", 646, 133, 1);
 	}
 
 	int xPos = 375;
@@ -3243,8 +3255,10 @@ void VendorMenu::Draw()
 			}
 		}
 	}
+	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 40);
+	text->RenderText("G", 175, 551, 1);
 
-	if (inStore)
+	if (state == BUYING || state == SELLING)
 	{
 		Item currentItem;
 		if (buying)
@@ -3253,7 +3267,7 @@ void VendorMenu::Draw()
 		}
 		else
 		{
-			currentItem = *buyer->inventory[currentOption];
+			currentItem = *buyer->inventory[currentOption]; //Need a way to handle 
 		}
 		int yPosition = 246;
 		if (currentItem.isWeapon)
@@ -3296,17 +3310,103 @@ void VendorMenu::Draw()
 
 void VendorMenu::SelectOption()
 {
-	if (!inStore)
+	switch (state)
 	{
-		inStore = true;
+	case GREETING:
 		if (buying)
 		{
 			textManager.init(1);
+			state = BUYING;
 		}
 		else
 		{
-			textManager.init(2);
+			if (buyer->inventory.size() > 0)
+			{
+				textManager.init(2);
+				state = SELLING;
+			}
+			else
+			{
+				textManager.init(10);
+			}
 		}
+		textManager.textObjects[0].displayedText = "";
+		textManager.active = true;
+		break;
+	case BUYING:
+	{
+		auto items = ItemManager::itemManager.items;
+		if (MenuManager::menuManager.playerManager->funds < items[vendor->items[currentOption]].value)
+		{
+			textManager.init(8);
+		}
+		else if (buyer->inventory.size() == 8)
+		{
+			textManager.init(9);
+		}
+		else
+		{
+			state = CONFIRMING;
+			confirm = true;
+			textManager.init(7);
+		}
+		break;
+	}
+	case SELLING:
+		textManager.init(5);
+		state = CONFIRMING;
+		confirm = true;
+		break;
+	case CONFIRMING:
+		if (confirm)
+		{
+			if (buying)
+			{
+				auto items = ItemManager::itemManager.items;
+				MenuManager::menuManager.playerManager->funds -= items[vendor->items[currentOption]].value;
+				buyer->addItem(vendor->items[currentOption]);
+				textManager.init(6);
+				state = BUYING;
+			}
+			else
+			{
+				MenuManager::menuManager.playerManager->funds += buyer->inventory[currentOption]->value * 0.5f;
+				buyer->dropItem(currentOption);
+				numberOfOptions--;
+				if (numberOfOptions == 0)
+				{
+					state = GREETING;
+					textManager.init(3);
+				}
+				else
+				{
+					textManager.init(6);
+					if (currentOption == numberOfOptions)
+					{
+						currentOption--;
+					}
+					state = SELLING;
+				}
+			}
+		}
+		else
+		{
+			if (buying)
+			{
+				state = BUYING;
+			}
+			else
+			{
+				state = SELLING;
+			}
+			textManager.init(3);
+		}
+
+	//	confirming = false;
+		break;
+	}
+	if (state != GREETING)
+	{
 		textManager.textObjects[0].displayedText = "";
 		textManager.active = true;
 	}
@@ -3318,14 +3418,25 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		textManager.Update(deltaTime, inputManager, *cursor);
 	}
-	else if (leaving)
+	else if (state == LEAVING)
 	{
 		Menu::CancelOption();
 
 	}
 	else
 	{
-		if (inStore)
+		if (state == CONFIRMING)
+		{
+			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			{
+				confirm = false;
+			}
+			else if (inputManager.isKeyPressed(SDLK_LEFT))
+			{
+				confirm = true;
+			}
+		}
+		else if (state == BUYING || state == SELLING)
 		{
 			if (inputManager.isKeyPressed(SDLK_UP))
 			{
@@ -3344,7 +3455,7 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				}
 			}
 		}
-		else
+		else if(state == GREETING)
 		{
 			if (inputManager.isKeyPressed(SDLK_RIGHT))
 			{
@@ -3370,18 +3481,29 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 
 void VendorMenu::CancelOption()
 {
-	if (inStore)
+	if (state == GREETING)
 	{
-		inStore = false;
-		textManager.init(3);
-		textManager.textObjects[0].displayedText = "";
-		textManager.active = true;
-	}
-	else
-	{
+		state = LEAVING;
 		textManager.init(4);
-		textManager.textObjects[0].displayedText = "";
-		textManager.active = true;
-		leaving = true;
 	}
+	else if (state == BUYING || state == SELLING)
+	{
+		state = GREETING;
+		textManager.init(3);
+
+	}
+	else if (state == CONFIRMING)
+	{
+		if (buying)
+		{
+			state = BUYING;
+		}
+		else
+		{
+			state = SELLING;
+		}
+		textManager.init(3);
+	}
+	textManager.textObjects[0].displayedText = "";
+	textManager.active = true;
 }

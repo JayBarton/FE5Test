@@ -346,6 +346,15 @@ struct OptionsMenu : public Menu
 	bool down = false;
 };
 
+enum VendorState
+{
+	GREETING,
+	BUYING,
+	SELLING,
+	CONFIRMING,
+	LEAVING
+};
+
 struct VendorMenu : public Menu
 {
 	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, class Vendor* vendor);
@@ -360,9 +369,14 @@ struct VendorMenu : public Menu
 	TextObjectManager textManager;
 	TextObject testText;
 
+	VendorState state;
 	bool buying = true;
+/*	
 	bool inStore = false;
-	bool leaving = false;
+	bool confirming = false;
+	bool leaving = false;*/
+	bool confirm = true;
+
 };
 
 struct MenuManager
