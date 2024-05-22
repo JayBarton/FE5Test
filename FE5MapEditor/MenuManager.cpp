@@ -93,6 +93,12 @@ void MenuManager::AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& w
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
+void MenuManager::AddVendorMenu(VendorMode* mode, Vendor* vendor)
+{
+	Menu* newMenu = new VendorMenu(text, camera, shapeVAO, vendor);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
 void MenuManager::OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects, std::vector<VisitObjects>& visitObjects)
 {
 	Menu* newMenu = new SceneMenu(text, camera, shapeVAO, sceneObjects, visitObjects);
@@ -279,15 +285,16 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 	growthNames[4] = "Magical 2";
 	growthNames[5] = "Fighter 2";
 
-	io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
-	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description");
+	io::CSVReader<8, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description", "value");
 	std::string name;
 	int maxUses;
 	int useID;
 	int isWeapon;
 	int canDrop;
+	int value;
 	std::string description;
-	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description))
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description, value))
 	{
 		//csv reader reads in new lines wrong for whatever reason, this fixes it.
 		size_t found = description.find("\\n");
@@ -296,7 +303,7 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 			description.replace(found, 2, "\n");
 			found = description.find("\\n", found + 1);
 		}
-		items.push_back({ ID, name, maxUses, maxUses, useID, bool(isWeapon), bool(canDrop), description });
+		items.push_back({ ID, name, maxUses, maxUses, useID, value, bool(isWeapon), bool(canDrop), description });
 	}
 }
 
@@ -715,9 +722,7 @@ void InventoryMenu::Draw()
 		auto item = items[currentItem];
 		text->RenderText(item.name, 500, 230 + 30 * currentSlot + 1, 1, glm::vec3(1.0f, 1.0f, 0.0f));
 		text->RenderTextRight(intToString(item.maxUses), 628, 230 + 30 * currentSlot + 1, 1, 14, glm::vec3(1.0f, 1.0f, 0.0f));
-
 	}
-
 }
 
 StatsMenu::StatsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode* mode, Object* object, std::vector<int>& baseStats, bool& editedStats) :
@@ -1736,6 +1741,176 @@ void DialogueActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+}
+
+VendorMenu::VendorMenu(TextRenderer* Text, Camera* camera, int shapeVAO, Vendor* vendor) : Menu(Text, camera, shapeVAO), vendor(vendor)
+{
+	vendor->items.reserve(8);
+
+	io::CSVReader<8, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description", "value");
+	std::string name;
+	int ID;
+	int maxUses;
+	int useID;
+	int isWeapon;
+	int canDrop;
+	int value;
+	std::string description;
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description, value))
+	{
+		//csv reader reads in new lines wrong for whatever reason, this fixes it.
+		size_t found = description.find("\\n");
+		while (found != std::string::npos)
+		{
+			description.replace(found, 2, "\n");
+			found = description.find("\\n", found + 1);
+		}
+		items.push_back({ ID, name, maxUses, maxUses, useID, value, bool(isWeapon), bool(canDrop), description });
+	}
+
+	currentSlot = 0;
+	if (currentSlot < vendor->items.size())
+	{
+		currentItem = vendor->items[currentSlot];
+	}
+}
+
+void VendorMenu::Draw()
+{
+	if (currentSlot >= 0)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(144, 80 + 12 * currentSlot, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+
+	for (int i = 0; i < vendor->items.size(); i++)
+	{
+		if (i != currentSlot)
+		{
+			auto item = items[vendor->items[i]];
+			text->RenderText(item.name, 500, 230 + 30 * i + 1, 1);
+			text->RenderTextRight(intToString(item.maxUses), 628, 230 + 30 * i + 1, 1, 14);
+			text->RenderTextRight(intToString(item.value), 700, 230 + 30 * i + 1, 1, 14);
+		}
+	}
+	if (currentItem >= 0)
+	{
+		auto item = items[currentItem];
+		text->RenderText(item.name, 500, 230 + 30 * currentSlot + 1, 1, glm::vec3(1.0f, 1.0f, 0.0f));
+		text->RenderTextRight(intToString(item.maxUses), 628, 230 + 30 * currentSlot + 1, 1, 14, glm::vec3(1.0f, 1.0f, 0.0f));
+		text->RenderTextRight(intToString(item.value), 700, 230 + 30 * currentSlot + 1, 1, 14, glm::vec3(1.0f, 1.0f, 0.0f));
+	}
+
+	text->RenderText("Vendor inventory", 600, 100, 1);
+
+}
+
+void VendorMenu::SelectOption()
+{
+	if (vendor->items.size() > currentSlot)
+	{
+		//update inventory slot
+		vendor->items[currentSlot] = currentItem;
+	}
+	else
+	{
+		vendor->items.push_back(currentItem);
+		currentSlot++;
+	}
+}
+
+void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		if (vendor->items.size() > currentSlot)
+		{
+			//update inventory slot
+			vendor->items[currentSlot] = currentItem;
+		}
+		currentSlot--;
+		if (currentSlot < 0)
+		{
+			currentSlot = vendor->items.size();
+		}
+		if (currentSlot < vendor->items.size())
+		{
+			currentItem = vendor->items[currentSlot];
+		}
+		else
+		{
+			currentItem = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		if (vendor->items.size() > currentSlot)
+		{
+			//update inventory slot
+			vendor->items[currentSlot] = currentItem;
+		}
+		currentSlot++;
+		if (currentSlot > vendor->items.size())
+		{
+			currentSlot = 0;
+		}
+		if (currentSlot < vendor->items.size())
+		{
+			currentItem = vendor->items[currentSlot];
+		}
+		else
+		{
+			currentItem = 0;
+		}
+	}
+
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		currentItem++;
+		if (currentItem > items.size() - 1)
+		{
+			currentItem = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		currentItem--;
+		if (currentItem < 0)
+		{
+			currentItem = items.size() - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_BACKSPACE))
+	{
+		if (vendor->items.size() > currentSlot)
+		{
+			vendor->items.erase(vendor->items.begin() + currentSlot);
+			if (currentSlot < vendor->items.size())
+			{
+				currentItem = vendor->items[currentSlot];
+			}
+		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{

@@ -18,6 +18,7 @@
 #include "MenuManager.h"
 #include "PlacementModes.h"
 #include "../SceneActions.h"
+#include "../Vendor.h"
 
 #include <vector>
 #include <map>
@@ -70,12 +71,16 @@ std::unordered_map<glm::vec2, Object, vec2Hash2> objects;
 std::unordered_map<glm::vec2, std::string, vec2Hash2> objectStrings;
 std::unordered_map<glm::vec2, int, vec2Hash2> objectWriteTypes;
 
+std::unordered_map<glm::vec2, Vendor, vec2Hash2> vendors;
+
+
 std::vector<std::vector<glm::vec4>> enemyUVs;
 
 Object displayObject;
 
 int numberOfEnemies = 0;
 int numberOfStarts = 0;
+int numberOfVendors = 0;
 
 const int CAMERA_WIDTH = 256;
 const int CAMERA_HEIGHT = 224;
@@ -767,6 +772,26 @@ bool loadMap()
                 }
             }
         }
+        else if (thing == "Vendors")
+        {
+            int numberOfVendors = 0;
+            map >> numberOfVendors;
+            vendors.reserve(numberOfVendors);
+            for (int i = 0; i < numberOfVendors; i++)
+            {
+                glm::ivec2 position;
+                map >> position.x >> position.y;
+                int numberOfItems = 0;
+                map >> numberOfItems;
+                std::vector<int> items;
+                items.resize(numberOfItems);
+                for (int c = 0; c < numberOfItems; c++)
+                {
+                    map >> items[c];
+                }
+                vendors[position] = Vendor{ items };
+            }
+        }
     }
     map.close();
     return good;
@@ -781,6 +806,7 @@ void saveMap()
     map << "\n";
     std::string enemies = "Enemies\n";
     std::string starts = "Starts\n";
+    std::string vendorString = "Vendors\n";
     enemies += intToString(numberOfEnemies);
 
     starts += intToString(numberOfStarts);
@@ -794,6 +820,15 @@ void saveMap()
         else if (iter.second == 3)
         {
             starts += "\n" + objectStrings[iter.first];
+        }
+    }
+    vendorString += intToString(vendors.size());
+    for (auto& iter : vendors)
+    {
+        vendorString += "\n" + intToString(iter.first.x) + " " + intToString(iter.first.y) + " " + intToString(iter.second.items.size());
+        for (int i = 0; i < iter.second.items.size(); i++)
+        {
+            vendorString += " " + intToString(iter.second.items[i]);
         }
     }
     std::string scenes = "Scenes\n";
@@ -844,11 +879,6 @@ void saveMap()
     visit += intToString(visitObjects.size());
     for (int i = 0; i < visitObjects.size(); i++)
     {
-        /*
-        *         auto currentObject = sceneObjects[i];
-        scenes += "\n" + intToString(currentObject->actions.size()) + " ";
-        for (int c = 0; c < currentObject->actions.size(); c++)
-        */
         auto currentVisit = visitObjects[i];
         visit += "\n" + intToString(currentVisit.position.x) + " " + intToString(currentVisit.position.y) + " " + intToString(currentVisit.sceneMap.size()) + " ";
 
@@ -858,7 +888,7 @@ void saveMap()
         }
     }
 
-    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n";
+    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n";
 
     map.close();
 
@@ -867,7 +897,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n";
+    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);
@@ -996,6 +1026,10 @@ void switchMode()
     {
         newMode = new PlayerStartMode(&displayObject, objects, objectStrings, objectWriteTypes, numberOfStarts);
     }
+    else if (editMode->type == EditMode::STARTS)
+    {
+        newMode = new VendorMode(&displayObject, vendors, numberOfVendors);
+    }
     else
     {
         newMode = new TileMode(&displayObject);
@@ -1033,7 +1067,7 @@ void Draw()
                 glm::vec2 size;
 
                 size = glm::vec2(16);
-              //  position += sprite.drawOffset;
+                //  position += sprite.drawOffset;
 
                 Batch.addToBatch(texture.ID, position, size, colorAndAlpha, 0, false, 1, iter.second.uvs[idleFrame]);
             }
@@ -1058,6 +1092,32 @@ void Draw()
                 Text->RenderText(intToString(iter.second.type), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
             }
         }
+        if (editMode->type == EditMode::ENEMY)
+        {
+            Texture2D displayTexture = ResourceManager::GetTexture("sprites");
+            Batch.addToBatch(displayTexture.ID, displayObject.position, displayObject.dimensions, glm::vec4(1), 0, false, 1, displayObject.uvs[idleFrame]);
+        }
+        Batch.end();
+        Batch.renderBatch();
+        for (auto& iter : vendors)
+        {
+            ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+            ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+            glm::mat4 model = glm::mat4();
+            model = glm::translate(model, glm::vec3(iter.first, 0.0f));
+
+            model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+            ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
+
+            ResourceManager::GetShader("shape").SetMatrix4("model", model);
+            glBindVertexArray(shapeVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+
+            glm::vec2 drawPosition = glm::vec2(iter.first) + glm::vec2(4);
+            drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+        }
         if (MenuManager::menuManager.menus.size() > 0)
         {
             auto menu = MenuManager::menuManager.menus.back();
@@ -1074,19 +1134,18 @@ void Draw()
                 Text->RenderText("Current: " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
 
             }
-            else if(editMode->type == EditMode::ENEMY)
+            else if (editMode->type == EditMode::ENEMY)
             {
-                Texture2D displayTexture = ResourceManager::GetTexture("sprites");
-                Batch.addToBatch(displayTexture.ID, displayObject.position, displayObject.dimensions, glm::vec4(1), 0, false, 1, displayObject.uvs[idleFrame]);
-
                 if (editMode->type == EditMode::ENEMY)
                 {
                     Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
                 }
                 Text->RenderText("Current: " + classNames[editMode->currentElement], SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
             }
-            else
+            else if (editMode->type == EditMode::STARTS)
             {
+                Text->RenderText("Starts Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+
                 ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
                 ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
                 glm::mat4 model = glm::mat4();
@@ -1105,11 +1164,31 @@ void Draw()
                 drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
                 Text->RenderText(intToString(editMode->currentElement), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
             }
+            else if (editMode->type == EditMode::VENDORS)
+            {
+                Text->RenderText("Vendors Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+
+                ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+                ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+                glm::mat4 model = glm::mat4();
+                model = glm::translate(model, glm::vec3(displayObject.position, 0.0f));
+
+                model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+                ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
+
+                ResourceManager::GetShader("shape").SetMatrix4("model", model);
+                glBindVertexArray(shapeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+
+                glm::vec2 drawPosition = glm::vec2(displayObject.position) + glm::vec2(4);
+                drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+            }
             Text->RenderText("Max " + intToString(editMode->maxElement), SCREEN_WIDTH * 0.5f + 128, 64, 1);
 
             Text->RenderText("Position " + intToString(displayObject.position.x), SCREEN_WIDTH * 0.5f + 128, 96, 1);
             Text->RenderText(intToString(displayObject.position.y), SCREEN_WIDTH * 0.5f + 256, 96, 1);
-
 
             if (saveDisplay)
             {
@@ -1130,8 +1209,6 @@ void Draw()
                 Text->RenderText(inputText[LEVEL_WIDTH_STRING], SCREEN_WIDTH * 0.5f - 64, SCREEN_HEIGHT * 0.5f, 1);
             }
         }
-        Batch.end();
-        Batch.renderBatch();
     }
     else
     {

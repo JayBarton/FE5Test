@@ -143,6 +143,7 @@
     <ClInclude Include="..\SceneActions.h" />
     <ClInclude Include="..\SceneManager.h" />
     <ClInclude Include="..\Shader.h" />
+    <ClInclude Include="..\Vendor.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="MenuManager.h" />
     <ClInclude Include="PlacementModes.h" />

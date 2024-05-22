@@ -93,8 +93,7 @@ InfoDisplays displays;
 
 std::unordered_map<int, Unit*> sceneUnits;
 std::vector<VisitObject> visitObjects;
-
-Vendor vendor;
+std::vector<Vendor> vendors;
 
 SBatch Batch;
 
@@ -850,9 +849,28 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);
 			}
 		}
+		else if (thing == "Vendors")
+		{
+			int numberOfVendors = 0;
+			map >> numberOfVendors;
+			vendors.resize(numberOfVendors);
+			for (int i = 0; i < numberOfVendors; i++)
+			{
+				glm::ivec2 position;
+				map >> position.x >> position.y;
+				int numberOfItems = 0;
+				map >> numberOfItems;
+				std::vector<int> items;
+				items.resize(numberOfItems);
+				for (int c = 0; c < numberOfItems; c++)
+				{
+					map >> items[c];
+				}
+				vendors[i] = Vendor{ items };
+				TileManager::tileManager.placeVendor(position.x, position.y, &vendors[i]);
+			}
+		}
 	}
-	vendor.items.push_back(0);
-	TileManager::tileManager.placeVendor(48, 272, &vendor);
 
 	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 

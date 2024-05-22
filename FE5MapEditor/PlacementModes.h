@@ -10,6 +10,8 @@
 #include <sstream>
 
 #include "TileManager.h"
+#include "../Vendor.h"
+
 
 struct Object
 {
@@ -49,6 +51,7 @@ struct EditMode
     const static int PICKUP = 1;
     const static int ENEMY = 2;
     const static int STARTS = 3;
+    const static int VENDORS = 4;
     int currentElement;
     int maxElement;
     //The current edit mode
@@ -279,4 +282,27 @@ struct PlayerStartMode : public EditMode
     ~PlayerStartMode()
     {
     }
+};
+
+struct VendorMode : public EditMode
+{
+    VendorMode(Object* obj, std::unordered_map<glm::vec2, class Vendor, vec2Hash2>& vendors, int& numberOfVendors) : EditMode(obj), vendors(vendors), numberOfVendors(numberOfVendors)
+    {
+        type = VENDORS;
+    }
+
+    std::unordered_map<glm::vec2, Vendor, vec2Hash2>& vendors;
+    int& numberOfVendors;
+
+    virtual void rightClick(int x, int y) 
+    {
+        glm::vec2 mousePosition(x, y);
+        if (vendors.count(mousePosition) == 1)
+        {
+            vendors.erase(mousePosition);
+            numberOfVendors--;
+        }
+    }
+    virtual void leftClick(int x, int y);
+
 };

@@ -1,6 +1,7 @@
 #include <vector>
 #include "../Unit.h"
 #include "../Items.h"
+#include "../Vendor.h"
 
 class TextRenderer;
 class Camera;
@@ -90,6 +91,7 @@ struct MenuManager
     void AddInventoryMenu(class EnemyMode* mode, class Object* obj, std::vector<int>& inventory, std::vector<Item>& items);
     void AddStatsMenu(EnemyMode* mode, Object* obj, std::vector<int>& baseStats, bool& editedStats);
     void AddProfsMenu(EnemyMode* mode, Object* obj, std::vector<int>& weaponProfs, bool& editedProfs);
+    void AddVendorMenu(class VendorMode* mode, Vendor* vendor);
     void OpenSceneMenu(std::vector<SceneObjects*>& sceneObjects, std::vector<VisitObjects>& visitObjects);
     void OpenActionMenu(SceneObjects& sceneObject);
     void OpenVisitMenu(VisitObjects& visitObject);
@@ -174,7 +176,7 @@ struct InventoryMenu : public Menu
     std::vector<int>& inventory;
     std::vector<Item>& items;
     int currentSlot = -1;
-    int currentItem = -1;
+    int currentItem = 0;
 };
 
 struct StatsMenu : public Menu
@@ -209,6 +211,19 @@ struct SceneMenu : public Menu
     bool addingScene = true;
     std::vector<SceneObjects*>& sceneObjects;
     std::vector<VisitObjects>& visitObjects;
+};
+
+struct VendorMenu : public Menu
+{
+    VendorMenu(TextRenderer* Text, Camera* camera, int shapeVAO, Vendor* vendor);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    int currentSlot = -1;
+    int currentItem = 0;
+    Vendor* vendor;
+    std::vector<Item> items;
 };
 
 struct VisitMenu : public Menu
