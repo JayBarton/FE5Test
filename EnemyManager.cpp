@@ -14,6 +14,464 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits)
+{
+    UVs.resize(3);
+    UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
+    UVs[0].insert(UVs[0].end(), extras.begin(), extras.end());
+    UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 128, 32, 32, 4, 4);
+    UVs[1].insert(UVs[1].end(), extras.begin(), extras.end());
+    UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+    extras = ResourceManager::GetTexture("movesprites").GetUVs(256, 0, 32, 32, 4, 4);
+    UVs[2].insert(UVs[2].end(), extras.begin(), extras.end());
+    std::vector<Unit> unitBases;
+    unitBases.resize(4);
+    this->playerUnits = playerUnits;
+
+    std::ifstream f("BaseStats.json");
+    json data = json::parse(f);
+    json bases = data["enemies"];
+    int currentUnit = 0;
+    std::unordered_map<std::string, int> weaponNameMap;
+    weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
+    weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
+    weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
+    weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
+    weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
+    weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
+    weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
+    weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
+    weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
+    weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
+
+    for (const auto& enemy : bases) {
+        int ID = enemy["ID"];
+        std::string name = enemy["Name"];
+        json stats = enemy["Stats"];
+        int HP = stats["HP"];
+        int str = stats["Str"];
+        int mag = stats["Mag"];
+        int skl = stats["Skl"];
+        int spd = stats["Spd"];
+        int lck = stats["Lck"];
+        int def = stats["Def"];
+        int bld = stats["Bld"];
+        int mov = stats["Mov"];
+        unitBases[currentUnit] = Unit(name, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
+
+        json weaponProf = enemy["WeaponProf"];
+        for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
+        {
+            unitBases[currentUnit].weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+        }
+        if (enemy.find("Skills") != enemy.end())
+        {
+            auto skills = enemy["Skills"];
+            for (const auto& skill : skills)
+            {
+                unitBases[currentUnit].skills.push_back(int(skill));
+            }
+        }
+        if (enemy.find("ClassPower") != enemy.end())
+        {
+            unitBases[currentUnit].classPower = enemy["ClassPower"];
+        }
+        currentUnit++;
+    }
+
+    int ID;
+    int HP;
+    int str;
+    int mag;
+    int skl;
+    int spd;
+    int lck;
+    int def;
+    int bld;
+
+    io::CSVReader<9, io::trim_chars<' '>, io::no_quote_escape<':'>> in2("EnemyGrowths.csv");
+    in2.read_header(io::ignore_extra_column, "ID", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld");
+    currentUnit = 0;
+    std::vector<StatGrowths> unitGrowths;
+    unitGrowths.resize(6);
+    while (in2.read_row(ID, HP, str, mag, skl, spd, lck, def, bld)) {
+        unitGrowths[currentUnit] = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, 0 };
+        currentUnit++;
+    }
+
+    int numberOfEnemies;
+    map >> numberOfEnemies;
+    enemies.resize(numberOfEnemies);
+    for (int i = 0; i < numberOfEnemies; i++)
+    {
+        glm::vec2 position;
+        int type;
+        int level;
+        int growthID;
+        int inventorySize;
+        map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
+        enemies[i] = new Unit(unitBases[type]);
+        enemies[i]->init(gen, distribution);
+
+        enemies[i]->team = 1;
+        enemies[i]->growths = unitGrowths[growthID];
+        std::vector<int> inventory;
+        inventory.resize(inventorySize);
+        for (int c = 0; c < inventorySize; c++)
+        {
+            int itemID;
+            map >> itemID;
+            inventory[c] = itemID;
+        }
+        int editedStats;
+        map >> editedStats;
+        if (editedStats)
+        {
+            int stats[9];
+            for (int c = 0; c < 9; c++)
+            {
+                map >> stats[c];
+            }
+            enemies[i]->maxHP = stats[0];
+            enemies[i]->currentHP = stats[0];
+            enemies[i]->strength = stats[1];
+            enemies[i]->magic = stats[2];
+            enemies[i]->skill = stats[3];
+            enemies[i]->speed = stats[4];
+            enemies[i]->luck = stats[5];
+            enemies[i]->defense = stats[6];
+            enemies[i]->build = stats[7];
+            enemies[i]->move = stats[8];
+            enemies[i]->level = level;
+        }
+        else
+        {
+            enemies[i]->LevelEnemy(level - 1);
+        }
+        int editedProfs;
+        map >> editedProfs;
+        if (editedProfs)
+        {
+            int profs[10];
+            for (int c = 0; c < 10; c++)
+            {
+                map >> enemies[i]->weaponProficiencies[c];
+            }
+        }
+
+        map >> enemies[i]->activationType >> enemies[i]->stationary >> enemies[i]->boss;
+
+        map >> enemies[i]->sceneID;
+
+        for (int c = 0; c < inventorySize; c++)
+        {
+            enemies[i]->addItem(inventory[c]);
+        }
+
+        enemies[i]->placeUnit(position.x, position.y);
+        enemies[i]->sprite.uv = &UVs[enemies[i]->ID];
+        //I'm thinking I will move the anim data to its own json, so I won't need to go through here again.
+        for (const auto& enemy : bases)
+        {
+            int ID = enemy["ID"];
+            if (ID == enemies[i]->ID)
+            {
+                auto animData = enemy["AnimData"];
+                enemies[i]->focusedFacing = animData["FocusFace"];
+            }
+        }
+    }
+    //  enemies[14]->currentHP = 14;
+    //  enemies[0]->move = 6;
+    //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+}
+
+void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
+{
+    if (currentEnemy >= enemies.size())
+    {
+        EndTurn();
+    }
+    else
+    {
+        auto enemy = enemies[currentEnemy];
+
+        if (enemyMoving)
+        {
+            followCamera = true;
+            if (!canAct)
+            {
+                timer += deltaTime;
+                if (timer >= actionDelay)
+                {
+                    timer = 0.0f;
+                    canAct = true;
+                }
+            }
+            else
+            {
+                enemy->UpdateMovement(deltaTime, inputManager);
+                if (!enemy->movementComponent.moving)
+                {
+                    enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
+                    if (state == ATTACK)
+                    {
+                        //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
+                        //before the battle actually starts
+                        auto otherStats = otherUnit->CalculateBattleStats();
+                        auto weapon = otherUnit->GetEquippedWeapon();
+                        otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
+                    }
+                    else if (state == CANTO || state == APPROACHING)
+                    {
+                        FinishMove();
+                    }
+                    else if (state == HEALING)
+                    {
+                        displays->EnemyUse(enemy, healIndex);
+                    }
+                    else if (state == TRADING)
+                    {
+                        displays->EnemyTrade(this);
+                    }
+                }
+            }
+        }
+        else
+        {
+            timer += deltaTime;
+            if (timer >= turnStartDelay)
+            {
+                timer = 0.0f;
+                skippedUnit = false;
+                while (currentEnemy < enemies.size() && !skippedUnit && !enemyMoving)
+                {
+                    if (enemy->isCarried)
+                    {
+                        NextUnit();
+                        skippedUnit = true;
+                    }
+                    else if (enemy->stationary)
+                    {
+                        StationaryUpdate(enemy, battleManager, camera);
+                    }
+                    else
+                    {
+                        DefaultUpdate(deltaTime, enemy, camera, battleManager);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager)
+{
+    if (!enemyMoving)
+    {
+        //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
+        //If active
+        if (enemy->active)
+        {
+            std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+            if (enemy->currentHP <= enemy->maxHP * 0.5f)
+            {
+                healIndex = -1;
+                for (int i = 0; i < enemy->inventory.size(); i++)
+                {
+                    if (enemy->inventory[i]->ID == 0)
+                    {
+                        //can heal. Move away from closest player unit and heal
+                        healIndex = i;
+                        break;
+                    }
+                }
+                if (healIndex >= 0)
+                {
+                    HealSelf(enemy, path);
+                }
+                if (healIndex < 0)
+                {
+                    FindHealItem(enemy, path);
+                }
+            }
+            //Want to do the store check here
+            else
+            {
+                FindUnitInAttackRange(enemy, path, camera);
+            }
+        }
+        //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
+        //If units found, set active to true and path towards the closest unit
+        //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
+        //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can just call get priority again.
+        else
+        {
+            if (enemy->activationType > 0)
+            {
+                RangeActivation(enemy);
+                //Move this into range activation if it works
+                if (enemyMoving)
+                {
+                    camera.SetMove(enemy->sprite.getPosition());
+                }
+            }
+            else
+            {
+                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
+                std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
+                GetPriority(enemy, path, otherUnits);
+                //So what I am doing here is, if the enemy is able to move/attack, set them to active.
+                //This is only going to work in the case that the enemy actually found a unit to attack, so if all of the attack positions are
+                //occupied, they will remain inactive
+                //Not sure if this is how I want things to work going forward, but it's the plan for now.
+                if (enemyMoving)
+                {
+                    enemy->active = true;
+                    camera.SetMove(enemy->sprite.getPosition());
+                }
+                //When it comes to the store, my current thought process won't allow inactive, unarmed enemies from using the store as they can
+                //never activate
+            }
+        }
+    }
+}
+
+void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera)
+{
+    auto otherUnits = enemy->inRangeUnits(0);
+    auto position = enemy->sprite.getPosition();
+    if (otherUnits.size() > 0)
+    {
+        otherUnit = nullptr;
+
+        battleStats = BattleStats{};
+
+        int cannotCounterBonus = 50;
+
+        Target finalTarget;
+        for (int i = 0; i < otherUnits.size(); i++)
+        {
+            Target currentTarget;
+
+            auto otherUnit = otherUnits[i];
+            auto otherWeapon = otherUnit->GetEquippedWeapon();
+            currentTarget.ID = i;
+            //Next want to check how much damage this enemy can do to the other unit
+            //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
+            BattleStats tempStats;
+            int maxDamage = 0;
+
+            float attackDistance = abs(enemy->sprite.getPosition().x - otherUnit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - otherUnit->sprite.getPosition().y);
+            attackDistance /= TileManager::TILE_SIZE;
+            if (!(otherWeapon.maxRange >= attackDistance && otherWeapon.minRange <= attackDistance))
+            {
+                currentTarget.priority += cannotCounterBonus;
+            }
+            for (int c = 0; c < enemy->weapons.size(); c++)
+            {
+                auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
+
+                if (weapon.minRange == attackDistance || weapon.maxRange == attackDistance)
+                {
+                    auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
+
+
+                    tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+
+                    //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
+                    //at a closer ranger would do more damage.
+                    //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
+                    enemy->CalculateMagicDefense(weapon, tempStats, attackDistance);
+                    int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
+                    int damage = tempStats.attackDamage - otherDefense;
+                    if (damage > maxDamage)
+                    {
+                        //prioritize sure kills
+                        if (otherUnit->currentHP - damage <= 0)
+                        {
+                            maxDamage = 50;
+                        }
+                        else
+                        {
+                            maxDamage = damage;
+                        }
+                        currentTarget.battleStats = tempStats;
+                        currentTarget.range = attackDistance;
+                        currentTarget.weaponToUse = enemy->weapons[c];
+                    }
+                }
+            }
+            currentTarget.priority += maxDamage;
+            if (currentTarget.priority > finalTarget.priority)
+            {
+                finalTarget = currentTarget;
+            }
+            //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
+            //In that case, check which unit will do less damage on counter
+            //Priority of 0 at this point would suggest zero damage will be dealt
+            //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
+            else if (currentTarget.priority == finalTarget.priority)
+            {
+                auto previousUnit = otherUnits[finalTarget.ID];
+                auto previousWeapon = previousUnit->GetEquippedWeapon();
+                auto foeWeapon = otherUnit->GetEquippedWeapon();
+                auto previousStats = previousUnit->CalculateBattleStats();
+                previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
+                auto otherStats = otherUnit->CalculateBattleStats();
+                otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
+
+                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
+                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
+                if (damageTaken < previousDamage)
+                {
+                    finalTarget = currentTarget;
+                }
+            }
+        }
+
+        //In range of units but cannot reach any of them, stay where you are
+        if (finalTarget.priority == 0)
+        {
+            DoNothing(enemy, position);
+        }
+        else
+        {
+            for (int i = 0; i < enemy->inventory.size(); i++)
+            {
+                if (finalTarget.weaponToUse == enemy->inventory[i])
+                {
+                    enemy->equipWeapon(i);
+                    break;
+                }
+            }
+            otherUnit = otherUnits[finalTarget.ID];
+
+            auto otherStats = otherUnit->CalculateBattleStats();
+            auto weapon = otherUnit->GetEquippedWeapon();
+            attackRange = finalTarget.range;
+            otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+            battleStats = finalTarget.battleStats;
+            bool canCounter = false;
+            skippedUnit = true;
+            if (weapon.maxRange >= attackRange && weapon.minRange <= attackRange)
+            {
+                canCounter = true;
+            }
+            battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
+        }
+    }
+    //No units in range
+    else
+    {
+        DoNothing(enemy, position);
+    }
+}
+
 void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, std::vector<Unit*>& otherUnits)
 {
     otherUnit = nullptr;
@@ -301,12 +759,14 @@ void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
     NextUnit();
     skippedUnit = true;
 }
+
 void EnemyManager::NextUnit()
 {
     currentEnemy++;
     canAct = false;
     followCamera = false;
 }
+
 std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
 {
     std::vector<Unit*> otherUnits;
@@ -320,180 +780,6 @@ std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
         }
     }
     return otherUnits;
-}
-
-void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits)
-{
-    UVs.resize(3);
-    UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-    auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
-    UVs[0].insert(UVs[0].end(), extras.begin(), extras.end());
-    UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-    extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 128, 32, 32, 4, 4);
-    UVs[1].insert(UVs[1].end(), extras.begin(), extras.end());
-    UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-    extras = ResourceManager::GetTexture("movesprites").GetUVs(256, 0, 32, 32, 4, 4);
-    UVs[2].insert(UVs[2].end(), extras.begin(), extras.end());
-    std::vector<Unit> unitBases;
-    unitBases.resize(4);
-    this->playerUnits = playerUnits;
-
-    std::ifstream f("BaseStats.json");
-    json data = json::parse(f);
-    json bases = data["enemies"];
-    int currentUnit = 0;
-    std::unordered_map<std::string, int> weaponNameMap;
-    weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
-    weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
-    weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
-    weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
-    weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
-    weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
-    weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
-    weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
-    weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
-    weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
-
-    for (const auto& enemy : bases) {
-        int ID = enemy["ID"];
-        std::string name = enemy["Name"];
-        json stats = enemy["Stats"];
-        int HP = stats["HP"];
-        int str = stats["Str"];
-        int mag = stats["Mag"];
-        int skl = stats["Skl"];
-        int spd = stats["Spd"];
-        int lck = stats["Lck"];
-        int def = stats["Def"];
-        int bld = stats["Bld"];
-        int mov = stats["Mov"];
-        unitBases[currentUnit] = Unit(name, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
-
-        json weaponProf = enemy["WeaponProf"];
-        for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
-        {
-            unitBases[currentUnit].weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
-        }
-        if (enemy.find("Skills") != enemy.end())
-        {
-            auto skills = enemy["Skills"];
-            for (const auto& skill : skills)
-            {
-                unitBases[currentUnit].skills.push_back(int(skill));
-            }
-        }
-        if (enemy.find("ClassPower") != enemy.end())
-        {
-            unitBases[currentUnit].classPower = enemy["ClassPower"];
-        }
-        currentUnit++;
-    }
-
-    int ID;
-    int HP;
-    int str;
-    int mag;
-    int skl;
-    int spd;
-    int lck;
-    int def;
-    int bld;
-
-    io::CSVReader<9, io::trim_chars<' '>, io::no_quote_escape<':'>> in2("EnemyGrowths.csv");
-    in2.read_header(io::ignore_extra_column, "ID", "HP", "Str", "Mag", "Skl", "Spd", "Lck", "Def", "Bld");
-    currentUnit = 0;
-    std::vector<StatGrowths> unitGrowths;
-    unitGrowths.resize(6);
-    while (in2.read_row(ID, HP, str, mag, skl, spd, lck, def, bld)) {
-        unitGrowths[currentUnit] = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, 0 };
-        currentUnit++;
-    }
-
-    int numberOfEnemies;
-    map >> numberOfEnemies;
-    enemies.resize(numberOfEnemies);
-    for (int i = 0; i < numberOfEnemies; i++)
-    {
-        glm::vec2 position;
-        int type;
-        int level;
-        int growthID;
-        int inventorySize;
-        map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
-        enemies[i] = new Unit(unitBases[type]);
-        enemies[i]->init(gen, distribution);
-
-        enemies[i]->team = 1;
-        enemies[i]->growths = unitGrowths[growthID];
-        std::vector<int> inventory;
-        inventory.resize(inventorySize);
-        for (int c = 0; c < inventorySize; c++)
-        {
-            int itemID;
-            map >> itemID;
-            inventory[c] = itemID;
-        }
-        int editedStats;
-        map >> editedStats;
-        if (editedStats)
-        {
-            int stats[9];
-            for (int c = 0; c < 9; c++)
-            {
-                map >> stats[c];
-            }
-            enemies[i]->maxHP = stats[0];
-            enemies[i]->currentHP = stats[0];
-            enemies[i]->strength = stats[1];
-            enemies[i]->magic = stats[2];
-            enemies[i]->skill = stats[3];
-            enemies[i]->speed = stats[4];
-            enemies[i]->luck = stats[5];
-            enemies[i]->defense = stats[6];
-            enemies[i]->build = stats[7];
-            enemies[i]->move = stats[8];
-            enemies[i]->level = level;
-        }
-        else
-        {
-            enemies[i]->LevelEnemy(level - 1);
-        }
-        int editedProfs;
-        map >> editedProfs;
-        if (editedProfs)
-        {
-            int profs[10];
-            for (int c = 0; c < 10; c++)
-            {
-                map >> enemies[i]->weaponProficiencies[c];
-            }
-        }
-        
-        map >> enemies[i]->activationType >> enemies[i]->stationary >> enemies[i]->boss;
-
-        map >> enemies[i]->sceneID;
-
-        for (int c = 0; c < inventorySize; c++)
-        {
-            enemies[i]->addItem(inventory[c]);
-        }
-
-        enemies[i]->placeUnit(position.x, position.y);
-        enemies[i]->sprite.uv = &UVs[enemies[i]->ID];
-        //I'm thinking I will move the anim data to its own json, so I won't need to go through here again.
-        for (const auto& enemy : bases) 
-        {
-            int ID = enemy["ID"];
-            if (ID == enemies[i]->ID)
-            {
-                auto animData = enemy["AnimData"];
-                enemies[i]->focusedFacing = animData["FocusFace"];
-            }
-        }
-    }
-  //  enemies[14]->currentHP = 14;
-  //  enemies[0]->move = 6;
-  //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
 void EnemyManager::Draw(SpriteRenderer* renderer)
@@ -512,290 +798,6 @@ void EnemyManager::Draw(SBatch* Batch)
     }
 }
 
-void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
-{
-    if (currentEnemy >= enemies.size())
-    {
-        EndTurn();
-    }
-    else
-    {
-        auto enemy = enemies[currentEnemy];
-
-        if (enemyMoving)
-        {
-            followCamera = true;
-            if (!canAct)
-            {
-                timer += deltaTime;
-                if (timer >= actionDelay)
-                {
-                    timer = 0.0f;
-                    canAct = true;
-                }
-            }
-            else
-            {
-                enemy->UpdateMovement(deltaTime, inputManager);
-                if (!enemy->movementComponent.moving)
-                {
-                    enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
-                    if (state == ATTACK)
-                    {
-                        //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
-                        //before the battle actually starts
-                        auto otherStats = otherUnit->CalculateBattleStats();
-                        auto weapon = otherUnit->GetEquippedWeapon();
-                        otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
-                    }
-                    else if (state == CANTO || state == APPROACHING)
-                    {
-                        FinishMove();
-                    }
-                    else if (state == HEALING)
-                    {
-                        displays->EnemyUse(enemy, healIndex);
-                    }
-                    else if (state == TRADING)
-                    {
-                        displays->EnemyTrade(this);
-                    }
-                }
-            }
-        }
-        else
-        {
-            timer += deltaTime;
-            if (timer >= turnStartDelay)
-            {
-                timer = 0.0f;
-                skippedUnit = false;
-                while (currentEnemy < enemies.size() && !skippedUnit && !enemyMoving)
-                {
-                    if (enemy->isCarried)
-                    {
-                        NextUnit();
-                        skippedUnit = true;
-                    }
-                    else if (enemy->stationary)
-                    {
-                        StationaryUpdate(enemy, battleManager, camera);
-                    }
-                    else
-                    {
-                        DefaultUpdate(deltaTime, enemy, camera, battleManager);
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager)
-{
-    if (!enemyMoving)
-    {
-        //Small delay between starting the next enemy's move
-
-        //Need to move the camera to the next enemy. Not exactly sure how FE5 handles this
-        //If active
-        if (enemy->active)
-        {
-            std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-            if (enemy->currentHP <= enemy->maxHP * 0.5f)
-            {
-                healIndex = -1;
-                for (int i = 0; i < enemy->inventory.size(); i++)
-                {
-                    if (enemy->inventory[i]->ID == 0)
-                    {
-                        //can heal. Move away from closest player unit and heal
-                        healIndex = i;
-                        break;
-                    }
-                }
-                if (healIndex >= 0)
-                {
-                    HealSelf(enemy, path);
-                }
-                if (healIndex < 0)
-                {
-                    FindHealItem(enemy, path);
-                }
-            }
-            else
-            {
-                FindUnitInAttackRange(enemy, path, camera);
-            }
-        }
-        //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
-        //If units found, set active to true and path towards the closest unit
-        //Should be different activation requirements. Some enemies use as I described above, others will only activate if unit is in attack range
-        //So I could have an "activation type", if it is range I just use the above, if it is "attack" I can just call get priority again.
-        else
-        {
-            if (enemy->activationType > 0)
-            {
-                RangeActivation(enemy);
-                //Move this into range activation if it works
-                if (enemyMoving)
-                {
-                    camera.SetMove(enemy->sprite.getPosition());
-                }
-            }
-            else
-            {
-                std::unordered_map<glm::vec2, pathCell, vec2Hash> path = enemy->FindUnitMoveRange();
-                std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-                GetPriority(enemy, path, otherUnits);
-                //So what I am doing here is, if the enemy is able to move/attack, set them to active.
-                //This is only going to work in the case that the enemy actually found a unit to attack, so if all of the attack positions are
-                //occupied, they will remain inactive
-                //Not sure if this is how I want things to work going forward, but it's the plan for now.
-                if (enemyMoving)
-                {
-                    enemy->active = true;
-                    camera.SetMove(enemy->sprite.getPosition());
-                }
-            }
-        }
-
-    }
-}
-
-void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera)
-{
-    auto otherUnits = enemy->inRangeUnits(0);
-    auto position = enemy->sprite.getPosition();
-    if (otherUnits.size() > 0)
-    {
-        otherUnit = nullptr;
-
-        battleStats = BattleStats{};
-
-        int cannotCounterBonus = 50;
-
-        Target finalTarget;
-        for (int i = 0; i < otherUnits.size(); i++)
-        {
-            Target currentTarget;
-
-            auto otherUnit = otherUnits[i];
-            auto otherWeapon = otherUnit->GetEquippedWeapon();
-            currentTarget.ID = i;
-            //Next want to check how much damage this enemy can do to the other unit
-            //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
-            BattleStats tempStats;
-            int maxDamage = 0;
-
-            float attackDistance = abs(enemy->sprite.getPosition().x - otherUnit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - otherUnit->sprite.getPosition().y);
-            attackDistance /= TileManager::TILE_SIZE;
-            if (!(otherWeapon.maxRange >= attackDistance && otherWeapon.minRange <= attackDistance))
-            {
-                currentTarget.priority += cannotCounterBonus;
-            }
-            for (int c = 0; c < enemy->weapons.size(); c++)
-            {
-                auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
-
-                if (weapon.minRange == attackDistance || weapon.maxRange == attackDistance)
-                {
-                    auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
-
-
-                    tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
-
-                    //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
-                    //at a closer ranger would do more damage.
-                    //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
-                    enemy->CalculateMagicDefense(weapon, tempStats, attackDistance);
-                    int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
-                    int damage = tempStats.attackDamage - otherDefense;
-                    if (damage > maxDamage)
-                    {
-                        //prioritize sure kills
-                        if (otherUnit->currentHP - damage <= 0)
-                        {
-                            maxDamage = 50;
-                        }
-                        else
-                        {
-                            maxDamage = damage;
-                        }
-                        currentTarget.battleStats = tempStats;
-                        currentTarget.range = attackDistance;
-                        currentTarget.weaponToUse = enemy->weapons[c];
-                    }
-                }
-            }
-            currentTarget.priority += maxDamage;
-            if (currentTarget.priority > finalTarget.priority)
-            {
-                finalTarget = currentTarget;
-            }
-            //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
-            //In that case, check which unit will do less damage on counter
-            //Priority of 0 at this point would suggest zero damage will be dealt
-            //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
-            else if (currentTarget.priority == finalTarget.priority)
-            {
-                auto previousUnit = otherUnits[finalTarget.ID];
-                auto previousWeapon = previousUnit->GetEquippedWeapon();
-                auto foeWeapon = otherUnit->GetEquippedWeapon();
-                auto previousStats = previousUnit->CalculateBattleStats();
-                previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
-                auto otherStats = otherUnit->CalculateBattleStats();
-                otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
-
-                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
-                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
-                if (damageTaken < previousDamage)
-                {
-                    finalTarget = currentTarget;
-                }
-            }
-        }
-
-        //In range of units but cannot reach any of them, stay where you are
-        if (finalTarget.priority == 0)
-        {
-            DoNothing(enemy, position);
-        }
-        else
-        {
-            for (int i = 0; i < enemy->inventory.size(); i++)
-            {
-                if (finalTarget.weaponToUse == enemy->inventory[i])
-                {
-                    enemy->equipWeapon(i);
-                    break;
-                }
-            }
-            otherUnit = otherUnits[finalTarget.ID];
-
-            auto otherStats = otherUnit->CalculateBattleStats();
-            auto weapon = otherUnit->GetEquippedWeapon();
-            attackRange = finalTarget.range;
-            otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-            battleStats = finalTarget.battleStats;
-            bool canCounter = false;
-            skippedUnit = true;
-            if (weapon.maxRange >= attackRange && weapon.minRange <= attackRange)
-            {
-                canCounter = true;
-            }
-            battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
-        }
-    }
-    //No units in range
-    else
-    {
-        DoNothing(enemy, position);
-    }
-}
-
 void EnemyManager::RangeActivation(Unit* enemy)
 {
     std::vector<Unit*> otherUnits;
@@ -811,25 +813,13 @@ void EnemyManager::RangeActivation(Unit* enemy)
         //It's possible a unit has moved into the attackable range.
         //Check that by checking if the move cost to them is less than the enemy move cost + max range
         //If they are attackable, attack them and activate
-        std::vector<Unit*> attackableUnits;
-        attackableUnits.reserve(otherUnits.size());
-        for (int i = 0; i < otherUnits.size(); i++)
-        {
-            auto position = enemy->sprite.getPosition();
-            auto p = otherUnits[i]->sprite.getPosition();
-            auto distance = (abs(position.x - p.x) + abs(position.y - p.y)) / TileManager::TILE_SIZE;
-            if (distance <= enemy->getMove() + enemy->maxRange)
-            {
-                attackableUnits.push_back(otherUnits[i]);
-            }
-        }
+        auto attackPath = enemy->FindUnitMoveRange();
+        std::vector<Unit*> attackableUnits = GetOtherUnits(enemy);
         if (attackableUnits.size() > 0)
         {
             //Really, really don't like refinding the path here
             //I had initially wanted to reuse the path calculated above, but it's increased range makes that not really tenable
-            path = enemy->FindUnitMoveRange();
-            std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-            GetPriority(enemy, path, otherUnits);
+            GetPriority(enemy, attackPath, attackableUnits);
             enemy->active = true;
         }
         //If enemies were in the activate range, but not in attack range, approach the closest one.
@@ -853,6 +843,21 @@ void EnemyManager::RangeActivation(Unit* enemy)
             while (path[pathPoint].moveCost > enemy->getMove())
             {
                 pathPoint = path[pathPoint].previousPosition;
+            }
+            //Need to make sure to cut short a path if it ends on a tile occupied by another unit
+            bool blocked = true;
+            while (blocked)
+            {
+                blocked = false;
+                auto thisTile = TileManager::tileManager.getTile(pathPoint.x, pathPoint.y);
+                if (thisTile)
+                {
+                    if (thisTile->occupiedBy)
+                    {
+                        pathPoint = path[pathPoint].previousPosition;
+                        blocked = true;
+                    }
+                }
             }
             followPath.push_back(pathPoint);
 
@@ -1335,3 +1340,10 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
         }
     }
 }
+
+/*
+* Want to check if the current unit is unarmed. If he is, find a store that sells weapons he can use. If that is found, set that store as the destination
+* and set the state to the Store state.
+* In Store state update, just A* towards the store. Once it is reached, enemy will buy the cheapest(?) weapon they can use, equip it, and be set back
+* to their regular state
+*/

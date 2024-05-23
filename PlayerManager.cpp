@@ -84,6 +84,9 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	playerUnits.resize(numberOfStarts);
 	int type;
 	glm::vec2 position;
+	//This needs some work. It only works by chance in my level because the units happen to be
+	//In the correct order(0-8) in the map file, it screws up if they aren't.
+	//This would be problematic anyway if I got to a point where I was placing units at the level start.
 	for (int i = 0; i < numberOfStarts; i++)
 	{
 		map >> type >> position.x >> position.y;
