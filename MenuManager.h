@@ -360,6 +360,7 @@ struct VendorMenu : public Menu
 	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, class Vendor* vendor);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
+	void ActivateText();
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 	virtual void CancelOption() override;
 
@@ -371,12 +372,11 @@ struct VendorMenu : public Menu
 
 	VendorState state;
 	bool buying = true;
-/*	
-	bool inStore = false;
-	bool confirming = false;
-	bool leaving = false;*/
 	bool confirm = true;
+	bool delay = false;
 
+	float delayTime = 0.15f;
+	float delayTimer = 0.0f;
 };
 
 struct MenuManager

@@ -3194,7 +3194,7 @@ void VendorMenu::Draw()
 	glBindVertexArray(0);
 
 	model = glm::mat4();
-	if (!textManager.active)
+	if (!textManager.active && !delay)
 	{
 		switch (state)
 		{
@@ -3330,8 +3330,7 @@ void VendorMenu::SelectOption()
 				textManager.init(10);
 			}
 		}
-		textManager.textObjects[0].displayedText = "";
-		textManager.active = true;
+		ActivateText();
 		break;
 	case BUYING:
 	{
@@ -3407,9 +3406,15 @@ void VendorMenu::SelectOption()
 	}
 	if (state != GREETING)
 	{
-		textManager.textObjects[0].displayedText = "";
-		textManager.active = true;
+		ActivateText();
 	}
+}
+
+void VendorMenu::ActivateText()
+{
+	textManager.textObjects[0].displayedText = "";
+	textManager.active = true;
+	delay = true;
 }
 
 void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -3418,10 +3423,18 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		textManager.Update(deltaTime, inputManager, *cursor);
 	}
+	else if (delay)
+	{
+		delayTimer += deltaTime;
+		if (delayTimer >= delayTime)
+		{
+			delayTimer = 0.0f;
+			delay = false;
+		}
+	}
 	else if (state == LEAVING)
 	{
 		Menu::CancelOption();
-
 	}
 	else
 	{
@@ -3504,6 +3517,5 @@ void VendorMenu::CancelOption()
 		}
 		textManager.init(3);
 	}
-	textManager.textObjects[0].displayedText = "";
-	textManager.active = true;
+	ActivateText();
 }
