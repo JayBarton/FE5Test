@@ -512,6 +512,12 @@ bool Unit::canUse(const WeaponData& weapon)
     return weapon.rank <= weaponProficiencies[weapon.type];
 }
 
+bool Unit::canUse(int ID)
+{
+    auto weapon = ItemManager::itemManager.GetWeaponFromID(ID);
+    return canUse(weapon);
+}
+
 bool Unit::hasSkill(int ID)
 {
     auto it = std::find(skills.begin(), skills.end(), ID);
@@ -707,7 +713,7 @@ WeaponData Unit::GetWeaponData(Item* item)
 {
     if (item)
     {
-        return ItemManager::itemManager.weaponData[item->ID];
+        return ItemManager::itemManager.GetWeaponFromID(item->ID);
     }
     return WeaponData();
 }
@@ -1295,20 +1301,23 @@ void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector
 
 void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove)
 {
-    this->path = path;
-    end = 0;
-    current = path.size() - 1;
-    moving = true;
-    owner->moveAnimate = true;
-    if (!remainingMove)
+    if (path.size() > 0)
     {
-        if (owner->isMounted())
+        this->path = path;
+        end = 0;
+        current = path.size() - 1;
+        moving = true;
+        owner->moveAnimate = true;
+        if (!remainingMove)
         {
-            owner->mount->remainingMoves = owner->getMove() - moveCost;
+            if (owner->isMounted())
+            {
+                owner->mount->remainingMoves = owner->getMove() - moveCost;
+            }
         }
+        previousDirection = glm::vec2(0);
+        getNewDirection();
     }
-    previousDirection = glm::vec2(0);
-    getNewDirection();
 }
 
 void MovementComponent::getNewDirection()

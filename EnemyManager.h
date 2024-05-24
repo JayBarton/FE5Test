@@ -31,7 +31,8 @@ enum ActionState
 	CANTO,
 	HEALING,
 	TRADING,
-	APPROACHING
+	APPROACHING,
+	SHOPPING
 };
 
 class InfoDisplays;
@@ -62,6 +63,7 @@ struct EnemyManager
 
 	std::vector<std::vector<glm::vec4>> UVs;
 	std::vector<Unit*>* playerUnits;
+	std::vector<struct Vendor>* vendors;
 
 	PathFinder pathFinder;
 
@@ -69,11 +71,13 @@ struct EnemyManager
 	void ApproachNearest(glm::vec2& position, Unit* enemy);
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void NextUnit();
-	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits);
+	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
 	void Draw(SpriteRenderer* renderer);
 	void Draw(class SBatch* Batch);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera, class InputManager& inputManager);
 	void DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager);
+	void CheckStores(Unit* enemy);
+	void GoShopping(glm::vec2& position, Unit* enemy);
 	void StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void RangeActivation(Unit* enemy);
 	void DoNothing(Unit* enemy, glm::vec2& position);

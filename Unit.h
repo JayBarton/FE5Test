@@ -233,6 +233,7 @@ struct Unit
 	void equipWeapon(int index);
 	bool tryEquip(int index);
 	bool canUse(const WeaponData& weapon);
+	bool canUse(int ID);
 
 	bool hasSkill(int ID);
 
@@ -264,8 +265,13 @@ struct Unit
 	std::vector<glm::ivec2> foundTiles;
 	std::vector<glm::ivec2> attackTiles;
 	std::vector<glm::ivec2> endTiles;
-	//Using this to allow enemies to trade with each other
+
+	//All of these are for AI units
 	std::vector<Unit*> tradeUnits;
+	bool targetVendor = false;
+	glm::vec2 storeTarget;
+	//End AI Units
+
 	//Temporary, just using to visualize tile costs
 	std::vector<int> costTile;
 

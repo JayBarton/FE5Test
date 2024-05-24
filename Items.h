@@ -67,6 +67,8 @@ struct ItemManager
 
 	void LoadItems();
 
+	WeaponData GetWeaponFromID(int ID);
+
 	void UseItem(Unit* unit, int index);
 	void Heal(Unit* unit, int index);
 

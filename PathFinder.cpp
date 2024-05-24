@@ -107,7 +107,7 @@ std::vector<glm::ivec2> PathFinder::findPath(const glm::vec2& start, const glm::
             //I am not entirely sure if this is the best way of handling this, nor am I sure how frequent an occurance this is.
             //At the least, this will prevent two approaching enemies from occupying the same space.
             bool blocked = true;
-            while (blocked)
+            while (blocked && currentNode->parentNode != nullptr)
             {
                 blocked = false;
                 auto thisTile = TileManager::tileManager.getTile(currentNode->nodePosition.x, currentNode->nodePosition.y);
@@ -184,50 +184,43 @@ void PathFinder::addChild(const glm::vec2& position, int cost, Node *parent)
         //(that is handled above when returning the path)
         //Only the enemies are using this class at all right now, so I can just check for the player team. In future,
         //may want to pass in the unit so I can know what team to check against.
-        //This is currently not in use, as I only use this class for enemies that are not in attacking range of player units,
-        //Which means there won't be a case where there is a tile occupied by an unfriendly unit on their path anyway.
-        bool cool = true;
-       /* if (thisTile->occupiedBy && thisTile->occupiedBy->team == 0)
+        //What I am trying right now is rather than impassible, occupied tiles have a cost so high they are almost basically impassible, but are still
+        //pathable. This should allow the enemies to approach locations even if they are not reachable.
+        //This is mainly for stores.
+        //Not a massive deal if this doesn't work 100% since it isn't going to be in the first level anyway
+        if (thisTile->occupiedBy && thisTile->occupiedBy->team == 0)
         {
-            //Do need to be able to recognize the end node however
-            glm::vec2 tilePos = glm::vec2(thisTile->x, thisTile->y);
-            if (tilePos != position)
+            cost += 20;
+        }
+
+        //create a new node
+        Node newNode(position, thisTile->properties.movementCost + cost, parent, parent->endNode);
+        if (nodeStatus.count(position) == 1)
+        {
+            //check if the new node is in the closed set. If it is, return.
+            if (nodeStatus[position] == false)
             {
-                cool = false;
+                return;
             }
-        }*/
-        if(cool)
-        {
-            //create a new node
-            Node newNode(position, thisTile->properties.movementCost + cost, parent, parent->endNode);
-            if (nodeStatus.count(position) == 1)
+            //check if the new node is in the open set
+            if (nodeStatus[position] == true)
             {
-                //check if the new node is in the closed set. If it is, return.
-                if (nodeStatus[position] == false)
+                //If the fvalue of the new node is greater or equal to the node already in the open list
+                //return
+                if (newNode.fValue >= nodeFCost[position])
                 {
                     return;
                 }
-                //check if the new node is in the open set
-                if (nodeStatus[position] == true)
+                else
                 {
-                    //If the fvalue of the new node is greater or equal to the node already in the open list
-                    //return
-                    if (newNode.fValue >= nodeFCost[position])
-                    {
-                        return;
-                    }
-                    else
-                    {
-                        //nothing here
-                        //ideally, the priority of the node would be reset to the new lower fvalue
-                        //as I cannot think of a fast way to do this, the node ends up being checked twice
-
-                    }
+                    //nothing here
+                    //ideally, the priority of the node would be reset to the new lower fvalue
+                    //as I cannot think of a fast way to do this, the node ends up being checked twice
 
                 }
             }
-            //add the new node to the open set
-            addToOpenSet(&newNode);
         }
+        //add the new node to the open set
+        addToOpenSet(&newNode);
     }
 }

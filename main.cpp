@@ -734,7 +734,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		}
 		else if (thing == "Enemies")
 		{
-			enemyManager.SetUp(map, &gen, &distribution, &playerManager.playerUnits);
+			enemyManager.SetUp(map, &gen, &distribution, &playerManager.playerUnits, &vendors);
 			//proof of concept
 			for (int i = 0; i < enemyManager.enemies.size(); i++)
 			{
@@ -866,7 +866,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				{
 					map >> items[c];
 				}
-				vendors[i] = Vendor{ items };
+				vendors[i] = Vendor{ items, position };
 				TileManager::tileManager.placeVendor(position.x, position.y, &vendors[i]);
 			}
 		}

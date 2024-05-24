@@ -38,6 +38,11 @@ void ItemManager::LoadItems()
 	}
 }
 
+WeaponData ItemManager::GetWeaponFromID(int ID)
+{
+	return itemManager.weaponData[ID];
+}
+
 void ItemManager::LoadWeaponData()
 {
 	io::CSVReader<16, io::trim_chars<' '>, io::no_quote_escape<':'>> in("weapons.csv");

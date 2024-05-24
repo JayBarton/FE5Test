@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "PathFinder.h"
 #include "SBatch.h"
+#include "Vendor.h"
 
 #include <algorithm>
 #include <fstream>  
@@ -14,7 +15,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits)
+void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors)
 {
     UVs.resize(3);
     UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
@@ -29,6 +30,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
     std::vector<Unit> unitBases;
     unitBases.resize(4);
     this->playerUnits = playerUnits;
+    this->vendors = vendors;
 
     std::ifstream f("BaseStats.json");
     json data = json::parse(f);
@@ -237,6 +239,15 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                     {
                         displays->EnemyTrade(this);
                     }
+                    else if (state == SHOPPING)
+                    {
+                        if (enemy->sprite.getPosition() == enemy->storeTarget)
+                        {
+                            //buy the item
+                            std::cout << "Like stars and sattlites\n";
+                        }
+                        FinishMove();
+                    }
                 }
             }
         }
@@ -300,6 +311,10 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
                 }
             }
             //Want to do the store check here
+            else if (!enemy->GetEquippedItem())
+            {
+                CheckStores(enemy);
+            }
             else
             {
                 FindUnitInAttackRange(enemy, path, camera);
@@ -334,11 +349,62 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
                     enemy->active = true;
                     camera.SetMove(enemy->sprite.getPosition());
                 }
-                //When it comes to the store, my current thought process won't allow inactive, unarmed enemies from using the store as they can
-                //never activate
             }
         }
     }
+}
+
+void EnemyManager::CheckStores(Unit* enemy)
+{
+    auto position = enemy->sprite.getPosition();
+
+    if (!enemy->targetVendor)
+    {
+        std::vector<Vendor> usableVendors;
+        usableVendors.reserve(vendors->size());
+        for (int i = 0; i < vendors->size(); i++)
+        {
+            auto vendor = (*vendors)[i];
+            for (int c = 0; c < vendor.items.size(); c++)
+            {
+                if (enemy->canUse(vendor.items[c]))
+                {
+                    usableVendors.push_back(vendor);
+                }
+            }
+        }
+        float closest = 10000;
+        for (int i = 0; i < usableVendors.size(); i++)
+        {
+            //Going to want findPath to return a path distance so I can tell which vendor is closest
+            // For now I will just use good ol' Manhattan
+            // pathFinder.findPath(position, usableVendors[i].position, 100);
+            float distance = abs(position.x - usableVendors[i].position.x) + abs(position.y - usableVendors[i].position.y);
+            if (distance < closest)
+            {
+                closest = distance;
+                enemy->storeTarget = usableVendors[i].position;
+                enemy->targetVendor = true;
+            }
+        }
+        if (enemy->targetVendor)
+        {
+            GoShopping(position, enemy);
+        }
+    }
+    else
+    {
+        GoShopping(position, enemy);
+    }
+}
+
+void EnemyManager::GoShopping(glm::vec2& position, Unit* enemy)
+{
+    TileManager::tileManager.removeUnit(position.x, position.y);
+    auto path = pathFinder.findPath(position, enemy->storeTarget, enemy->getMove());
+    enemy->movementComponent.startMovement(path, enemy->getMove(), false);
+    enemyMoving = true;
+    state = SHOPPING;
 }
 
 void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera)
@@ -810,69 +876,76 @@ void EnemyManager::RangeActivation(Unit* enemy)
     auto path = enemy->FindApproachMoveRange(otherUnits, range);
     if (otherUnits.size() > 0)
     {
-        //It's possible a unit has moved into the attackable range.
-        //Check that by checking if the move cost to them is less than the enemy move cost + max range
-        //If they are attackable, attack them and activate
-        auto attackPath = enemy->FindUnitMoveRange();
-        std::vector<Unit*> attackableUnits = GetOtherUnits(enemy);
-        if (attackableUnits.size() > 0)
+        if (!enemy->GetEquippedItem())
         {
-            //Really, really don't like refinding the path here
-            //I had initially wanted to reuse the path calculated above, but it's increased range makes that not really tenable
-            GetPriority(enemy, attackPath, attackableUnits);
-            enemy->active = true;
+            CheckStores(enemy);
         }
-        //If enemies were in the activate range, but not in attack range, approach the closest one.
         else
         {
-            int closest = 1000;
-            glm::vec2 otherPosition;
-            for (int i = 0; i < otherUnits.size(); i++)
+            //It's possible a unit has moved into the attackable range.
+            //Check that by checking if the move cost to them is less than the enemy move cost + max range
+            //If they are attackable, attack them and activate
+            auto attackPath = enemy->FindUnitMoveRange();
+            std::vector<Unit*> attackableUnits = GetOtherUnits(enemy);
+            if (attackableUnits.size() > 0)
             {
-                auto p = otherUnits[i]->sprite.getPosition();
-                auto moveCost = path[p].moveCost;
-                if (moveCost < closest)
-                {
-                    closest = moveCost;
-                    otherUnit = otherUnits[i];
-                    otherPosition = p;
-                }
+                //Really, really don't like refinding the path here
+                //I had initially wanted to reuse the path calculated above, but it's increased range makes that not really tenable
+                GetPriority(enemy, attackPath, attackableUnits);
+                enemy->active = true;
             }
-            std::vector<glm::ivec2> followPath;
-            glm::vec2 pathPoint = otherPosition;
-            while (path[pathPoint].moveCost > enemy->getMove())
+            //If enemies were in the activate range, but not in attack range, approach the closest one.
+            else
             {
-                pathPoint = path[pathPoint].previousPosition;
-            }
-            //Need to make sure to cut short a path if it ends on a tile occupied by another unit
-            bool blocked = true;
-            while (blocked)
-            {
-                blocked = false;
-                auto thisTile = TileManager::tileManager.getTile(pathPoint.x, pathPoint.y);
-                if (thisTile)
+                int closest = 1000;
+                glm::vec2 otherPosition;
+                for (int i = 0; i < otherUnits.size(); i++)
                 {
-                    if (thisTile->occupiedBy)
+                    auto p = otherUnits[i]->sprite.getPosition();
+                    auto moveCost = path[p].moveCost;
+                    if (moveCost < closest)
                     {
-                        pathPoint = path[pathPoint].previousPosition;
-                        blocked = true;
+                        closest = moveCost;
+                        otherUnit = otherUnits[i];
+                        otherPosition = p;
                     }
                 }
-            }
-            followPath.push_back(pathPoint);
+                std::vector<glm::ivec2> followPath;
+                glm::vec2 pathPoint = otherPosition;
+                while (path[pathPoint].moveCost > enemy->getMove())
+                {
+                    pathPoint = path[pathPoint].previousPosition;
+                }
+                //Need to make sure to cut short a path if it ends on a tile occupied by another unit
+                bool blocked = true;
+                while (blocked)
+                {
+                    blocked = false;
+                    auto thisTile = TileManager::tileManager.getTile(pathPoint.x, pathPoint.y);
+                    if (thisTile)
+                    {
+                        if (thisTile->occupiedBy)
+                        {
+                            pathPoint = path[pathPoint].previousPosition;
+                            blocked = true;
+                        }
+                    }
+                }
+                followPath.push_back(pathPoint);
 
-            while (pathPoint != enemy->sprite.getPosition())
-            {
-                auto previous = path[pathPoint].previousPosition;
-                followPath.push_back(previous);
-                pathPoint = previous;
+                while (pathPoint != enemy->sprite.getPosition())
+                {
+                    auto previous = path[pathPoint].previousPosition;
+                    followPath.push_back(previous);
+                    pathPoint = previous;
+                }
+                state = APPROACHING;
+                auto position = enemy->sprite.getPosition();
+                TileManager::tileManager.removeUnit(position.x, position.y);
+                enemy->movementComponent.startMovement(followPath, path[otherPosition].moveCost, false);
+                enemyMoving = true;
+                enemy->active = true;
             }
-            state = APPROACHING;
-            auto position = enemy->sprite.getPosition();
-            TileManager::tileManager.removeUnit(position.x, position.y);
-            enemy->movementComponent.startMovement(followPath, path[otherPosition].moveCost, false);
-            enemyMoving = true;
-            enemy->active = true;
         }
     }
     //If no enemies are in the active range, do nothing this turn
