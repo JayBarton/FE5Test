@@ -73,7 +73,6 @@ std::unordered_map<glm::vec2, int, vec2Hash2> objectWriteTypes;
 
 std::unordered_map<glm::vec2, Vendor, vec2Hash2> vendors;
 
-
 std::vector<std::vector<glm::vec4>> enemyUVs;
 
 Object displayObject;

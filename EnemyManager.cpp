@@ -241,10 +241,26 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                     }
                     else if (state == SHOPPING)
                     {
-                        if (enemy->sprite.getPosition() == enemy->storeTarget)
+                        if (enemy->sprite.getPosition() == enemy->storeTarget->position)
                         {
-                            //buy the item
-                            std::cout << "Like stars and sattlites\n";
+                            //buy the item cheapest item this enemy can use
+                            int cheapest = 10000;
+                            int selectedItem = -1;
+                            for (int i = 0; i < enemy->storeTarget->items.size(); i++)
+                            {
+                                auto currentItem = enemy->storeTarget->items[i];
+                                if (enemy->canUse(currentItem))
+                                {
+                                    if (ItemManager::itemManager.items[currentItem].value < cheapest)
+                                    {
+                                        cheapest = ItemManager::itemManager.items[i].value;
+                                        selectedItem = currentItem;
+                                    }
+                                }
+                            }
+                            enemy->addItem(selectedItem);
+                            enemy->storeTarget = nullptr;
+                            //display
                         }
                         FinishMove();
                     }
@@ -311,11 +327,8 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
                 }
             }
             //Want to do the store check here
-            else if (!enemy->GetEquippedItem())
-            {
-                CheckStores(enemy);
-            }
-            else
+            //Not a huge fan of this, but it works for now
+            else if (enemy->GetEquippedItem() || !CheckStores(enemy))
             {
                 FindUnitInAttackRange(enemy, path, camera);
             }
@@ -354,13 +367,13 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
     }
 }
 
-void EnemyManager::CheckStores(Unit* enemy)
-{
+bool EnemyManager::CheckStores(Unit* enemy)
+{ 
     auto position = enemy->sprite.getPosition();
 
-    if (!enemy->targetVendor)
+    if (!enemy->storeTarget)
     {
-        std::vector<Vendor> usableVendors;
+        std::vector<Vendor*> usableVendors;
         usableVendors.reserve(vendors->size());
         for (int i = 0; i < vendors->size(); i++)
         {
@@ -369,7 +382,8 @@ void EnemyManager::CheckStores(Unit* enemy)
             {
                 if (enemy->canUse(vendor.items[c]))
                 {
-                    usableVendors.push_back(vendor);
+                    usableVendors.push_back(&(*vendors)[i]);
+                    break;
                 }
             }
         }
@@ -379,31 +393,34 @@ void EnemyManager::CheckStores(Unit* enemy)
             //Going to want findPath to return a path distance so I can tell which vendor is closest
             // For now I will just use good ol' Manhattan
             // pathFinder.findPath(position, usableVendors[i].position, 100);
-            float distance = abs(position.x - usableVendors[i].position.x) + abs(position.y - usableVendors[i].position.y);
+            float distance = abs(position.x - usableVendors[i]->position.x) + abs(position.y - usableVendors[i]->position.y);
             if (distance < closest)
             {
                 closest = distance;
-                enemy->storeTarget = usableVendors[i].position;
-                enemy->targetVendor = true;
+                enemy->storeTarget = usableVendors[i];
             }
         }
-        if (enemy->targetVendor)
+        if (enemy->storeTarget)
         {
             GoShopping(position, enemy);
+            return true;
         }
     }
     else
     {
         GoShopping(position, enemy);
+        return true;
     }
+    return false;
 }
 
 void EnemyManager::GoShopping(glm::vec2& position, Unit* enemy)
 {
     TileManager::tileManager.removeUnit(position.x, position.y);
-    auto path = pathFinder.findPath(position, enemy->storeTarget, enemy->getMove());
+    auto path = pathFinder.findPath(position, enemy->storeTarget->position, enemy->getMove());
     enemy->movementComponent.startMovement(path, enemy->getMove(), false);
     enemyMoving = true;
+    enemy->active = true;
     state = SHOPPING;
 }
 
@@ -876,11 +893,8 @@ void EnemyManager::RangeActivation(Unit* enemy)
     auto path = enemy->FindApproachMoveRange(otherUnits, range);
     if (otherUnits.size() > 0)
     {
-        if (!enemy->GetEquippedItem())
-        {
-            CheckStores(enemy);
-        }
-        else
+        //Not a huge fan of this, but it works for now
+        if (enemy->GetEquippedItem() || !CheckStores(enemy))
         {
             //It's possible a unit has moved into the attackable range.
             //Check that by checking if the move cost to them is less than the enemy move cost + max range
@@ -1413,10 +1427,3 @@ void EnemyManager::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
         }
     }
 }
-
-/*
-* Want to check if the current unit is unarmed. If he is, find a store that sells weapons he can use. If that is found, set that store as the destination
-* and set the state to the Store state.
-* In Store state update, just A* towards the store. Once it is reached, enemy will buy the cheapest(?) weapon they can use, equip it, and be set back
-* to their regular state
-*/

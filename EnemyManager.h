@@ -76,7 +76,7 @@ struct EnemyManager
 	void Draw(class SBatch* Batch);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera, class InputManager& inputManager);
 	void DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager);
-	void CheckStores(Unit* enemy);
+	bool CheckStores(Unit* enemy);
 	void GoShopping(glm::vec2& position, Unit* enemy);
 	void StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void RangeActivation(Unit* enemy);

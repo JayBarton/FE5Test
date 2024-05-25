@@ -268,8 +268,7 @@ struct Unit
 
 	//All of these are for AI units
 	std::vector<Unit*> tradeUnits;
-	bool targetVendor = false;
-	glm::vec2 storeTarget;
+	struct Vendor* storeTarget = nullptr;
 	//End AI Units
 
 	//Temporary, just using to visualize tile costs

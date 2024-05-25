@@ -501,15 +501,19 @@ bool Unit::tryEquip(int index)
 
 bool Unit::canUse(const WeaponData& weapon)
 {
-    if (weapon.rank > 5)
+    if (weapon.type >= 0)
     {
-        auto it = std::find(uniqueWeapons.begin(), uniqueWeapons.end(), weapon.rank);
-        if (it != uniqueWeapons.end())
+        if (weapon.rank > 5)
         {
-            return true;
+            auto it = std::find(uniqueWeapons.begin(), uniqueWeapons.end(), weapon.rank);
+            if (it != uniqueWeapons.end())
+            {
+                return true;
+            }
         }
+        return weapon.rank <= weaponProficiencies[weapon.type];
     }
-    return weapon.rank <= weaponProficiencies[weapon.type];
+    return false;
 }
 
 bool Unit::canUse(int ID)
