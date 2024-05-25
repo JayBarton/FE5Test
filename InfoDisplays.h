@@ -16,14 +16,15 @@ enum DisplayState
 	HEALING_BAR,
 	ENEMY_USE,
 	ENEMY_TRADE,
-	TURN_CHANGE
+	TURN_CHANGE,
+	ENEMY_BUY
 };
 class EnemyManager;
 struct InfoDisplays
 {
 	DisplayState state = NONE;
 	Subject<int> subject;
-	Unit* leveledUnit = nullptr;
+	Unit* focusedUnit = nullptr;
 	//Ugh. Figure out how to gain access to this better later
 	EnemyManager* enemyManager = nullptr;
 
@@ -67,6 +68,7 @@ struct InfoDisplays
 	void StartUse(Unit* unit, int index, Camera* camera);
 	void EnemyUse(Unit* enemy, int index);
 	void EnemyTrade(EnemyManager* enemyManager);
+	void EnemyBuy(EnemyManager* enemyManager);
 	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
 

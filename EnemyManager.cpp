@@ -260,9 +260,12 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                             }
                             enemy->addItem(selectedItem);
                             enemy->storeTarget = nullptr;
-                            //display
+                            displays->EnemyBuy(this);
                         }
-                        FinishMove();
+                        else
+                        {
+                            FinishMove();
+                        }
                     }
                 }
             }

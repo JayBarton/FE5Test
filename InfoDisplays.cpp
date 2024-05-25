@@ -16,17 +16,17 @@ void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 {
 	if (unit->isDead)
 	{
-		leveledUnit = nullptr;
+		focusedUnit = nullptr;
 		state = NONE;
 		subject.notify(0);
 	}
 	else
 	{
-		leveledUnit = unit;
+		focusedUnit = unit;
 
 		gainedExperience = unit->CalculateExperience(foe);
-		leveledUnit = unit;
-		displayedExperience = leveledUnit->experience;
+		focusedUnit = unit;
+		displayedExperience = focusedUnit->experience;
 		finalExperience = gainedExperience + displayedExperience;
 		if (finalExperience >= 100)
 		{
@@ -38,9 +38,9 @@ void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 
 void InfoDisplays::OnUnitLevel(Unit* unit)
 {
-	leveledUnit = unit;
-	preLevelStats = new StatGrowths{ leveledUnit->maxHP, leveledUnit->strength, leveledUnit->magic,
-		leveledUnit->skill, leveledUnit->speed, leveledUnit->luck,leveledUnit->defense,leveledUnit->build,leveledUnit->move };
+	focusedUnit = unit;
+	preLevelStats = new StatGrowths{ focusedUnit->maxHP, focusedUnit->strength, focusedUnit->magic,
+		focusedUnit->skill, focusedUnit->speed, focusedUnit->luck,focusedUnit->defense,focusedUnit->build,focusedUnit->move };
 	state = LEVEL_UP_NOTE;
 }
 
@@ -54,7 +54,7 @@ void InfoDisplays::StartUse(Unit* unit, int index, Camera* camera)
 void InfoDisplays::EnemyUse(Unit* unit, int index)
 {
 	state = ENEMY_USE;
-	leveledUnit = unit;
+	focusedUnit = unit;
 	itemToUse = index;
 }
 
@@ -62,8 +62,15 @@ void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)
 {
 	state = ENEMY_TRADE;
 	this->enemyManager = enemyManager;
-	leveledUnit = enemyManager->enemies[enemyManager->currentEnemy];
+	focusedUnit = enemyManager->enemies[enemyManager->currentEnemy];
 	itemToUse = enemyManager->healIndex;
+}
+
+void InfoDisplays::EnemyBuy(EnemyManager* enemyManager)
+{
+	state = ENEMY_BUY;
+	this->enemyManager = enemyManager;
+	focusedUnit = enemyManager->enemies[enemyManager->currentEnemy];
 }
 
 //Call this from StartUse
@@ -71,10 +78,10 @@ void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount, Camera* camera)
 {
 	state = HEALING_ANIMATION;
 	healDelay = true;
-	leveledUnit = unit;
-	displayedHP = leveledUnit->currentHP;
+	focusedUnit = unit;
+	displayedHP = focusedUnit->currentHP;
 	healedHP = healAmount;
-	camera->SetCenter(leveledUnit->sprite.getPosition());
+	camera->SetCenter(focusedUnit->sprite.getPosition());
 }
 
 void InfoDisplays::ChangeTurn(int currentTurn)
@@ -129,13 +136,21 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		if (displayTimer > textDisplayTime)
 		{
 			displayTimer = 0.0f;
-			ItemManager::itemManager.UseItem(leveledUnit, itemToUse);
+			ItemManager::itemManager.UseItem(focusedUnit, itemToUse);
 		}
 	case ENEMY_TRADE:
 		if (displayTimer > textDisplayTime)
 		{
 			displayTimer = 0.0f;
 			state = ENEMY_USE;
+		}
+		break;
+	case ENEMY_BUY:
+		if (displayTimer > textDisplayTime)
+		{
+			displayTimer = 0.0f;
+			enemyManager->FinishMove();
+			state = NONE;
 		}
 		break;
 	case TURN_CHANGE:
@@ -195,7 +210,7 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 	{
 		if (displayTimer > healAnimationTime)
 		{
-			leveledUnit->currentHP = healedHP;
+			focusedUnit->currentHP = healedHP;
 			finishedHealing = false;
 			displayTimer = 0;
 			state = NONE;
@@ -203,7 +218,7 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 			{
 				usedItem = false;
 				//I don't know about this gravy...
-				if (leveledUnit->team == 0)
+				if (focusedUnit->team == 0)
 				{
 					subject.notify(1);
 				}
@@ -239,7 +254,7 @@ void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 	{
 		displayTimer = 0;
 		delete preLevelStats;
-		leveledUnit = nullptr;
+		focusedUnit = nullptr;
 		state = NONE;
 		subject.notify(0);
 	}
@@ -251,11 +266,11 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 	{
 		if (displayTimer > experienceDisplayTime)
 		{
-			leveledUnit->AddExperience(gainedExperience);
+			focusedUnit->AddExperience(gainedExperience);
 			displayingExperience = false;
 			if (state == ADD_EXPERIENCE)
 			{
-				leveledUnit = nullptr;
+				focusedUnit = nullptr;
 				state = NONE;
 				subject.notify(0);
 			}
@@ -291,8 +306,8 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		break;
 	case LEVEL_UP_NOTE:
 	{
-		leveledUnit->sprite.getPosition();
-		glm::vec2 drawPosition = leveledUnit->sprite.getPosition();
+		focusedUnit->sprite.getPosition();
+		glm::vec2 drawPosition = focusedUnit->sprite.getPosition();
 		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
 		Text->RenderText("LEVEL UP", drawPosition.x, drawPosition.y, 0.85f, glm::vec3(0.95f, 0.95f, 0.0f));
 		break;
@@ -307,10 +322,13 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		DrawHealthBar(camera, shapeVAO, Text);
 		break;
 	case ENEMY_USE:
-		Text->RenderText(leveledUnit->name + " used " + leveledUnit->inventory[itemToUse]->name, 300, 300, 1);
+		Text->RenderText(focusedUnit->name + " used " + focusedUnit->inventory[itemToUse]->name, 300, 300, 1);
 		break;
 	case ENEMY_TRADE:
-		Text->RenderText(leveledUnit->name + " recieved " + leveledUnit->inventory[itemToUse]->name, 300, 300, 1);
+		Text->RenderText(focusedUnit->name + " recieved " + focusedUnit->inventory[itemToUse]->name, 300, 300, 1);
+		break;
+	case ENEMY_BUY:
+		Text->RenderText(focusedUnit->name + " bought " + focusedUnit->GetEquippedItem()->name, 300, 300, 1);
 		break;
 	case TURN_CHANGE:
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
@@ -346,7 +364,7 @@ void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Tex
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
 	model = glm::translate(model, glm::vec3(80, 98, 0.0f));
-	model = glm::scale(model, glm::vec3(100 * (float(displayedHP) / float(leveledUnit->maxHP)), 5, 0.0f));
+	model = glm::scale(model, glm::vec3(100 * (float(displayedHP) / float(focusedUnit->maxHP)), 5, 0.0f));
 
 	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
 
@@ -366,7 +384,7 @@ void InfoDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
 		glm::mat4 model = glm::mat4();
-		auto unitPosition = leveledUnit->sprite.getPosition();
+		auto unitPosition = focusedUnit->sprite.getPosition();
 		model = glm::translate(model, glm::vec3(unitPosition.x, unitPosition.y, 0.0f));
 
 		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
@@ -407,7 +425,7 @@ void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer
 	Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
 	Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
 	//This needs to be redone, need the leveled unit, not the focused unit
-	auto unit = leveledUnit;
+	auto unit = focusedUnit;
 	Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 14);
 	if (unit->maxHP > preLevelStats->maxHP)
 	{
