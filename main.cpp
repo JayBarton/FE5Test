@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 	displays.subject.addObserver(postBattleEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 
-	loadMap("3.map", unitEvents);
+	loadMap("2.map", unitEvents);
 
 	cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
 
@@ -455,7 +455,7 @@ int main(int argc, char** argv)
 		}
 		if(sceneManager.PlayingScene())
 		{
-			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor);
+			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 		}
 		else if (MenuManager::menuManager.menus.size() == 0)
 		{
@@ -794,6 +794,12 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 						map >> dialogueID;
 						currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
 					}
+					else if (actionType == 4)
+					{
+						int itemID = 0;
+						map >> itemID;
+						currentObject->actions[c] = new ItemAction(actionType, itemID);
+					}
 				}
 				int activationType = 0;
 				map >> activationType;
@@ -924,9 +930,16 @@ void Draw()
 			Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 		}
 	}
-	if (sceneManager.scenes.size() > 0 && sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+	if (sceneManager.PlayingScene())
 	{
-		sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
+		if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+		{
+			sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
+		}
+		else if(displays.state != NONE)
+		{
+			displays.Draw(&camera, Text, shapeVAO);
+		}
 	}
 	else
 	{

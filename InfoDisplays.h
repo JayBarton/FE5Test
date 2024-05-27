@@ -17,7 +17,8 @@ enum DisplayState
 	ENEMY_USE,
 	ENEMY_TRADE,
 	TURN_CHANGE,
-	ENEMY_BUY
+	ENEMY_BUY,
+	GOT_ITEM
 };
 class EnemyManager;
 struct InfoDisplays
@@ -69,6 +70,7 @@ struct InfoDisplays
 	void EnemyUse(Unit* enemy, int index);
 	void EnemyTrade(EnemyManager* enemyManager);
 	void EnemyBuy(EnemyManager* enemyManager);
+	void GetItem(int itemID);
 	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
 

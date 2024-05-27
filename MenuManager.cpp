@@ -230,6 +230,7 @@ void UnitOptionsMenu::SelectOption()
 		{
 			sceneID = playerUnit->sceneID;
 		}
+		visit->sceneMap[sceneID]->initiator = playerUnit;
 		visit->sceneMap[sceneID]->activation->CheckActivation();
 		ClearMenu();
 
@@ -3387,6 +3388,7 @@ void VendorMenu::SelectOption()
 					state = SELLING;
 				}
 			}
+			MenuManager::menuManager.mustWait = true;
 		}
 		else
 		{

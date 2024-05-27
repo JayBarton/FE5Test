@@ -49,3 +49,10 @@ struct DialogueAction : public SceneAction
 	{}
 	int ID;
 };
+
+struct ItemAction : public SceneAction
+{
+	ItemAction(int type, int ID) : SceneAction(type), ID(ID)
+	{}
+	int ID;
+};

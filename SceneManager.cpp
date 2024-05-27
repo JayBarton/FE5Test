@@ -5,6 +5,7 @@
 #include "PathFinder.h"
 #include "InputManager.h"
 #include "Cursor.h"
+#include "InfoDisplays.h"
 
 #include <sstream>
 #include <fstream>
@@ -42,7 +43,8 @@ void Scene::extraSetup(Subject<int>* subject)
 	subject->addObserver(type->roundEvents);
 }
 
-void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, InputManager& inputManager, Cursor& cursor)
+void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, 
+	Camera& camera, InputManager& inputManager, Cursor& cursor, InfoDisplays& displays)
 {
 	if (state!= WAITING)
 	{
@@ -82,6 +84,27 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				state = WAITING;
 			}
 			break;
+		case GET_ITEM:
+			displays.Update(deltaTime, inputManager);
+			if (displays.state == NONE)
+			{
+				state = WAITING;
+				auto action = static_cast<ItemAction*>(actions[actionIndex]);
+				//Going to in future want the item action to have a property to specify a specific unit
+				//Currently, whoever began the scene will get the item, but I can imagine scenarios in which a scene has many actions that result
+				//In some other unit getting the item.
+				if (initiator->inventory.size() < 2)
+				{
+					initiator->addItem(action->ID);
+				}
+				else
+				{
+					//Open storage menu
+					std::cout << "Inventory is full";
+				}
+				actionIndex++;
+			}
+			break;
 		}
 	}
 	else if (actionIndex < actions.size())
@@ -115,9 +138,11 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			auto path = pathFinder.findPath(position, action->end, 99);
 			activeUnit->movementComponent.startMovement(path, 0, false);
 			state = UNIT_MOVE;
-		}
+
 			break;
+		}
 		case DIALOGUE_ACTION:
+		{
 			auto action = static_cast<DialogueAction*>(currentAction);
 			textManager.textLines.clear();
 			std::ifstream f("Levels/Level1Dialogue.json");
@@ -133,7 +158,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					{
 						Unit* speaker = sceneUnits[dialogue["speaker"]];
 
-						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"]});
+						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"] });
 					}
 					break;
 				}
@@ -145,6 +170,12 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			textManager.active = true;
 			state = TEXT;
 
+			break;
+		}
+		case GET_ITEM:
+			auto action = static_cast<ItemAction*>(currentAction);
+			displays.GetItem(action->ID);
+			state = GET_ITEM;
 			break;
 		}
 	}

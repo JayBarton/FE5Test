@@ -73,6 +73,12 @@ void InfoDisplays::EnemyBuy(EnemyManager* enemyManager)
 	focusedUnit = enemyManager->enemies[enemyManager->currentEnemy];
 }
 
+void InfoDisplays::GetItem(int itemID)
+{
+	itemToUse = itemID;
+	state = GOT_ITEM;
+}
+
 //Call this from StartUse
 void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount, Camera* camera)
 {
@@ -150,6 +156,13 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		{
 			displayTimer = 0.0f;
 			enemyManager->FinishMove();
+			state = NONE;
+		}
+		break;
+	case GOT_ITEM:
+		if (displayTimer > textDisplayTime)
+		{
+			displayTimer = 0.0f;
 			state = NONE;
 		}
 		break;
@@ -329,6 +342,9 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		break;
 	case ENEMY_BUY:
 		Text->RenderText(focusedUnit->name + " bought " + focusedUnit->GetEquippedItem()->name, 300, 300, 1);
+		break;
+	case GOT_ITEM:
+		Text->RenderText(ItemManager::itemManager.items[itemToUse].name, 300, 300, 1);
 		break;
 	case TURN_CHANGE:
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());

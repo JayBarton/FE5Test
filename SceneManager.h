@@ -17,7 +17,8 @@ enum SceneState
 	WAITING,
 	CAMERA_MOVE,
 	UNIT_MOVE,
-	TEXT
+	TEXT,
+	GET_ITEM
 };
 struct Scene
 {
@@ -31,6 +32,7 @@ struct Scene
 	PathFinder pathFinder;
 	SceneState state = WAITING;
 	Unit* activeUnit = nullptr;
+	Unit* initiator = nullptr;
 	//Not crazy about this. Need some way of telling the scene manager what scene is playing
 	class SceneManager* owner = nullptr;
 
@@ -47,7 +49,7 @@ struct Scene
 	void init();
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
 	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
-		Camera& camera, class InputManager& inputManager, class Cursor& cursor);
+		Camera& camera, class InputManager& inputManager, class Cursor& cursor, class InfoDisplays& displays);
 
 	void ClearActions();
 };
