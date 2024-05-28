@@ -346,6 +346,19 @@ struct OptionsMenu : public Menu
 	bool down = false;
 };
 
+struct FullInventoryMenu : public Menu
+{
+	FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	int newItem = -1;
+
+	BattleStats currentStats;
+	BattleStats selectedStats;
+};
+
 enum VendorState
 {
 	GREETING,
@@ -386,6 +399,8 @@ struct MenuManager
 	void AddMenu(int menuID);
 
 	void AddUnitStatMenu(Unit* unit);
+
+	void AddFullInventoryMenu(int itemID);
 
 	void PreviousMenu();
 	void ClearMenu();

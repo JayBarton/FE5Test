@@ -6,6 +6,7 @@
 #include "InputManager.h"
 #include "Cursor.h"
 #include "InfoDisplays.h"
+#include "MenuManager.h"
 
 #include <sstream>
 #include <fstream>
@@ -100,7 +101,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				else
 				{
 					//Open storage menu
-					std::cout << "Inventory is full";
+					MenuManager::menuManager.AddFullInventoryMenu(action->ID);
 				}
 				actionIndex++;
 			}
@@ -181,6 +182,21 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 	}
 	else
 	{
+		if (initiator)
+		{
+			//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
+			//But it is worth noting I think
+			if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
+			{
+				cursor.GetRemainingMove();
+				MenuManager::menuManager.mustWait = true;
+			}
+			else
+			{
+				cursor.Wait();
+			}
+			initiator = nullptr;
+		}
 		playingScene = false;
 		if (repeat)
 		{

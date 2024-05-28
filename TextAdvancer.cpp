@@ -48,23 +48,15 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 		{
 			//Do something here
 			//The idea is that dependent on what the next option is, I can end text display, display images, move units, etc
+			//0: End line
+			//1: End dialouge
+			//2: 
 			if (nextOption == 1)
 			{
 				active = false;
 				waitingOnInput = false;
 				if (talkActivated)
 				{
-					//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
-					//But it is worth noting I think
-					if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
-					{
-						cursor.GetRemainingMove();
-						MenuManager::menuManager.mustWait = true;
-					}
-					else
-					{
-						cursor.Wait();
-					}
 					talkActivated = false;
 				}
 				else

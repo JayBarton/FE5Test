@@ -453,11 +453,15 @@ int main(int argc, char** argv)
 			//Doing this dumb thing for a minute
 			sceneManager.scenes[sceneManager.currentScene]->init();
 		}
-		if(sceneManager.PlayingScene())
+		if (MenuManager::menuManager.menus.size() > 0)
+		{
+			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
+		}
+		else if(sceneManager.PlayingScene())
 		{
 			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 		}
-		else if (MenuManager::menuManager.menus.size() == 0)
+		else
 		{
 			if (displays.state != NONE)
 			{
@@ -584,10 +588,6 @@ int main(int argc, char** argv)
 					}
 				}
 			}
-		}
-		else
-		{
-			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 		}
 		//These two update functions are basically just going to handle animations
 		//if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
@@ -899,7 +899,7 @@ void Draw()
 
 	bool fullScreenMenu = false;
 	bool drawingMenu = false;
-	
+
 	if (MenuManager::menuManager.menus.size() > 0)
 	{
 		drawingMenu = true;
@@ -930,28 +930,25 @@ void Draw()
 			Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 		}
 	}
-	if (sceneManager.PlayingScene())
+	if (drawingMenu)
+	{
+		auto menu = MenuManager::menuManager.menus.back();
+		menu->Draw();
+	}
+	else if (sceneManager.PlayingScene())
 	{
 		if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
 		{
 			sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
 		}
-		else if(displays.state != NONE)
+		else if (displays.state != NONE)
 		{
 			displays.Draw(&camera, Text, shapeVAO);
 		}
 	}
-	else
+	else if (!fullScreenMenu && !minimap.show)
 	{
-		if (drawingMenu)
-		{
-			auto menu = MenuManager::menuManager.menus.back();
-			menu->Draw();
-		}
-		if (!fullScreenMenu && !minimap.show)
-		{
-			DrawText();
-		}
+		DrawText();
 	}
 	minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
 	SDL_GL_SwapWindow(window);

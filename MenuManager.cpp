@@ -741,6 +741,12 @@ void MenuManager::AddUnitStatMenu(Unit* unit)
 	menus.push_back(newMenu);
 }
 
+void MenuManager::AddFullInventoryMenu(int itemID)
+{
+	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
 void MenuManager::PreviousMenu()
 {
 	Menu* p = menus.back();
@@ -1395,9 +1401,11 @@ void SelectTalkMenu::SelectOption()
 			break;
 		}
 	}
-	cursor->selectedUnit->talkData[index].scene->activation->CheckActivation();
-	cursor->selectedUnit->talkData[index] = cursor->selectedUnit->talkData.back();
-	cursor->selectedUnit->talkData.pop_back();
+	auto playerUnit = cursor->selectedUnit;
+	playerUnit->talkData[index].scene->initiator = playerUnit;
+	playerUnit->talkData[index].scene->activation->CheckActivation();
+	playerUnit->talkData[index] = playerUnit->talkData.back();
+	playerUnit->talkData.pop_back();
 	ClearMenu();
 }
 
@@ -1495,7 +1503,6 @@ void TradeMenu::Draw()
 	auto firstUnit = cursor->selectedUnit;
 	text->RenderText(firstUnit->name, 100, 30, 1);
 	text->RenderText(tradeUnit->name, 700, 30, 1);
-
 
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
 	{
@@ -3520,4 +3527,191 @@ void VendorMenu::CancelOption()
 		textManager.init(3);
 	}
 	ActivateText();
+}
+
+FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem) :
+	Menu(Cursor, Text, camera, shapeVAO), newItem(newItem)
+{
+	numberOfOptions = cursor->selectedUnit->inventory.size() + 1;
+	currentStats = cursor->selectedUnit->CalculateBattleStats();
+	selectedStats = cursor->selectedUnit->CalculateBattleStats(cursor->selectedUnit->inventory[currentOption]->ID);
+}
+
+void FullInventoryMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	//Inventory box
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(24, 72, 0.0f));
+	model = glm::scale(model, glm::vec3(122, 146, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//Item info
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(152, 72, 0.0f));
+
+	model = glm::scale(model, glm::vec3(98, 130, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//"Too many items" box
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(128, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(122, 66, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//Selection
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(24, 84 + (16 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//Duplicated this down in ItemUseMenu's Draw.
+	Unit* unit = cursor->selectedUnit;
+	auto inventory = unit->inventory;
+	glm::vec3 color = glm::vec3(1);
+	glm::vec3 grey = glm::vec3(0.64f);
+	for (int i = 0; i < numberOfOptions - 1; i++)
+	{
+		color = glm::vec3(1);
+		int yPosition = 225 + i * 42;
+		auto item = inventory[i];
+		text->RenderText(item->name, 175, yPosition, 1, color);
+		text->RenderTextRight(intToString(item->remainingUses), 375, 230 + i * 42, 1, 14, color);
+	}
+	auto item = ItemManager::itemManager.items[newItem];
+	text->RenderText(item.name, 175, 225 + (numberOfOptions - 1) * 42, 1, grey);
+	text->RenderTextRight(intToString(item.remainingUses), 375, 230 + (numberOfOptions - 1) * 42, 1, 14, grey);
+	Item focusedItem = item;
+	if (currentOption < numberOfOptions - 1)
+	{
+		focusedItem = *inventory[currentOption];
+	}
+	if (focusedItem.isWeapon)
+	{
+		//temp
+		selectedStats = cursor->selectedUnit->CalculateBattleStats(focusedItem.ID);
+
+		int offSet = 42;
+		int yPosition = 225;
+		auto weaponData = ItemManager::itemManager.weaponData[focusedItem.ID];
+
+		int xStatName = 525;
+		int xStatValue = 660;
+		text->RenderText("Type", xStatName, yPosition, 1);
+		text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
+		yPosition += offSet;
+		text->RenderText("Atk", xStatName, yPosition, 1);
+		text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
+		if (selectedStats.attackDamage > currentStats.attackDamage)
+		{
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		}
+		else if (selectedStats.attackDamage < currentStats.attackDamage)
+		{
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+		}
+		yPosition += offSet;
+		text->RenderText("Hit", xStatName, yPosition, 1);
+		text->RenderTextRight(intToString(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+		if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
+		{
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		}
+		else if (selectedStats.hitAccuracy < currentStats.hitAccuracy)
+		{
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+		}
+		yPosition += offSet;
+		text->RenderText("Crit", xStatName, yPosition, 1);
+		text->RenderTextRight(intToString(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
+		if (selectedStats.hitCrit > currentStats.hitCrit)
+		{
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		}
+		else if (selectedStats.hitCrit < currentStats.hitCrit)
+		{
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+		}
+		yPosition += offSet;
+		text->RenderText("Avo", xStatName, yPosition, 1);
+		text->RenderTextRight(intToString(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
+		if (selectedStats.hitAvoid > currentStats.hitAvoid)
+		{
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		}
+		else if (selectedStats.hitAvoid < currentStats.hitAvoid)
+		{
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+		}
+	}
+	else
+	{
+		text->RenderText(focusedItem.description, 500, 225, 1);
+	}
+}
+
+void FullInventoryMenu::SelectOption()
+{
+	if (currentOption < numberOfOptions)
+	{
+		//Would be sending the item to supply, but that's not part of this project
+		cursor->selectedUnit->dropItem(currentOption);
+		cursor->selectedUnit->addItem(newItem);
+	}
+	else
+	{
+		//Likewise, would be sending the new item to supply if we had one
+	}
+	ClearMenu();
+}
+
+void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		currentOption++;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
 }
