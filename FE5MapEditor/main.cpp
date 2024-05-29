@@ -729,6 +729,12 @@ bool loadMap()
                         map >> dialogueID;
                         currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
                     }
+                    else if (actionType == ITEM_ACTION)
+                    {
+                        int itemID;
+                        map >> itemID;
+                        currentObject->actions[c] = new ItemAction(actionType, itemID);
+                    }
                 }
                 int activationType = 0;
                 map >> activationType;
@@ -858,6 +864,11 @@ void saveMap()
             else if (currentAction->type == DIALOGUE_ACTION)
             {
                 auto action = static_cast<DialogueAction*>(currentAction);
+                scenes += intToString(action->ID) + " ";
+            }
+            else if (currentAction->type == ITEM_ACTION)
+            {
+                auto action = static_cast<ItemAction*>(currentAction);
                 scenes += intToString(action->ID) + " ";
             }
         }

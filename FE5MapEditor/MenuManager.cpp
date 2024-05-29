@@ -146,6 +146,8 @@ void MenuManager::SelectOptionMenu(int action, std::vector<SceneAction*>& sceneA
 	case DIALOGUE_ACTION:
 		newMenu = new DialogueActionMenu(text, camera, shapeVAO, sceneActions);
 		break;
+	case ITEM_ACTION:
+		newMenu = new ItemActionMenu(text, camera, shapeVAO, sceneActions);
 	}
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
@@ -1101,11 +1103,12 @@ SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVA
 	Menu(Text, camera, shapeVAO), sceneObject(sceneObject), sceneActions(sceneObject.actions)
 {
 	numberOfOptions = sceneActions.size() + 1;
-	actionNames.resize(4);
+	actionNames.resize(5);
 	actionNames[CAMERA_ACTION] = "Camera Action";
 	actionNames[NEW_UNIT_ACTION] = "New Unit Action";
 	actionNames[MOVE_UNIT_ACTION] = "Move Unit Action";
 	actionNames[DIALOGUE_ACTION] = "Dialogue Action";
+	actionNames[ITEM_ACTION] = "Item Action";
 }
 
 void SceneActionMenu::Draw()
@@ -1173,6 +1176,11 @@ void SceneActionMenu::Draw()
 			auto action = static_cast<DialogueAction*>(currentAction);
 			text->RenderText("Dialogue, ID: " + intToString(action->ID), 100, 100 + (i * 32), 1);
 		}
+		else if (currentAction->type == ITEM_ACTION)
+		{
+			auto action = static_cast<ItemAction*>(currentAction);
+			text->RenderText("Item, ID: " + intToString(action->ID), 100, 100 + (i * 32), 1);
+		}
 	}
 
 	text->RenderText("Action Menu", 100, 50, 1);
@@ -1219,7 +1227,7 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		selectedAction++;
 		
-		if (selectedAction > DIALOGUE_ACTION)
+		if (selectedAction > ITEM_ACTION)
 		{
 			selectedAction = 0;
 		}
@@ -1229,7 +1237,7 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		selectedAction--;
 		if (selectedAction < 0)
 		{
-			selectedAction = DIALOGUE_ACTION;
+			selectedAction = ITEM_ACTION;
 		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_DELETE))
@@ -1746,6 +1754,46 @@ void DialogueActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		CancelOption();
 	}
+}
+
+ItemActionMenu::ItemActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions) : Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	itemID;
+	io::CSVReader<8, io::trim_chars<' '>, io::no_quote_escape<':'>> in("../items.csv");
+	in.read_header(io::ignore_extra_column, "ID", "name", "maxUses", "useID", "isWeapon", "canDrop", "description", "value");
+	std::string name;
+	int ID;
+	int maxUses;
+	int useID;
+	int isWeapon;
+	int canDrop;
+	int value;
+	std::string description;
+	while (in.read_row(ID, name, maxUses, useID, isWeapon, canDrop, description, value))
+	{
+		//csv reader reads in new lines wrong for whatever reason, this fixes it.
+		size_t found = description.find("\\n");
+		while (found != std::string::npos)
+		{
+			description.replace(found, 2, "\n");
+			found = description.find("\\n", found + 1);
+		}
+		items.push_back({ ID, name, maxUses, maxUses, useID, value, bool(isWeapon), bool(canDrop), description });
+	}
+	numberOfOptions = items.size();
+}
+
+void ItemActionMenu::Draw()
+{
+	text->RenderText("Item: " + items[currentOption].name, 600, 200, 1);
+}
+
+void ItemActionMenu::SelectOption()
+{
+	ItemAction* move = new ItemAction(4, currentOption);
+	sceneActions.push_back(move);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
 }
 
 VendorMenu::VendorMenu(TextRenderer* Text, Camera* camera, int shapeVAO, Vendor* vendor) : Menu(Text, camera, shapeVAO), vendor(vendor)

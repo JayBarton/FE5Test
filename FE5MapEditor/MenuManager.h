@@ -332,3 +332,13 @@ struct DialogueActionMenu : public Menu
     int dialogueID;
     std::vector<SceneAction*>& sceneActions;
 };
+
+struct ItemActionMenu : public Menu
+{
+    ItemActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    int itemID;
+    std::vector<SceneAction*>& sceneActions;
+    std::vector<Item> items;
+};
