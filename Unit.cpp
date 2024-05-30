@@ -1305,7 +1305,7 @@ void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector
 
 void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove)
 {
-    if (path.size() > 0)
+    if (path.size() > 1)
     {
         this->path = path;
         end = 0;
