@@ -884,6 +884,10 @@ void SceneMenu::Draw()
 	for (int i = 0; i < sceneObjects.size(); i++)
 	{
 		text->RenderText("Scene: " + intToString(i + 1), 100, 100 + (i * 32), 1);
+		if (!sceneObjects[i]->activation)
+		{
+			text->RenderText("No Activation!", 200, 100 + (i * 32), 1, glm::vec3(1, 0, 0));
+		}
 	}
 	text->RenderText("New Scene", 100, 100 + (sceneObjects.size() * 32), 1);
 
@@ -992,13 +996,13 @@ void VisitMenu::Draw()
 		glm::vec2 drawPosition = glm::vec2(visitObject.position) + glm::vec2(2, 4);
 		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
 		text->RenderText("start", drawPosition.x, drawPosition.y, 1);
-		text->RenderText("Current: " + intToString(unitID) + " " + intToString(sceneID), 100, 100, 1);
-		text->RenderText("Use the enter key to confirm new scene pairs. Space bar to confirm.", 100, 50, 1);
+		text->RenderText("Current: " + intToString(unitID) + " " + intToString(sceneID + 1), 100, 100, 1);
+		text->RenderText("Use the enter key to confirm new scene pairs. Space bar to confirm.\n First is the unitID(-1 for all), second is the scene number", 100, 50, 1);
 	}
 	int yOffset = 150;
 	for (const auto& pair : visitObject.sceneMap) 
 	{
-		text->RenderText(intToString(pair.first) + " " + intToString(pair.second), 100, yOffset, 1);
+		text->RenderText(intToString(pair.first) + " " + intToString(pair.second + 1), 100, yOffset, 1);
 		yOffset += 30;
 	}
 }

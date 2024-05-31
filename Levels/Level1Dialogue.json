@@ -36,17 +36,37 @@
         {
           "speaker": 2,
           "location": 0,
-          "speech": "My God, we're talking!<0"
+          "speech": "Dagda!? You came?<0"
         },
         {
           "speaker": 5,
           "location": 1,
-          "speech": "My God, so we are!<0"
+          "speech": "Oh, Eyvale, thank goodness you're alright.<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "speech": "Does that kid have something to do with why imperial\nsoldiers have come all the way out here?<0"
         },
         {
           "speaker": 2,
           "location": 0,
-          "speech": "I better get back to where I started!<1"
+          "speech": "Yeah, actually,\nthat kid is the prince of the fallen Leonster kingdom.<0"
+        },
+        {
+          "speaker": 2,
+          "location": 0,
+          "speech": "I've been sheltering him, sorry for keeping it from you.<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "speech": "I figured it was something like that.<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "speech": "Well, it's fine.\nAs long as I get to fight imperial soldiers, I won't complain.<1"
         }
       ]
     },
@@ -56,7 +76,22 @@
         {
           "speaker": -1,
           "location": 0,
-          "speech": "This is the first verse<1"
+          "speech": "Mareeta and Nanna were taken by the imperial soldiers.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Hurry, you have to save them before it's too late.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Oh, before you go, take this magic bracelet with you. I think it will be useful.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "But just holding it isn't enough. You have to use it.<1"
         }
       ]
     },
@@ -66,7 +101,22 @@
         {
           "speaker": -1,
           "location": 0,
-          "speech": "This is the second verse<1"
+          "speech": "You've all returned! Thank goodness...<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "The village, please save the village!<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Here...Take this medicine, please.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "No, it's fine. Eyvale has done so much for us, this hardly compares...<1"
         }
       ]
     },
@@ -76,12 +126,147 @@
         {
           "speaker": -1,
           "location": 0,
-          "speech": "And this is the chorus<0"
+          "speech": "Don't know what the fuck this old man is saying, he gives you a sword<1"
+        }
+      ]
+    },
+    {
+      "ID": 7,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Ah, big brother! I have something good for you.<0"
         },
         {
           "speaker": -1,
           "location": 0,
-          "speech": "Or perhaps it's a bridge?<1"
+          "speech": "This should be useful, right?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "?\n...This axe?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "It's a good looking axe, isn't it?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Awhile back, while I was walking in the hills,\na strange old lady came out of the lake and gave it to me.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "But I don't really have a use for an axe, so I'm giving it to you.<1"
+        }
+      ]
+    },
+    {
+      "ID": 8,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Have you seen Halvan, my brother?\nI hope he's doing alright...<1"
+        }
+      ]
+    },
+    {
+      "ID": 9,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Damn it Orthin, where are you off to now?\nThat useless boy!<1"
+        }
+      ]
+    },
+    {
+      "ID": 10,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Orthin, are you serious?\nYou had better not be getting in Lady Eyvale's way.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Get off my back old man.\nI don't want another lecture.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Some son I have,\nyour mouth is the only thing that has grown up.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Well, come here. This is for you.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Ah, thank you very much.\nI can't relax without this axe in my hands.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Honestly, you're such a forgetful guy.\nWho''s ever heard of someone going off to war\nand forgetting their own weapon?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Tch,\nHere comes another lecture.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "Hmph.\nWell, hurry up and go help Lady Eyvale.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "You don't need to tell me that!<1"
+        }
+      ]
+    },
+    {
+      "ID": 11,
+      "dialogue": [
+        {
+          "speaker": 4,
+          "location": 0,
+          "speech": "Hey, is that Tania?\nWhat are you doing here?<0"
+        },
+        {
+          "speaker": 6,
+          "location": 1,
+          "speech": "Orthin!?\nWhat does it look like I'm doing?\nI came here to help.<0"
+        },
+        {
+          "speaker": 4,
+          "location": 0,
+          "speech": "\"Came here to help\"?\nYou're not going to be of any help to us<0"
+        },
+        {
+          "speaker": 4,
+          "location": 0,
+          "speech": "Go home kid, go on, get.<0"
+        },
+        {
+          "speaker": 6,
+          "location": 1,
+          "speech": "K-kid?! You're the kid!\nYou don't have to tell me to leave, I'm leaving!<0"
+        },
+        {
+          "speaker": 6,
+          "location": 1,
+          "speech": "Who would want to come to a place like this on purpose you jerk!<1"
         }
       ]
     }

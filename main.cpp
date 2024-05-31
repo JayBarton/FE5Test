@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 	displays.subject.addObserver(postBattleEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 
-	loadMap("1.map", unitEvents);
+	loadMap("2.map", unitEvents);
 
 	cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
 
