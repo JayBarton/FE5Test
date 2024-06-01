@@ -8,6 +8,7 @@
 #include "Tile.h"
 #include "SceneManager.h"
 #include "PlayerManager.h"
+#include "EnemyManager.h"
 #include "Vendor.h"
 
 #include "Globals.h"
@@ -693,7 +694,8 @@ void ItemOptionsMenu::GetBattleStats()
 }
 
 MenuManager MenuManager::menuManager;
-void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager)
+void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, 
+	SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager, EnemyManager* enemyManager)
 {
 	renderer = Renderer;
 	cursor = Cursor;
@@ -702,6 +704,7 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	this->battleManager = battleManager;
 	this->shapeVAO = shapeVAO;
 	this->playerManager = playerManager;
+	this->enemyManager = enemyManager;
 }
 
 void MenuManager::AddMenu(int ID)
@@ -1677,12 +1680,30 @@ void TradeMenu::CancelOption()
 	}
 }
 
-UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer) :
+	Menu(Cursor, Text, camera, shapeVAO)
 {
 	this->unit = unit;
 	renderer = Renderer;
 	battleStats = unit->CalculateBattleStats();
 	fullScreen = true;
+	if (unit->team == 0)
+	{
+		unitList = &MenuManager::menuManager.playerManager->playerUnits;
+	}
+	else if (unit->team == 1)
+	{
+		unitList = &MenuManager::menuManager.enemyManager->enemies;
+	}
+
+	for (int i = 0; i < unitList->size(); i++)
+	{
+		if (unit == (*unitList)[i])
+		{
+			unitIndex = i;
+			break;
+		}
+	}
 }
 
 void UnitStatsViewMenu::Draw()
@@ -1845,7 +1866,28 @@ void UnitStatsViewMenu::Draw()
 	}
 	else
 	{
-		text->RenderText("COMING SOON", 700, 0, 1);
+		text->RenderText("Personal Data", 37, 246, 1);
+		text->RenderText("Leader", 25, 291, 1);
+		text->RenderText("Lead*", 25, 334, 1);
+		text->RenderText("Move*", 25, 377, 1);
+		text->RenderText("Trvlr.", 25, 420, 1);
+		text->RenderText("Move", 25, 463, 1);
+		text->RenderText("Fatg.", 25, 506, 1);
+		text->RenderText("Status", 25, 549, 1);
+
+		if (unit->carriedUnit)
+		{
+			text->RenderText(unit->carriedUnit->name, 150, 420, 1);
+		}
+		else
+		{
+			text->RenderText("-----", 153, 420, 1);
+		}
+
+		text->RenderText("Weapon Ranks", 434, 246, 1);
+
+
+		text->RenderText("Skills", 434, 503, 1);
 
 	}
 
@@ -1873,7 +1915,27 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				firstPage = true;
 			}
 		}
-		if (inputManager.isKeyPressed(SDLK_SPACE))
+		if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			unitIndex--;
+			if (unitIndex < 0)
+			{
+				unitIndex = unitList->size() - 1;
+			}
+			unit = (*unitList)[unitIndex];
+			battleStats = unit->CalculateBattleStats();
+		}
+		else if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			unitIndex++;
+			if (unitIndex >= unitList->size())
+			{
+				unitIndex = 0;
+			}
+			unit = (*unitList)[unitIndex];
+			battleStats = unit->CalculateBattleStats();
+		}
+		else if (inputManager.isKeyPressed(SDLK_SPACE))
 		{
 			if (firstPage)
 			{
@@ -1934,6 +1996,14 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			}
 		}
 	}
+}
+
+void UnitStatsViewMenu::CancelOption()
+{
+	cursor->position = (*unitList)[unitIndex]->sprite.getPosition();
+	cursor->focusedUnit = (*unitList)[unitIndex];
+	camera->SetMove(cursor->position);
+	Menu::CancelOption();
 }
 
 ExtraMenu::ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
@@ -2588,11 +2658,23 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				sortIndicator--;
 				if (sortIndicator < 0)
 				{
-					currentPage--;
-					sortIndicator = pageSortOptions[currentPage] - 1;
+					if (currentPage > 0)
+					{
+						currentPage--;
+						sortIndicator = pageSortOptions[currentPage] - 1;
+						sortType--;
+					}
+					else
+					{
+						sortIndicator = 0;
+					}
 				}
-				sortType--;
+				else
+				{
+					sortType--;
+				}
 			}
+			std::cout << sortType << std::endl;
 		}
 	}
 	else
@@ -2615,9 +2697,12 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				currentPage = 0;
 			}
-			sortType -= sortIndicator;
-			sortType -= pageSortOptions[currentPage];
-			sortIndicator = 0;
+			else
+			{
+				sortType -= sortIndicator;
+				sortType -= pageSortOptions[currentPage];
+				sortIndicator = 0;
+			}
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_RETURN))

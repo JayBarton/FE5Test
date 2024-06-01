@@ -80,7 +80,7 @@ public:
     bool moving = false;
 
 protected:
-private:
+public:
 
     int halfWidth;
     int halfHeight;

@@ -182,10 +182,6 @@ struct Unit
 	bool active = false;
 	bool stationary = false;
 	bool boss = false;
-	//Will activate the enemy if they enter a specific range from the enemy if true
-	//Enemy activates on unit entering attack range otherwise
-	int activationType = 0;
-
 
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
@@ -269,6 +265,9 @@ struct Unit
 	//All of these are for AI units
 	std::vector<Unit*> tradeUnits;
 	struct Vendor* storeTarget = nullptr;
+	//Will activate the enemy if they enter a specific range from the enemy if true
+	//Enemy activates on unit entering attack range otherwise
+	int activationType = 0;
 	//End AI Units
 
 	//Temporary, just using to visualize tile costs

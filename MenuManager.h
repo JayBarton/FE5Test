@@ -268,10 +268,15 @@ struct UnitStatsViewMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+	virtual void CancelOption() override;
 
 	Unit* unit;
 	BattleStats battleStats;
 	SpriteRenderer* renderer;
+
+	//Need these for swapping the view between units
+	int unitIndex = 0;
+	std::vector<Unit*>* unitList;
 
 	bool firstPage = true;
 	bool examining = false;
@@ -394,7 +399,8 @@ struct VendorMenu : public Menu
 
 struct MenuManager
 {
-	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, BattleManager* battleManager, class PlayerManager* playerManager);
+	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, 
+		BattleManager* battleManager, class PlayerManager* playerManager, class EnemyManager* enemyManager);
 
 	void AddMenu(int menuID);
 
@@ -413,6 +419,7 @@ struct MenuManager
 	SpriteRenderer* renderer = nullptr;
 	BattleManager* battleManager = nullptr;
 	PlayerManager* playerManager = nullptr;
+	EnemyManager* enemyManager = nullptr;
 
 	Subject<int> subject;
 

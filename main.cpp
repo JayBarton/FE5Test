@@ -358,7 +358,7 @@ int main(int argc, char** argv)
 
 	cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
 
-	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager);
+	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
 	enemyManager.subject.addObserver(turnEvents);
 	enemyManager.displays = &displays;
