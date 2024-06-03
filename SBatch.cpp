@@ -20,7 +20,6 @@ void SBatch::init()
     glBindVertexArray(vao);
 
     glBindVertexArray(0);
-    ResourceManager::GetShader("instance").Use().SetInteger("model_matrix_tbo", 1);
 }
 
 void SBatch::begin()

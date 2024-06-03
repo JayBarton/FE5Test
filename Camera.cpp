@@ -185,7 +185,7 @@ void Camera::SetMove(glm::vec2 p)
 	t = 0.0f;
 	glm::vec2 pScreen = worldToScreen(p);
 	startPosition = position;
-	movePosition = position; //Setting move position to position and leaving the first set of ifs uncommented worked for cancelling moves...
+	movePosition = position; //Setting moveposition to position and leaving the first set of ifs uncommented worked for cancelling moves...
 	moving = true;
 	if (pScreen.x > border.z)
 	{

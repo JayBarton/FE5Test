@@ -278,8 +278,19 @@ struct UnitStatsViewMenu : public Menu
 	int unitIndex = 0;
 	std::vector<Unit*>* unitList;
 
+	//Just here as a proof of concept for now
+	std::vector<glm::vec4> iconUVs;
+
 	bool firstPage = true;
 	bool examining = false;
+	bool transition = false;
+
+	float yOffset = 224;
+	float start;
+	float goal;
+
+	float t = 0.0f;
+
 };
 
 //No idea what to call this one
@@ -422,6 +433,8 @@ struct MenuManager
 	EnemyManager* enemyManager = nullptr;
 
 	Subject<int> subject;
+
+	std::unordered_map<int, std::string> profcienciesMap;
 
 	//Some actions, such as trading or dismounting will allow the menu to stay open but will force the unit to stay where they have been moved too
 	bool mustWait = false;

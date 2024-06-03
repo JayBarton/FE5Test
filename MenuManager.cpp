@@ -705,6 +705,13 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	this->shapeVAO = shapeVAO;
 	this->playerManager = playerManager;
 	this->enemyManager = enemyManager;
+
+	profcienciesMap[0] = "-";
+	profcienciesMap[1] = "E";
+	profcienciesMap[2] = "D";
+	profcienciesMap[3] = "C";
+	profcienciesMap[4] = "B";
+	profcienciesMap[5] = "A";
 }
 
 void MenuManager::AddMenu(int ID)
@@ -1704,6 +1711,8 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 			break;
 		}
 	}
+
+	iconUVs = ResourceManager::GetTexture("icons").GetUVs(16, 16);
 }
 
 void UnitStatsViewMenu::Draw()
@@ -1711,9 +1720,190 @@ void UnitStatsViewMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 79, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 145, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.9f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//page 1
+	if (firstPage || transition)
+	{
+		float adjustedOffset = ((224 - yOffset) / 224.0f) * 600;
+		text->RenderText("Inventory", 500, 180 - adjustedOffset, 1);
+
+		auto inventory = unit->inventory;
+		glm::vec3 color = glm::vec3(1);
+		glm::vec3 grey = glm::vec3(0.64f);
+		for (int i = 0; i < inventory.size(); i++)
+		{
+			color = glm::vec3(1);
+			int yPosition = (220 + i * 30) - adjustedOffset;
+			auto item = inventory[i];
+			if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
+			{
+				color = grey;
+			}
+			text->RenderText(item->name, 480, yPosition, 1, color);
+			text->RenderTextRight(intToString(item->remainingUses), 680, yPosition, 1, 14, color);
+			if (i == unit->equippedWeapon)
+			{
+				text->RenderText("E", 700, yPosition, 1);
+			}
+		}
+		if (!examining)
+		{
+			//Going to need an indication of what stats are affected by modifiers
+			text->RenderText("Combat Stats", 54, 190 - adjustedOffset, 1);
+			text->RenderText("STR", 48, 220 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getStrength()), 148, 220 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("MAG", 48, 252 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getMagic()), 148, 252 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("SKL", 48, 284 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getSkill()), 148, 284 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("SPD", 48, 316 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getSpeed()), 148, 316 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("LCK", 48, 348 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getLuck()), 148, 348 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("DEF", 48, 380 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getDefense()), 148, 380 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+			text->RenderText("CON", 48, 412 - adjustedOffset, 0.8f);
+			text->RenderTextRight(intToString(unit->getBuild()), 148, 412 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+		}
+		else
+		{
+			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(128, 75 + (12 * currentOption), 0.0f));
+
+			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+			int yPosition = 220;
+
+			if (inventory[currentOption]->isWeapon)
+			{
+				int offSet = 30;
+				auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
+
+				int xStatName = 100;
+				int xStatValue = 200;
+				text->RenderText("Type", xStatName, yPosition - adjustedOffset, 1);
+				text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition - adjustedOffset, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Hit", xStatName, yPosition - adjustedOffset, 1);
+				text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition - adjustedOffset, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Might", xStatName, yPosition - adjustedOffset, 1);
+				text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition - adjustedOffset, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Crit", xStatName, yPosition - adjustedOffset, 1);
+				text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition - adjustedOffset, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Range", xStatName, yPosition - adjustedOffset, 1);
+				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition - adjustedOffset, 1, 14);
+				yPosition += offSet;
+				text->RenderText("Weight", xStatName, yPosition - adjustedOffset, 1);
+				text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition - adjustedOffset, 1, 14);
+				yPosition += offSet;
+			}
+			text->RenderText(inventory[currentOption]->description, 50, yPosition - adjustedOffset, 1);
+		}
+
+	}
+	if(!firstPage || transition)
+	{
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(iconUVs[WeaponData::TYPE_SWORD]);
+		renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_LANCE]);
+		renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_AXE]);
+		renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_BOW]);
+		renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_STAFF]);
+		renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, cursor->dimensions);
+
+		renderer->setUVs(iconUVs[WeaponData::TYPE_FIRE]);
+		renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_THUNDER]);
+		renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_WIND]);
+		renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_LIGHT]);
+		renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, cursor->dimensions);
+		renderer->setUVs(iconUVs[WeaponData::TYPE_DARK]);
+		renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, cursor->dimensions);
+
+		auto& profMap = MenuManager::menuManager.profcienciesMap;
+
+		int adjustedOffset = (yOffset / 224.0f) * 600;
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_BOW]], 500, 417 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_STAFF]], 500, 459 + adjustedOffset, 1);
+
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_FIRE]], 700, 291 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_THUNDER]], 700, 333 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_WIND]], 700, 375 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LIGHT]], 700, 417 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_DARK]], 700, 459 + adjustedOffset, 1);
+
+		text->RenderText("Personal Data", 37, 246 + adjustedOffset, 1);
+		text->RenderText("Leader", 25, 291 + adjustedOffset, 1);
+		text->RenderText("Lead*", 25, 334 + adjustedOffset, 1);
+		text->RenderText("Move*", 25, 377 + adjustedOffset, 1);
+		text->RenderText("Trvlr.", 25, 420 + adjustedOffset, 1);
+		text->RenderText("Move", 25, 463 + adjustedOffset, 1);
+		text->RenderText("Fatg.", 25, 506 + adjustedOffset, 1);
+		text->RenderText("Status", 25, 549 + adjustedOffset, 1);
+
+		//Leader
+		text->RenderText("Leif", 150, 291 + adjustedOffset, 1);
+
+		if (unit->carriedUnit)
+		{
+			text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
+			text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
+		}
+		else
+		{
+			text->RenderText("----", 153, 420 + adjustedOffset, 1);
+		}
+
+		text->RenderText(intToString(unit->getMove()), 200, 466 + adjustedOffset, 1);
+		//Fatigue
+		text->RenderText(intToString(0), 200, 508 + adjustedOffset, 1);
+		//Status
+		text->RenderText("----", 153, 549 + adjustedOffset, 1);
+
+		text->RenderText("Weapon Ranks", 434, 246 + adjustedOffset, 1);
+
+		text->RenderText("Skills", 434, 503 + adjustedOffset, 1);
+	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 
-	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 79, 0.0f));
 
 	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
 
@@ -1721,7 +1911,7 @@ void UnitStatsViewMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-	
+
 	//Would like to not use batch here it's just easier without writing a new function/shader
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
@@ -1732,7 +1922,7 @@ void UnitStatsViewMenu::Draw()
 	Batch.renderBatch();
 
 	text->RenderText(unit->name, 110, 64, 1);
-	text->RenderText(unit->unitClass, 48, 96, 1); 
+	text->RenderText(unit->unitClass, 48, 96, 1);
 	text->RenderText("Lv", 48, 128, 1);
 	text->RenderText("HP", 48, 160, 1);
 
@@ -1774,225 +1964,160 @@ void UnitStatsViewMenu::Draw()
 	text->RenderText("AVO", 600, 96, 1);
 	text->RenderTextRight(intToString(battleStats.hitAvoid), 642, 96, 1, 14);
 
-	//page 1
-	if (firstPage)
-	{
-		text->RenderText("Inventory", 500, 180, 1);
-
-		auto inventory = unit->inventory;
-		glm::vec3 color = glm::vec3(1);
-		glm::vec3 grey = glm::vec3(0.64f);
-		for (int i = 0; i < inventory.size(); i++)
-		{
-			color = glm::vec3(1);
-			int yPosition = 220 + i * 30;
-			auto item = inventory[i];
-			if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
-			{
-				color = grey;
-			}
-			text->RenderText(item->name, 480, yPosition, 1, color);
-			text->RenderTextRight(intToString(item->remainingUses), 680, yPosition, 1, 14, color);
-			if (i == unit->equippedWeapon)
-			{
-				text->RenderText("E", 700, yPosition, 1);
-			}
-		}
-		if (!examining)
-		{
-			//Going to need an indication of what stats are affected by modifiers
-			text->RenderText("Combat Stats", 54, 190, 1);
-			text->RenderText("STR", 48, 220, 0.8f);
-			text->RenderTextRight(intToString(unit->getStrength()), 148, 220, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("MAG", 48, 252, 0.8f);
-			text->RenderTextRight(intToString(unit->getMagic()), 148, 252, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("SKL", 48, 284, 0.8f);
-			text->RenderTextRight(intToString(unit->getSkill()), 148, 284, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("SPD", 48, 316, 0.8f);
-			text->RenderTextRight(intToString(unit->getSpeed()), 148, 316, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("LCK", 48, 348, 0.8f);
-			text->RenderTextRight(intToString(unit->getLuck()), 148, 348, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("DEF", 48, 380, 0.8f);
-			text->RenderTextRight(intToString(unit->getDefense()), 148, 380, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("CON", 48, 412, 0.8f);
-			text->RenderTextRight(intToString(unit->getBuild()), 148, 412, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-		}
-		else
-		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(128, 75 + (12 * currentOption), 0.0f));
-
-			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
-			int yPosition = 220;
-
-			if (inventory[currentOption]->isWeapon)
-			{
-				int offSet = 30;
-				auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
-
-				int xStatName = 100;
-				int xStatValue = 200;
-				text->RenderText("Type", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Hit", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Might", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Crit", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Range", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Weight", xStatName, yPosition, 1);
-				text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 14);
-				yPosition += offSet;
-			}
-			text->RenderText(inventory[currentOption]->description, 50, yPosition, 1);
-		}
-
-	}
-	else
-	{
-		text->RenderText("Personal Data", 37, 246, 1);
-		text->RenderText("Leader", 25, 291, 1);
-		text->RenderText("Lead*", 25, 334, 1);
-		text->RenderText("Move*", 25, 377, 1);
-		text->RenderText("Trvlr.", 25, 420, 1);
-		text->RenderText("Move", 25, 463, 1);
-		text->RenderText("Fatg.", 25, 506, 1);
-		text->RenderText("Status", 25, 549, 1);
-
-		if (unit->carriedUnit)
-		{
-			text->RenderText(unit->carriedUnit->name, 150, 420, 1);
-		}
-		else
-		{
-			text->RenderText("-----", 153, 420, 1);
-		}
-
-		text->RenderText("Weapon Ranks", 434, 246, 1);
-
-
-		text->RenderText("Skills", 434, 503, 1);
-
-	}
-
 }
 
 void UnitStatsViewMenu::SelectOption()
 {
 }
 
+float EaseOut2(float t)
+{
+	return 1 - (1 - t) * (1 - t);
+}
+
 void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (!examining)
+	if (transition)
 	{
-		if (firstPage)
+		int rate = 960;
+		float direction;
+		if (firstPage == false)
 		{
-			if (inputManager.isKeyPressed(SDLK_DOWN))
-			{
-				firstPage = false;
-			}
+			direction = -1;
 		}
 		else
 		{
-			if (inputManager.isKeyPressed(SDLK_UP))
-			{
-				firstPage = true;
-			}
+			direction = 1;
 		}
-		if (inputManager.isKeyPressed(SDLK_LEFT))
+
+		float distance = glm::length(goal - start);
+
+		// Calculate easing factor based on current time
+		float easingFactor = EaseOut2(t);
+
+		// Calculate current position based on easing factor
+		float currentPosition = start + direction * (distance * easingFactor);
+
+		// Update camera position
+		yOffset = currentPosition;
+
+		// Increment time based on speed
+		t += rate * deltaTime / distance;
+
+		// Break loop if reached the destination
+		if (t >= 1.0f)
 		{
-			unitIndex--;
-			if (unitIndex < 0)
-			{
-				unitIndex = unitList->size() - 1;
-			}
-			unit = (*unitList)[unitIndex];
-			battleStats = unit->CalculateBattleStats();
-		}
-		else if (inputManager.isKeyPressed(SDLK_RIGHT))
-		{
-			unitIndex++;
-			if (unitIndex >= unitList->size())
-			{
-				unitIndex = 0;
-			}
-			unit = (*unitList)[unitIndex];
-			battleStats = unit->CalculateBattleStats();
-		}
-		else if (inputManager.isKeyPressed(SDLK_SPACE))
-		{
-			if (firstPage)
-			{
-				if (unit->inventory.size() > 0)
-				{
-					examining = true;
-					currentOption = 0;
-					numberOfOptions = unit->inventory.size();
-				}
-			}
-			else
-			{
-				if (unit->skills.size() > 0)
-				{
-					examining = true;
-					currentOption = 0;
-					numberOfOptions = unit->skills.size();
-				}
-			}
-		}
-		else if (inputManager.isKeyPressed(SDLK_z))
-		{
-			CancelOption();
+			yOffset = goal;
+			transition = false;
 		}
 	}
 	else
 	{
-		bool moved = false;
-		if (inputManager.isKeyPressed(SDLK_UP))
+		if (!examining)
 		{
-			moved = true;
-			currentOption--;
-			if (currentOption < 0)
+			if (firstPage)
 			{
-				currentOption = numberOfOptions - 1;
+				if (inputManager.isKeyPressed(SDLK_DOWN))
+				{
+					firstPage = false;
+					transition = true;
+					t = 0.0f;
+					goal = 0;
+					start = 224;
+					yOffset = 224;
+				}
+			}
+			else
+			{
+				if (inputManager.isKeyPressed(SDLK_UP))
+				{
+					firstPage = true;
+					transition = true;
+					t = 0.0f;
+					goal = 224;
+					start = 0;
+					yOffset = 0;
+				}
+			}
+			if (inputManager.isKeyPressed(SDLK_LEFT))
+			{
+				unitIndex--;
+				if (unitIndex < 0)
+				{
+					unitIndex = unitList->size() - 1;
+				}
+				unit = (*unitList)[unitIndex];
+				battleStats = unit->CalculateBattleStats();
+			}
+			else if (inputManager.isKeyPressed(SDLK_RIGHT))
+			{
+				unitIndex++;
+				if (unitIndex >= unitList->size())
+				{
+					unitIndex = 0;
+				}
+				unit = (*unitList)[unitIndex];
+				battleStats = unit->CalculateBattleStats();
+			}
+			else if (inputManager.isKeyPressed(SDLK_SPACE))
+			{
+				if (firstPage)
+				{
+					if (unit->inventory.size() > 0)
+					{
+						examining = true;
+						currentOption = 0;
+						numberOfOptions = unit->inventory.size();
+					}
+				}
+				else
+				{
+					if (unit->skills.size() > 0)
+					{
+						examining = true;
+						currentOption = 0;
+						numberOfOptions = unit->skills.size();
+					}
+				}
+			}
+			else if (inputManager.isKeyPressed(SDLK_z))
+			{
+				CancelOption();
 			}
 		}
-		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		else
 		{
-			moved = true;
-			currentOption++;
-			if (currentOption >= numberOfOptions)
+			bool moved = false;
+			if (inputManager.isKeyPressed(SDLK_UP))
 			{
-				currentOption = 0;
+				moved = true;
+				currentOption--;
+				if (currentOption < 0)
+				{
+					currentOption = numberOfOptions - 1;
+				}
 			}
-		}
-		if (inputManager.isKeyPressed(SDLK_z))
-		{
-			examining = false;
-		}
+			else if (inputManager.isKeyPressed(SDLK_DOWN))
+			{
+				moved = true;
+				currentOption++;
+				if (currentOption >= numberOfOptions)
+				{
+					currentOption = 0;
+				}
+			}
+			if (inputManager.isKeyPressed(SDLK_z))
+			{
+				examining = false;
+			}
 
-		if (firstPage)
-		{
-			if (moved)
+			if (firstPage)
 			{
-				auto inventory = unit->inventory;
-			//	battleStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
+				if (moved)
+				{
+					auto inventory = unit->inventory;
+					//	battleStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
+				}
 			}
 		}
 	}

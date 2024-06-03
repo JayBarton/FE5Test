@@ -316,8 +316,7 @@ int main(int argc, char** argv)
 
 	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
-	glm::vec4 color(1.0f);
-	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", color);
+	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", glm::vec4(1));
 
 //	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
 
@@ -328,6 +327,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/icons.png", "icons");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
