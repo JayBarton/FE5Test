@@ -197,7 +197,7 @@ struct PostBattleEvents : public Observer<int>
 		{
 			battleManager.EndBattle(&cursor, &enemyManager, camera);
 			//Real brute force here
-			battleManager.defender->moveAnimate = false;
+			battleManager.defender->sprite.moveAnimate = false;
 			battleManager.defender->sprite.currentFrame = idleFrame;
 			
 		}
@@ -460,6 +460,11 @@ int main(int argc, char** argv)
 		else if(sceneManager.PlayingScene())
 		{
 			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
+			auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
+			for (int i = 0; i < introUnits.size(); i++)
+			{
+				introUnits[i]->sprite.HandleAnimation(deltaTime, idleFrame);
+			}
 		}
 		else
 		{
@@ -618,6 +623,7 @@ int main(int argc, char** argv)
 
 		fps = fpsLimiter.end();
 		//std::cout << fps << std::endl;
+		std::cout << cursor.position.x << " " << cursor.position.y << std::endl;
 	}
 
 	delete Renderer;
@@ -877,6 +883,16 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 			}
 		}
 	}
+	Scene* intro = new Scene();
+	intro->ID = 10;
+	intro->owner = &sceneManager;
+	intro->actions.resize(4);
+	intro->actions[0] = new CameraMove(CAMERA_ACTION, glm::vec2(208, 112));
+	intro->actions[1] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 2, 1, glm::vec2(272, 80), glm::vec2(272, 80));
+	intro->actions[2] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, glm::vec2(272, 80), glm::vec2(272, 96));
+	intro->actions[3] = new DialogueAction(DIALOGUE_ACTION, 4);
+	sceneManager.scenes.push_back(intro);
+	intro->init();
 
 	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 
@@ -920,7 +936,7 @@ void Draw()
 		playerManager.Draw(&Batch);
 		enemyManager.Draw(&Batch);
 		Batch.end();
-		Batch.renderBatch();
+	//	Batch.renderBatch();
 
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 		if (currentTurn == 0)
@@ -945,6 +961,36 @@ void Draw()
 		{
 			displays.Draw(&camera, Text, shapeVAO);
 		}
+
+		auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
+		SBatch testBatch;
+		testBatch.init();
+		testBatch.begin();
+		for (int i = 0; i < introUnits.size(); i++)
+		{
+			Texture2D texture = ResourceManager::GetTexture("sprites");
+			glm::vec3 color = introUnits[i]->sprite.color;
+			glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
+
+			glm::vec2 position = introUnits[i]->sprite.getPosition();
+
+			glm::vec2 size;
+			if (introUnits[i]->sprite.moveAnimate)
+			{
+				size = glm::vec2(32, 32);
+				position += glm::vec2(-8, -8);
+				texture = ResourceManager::GetTexture("movesprites");
+			}
+			else
+			{
+				size = introUnits[i]->sprite.getSize();
+				position += introUnits[i]->sprite.drawOffset;
+
+			}
+			testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
+		}
+		testBatch.end();
+		testBatch.renderBatch();
 	}
 	else if (!fullScreenMenu && !minimap.show)
 	{

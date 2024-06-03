@@ -100,7 +100,6 @@ public:
         }
     }
 
-
     //TODO this doesn't need two parameters, can just use hitbox in place of parameter "a"
     bool collide(glm::vec4 a, glm::vec4 b);
 
@@ -114,14 +113,18 @@ public:
     //Will play the animation and then reverse it
     bool playAnimationReverse(float delta, int numberOfFrames, bool doubleFrames);
 
+    void HandleAnimation(float deltaTime, int idleFrame);
+
     void checkMatrixUpdate();
 
     bool active;
     bool updateDrawMatrix;
+    bool moveAnimate = false;
 
     int currentFrame = 0;
     int startingFrame = 0;
 
+    //0 left, 1 up, 2 right, 3 down
     int facing;
 
     float rotation; //this and facing are kind of odd
@@ -130,7 +133,7 @@ public:
     float timeForFrame = 0.0f;
 
     glm::vec3 color;
-    std::vector<glm::vec4>*  uv = nullptr;
+    std::vector<glm::vec4>* uv = nullptr;
     //For sprites that are not 16x16, but still need to be position at such locations.
     glm::vec2 drawOffset = glm::vec2(0);
 

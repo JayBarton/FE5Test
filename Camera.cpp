@@ -7,6 +7,8 @@ Code modified from https://github.com/Barnold1953/GraphicsTutorials/tree/master/
 #include <gtx/norm.hpp>
 #include <math.h>
 #include <iostream>
+
+#include "Globals.h"
 Camera::Camera(int screenW, int screenH, int levelW, int levelH) : screenWidth(screenW),
     screenHeight(screenH), levelWidth(levelW), levelHeight(levelH), cameraScale(1.0f), position(0.0f, 0.0f),
     cameraMatrix(1.0f), needsMatrixUpdate(true)
@@ -263,11 +265,6 @@ float quadraticEaseInOut(float t) {
 
 float EaseInOut(float t) {
 	return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;
-}
-
-float EaseOut(float t)
-{
-	return 1 - (1 - t) * (1 - t);
 }
 
 void Camera::MoveTo(float delta, float speed)

@@ -18,7 +18,8 @@ enum SceneState
 	CAMERA_MOVE,
 	UNIT_MOVE,
 	TEXT,
-	GET_ITEM
+	GET_ITEM,
+	SCENE_UNIT_MOVE
 };
 struct Scene
 {
@@ -41,6 +42,10 @@ struct Scene
 	TextObject testText;
 	TextObject testText2;
 	TextObjectManager textManager;
+
+	//Hopefully here temporarily
+	std::vector<struct SceneUnit*> introUnits;
+	std::vector<std::vector<glm::vec4>> UVs;
 
 	Scene();
 	~Scene();

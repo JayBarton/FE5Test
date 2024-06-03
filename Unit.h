@@ -1,9 +1,6 @@
 #pragma once
 #include <string>
 #include <random>
-#include <iostream>
-#include <chrono>
-#include <random>
 #include <vector>
 #include <unordered_map>
 #include "Sprite.h"
@@ -72,7 +69,7 @@ struct Mount
 //While I am still not sure if this needs to be standalone, multiple units can in fact move at one time in some circumstances
 struct MovementComponent
 {
-	class Unit* owner = nullptr;
+	class Sprite* owner = nullptr;
 	glm::vec2 nextNode;
 	glm::vec2 direction;
 	glm::vec2 previousDirection;
@@ -80,7 +77,7 @@ struct MovementComponent
 	int current;
 	int end;
 	bool moving = false;
-	void startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove);
+	void startMovement(const std::vector<glm::ivec2>& path, int moveCost);
 	void getNewDirection();
 	void Update(float deltaTime, InputManager& inputManager);
 };
@@ -164,12 +161,7 @@ struct Unit
 
 	int movementType;
 
-	//0 left, 1 up, 2 right, 3 down
-	int facing = 0;
 	int focusedFacing = 0;
-
-	//bool focused = false;;
-	bool moveAnimate = false;
 
 	bool hasMoved = false;
 	//Also for experience calculations, but probably unneeded for this project
@@ -238,6 +230,8 @@ struct Unit
 	int getMovementType();
 
 	void MountAction(bool on);
+
+	void startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove);
 
 	Item* GetEquippedItem();
 	WeaponData GetEquippedWeapon();
@@ -308,6 +302,11 @@ struct Unit
 	//Using this one to find units that are within adjacent attack range
 	std::vector<Unit*> inRangeUnits(int team);
 	void CheckRangeTiles(glm::vec2& checkingTile, std::vector<std::vector<bool>>& checked, std::vector<pathCell>& checking, pathCell startCell, std::vector<std::vector<int>>& costs, std::vector<glm::vec2>& foundTiles, std::vector<Unit*>& units, int team);
+};
 
-
+struct SceneUnit
+{
+	int team;
+	Sprite sprite;
+	MovementComponent movementComponent;
 };

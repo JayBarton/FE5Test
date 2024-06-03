@@ -139,8 +139,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		defender->sprite.currentFrame = 11;
 		defender->sprite.startingFrame = 11;
 	}
-	attacker->moveAnimate = true;
-	defender->moveAnimate = true;
+	attacker->sprite.moveAnimate = true;
+	defender->sprite.moveAnimate = true;
 }
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)

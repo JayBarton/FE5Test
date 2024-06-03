@@ -71,7 +71,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 							movingUnit = true;
 							auto unitPosition = selectedUnit->sprite.getPosition();
 							TileManager::tileManager.removeUnit(unitPosition.x, unitPosition.y);
-							selectedUnit->movementComponent.startMovement(drawnPath, path[position].moveCost, remainingMove);
+							selectedUnit->startMovement(drawnPath, path[position].moveCost, remainingMove);
 						}
 					}
 				}
@@ -130,7 +130,7 @@ void Cursor::ClearTiles()
 
 void Cursor::ClearSelected()
 {
-	selectedUnit->moveAnimate = false;
+	selectedUnit->sprite.moveAnimate = false;
 	selectedUnit = nullptr;
 }
 

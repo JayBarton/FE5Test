@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 // The Width of the screen
 const int SCREEN_WIDTH = 800;
@@ -19,6 +20,12 @@ static std::string intToString(int i)
 	s << i;
 	return s.str();
 }
+
+static float EaseOut(float t)
+{
+	return 1 - (1 - t) * (1 - t);
+}
+
 template<typename... Args>
 struct Observer
 {

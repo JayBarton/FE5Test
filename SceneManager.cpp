@@ -11,6 +11,8 @@
 #include <sstream>
 #include <fstream>
 
+#include "ResourceManager.h"
+
 Scene::Scene()
 {
 
@@ -34,6 +36,17 @@ void Scene::init()
 	testText2.nextIndex = 55;
 	testText2.displayedPosition = testText2.position;
 	owner->currentScene = ID;
+
+	UVs.resize(3);
+	UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
+	UVs[0].insert(UVs[0].end(), extras.begin(), extras.end());
+	UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 128, 32, 32, 4, 4);
+	UVs[1].insert(UVs[1].end(), extras.begin(), extras.end());
+	UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(256, 0, 32, 32, 4, 4);
+	UVs[2].insert(UVs[2].end(), extras.begin(), extras.end());
 }
 
 void Scene::extraSetup(Subject<int>* subject)
@@ -71,7 +84,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			{
 				auto position = activeUnit->sprite.getPosition();
 				activeUnit->placeUnit(position.x, position.y);
-				activeUnit->moveAnimate = false;
+				activeUnit->sprite.moveAnimate = false;
 				activeUnit = nullptr;
 				actionIndex++;
 				state = WAITING;
@@ -106,6 +119,26 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				actionIndex++;
 			}
 			break;
+		case SCENE_UNIT_MOVE:
+			bool moving = false;
+			for (int i = 0; i < introUnits.size(); i++)
+			{
+				auto currentUnit = introUnits[i];
+				if (currentUnit->movementComponent.moving)
+				{
+					currentUnit->movementComponent.Update(deltaTime, inputManager);
+					moving = true;
+				}
+				else
+				{
+					currentUnit->sprite.moveAnimate = false;
+				}
+			}
+			if (!moving)
+			{
+				actionIndex++;
+				state = WAITING;
+			}
 		}
 	}
 	else if (actionIndex < actions.size())
@@ -126,7 +159,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			playerManager->AddUnit(action->unitID, action->start);
 			activeUnit = playerManager->playerUnits[playerManager->playerUnits.size() - 1];
 			auto path = pathFinder.findPath(action->start, action->end, 99);
-			activeUnit->movementComponent.startMovement(path, 0, false);
+			activeUnit->movementComponent.startMovement(path, 0);
 			state = UNIT_MOVE;
 			break;
 		}
@@ -137,7 +170,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			auto position = activeUnit->sprite.getPosition();
 			TileManager::tileManager.removeUnit(position.x, position.y);
 			auto path = pathFinder.findPath(position, action->end, 99);
-			activeUnit->movementComponent.startMovement(path, 0, false);
+			activeUnit->movementComponent.startMovement(path, 0);
 			state = UNIT_MOVE;
 
 			break;
@@ -174,10 +207,40 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			break;
 		}
 		case GET_ITEM:
+		{
 			auto action = static_cast<ItemAction*>(currentAction);
 			displays.GetItem(action->ID);
 			state = GET_ITEM;
 			break;
+		}
+		case NEW_SCENE_UNIT_ACTION:
+		{
+			auto action = static_cast<AddSceneUnit*>(currentAction);
+			
+		/*	std::ifstream f("BaseStats.json");
+			json data = json::parse(f);
+			json bases;
+			if (action->team == 0)
+			{
+				bases = data["PlayerUnits"];
+			}
+			else
+			{
+				bases = data["enemies"];
+			}*/
+			SceneUnit* newUnit = new SceneUnit;
+			newUnit->sprite.uv = &UVs[action->unitID];
+			newUnit->team = action->team;
+
+			introUnits.push_back(newUnit);
+			newUnit->sprite.SetPosition(action->start);
+			auto path = pathFinder.findPath(action->start, action->end, 99);
+			newUnit->movementComponent.owner = &newUnit->sprite;
+			newUnit->sprite.setSize(glm::vec2(16));
+			newUnit->movementComponent.startMovement(path, 99);
+			state = SCENE_UNIT_MOVE;
+			break;
+		}
 		}
 	}
 	else

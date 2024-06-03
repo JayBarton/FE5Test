@@ -6,6 +6,8 @@ const static int NEW_UNIT_ACTION = 1;
 const static int MOVE_UNIT_ACTION = 2;
 const static int DIALOGUE_ACTION = 3;
 const static int ITEM_ACTION = 4;
+const static int NEW_SCENE_UNIT_ACTION = 5;
+const static int SCENE_UNIT_MOVE_ACTION = 6;
 
 struct SceneAction
 {
@@ -29,6 +31,18 @@ struct AddUnit : public SceneAction
 	{
 	}
 	int unitID;
+	glm::vec2 start;
+	glm::vec2 end;
+};
+
+struct AddSceneUnit : public SceneAction
+{
+	AddSceneUnit(int type, int unitID, int team, glm::vec2 start, glm::vec2 end) : 
+		SceneAction(type), unitID(unitID), team(team), start(start), end(end)
+	{
+	}
+	int unitID;
+	int team;
 	glm::vec2 start;
 	glm::vec2 end;
 };

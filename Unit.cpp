@@ -33,7 +33,7 @@ void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribut
     this->gen = gen;
     this->distribution = distribution;
     sprite.setSize(glm::vec2(16));
-    movementComponent.owner = this;
+    movementComponent.owner = &this->sprite;
 }
 
 void Unit::placeUnit(int x, int y)
@@ -49,15 +49,7 @@ void Unit::Update(float deltaTime, int idleFrame)
     //Need to figure out a better way to handle animating units in menus, disabling this check for now
    // if (!isDead && !isCarried)
     {
-        if (moveAnimate)
-        {
-         //   sprite.currentFrame = 4;
-            sprite.playAnimation(deltaTime, 4, true);
-        }
-        else
-        {
-            sprite.currentFrame = idleFrame;
-        }
+        sprite.HandleAnimation(deltaTime, idleFrame);
     }
 }
 
@@ -73,7 +65,7 @@ void Unit::SetFocus()
 {
     sprite.currentFrame = 3 + (focusedFacing * 4);
     sprite.startingFrame = sprite.currentFrame;
-    moveAnimate = true;
+    sprite.moveAnimate = true;
 }
 
 void Unit::Draw(SpriteRenderer* Renderer)
@@ -107,7 +99,7 @@ void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
             position = sprite.getPosition();
         }
         glm::vec2 size;
-        if (moveAnimate)
+        if (sprite.moveAnimate)
         {
             size = glm::vec2(32, 32);
             position += glm::vec2(-8, -8);
@@ -569,6 +561,18 @@ void Unit::MountAction(bool on)
             mountMov = 0;
         }
     }
+}
+
+void Unit::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove)
+{
+    if (!remainingMove)
+    {
+        if (isMounted())
+        {
+            mount->remainingMoves = getMove() - moveCost;
+        }
+    }
+    movementComponent.startMovement(path, moveCost);
 }
 
 Item* Unit::GetEquippedItem()
@@ -1303,7 +1307,7 @@ void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector
     }
 }
 
-void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove)
+void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int moveCost)
 {
     if (path.size() > 1)
     {
@@ -1312,13 +1316,6 @@ void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int m
         current = path.size() - 1;
         moving = true;
         owner->moveAnimate = true;
-        if (!remainingMove)
-        {
-            if (owner->isMounted())
-            {
-                owner->mount->remainingMoves = owner->getMove() - moveCost;
-            }
-        }
         previousDirection = glm::vec2(0);
         getNewDirection();
     }
@@ -1328,7 +1325,7 @@ void MovementComponent::getNewDirection()
 {
     if (current == end)
     {
-        owner->sprite.SetPosition(path[current]);
+        owner->SetPosition(path[current]);
         moving = false;
     }
     else
@@ -1352,26 +1349,26 @@ void MovementComponent::getNewDirection()
                 if (direction.x > 0)
                 {
                     owner->facing = 2;
-                    owner->sprite.currentFrame = 11;
-                    owner->sprite.startingFrame = 11;
+                    owner->currentFrame = 11;
+                    owner->startingFrame = 11;
                 }
                 else if (direction.x < 0)
                 {
                     owner->facing = 0;
-                    owner->sprite.currentFrame = 3;
-                    owner->sprite.startingFrame = 3;
+                    owner->currentFrame = 3;
+                    owner->startingFrame = 3;
                 }
                 else if (direction.y < 0)
                 {
                     owner->facing = 1;
-                    owner->sprite.currentFrame = 7;
-                    owner->sprite.startingFrame = 7;
+                    owner->currentFrame = 7;
+                    owner->startingFrame = 7;
                 }
                 else if (direction.y > 0)
                 {
                     owner->facing = 3;
-                    owner->sprite.currentFrame = 15;
-                    owner->sprite.startingFrame = 15;
+                    owner->currentFrame = 15;
+                    owner->startingFrame = 15;
                 }
                 previousDirection = direction;
             }
@@ -1386,12 +1383,12 @@ void MovementComponent::Update(float deltaTime, InputManager& inputManager)
     {
         speed = heldSpeed;
     }
-    glm::vec2 newPosition = owner->sprite.getPosition() + direction * speed;
+    glm::vec2 newPosition = owner->getPosition() + direction * speed;
 
     glm::vec2 toNextNode = newPosition - nextNode;
     if (toNextNode == glm::vec2(0))
     {
-        owner->sprite.SetPosition(newPosition);
+        owner->SetPosition(newPosition);
         getNewDirection();
     }
     else
@@ -1401,19 +1398,19 @@ void MovementComponent::Update(float deltaTime, InputManager& inputManager)
         if (directionDifference.x > 0 || directionDifference.y > 0)
         {
             //Snap object to next node's position
-            owner->sprite.SetPosition(nextNode);
+            owner->SetPosition(nextNode);
             getNewDirection();
             if (moving)
             {
                 //Move the object along towards the new next node by the distance that it overshot
                 //This is to insure that the object moves the same amount each frame
                 float remainingDistance = glm::abs(toNextNode.x) + glm::abs(toNextNode.y);
-                owner->sprite.Move(direction * remainingDistance);
+                owner->Move(direction * remainingDistance);
             }
         }
         else
         {
-            owner->sprite.SetPosition(newPosition);
+            owner->SetPosition(newPosition);
         }
     }
 }

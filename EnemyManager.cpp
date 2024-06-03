@@ -187,7 +187,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
     }
     //  enemies[14]->currentHP = 14;
     //  enemies[0]->move = 6;
-    //  enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+   //   enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
@@ -421,7 +421,7 @@ void EnemyManager::GoShopping(glm::vec2& position, Unit* enemy)
 {
     TileManager::tileManager.removeUnit(position.x, position.y);
     auto path = pathFinder.findPath(position, enemy->storeTarget->position, enemy->getMove());
-    enemy->movementComponent.startMovement(path, enemy->getMove(), false);
+    enemy->startMovement(path, enemy->getMove(), false);
     enemyMoving = true;
     enemy->active = true;
     state = SHOPPING;
@@ -784,7 +784,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
         state = ATTACK;
         attackRange = finalTarget.range;
         battleStats = finalTarget.battleStats;
-        enemy->movementComponent.startMovement(followPath, path[attackPosition].moveCost, false);
+        enemy->startMovement(followPath, path[attackPosition].moveCost, false);
         enemyMoving = true;
     }
 }
@@ -811,7 +811,7 @@ void EnemyManager::ApproachNearest(glm::vec2& position, Unit* enemy)
     }
     auto playerUnit = (*playerUnits)[index];
     auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->getMove());
-    enemy->movementComponent.startMovement(path, enemy->getMove(), false);
+    enemy->startMovement(path, enemy->getMove(), false);
     enemyMoving = true;
 }
 
@@ -935,7 +935,7 @@ void EnemyManager::RangeActivation(Unit* enemy)
                 state = APPROACHING;
                 auto position = enemy->sprite.getPosition();
                 TileManager::tileManager.removeUnit(position.x, position.y);
-                enemy->movementComponent.startMovement(followPath, path[otherPosition].moveCost, false);
+                enemy->startMovement(followPath, path[otherPosition].moveCost, false);
                 enemyMoving = true;
                 enemy->active = true;
             }
@@ -1039,7 +1039,7 @@ void EnemyManager::FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathC
         //Still going to need some way of informing the player that the enemy made a trade though.
         enemy->swapItem(closestFriendly, healIndex, tradeIndex);
         healIndex = tradeIndex;
-        enemy->movementComponent.startMovement(followPath, path[closestPosition].moveCost, false);
+        enemy->startMovement(followPath, path[closestPosition].moveCost, false);
         enemyMoving = true;
         state = TRADING;
     }
@@ -1132,7 +1132,7 @@ void EnemyManager::HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell,
                 followPath.push_back(previous);
                 pathPoint = previous;
             }
-            enemy->movementComponent.startMovement(followPath, path[bestPosition].moveCost, false);
+            enemy->startMovement(followPath, path[bestPosition].moveCost, false);
             enemyMoving = true;
         }
     }
@@ -1189,14 +1189,14 @@ void EnemyManager::CantoMove()
             followPath.push_back(previous);
             pathPoint = previous;
         }
-        enemy->movementComponent.startMovement(followPath, path[bestPosition].moveCost, true);
+        enemy->startMovement(followPath, path[bestPosition].moveCost, true);
     }
 }
 
 void EnemyManager::FinishMove()
 {
     enemies[currentEnemy]->hasMoved = true;
-    enemies[currentEnemy]->moveAnimate = false;
+    enemies[currentEnemy]->sprite.moveAnimate = false;
     enemyMoving = false;
     NextUnit();
 

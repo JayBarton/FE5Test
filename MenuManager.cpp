@@ -1684,6 +1684,7 @@ void TradeMenu::CancelOption()
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.menus.back()->currentOption = 0;
+		MenuManager::menuManager.menus.back()->GetOptions();
 	}
 }
 
@@ -1970,11 +1971,6 @@ void UnitStatsViewMenu::SelectOption()
 {
 }
 
-float EaseOut2(float t)
-{
-	return 1 - (1 - t) * (1 - t);
-}
-
 void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (transition)
@@ -1993,7 +1989,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		float distance = glm::length(goal - start);
 
 		// Calculate easing factor based on current time
-		float easingFactor = EaseOut2(t);
+		float easingFactor = EaseOut(t);
 
 		// Calculate current position based on easing factor
 		float currentPosition = start + direction * (distance * easingFactor);

@@ -61,7 +61,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 				}
 				else
 				{
-					textLines[currentLine].speaker->moveAnimate = false;
+					textLines[currentLine].speaker->sprite.moveAnimate = false;
 				}
 			}
 			else if (nextOption == 3)
@@ -75,7 +75,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 			{
 				if (!talkActivated)
 				{
-					textLines[currentLine].speaker->moveAnimate = false;
+					textLines[currentLine].speaker->sprite.moveAnimate = false;
 				}
 				currentLine++;
 				if (currentLine < textLines.size())

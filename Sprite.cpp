@@ -120,6 +120,18 @@ void Sprite::SetPosition(glm::vec2 newPosition)
     updateDrawMatrix = true;
 }
 
+void Sprite::HandleAnimation(float deltaTime, int idleFrame)
+{
+    if (moveAnimate)
+    {
+        playAnimation(deltaTime, 4, true);
+    }
+    else
+    {
+        currentFrame = idleFrame;
+    }
+}
+
 void Sprite::checkMatrixUpdate()
 {
     if (parent == nullptr)
