@@ -56,6 +56,15 @@ struct UnitMove : public SceneAction
 	glm::vec2 end;
 };
 
+struct SceneUnitMove : public SceneAction
+{
+	SceneUnitMove(int type, int unitID, glm::vec2 end) : SceneAction(type), unitID(unitID), end(end)
+	{
+	}
+	int unitID;
+	glm::vec2 end;
+};
+
 //not really sure what we're doing with this one
 //Maybe it will point to a file the dialogue is in?
 struct DialogueAction : public SceneAction

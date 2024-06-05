@@ -34,7 +34,7 @@ void TextObjectManager::init(int line/* = 0 */ )
 	{
 		if (!talkActivated)
 		{
-			textLines[currentLine].speaker->SetFocus();
+			textLines[currentLine].speaker->setFocus();
 		}
 	}
 	active = false;
@@ -61,7 +61,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 				}
 				else
 				{
-					textLines[currentLine].speaker->sprite.moveAnimate = false;
+					textLines[currentLine].speaker->moveAnimate = false;
 				}
 			}
 			else if (nextOption == 3)
@@ -75,7 +75,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 			{
 				if (!talkActivated)
 				{
-					textLines[currentLine].speaker->sprite.moveAnimate = false;
+					textLines[currentLine].speaker->moveAnimate = false;
 				}
 				currentLine++;
 				if (currentLine < textLines.size())
@@ -89,7 +89,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Curs
 					textObjects[focusedObject].text = textLines[currentLine].text;
 					if (!talkActivated)
 					{
-						textLines[currentLine].speaker->SetFocus();
+						textLines[currentLine].speaker->setFocus();
 					}
 					textObjects[focusedObject].index = 0;
 				}

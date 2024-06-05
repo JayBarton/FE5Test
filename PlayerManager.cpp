@@ -8,46 +8,12 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "SBatch.h"
+
+#include "UnitResources.h"
 using json = nlohmann::json;
 
 void PlayerManager::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents, std::unordered_map<int, Unit*>* sceneUnits)
 {
-	playerUVs.resize(8);
-	//Leif
-	/*
-	* AB.reserve( A.size() + B.size() ); // preallocate memory
-AB.insert( AB.end(), A.begin(), A.end() );
-AB.insert( AB.end(), B.begin(), B.end() );
-	*/
-	playerUVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	auto extras = ResourceManager::GetTexture("movesprites").GetUVs(0, 0, 32, 32, 4, 4);
-	playerUVs[0].insert(playerUVs[0].end(), extras.begin(), extras.end());
-	//Finn
-	playerUVs[1] = ResourceManager::GetTexture("sprites").GetUVs(0, 80, TileManager::TILE_SIZE, 20, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 0, 32, 32, 4, 4);
-	playerUVs[1].insert(playerUVs[1].end(), extras.begin(), extras.end());
-	//Eyvale
-	playerUVs[2] = ResourceManager::GetTexture("sprites").GetUVs(45, 64, 15, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(384, 128, 32, 32, 4, 4);
-	playerUVs[2].insert(playerUVs[2].end(), extras.begin(), extras.end());
-	//Halvan/Othin
-	playerUVs[3] = ResourceManager::GetTexture("sprites").GetUVs(0, 64, 15, TileManager::TILE_SIZE, 3, 1);
-	playerUVs[4] = ResourceManager::GetTexture("sprites").GetUVs(0, 64, 15, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 0, 32, 32, 4, 4);
-	playerUVs[3].insert(playerUVs[3].end(), extras.begin(), extras.end());
-	playerUVs[4].insert(playerUVs[4].end(), extras.begin(), extras.end());
-	//Dagda
-	playerUVs[5] = ResourceManager::GetTexture("sprites").GetUVs(96, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(512, 0, 32, 32, 4, 4);
-	playerUVs[5].insert(playerUVs[5].end(), extras.begin(), extras.end());
-	//Tanya
-	playerUVs[6] = ResourceManager::GetTexture("sprites").GetUVs(0, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(512, 128, 32, 32, 4, 4);
-	playerUVs[6].insert(playerUVs[6].end(), extras.begin(), extras.end());
-	//Marty
-	playerUVs[7] = ResourceManager::GetTexture("sprites").GetUVs(48, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(384, 0, 32, 32, 4, 4);
-	playerUVs[7].insert(playerUVs[7].end(), extras.begin(), extras.end());
 	this->gen = gen;
 	this->distribution = distribution;
 	this->unitEvents = unitEvents;
@@ -134,7 +100,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			newUnit->level = stats["Level"];
 			(*sceneUnits)[newUnit->sceneID] = newUnit;
 			auto animData = unit["AnimData"];
-			newUnit->focusedFacing = animData["FocusFace"];
+			newUnit->sprite.focusedFacing = animData["FocusFace"];
 
 			json growths = unit["GrowthRates"];
 			HP = growths["HP"];
@@ -180,7 +146,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			}
 			newUnit->subject.addObserver(unitEvents);
 			newUnit->init(gen, distribution);
-			newUnit->sprite.uv = &playerUVs[ID];
+			newUnit->sprite.uv = &UnitResources::unitUVs[unit["ClassID"]];
 			newUnit->placeUnit(position.x, position.y);
 			return newUnit;
 		}

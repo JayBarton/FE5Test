@@ -1,5 +1,5 @@
 {
-  "enemies": [
+  "classes": [
     {
       "ID": 0,
       "Name": "Soldier",
@@ -66,7 +66,7 @@
       }
     },
     {
-      "ID": 3,
+      "ID": 33,
       "Name": "Mage",
       "Stats": {
         "HP": 18,
@@ -84,6 +84,218 @@
         "Thunder": 2,
         "Wind": 1
       }
+    },
+    {
+      "ID": 3,
+      "Name": "Lord",
+      "Stats": {
+        "HP": 18,
+        "Str": 4,
+        "Mag": 0,
+        "Skl": 2,
+        "Spd": 3,
+        "Lck": 0,
+        "Def": 2,
+        "Bld": 5,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Sword": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
+      }
+    },
+    {
+      "ID": 4,
+      "Name": "Lance Knight",
+      "Stats": {
+        "HP": 20,
+        "Str": 3,
+        "Mag": 0,
+        "Skl": 3,
+        "Spd": 4,
+        "Lck": 0,
+        "Def": 3,
+        "Bld": 7,
+        "Mov": 8
+      },
+      "WeaponProf": {
+        "Sword": 1,
+        "Lance": 1
+      },
+      "AnimData": {
+        "FocusFace": 0
+      }
+    },
+    {
+      "ID": 5,
+      "Name": "Sword Master",
+      "Stats": {
+        "HP": 20,
+        "Str": 4,
+        "Mag": 1,
+        "Skl": 8,
+        "Spd": 10,
+        "Lck": 0,
+        "Def": 4,
+        "Bld": 5,
+        "Mov": 7
+      },
+      "WeaponProf": {
+        "Sword": 3
+      },
+      "AnimData": {
+        "FocusFace": 2
+      }
+    },
+    {
+      "ID": 6,
+      "Name": "Axe Fighter",
+      "Stats": {
+        "HP": 20,
+        "Str": 4,
+        "Mag": 0,
+        "Skl": 4,
+        "Spd": 5,
+        "Lck": 0,
+        "Def": 2,
+        "Bld": 8,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Axe": 1
+      },
+      "AnimData": {
+        "FocusFace": 0
+      }
+    },
+    {
+      "ID": 7,
+      "Name": "Warrior",
+      "Stats": {
+        "HP": 28,
+        "Str": 8,
+        "Mag": 1,
+        "Skl": 5,
+        "Spd": 6,
+        "Lck": 0,
+        "Def": 6,
+        "Bld": 10,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Axe": 2,
+        "Bow": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
+      }
+    },
+    {
+      "ID": 8,
+      "Name": "Bow Fighter",
+      "Stats": {
+        "HP": 16,
+        "Str": 2,
+        "Mag": 0,
+        "Skl": 3,
+        "Spd": 5,
+        "Lck": 0,
+        "Def": 1,
+        "Bld": 4,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Bow": 1
+      },
+      "AnimData": {
+        "FocusFace": 2
+      }
+    },
+    {
+      "ID": 9,
+      "Name": "Mountain Thief",
+      "Stats": {
+        "HP": 22,
+        "Str": 5,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 3,
+        "Bld": 9,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Axe": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
+      }
+    },
+    {
+      "ID": 10,
+      "Name": "Mountain Thief",
+      "Stats": {
+        "HP": 22,
+        "Str": 5,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 3,
+        "Bld": 9,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Axe": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
+      }
+    },
+    {
+      "ID": 11,
+      "Name": "Mountain Thief",
+      "Stats": {
+        "HP": 22,
+        "Str": 5,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 3,
+        "Bld": 9,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Axe": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
+      }
+    },
+    {
+      "ID": 12,
+      "Name": "Mountain Thief",
+      "Stats": {
+        "HP": 22,
+        "Str": 5,
+        "Mag": 0,
+        "Skl": 0,
+        "Spd": 0,
+        "Lck": 0,
+        "Def": 3,
+        "Bld": 9,
+        "Mov": 6
+      },
+      "WeaponProf": {
+        "Axe": 1
+      },
+      "AnimData": {
+        "FocusFace": 3
+      }
     }
   ],
   "PlayerUnits": [
@@ -91,6 +303,7 @@
       "ID": 0,
       "Name": "Leif",
       "Class": "Lord",
+      "ClassID" :  3,
       "Stats": {
         "Level": 1,
         "HP": 22,
@@ -131,6 +344,7 @@
       "ID": 1,
       "Name": "Finn",
       "Class": "Lance Knight",
+      "ClassID": 4,
       "Stats": {
         "Level": 7,
         "HP": 28,
@@ -171,7 +385,8 @@
     {
       "ID": 2,
       "Name": "Eyvale",
-      "Class": "SwordMaster",
+      "Class": "Sword Master",
+      "ClassID": 5,
       "Stats": {
         "Level": 12,
         "HP": 28,
@@ -211,6 +426,7 @@
       "ID": 3,
       "Name": "Halvan",
       "Class": "Axe Fighter",
+      "ClassID": 6,
       "Stats": {
         "Level": 2,
         "HP": 28,
@@ -250,6 +466,7 @@
       "ID": 4,
       "Name": "Othin",
       "Class": "Axe Fighter",
+      "ClassID": 6,
       "Stats": {
         "Level": 1,
         "HP": 27,
@@ -289,6 +506,7 @@
       "ID": 5,
       "Name": "Dagda",
       "Class": "Warrior",
+      "ClassID": 7,
       "Stats": {
         "Level": 6,
         "HP": 43,
@@ -329,6 +547,7 @@
       "ID": 6,
       "Name": "Tania",
       "Class": "Bow Fighter",
+      "ClassID": 8,
       "Stats": {
         "Level": 1,
         "HP": 20,
@@ -368,6 +587,7 @@
       "ID": 7,
       "Name": "Marty",
       "Class": "Mountain Thief",
+      "ClassID": 9,
       "Stats": {
         "Level": 1,
         "HP": 32,

@@ -8,6 +8,8 @@
 #include "SBatch.h"
 #include "Vendor.h"
 
+#include "UnitResources.h"
+
 #include <algorithm>
 #include <fstream>  
 #include "InfoDisplays.h"
@@ -15,26 +17,17 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors)
+void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution,
+    std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors)
 {
-    UVs.resize(3);
-    UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-    auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
-    UVs[0].insert(UVs[0].end(), extras.begin(), extras.end());
-    UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-    extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 128, 32, 32, 4, 4);
-    UVs[1].insert(UVs[1].end(), extras.begin(), extras.end());
-    UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-    extras = ResourceManager::GetTexture("movesprites").GetUVs(256, 0, 32, 32, 4, 4);
-    UVs[2].insert(UVs[2].end(), extras.begin(), extras.end());
-    std::vector<Unit> unitBases;
-    unitBases.resize(4);
+    std::vector<JSONUnit> unitBases;
+    unitBases.resize(14);
     this->playerUnits = playerUnits;
     this->vendors = vendors;
 
     std::ifstream f("BaseStats.json");
     json data = json::parse(f);
-    json bases = data["enemies"];
+    json bases = data["classes"];
     int currentUnit = 0;
     std::unordered_map<std::string, int> weaponNameMap;
     weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
@@ -61,7 +54,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         int def = stats["Def"];
         int bld = stats["Bld"];
         int mov = stats["Mov"];
-        unitBases[currentUnit] = Unit(name, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
+        unitBases[currentUnit] = JSONUnit(name, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
 
         json weaponProf = enemy["WeaponProf"];
         for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
@@ -173,7 +166,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         }
 
         enemies[i]->placeUnit(position.x, position.y);
-        enemies[i]->sprite.uv = &UVs[enemies[i]->ID];
+        enemies[i]->sprite.uv = &UnitResources::unitUVs[enemies[i]->ID];
         //I'm thinking I will move the anim data to its own json, so I won't need to go through here again.
         for (const auto& enemy : bases)
         {
@@ -181,7 +174,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
             if (ID == enemies[i]->ID)
             {
                 auto animData = enemy["AnimData"];
-                enemies[i]->focusedFacing = animData["FocusFace"];
+                enemies[i]->sprite.focusedFacing = animData["FocusFace"];
             }
         }
     }

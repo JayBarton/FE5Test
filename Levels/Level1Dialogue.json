@@ -269,6 +269,26 @@
           "speech": "Who would want to come to a place like this on purpose you jerk!<1"
         }
       ]
+    },
+    {
+      "ID": 12,
+      "dialogue": [
+        {
+          "speaker": 0,
+          "location": 0,
+          "speech": "Just making sure we can talk to each other<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "speech": "I'm talking fine, I think.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "speech": "Yes, yes. Very good.<1"
+        }
+      ]
     }
   ]
 }

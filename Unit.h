@@ -88,6 +88,30 @@ struct TalkData
 	int talkTarget;
 };
 
+//This struct represents just the data that needs to be loaded from json
+struct JSONUnit 
+{
+	JSONUnit(){}
+	JSONUnit(std::string Class, std::string Name, int ID, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) :
+		className(Class), name(Name), ID(ID), HP(HP), str(str), mag(mag), skl(skl), spd(spd), lck(lck), def(def), bld(bld), mov(mov)
+	{}
+	int ID;
+	std::string name;
+	std::string className;
+	int HP;
+	int str;
+	int mag;
+	int skl;
+	int spd;
+	int lck;
+	int def;
+	int bld;
+	int mov;
+	int classPower = 3;
+	int weaponProficiencies[10] = { 0 };
+	std::vector<int> skills;
+};
+
 class WeaponData;
 struct Unit
 {
@@ -103,12 +127,21 @@ struct Unit
 	const static int FLYING = 2;
 
 	Unit();
-	Unit(std::string Class, std::string Name, int ID, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) : 
+	Unit(std::string Class, std::string Name, int ID, int HP, int str, int mag, int skl, int spd, int lck, int def, int bld, int mov) :
 		unitClass(Class), name(Name), ID(ID), maxHP(HP), strength(str), magic(mag), skill(skl), speed(spd), luck(lck), defense(def), build(bld), move(mov)
 	{
 		currentHP = maxHP;
 		movementType = FOOT;
 	}
+
+	Unit(JSONUnit jUnit) : 
+		Unit(jUnit.className, jUnit.name, jUnit.ID, jUnit.HP, jUnit.str, jUnit.mag, jUnit.skl, jUnit.spd, jUnit.lck, jUnit.def, jUnit.bld, jUnit.bld)
+	{
+		std::copy(std::begin(jUnit.weaponProficiencies), std::end(jUnit.weaponProficiencies), weaponProficiencies);
+		skills = jUnit.skills;
+		classPower = jUnit.classPower;
+	}
+
 	~Unit();
 
 	//Not really sure where I'm passing this in, but the units should have a reference to the generator I think
@@ -160,8 +193,6 @@ struct Unit
 	int team = 0;
 
 	int movementType;
-
-	int focusedFacing = 0;
 
 	bool hasMoved = false;
 	//Also for experience calculations, but probably unneeded for this project

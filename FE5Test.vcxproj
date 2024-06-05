@@ -168,6 +168,7 @@
     <ClInclude Include="TileManager.h" />
     <ClInclude Include="Timing.h" />
     <ClInclude Include="Unit.h" />
+    <ClInclude Include="UnitResources.h" />
     <ClInclude Include="Vendor.h" />
   </ItemGroup>
   <ItemGroup>
@@ -200,6 +201,7 @@
     <ClCompile Include="TileManager.cpp" />
     <ClCompile Include="Timing.cpp" />
     <ClCompile Include="Unit.cpp" />
+    <ClCompile Include="UnitResources.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BaseStats.json" />

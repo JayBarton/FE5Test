@@ -12,6 +12,7 @@
 #include <fstream>
 
 #include "ResourceManager.h"
+#include "UnitResources.h"
 
 Scene::Scene()
 {
@@ -36,17 +37,6 @@ void Scene::init()
 	testText2.nextIndex = 55;
 	testText2.displayedPosition = testText2.position;
 	owner->currentScene = ID;
-
-	UVs.resize(3);
-	UVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
-	UVs[0].insert(UVs[0].end(), extras.begin(), extras.end());
-	UVs[1] = ResourceManager::GetTexture("sprites").GetUVs(48, 48, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(768, 128, 32, 32, 4, 4);
-	UVs[1].insert(UVs[1].end(), extras.begin(), extras.end());
-	UVs[2] = ResourceManager::GetTexture("sprites").GetUVs(96, 0, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
-	extras = ResourceManager::GetTexture("movesprites").GetUVs(256, 0, 32, 32, 4, 4);
-	UVs[2].insert(UVs[2].end(), extras.begin(), extras.end());
 }
 
 void Scene::extraSetup(Subject<int>* subject)
@@ -57,10 +47,10 @@ void Scene::extraSetup(Subject<int>* subject)
 	subject->addObserver(type->roundEvents);
 }
 
-void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits, 
+void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
 	Camera& camera, InputManager& inputManager, Cursor& cursor, InfoDisplays& displays)
 {
-	if (state!= WAITING)
+	if (state != WAITING)
 	{
 		switch (state)
 		{
@@ -190,7 +180,15 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					auto dialogues = text["dialogue"];
 					for (const auto& dialogue : dialogues)
 					{
-						Unit* speaker = sceneUnits[dialogue["speaker"]];
+						Sprite* speaker;
+						if (introUnits.size() > 0)
+						{
+							speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
+						}
+						else
+						{
+							speaker = &sceneUnits[dialogue["speaker"]]->sprite;
+						}
 
 						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"] });
 					}
@@ -216,20 +214,9 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 		case NEW_SCENE_UNIT_ACTION:
 		{
 			auto action = static_cast<AddSceneUnit*>(currentAction);
-			
-		/*	std::ifstream f("BaseStats.json");
-			json data = json::parse(f);
-			json bases;
-			if (action->team == 0)
-			{
-				bases = data["PlayerUnits"];
-			}
-			else
-			{
-				bases = data["enemies"];
-			}*/
+
 			SceneUnit* newUnit = new SceneUnit;
-			newUnit->sprite.uv = &UVs[action->unitID];
+			newUnit->sprite.uv = &UnitResources::unitUVs[action->unitID];
 			newUnit->team = action->team;
 
 			introUnits.push_back(newUnit);
@@ -238,13 +225,42 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			newUnit->movementComponent.owner = &newUnit->sprite;
 			newUnit->sprite.setSize(glm::vec2(16));
 			newUnit->movementComponent.startMovement(path, 99);
+
+			std::ifstream f("BaseStats.json");
+			json data = json::parse(f);
+			json bases;
+
+			bases = data["classes"];
+			for (const auto& unit : bases)
+			{
+				int ID = unit["ID"];
+				if (ID == action->unitID)
+				{
+					auto animData = unit["AnimData"];
+					newUnit->sprite.focusedFacing = animData["FocusFace"];
+				}
+			}
 			state = SCENE_UNIT_MOVE;
 			break;
 		}
+		case SCENE_UNIT_MOVE_ACTION:
+			auto action = static_cast<UnitMove*>(currentAction);
+			auto currentUnit = introUnits[action->unitID];
+			auto position = currentUnit->sprite.getPosition();
+			TileManager::tileManager.removeUnit(position.x, position.y);
+			auto path = pathFinder.findPath(position, action->end, 99);
+			currentUnit->movementComponent.startMovement(path, 0);
+			state = SCENE_UNIT_MOVE;
+			break;
 		}
 	}
 	else
 	{
+		for (int i = 0; i < introUnits.size(); i++)
+		{
+			delete introUnits[i];
+		}
+		introUnits.clear();
 		if (initiator)
 		{
 			//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,

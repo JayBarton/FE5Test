@@ -117,6 +117,8 @@ public:
 
     void checkMatrixUpdate();
 
+    void setFocus();
+
     bool active;
     bool updateDrawMatrix;
     bool moveAnimate = false;
@@ -126,6 +128,7 @@ public:
 
     //0 left, 1 up, 2 right, 3 down
     int facing;
+    int focusedFacing;
 
     float rotation; //this and facing are kind of odd
 

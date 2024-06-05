@@ -159,6 +159,13 @@ void Sprite::checkMatrixUpdate()
     }
 }
 
+void Sprite::setFocus()
+{
+    currentFrame = 3 + (focusedFacing * 4);
+    startingFrame = currentFrame;
+    moveAnimate = true;
+}
+
 void Sprite::playAnimation(float delta, int numberOfFrames, bool doubleFrames)
 {
     timeForFrame += delta;

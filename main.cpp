@@ -32,6 +32,8 @@
 
 #include "Vendor.h"
 
+#include "UnitResources.h"
+
 #include "csv.h"
 #include <nlohmann/json.hpp>
 
@@ -339,6 +341,8 @@ int main(int argc, char** argv)
 	minimap.cursorUvs = ResourceManager::GetTexture("cursor").GetUVs(32, 0, 70, 62, 2, 1, 2);
 	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
+	UnitResources::LoadUVs();
+
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
 	ItemManager::itemManager.SetUpItems();
@@ -623,7 +627,7 @@ int main(int argc, char** argv)
 
 		fps = fpsLimiter.end();
 		//std::cout << fps << std::endl;
-		std::cout << cursor.position.x << " " << cursor.position.y << std::endl;
+	//	std::cout << cursor.position.x << " " << cursor.position.y << std::endl;
 	}
 
 	delete Renderer;
@@ -888,9 +892,14 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	intro->owner = &sceneManager;
 	intro->actions.resize(4);
 	intro->actions[0] = new CameraMove(CAMERA_ACTION, glm::vec2(208, 112));
-	intro->actions[1] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 2, 1, glm::vec2(272, 80), glm::vec2(272, 80));
-	intro->actions[2] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, glm::vec2(272, 80), glm::vec2(272, 96));
-	intro->actions[3] = new DialogueAction(DIALOGUE_ACTION, 4);
+	intro->actions[1] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 10, 1, glm::vec2(272, 80), glm::vec2(272, 80));
+	intro->actions[2] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 2, 1, glm::vec2(272, 80), glm::vec2(272, 96));
+	intro->actions[3] = new DialogueAction(DIALOGUE_ACTION, 12);
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 1, glm::vec2(288, 112)));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, glm::vec2(272, 96)));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 11, 0, glm::vec2(256, 112), glm::vec2(256, 112)));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 12, 0, glm::vec2(272, 112), glm::vec2(272, 112)));
+	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 12));
 	sceneManager.scenes.push_back(intro);
 	intro->init();
 
@@ -936,7 +945,7 @@ void Draw()
 		playerManager.Draw(&Batch);
 		enemyManager.Draw(&Batch);
 		Batch.end();
-	//	Batch.renderBatch();
+		//Batch.renderBatch();
 
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 		if (currentTurn == 0)

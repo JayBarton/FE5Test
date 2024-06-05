@@ -24,7 +24,7 @@ struct TextObject
 
 struct SpeakerText
 {
-	class Unit* speaker = nullptr;
+	class Sprite* speaker = nullptr;
 	int location;
 	std::string text;
 };

@@ -61,7 +61,6 @@ struct EnemyManager
 
 	ActionState state = GET_TARGET;
 
-	std::vector<std::vector<glm::vec4>> UVs;
 	std::vector<Unit*>* playerUnits;
 	std::vector<struct Vendor>* vendors;
 

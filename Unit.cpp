@@ -63,9 +63,7 @@ void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
 
 void Unit::SetFocus()
 {
-    sprite.currentFrame = 3 + (focusedFacing * 4);
-    sprite.startingFrame = sprite.currentFrame;
-    sprite.moveAnimate = true;
+    sprite.setFocus();
 }
 
 void Unit::Draw(SpriteRenderer* Renderer)

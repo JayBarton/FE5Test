@@ -5,7 +5,6 @@
 struct PlayerManager
 {
 	std::vector<Unit*> playerUnits;
-	std::vector<std::vector<glm::vec4>> playerUVs;
 	std::unordered_map<std::string, int> weaponNameMap;
 
 	std::mt19937* gen;
