@@ -570,7 +570,7 @@ void Unit::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool
             mount->remainingMoves = getMove() - moveCost;
         }
     }
-    movementComponent.startMovement(path, moveCost);
+    movementComponent.startMovement(path);
 }
 
 Item* Unit::GetEquippedItem()
@@ -1305,7 +1305,7 @@ void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector
     }
 }
 
-void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int moveCost)
+void MovementComponent::startMovement(const std::vector<glm::ivec2>& path)
 {
     if (path.size() > 1)
     {
@@ -1374,9 +1374,14 @@ void MovementComponent::getNewDirection()
     }
 }
 
-void MovementComponent::Update(float deltaTime, InputManager& inputManager)
+void MovementComponent::Update(float deltaTime, InputManager& inputManager, float inputSpeed)
 {
     float speed = Settings::settings.unitSpeed;
+
+    if (inputSpeed > 0)
+    {
+        speed = inputSpeed;
+    }
     if (inputManager.isKeyDown(SDLK_RETURN))
     {
         speed = heldSpeed;

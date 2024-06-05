@@ -77,9 +77,9 @@ struct MovementComponent
 	int current;
 	int end;
 	bool moving = false;
-	void startMovement(const std::vector<glm::ivec2>& path, int moveCost);
+	void startMovement(const std::vector<glm::ivec2>& path);
 	void getNewDirection();
-	void Update(float deltaTime, InputManager& inputManager);
+	void Update(float deltaTime, InputManager& inputManager, float inputSpeed = 0);
 };
 
 struct TalkData

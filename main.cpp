@@ -627,7 +627,7 @@ int main(int argc, char** argv)
 
 		fps = fpsLimiter.end();
 		//std::cout << fps << std::endl;
-	//	std::cout << cursor.position.x << " " << cursor.position.y << std::endl;
+		std::cout << cursor.position.x << " " << cursor.position.y << std::endl;
 	}
 
 	delete Renderer;
@@ -892,14 +892,38 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	intro->owner = &sceneManager;
 	intro->actions.resize(4);
 	intro->actions[0] = new CameraMove(CAMERA_ACTION, glm::vec2(208, 112));
-	intro->actions[1] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 10, 1, glm::vec2(272, 80), glm::vec2(272, 80));
-	intro->actions[2] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 2, 1, glm::vec2(272, 80), glm::vec2(272, 96));
+	std::vector<glm::ivec2> path;
+	path.push_back(glm::ivec2(272, 80));
+	intro->actions[1] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 10, 1, path);
+	path.push_back(glm::ivec2(272, 96));
+	intro->actions[2] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 2, 1, path);
 	intro->actions[3] = new DialogueAction(DIALOGUE_ACTION, 12);
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 1, glm::vec2(288, 112)));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, glm::vec2(272, 96)));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 11, 0, glm::vec2(256, 112), glm::vec2(256, 112)));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 12, 0, glm::vec2(272, 112), glm::vec2(272, 112)));
-	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 12));
+
+	path.clear();
+	path.push_back(glm::ivec2(288, 208));
+	path.push_back(glm::ivec2(288, 192));
+	path.push_back(glm::ivec2(240, 192));
+	path.push_back(glm::ivec2(240, 128));
+	path.push_back(glm::ivec2(272, 128));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path));
+	//intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 0, glm::vec2(272, 208), glm::vec2(256, 128)));
+
+	path.clear();
+	path.push_back(glm::ivec2(272, 96));
+	path.push_back(glm::ivec2(288, 96));
+	path.push_back(glm::ivec2(288, 112));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 1, path));
+	path.clear();
+	path.push_back(glm::ivec2(272, 80));
+	path.push_back(glm::ivec2(272, 96));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
+	path.clear();
+	path.push_back(glm::ivec2(256, 112));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 11, 0, path));
+	path.clear();
+	path.push_back(glm::ivec2(272, 112));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 12, 0, path));
+	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 13));
 	sceneManager.scenes.push_back(intro);
 	intro->init();
 
@@ -945,7 +969,7 @@ void Draw()
 		playerManager.Draw(&Batch);
 		enemyManager.Draw(&Batch);
 		Batch.end();
-		//Batch.renderBatch();
+	//	Batch.renderBatch();
 
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 		if (currentTurn == 0)

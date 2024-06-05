@@ -37,14 +37,13 @@ struct AddUnit : public SceneAction
 
 struct AddSceneUnit : public SceneAction
 {
-	AddSceneUnit(int type, int unitID, int team, glm::vec2 start, glm::vec2 end) : 
-		SceneAction(type), unitID(unitID), team(team), start(start), end(end)
+	AddSceneUnit(int type, int unitID, int team, std::vector<glm::ivec2> path) : 
+		SceneAction(type), unitID(unitID), team(team), path(path)
 	{
 	}
 	int unitID;
 	int team;
-	glm::vec2 start;
-	glm::vec2 end;
+	std::vector<glm::ivec2> path;
 };
 
 struct UnitMove : public SceneAction
@@ -58,11 +57,11 @@ struct UnitMove : public SceneAction
 
 struct SceneUnitMove : public SceneAction
 {
-	SceneUnitMove(int type, int unitID, glm::vec2 end) : SceneAction(type), unitID(unitID), end(end)
+	SceneUnitMove(int type, int unitID, std::vector<glm::ivec2> path) : SceneAction(type), unitID(unitID), path(path)
 	{
 	}
 	int unitID;
-	glm::vec2 end;
+	std::vector<glm::ivec2> path;
 };
 
 //not really sure what we're doing with this one

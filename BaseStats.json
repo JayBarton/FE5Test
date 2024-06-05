@@ -236,7 +236,7 @@
     },
     {
       "ID": 10,
-      "Name": "Mountain Thief",
+      "Name": "Baron",
       "Stats": {
         "HP": 22,
         "Str": 5,
@@ -257,7 +257,7 @@
     },
     {
       "ID": 11,
-      "Name": "Mountain Thief",
+      "Name": "Sword Fighter",
       "Stats": {
         "HP": 22,
         "Str": 5,
@@ -278,7 +278,7 @@
     },
     {
       "ID": 12,
-      "Name": "Mountain Thief",
+      "Name": "Nanna",
       "Stats": {
         "HP": 22,
         "Str": 5,
@@ -294,7 +294,7 @@
         "Axe": 1
       },
       "AnimData": {
-        "FocusFace": 3
+        "FocusFace": 0
       }
     }
   ],

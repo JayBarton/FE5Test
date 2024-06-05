@@ -289,6 +289,31 @@
           "speech": "Yes, yes. Very good.<1"
         }
       ]
+    },
+    {
+      "ID": 13,
+      "dialogue": [
+        {
+          "speaker": 0,
+          "location": 0,
+          "speech": "On a dillema<0"
+        },
+        {
+          "speaker": 4,
+          "location": 1,
+          "speech": "Between what I need and what I just want.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "speech": "Between your thighs I feel a sensation.<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "speech": "How long can I resist the temptation?<1"
+        }
+      ]
     }
   ]
 }

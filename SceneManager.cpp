@@ -7,6 +7,7 @@
 #include "Cursor.h"
 #include "InfoDisplays.h"
 #include "MenuManager.h"
+#include "SDL.h"
 
 #include <sstream>
 #include <fstream>
@@ -50,6 +51,8 @@ void Scene::extraSetup(Subject<int>* subject)
 void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
 	Camera& camera, InputManager& inputManager, Cursor& cursor, InfoDisplays& displays)
 {
+	//I am thinking scene actions will have a delay on them. -1 will mean until the action is completely finished, anything else will be the time
+	//Until the next action starts
 	if (state != WAITING)
 	{
 		switch (state)
@@ -82,6 +85,10 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			break;
 		case TEXT:
 			textManager.Update(deltaTime, inputManager, cursor);
+			if (inputManager.isKeyPressed(SDLK_SPACE))
+			{
+				textManager.active = false;
+			}
 			if (!textManager.active)
 			{
 				actionIndex++;
@@ -116,7 +123,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				auto currentUnit = introUnits[i];
 				if (currentUnit->movementComponent.moving)
 				{
-					currentUnit->movementComponent.Update(deltaTime, inputManager);
+					currentUnit->movementComponent.Update(deltaTime, inputManager, 1.0f);
 					moving = true;
 				}
 				else
@@ -149,7 +156,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			playerManager->AddUnit(action->unitID, action->start);
 			activeUnit = playerManager->playerUnits[playerManager->playerUnits.size() - 1];
 			auto path = pathFinder.findPath(action->start, action->end, 99);
-			activeUnit->movementComponent.startMovement(path, 0);
+			activeUnit->movementComponent.startMovement(path);
 			state = UNIT_MOVE;
 			break;
 		}
@@ -160,7 +167,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			auto position = activeUnit->sprite.getPosition();
 			TileManager::tileManager.removeUnit(position.x, position.y);
 			auto path = pathFinder.findPath(position, action->end, 99);
-			activeUnit->movementComponent.startMovement(path, 0);
+			activeUnit->movementComponent.startMovement(path);
 			state = UNIT_MOVE;
 
 			break;
@@ -220,11 +227,12 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			newUnit->team = action->team;
 
 			introUnits.push_back(newUnit);
-			newUnit->sprite.SetPosition(action->start);
-			auto path = pathFinder.findPath(action->start, action->end, 99);
+			newUnit->sprite.SetPosition(action->path[0]);
+			std::reverse(action->path.begin(), action->path.end());
+
 			newUnit->movementComponent.owner = &newUnit->sprite;
 			newUnit->sprite.setSize(glm::vec2(16));
-			newUnit->movementComponent.startMovement(path, 99);
+			newUnit->movementComponent.startMovement(action->path);
 
 			std::ifstream f("BaseStats.json");
 			json data = json::parse(f);
@@ -240,16 +248,51 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					newUnit->sprite.focusedFacing = animData["FocusFace"];
 				}
 			}
+			//SUPER proof of concept, just want to try out units moving at the same time
+			if (action->unitID == 0)
+			{
+				//1, 0, glm::vec2(272, 208), glm::vec2(256, 128)));
+				SceneUnit* newUnit = new SceneUnit;
+				newUnit->sprite.uv = &UnitResources::unitUVs[1];
+				newUnit->team = 1;
+
+				introUnits.push_back(newUnit);
+				newUnit->sprite.SetPosition(glm::vec2(272, 208));
+
+				std::vector<glm::ivec2> path;
+				path.push_back(glm::ivec2(272, 208));
+				path.push_back(glm::ivec2(272, 192));
+				path.push_back(glm::ivec2(256, 192));
+				path.push_back(glm::ivec2(256, 128));
+				std::reverse(path.begin(), path.end());
+				newUnit->movementComponent.owner = &newUnit->sprite;
+				newUnit->sprite.setSize(glm::vec2(16));
+				newUnit->movementComponent.startMovement(path);
+
+				std::ifstream f("BaseStats.json");
+				json data = json::parse(f);
+				json bases;
+
+				bases = data["classes"];
+				for (const auto& unit : bases)
+				{
+					int ID = unit["ID"];
+					if (ID == 1)
+					{
+						auto animData = unit["AnimData"];
+						newUnit->sprite.focusedFacing = animData["FocusFace"];
+					}
+				}
+			}
+
 			state = SCENE_UNIT_MOVE;
 			break;
 		}
 		case SCENE_UNIT_MOVE_ACTION:
-			auto action = static_cast<UnitMove*>(currentAction);
+			auto action = static_cast<SceneUnitMove*>(currentAction);
 			auto currentUnit = introUnits[action->unitID];
-			auto position = currentUnit->sprite.getPosition();
-			TileManager::tileManager.removeUnit(position.x, position.y);
-			auto path = pathFinder.findPath(position, action->end, 99);
-			currentUnit->movementComponent.startMovement(path, 0);
+			std::reverse(action->path.begin(), action->path.end());
+			currentUnit->movementComponent.startMovement(action->path);
 			state = SCENE_UNIT_MOVE;
 			break;
 		}
