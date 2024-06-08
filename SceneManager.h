@@ -47,6 +47,11 @@ struct Scene
 	std::vector<struct SceneUnit*> introUnits;
 	std::vector<std::vector<glm::vec4>> UVs;
 
+	float delayTimer = 0.0f;
+	float currentDelay = 0.0f;
+	//The delay between a new movement action starting, since multiple enemies can move at once
+	float movementDelay = -1.0f;
+
 	Scene();
 	~Scene();
 	//I imagine a lot of this will ne set up in the map editor, so this is temporary
@@ -55,6 +60,8 @@ struct Scene
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
 	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
 		Camera& camera, class InputManager& inputManager, class Cursor& cursor, class InfoDisplays& displays);
+
+	void AddNewSceneUnit(SceneAction* currentAction);
 
 	void ClearActions();
 };

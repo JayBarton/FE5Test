@@ -900,13 +900,20 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	intro->actions[3] = new DialogueAction(DIALOGUE_ACTION, 12);
 
 	path.clear();
-	path.push_back(glm::ivec2(288, 208));
+	path.push_back(glm::ivec2(288, 224));
 	path.push_back(glm::ivec2(288, 192));
 	path.push_back(glm::ivec2(240, 192));
 	path.push_back(glm::ivec2(240, 128));
 	path.push_back(glm::ivec2(272, 128));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path));
-	//intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 0, glm::vec2(272, 208), glm::vec2(256, 128)));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.0f, 0.0f));
+
+	path.clear();
+	path.push_back(glm::ivec2(272, 232));
+	path.push_back(glm::ivec2(272, 224));
+	path.push_back(glm::ivec2(272, 192));
+	path.push_back(glm::ivec2(256, 192));
+	path.push_back(glm::ivec2(256, 128));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, path));
 
 	path.clear();
 	path.push_back(glm::ivec2(272, 96));
@@ -917,14 +924,179 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	path.push_back(glm::ivec2(272, 80));
 	path.push_back(glm::ivec2(272, 96));
 	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
+	
+	//Add Nanna and Mareeta
 	path.clear();
 	path.push_back(glm::ivec2(256, 112));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 11, 0, path));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 11, 0, path, 0.1f));
 	path.clear();
 	path.push_back(glm::ivec2(272, 112));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 12, 0, path));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 12, 0, path, 0.1f));
 	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 13));
 	sceneManager.scenes.push_back(intro);
+
+	//Remove Nanna and Mareeta
+	path.clear();
+	path.push_back(glm::ivec2(272, 80));
+	path.push_back(glm::ivec2(272, 112));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
+	intro->actions.push_back(new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, 5, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(272, 112));
+	path.push_back(glm::ivec2(256, 112));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
+	intro->actions.push_back(new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, 4, 0.1f));
+
+	//Reydric exits
+	path.clear();
+	path.push_back(glm::ivec2(256, 112));
+	path.push_back(glm::ivec2(256, 128));
+	path.push_back(glm::ivec2(240, 128));
+	path.push_back(glm::ivec2(240, 176));
+	path.push_back(glm::ivec2(304, 176));
+	path.push_back(glm::ivec2(304, 192));
+	path.push_back(glm::ivec2(336, 192));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
+	intro->actions.push_back(new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, 0));
+
+	//Enemies get into position
+	path.clear();
+	path.push_back(glm::ivec2(288, 112));
+	path.push_back(glm::ivec2(288, 80));
+	path.push_back(glm::ivec2(272, 80));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 1, path));
+
+	path.clear();
+	path.push_back(glm::ivec2(208, 192));
+	path.push_back(glm::ivec2(240, 192));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path));
+
+	intro->actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(240, 144)));
+
+	path.clear();
+	path.push_back(glm::ivec2(208, 160));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(144, 160));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, path, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(176, 48));
+	path.push_back(glm::ivec2(192, 48));
+	path.push_back(glm::ivec2(192, 64));
+	path.push_back(glm::ivec2(160, 64));
+	path.push_back(glm::ivec2(160, 128));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.0f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(288, 208));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(128, 192));
+	path.push_back(glm::ivec2(160, 192));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(288, 160));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(128, 80));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(128, 224));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(176, 192));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(192, 96));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
+
+	path.clear();
+	path.push_back(glm::ivec2(208, 256));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 2.0f));
+
+	//Player units spawn
+	intro->actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(128, 224)));
+	path.clear();
+	path.push_back(glm::ivec2(0, 320));
+	path.push_back(glm::ivec2(0, 304));
+	path.push_back(glm::ivec2(48, 304));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 3, 0, path, 0, 0.1f));
+	path.clear();
+	path.push_back(glm::ivec2(0, 320));
+	path.push_back(glm::ivec2(0, 304));
+	path.push_back(glm::ivec2(32, 304));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 4, 0, path, 0, 0.1f));
+	path.clear();
+	path.push_back(glm::ivec2(0, 320));
+	path.push_back(glm::ivec2(0, 304));
+	path.push_back(glm::ivec2(48, 304));
+	path.push_back(glm::ivec2(48, 288));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 5, 0, path, 0, 0.1f));
+	path.clear();
+	path.push_back(glm::ivec2(0, 320));
+	path.push_back(glm::ivec2(0, 304));
+	path.push_back(glm::ivec2(32, 304));
+	path.push_back(glm::ivec2(32, 288));
+	path.push_back(glm::ivec2(64, 288));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 6, 0, path, 0, 0.1f));
+	path.clear();
+	path.push_back(glm::ivec2(0, 320));
+	path.push_back(glm::ivec2(0, 288));
+	path.push_back(glm::ivec2(32, 288));
+	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 6, 0, path));
+
+	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 14));
+
+	//Halvan's shit
+	path.clear();
+	path.push_back(glm::ivec2(32, 288));
+	path.push_back(glm::ivec2(32, 272));
+	path.push_back(glm::ivec2(64, 272));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0.2f));
+
+	path.clear();
+	path.push_back(glm::ivec2(64, 272));
+	path.push_back(glm::ivec2(64, 240));
+	path.push_back(glm::ivec2(80, 240));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0.2f));
+
+	path.clear();
+	path.push_back(glm::ivec2(80, 240));
+	path.push_back(glm::ivec2(80, 224));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0, 0.5f, 2));
+
+	path.clear();
+	path.push_back(glm::ivec2(80, 224));
+	path.push_back(glm::ivec2(80, 240));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0.2f));
+
+	path.clear();
+	path.push_back(glm::ivec2(80, 240));
+	path.push_back(glm::ivec2(64, 240));
+	path.push_back(glm::ivec2(64, 272));
+	path.push_back(glm::ivec2(32, 272));
+	path.push_back(glm::ivec2(32, 288));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0, 2));
+
+	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 15));
+
+	/*
+	* 
+	path.clear();
+	path.push_back(glm::ivec2(288, 208));
+	path.push_back(glm::ivec2(288, 144));
+	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 10, path, 0, 0.15f, 0));
+	*/
+
 	intro->init();
 
 	//sceneManager.scenes[1]->extraSetup(&roundSubject);
@@ -1001,26 +1173,29 @@ void Draw()
 		testBatch.begin();
 		for (int i = 0; i < introUnits.size(); i++)
 		{
-			Texture2D texture = ResourceManager::GetTexture("sprites");
-			glm::vec3 color = introUnits[i]->sprite.color;
-			glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
-
-			glm::vec2 position = introUnits[i]->sprite.getPosition();
-
-			glm::vec2 size;
-			if (introUnits[i]->sprite.moveAnimate)
+			if (introUnits[i]->draw)
 			{
-				size = glm::vec2(32, 32);
-				position += glm::vec2(-8, -8);
-				texture = ResourceManager::GetTexture("movesprites");
-			}
-			else
-			{
-				size = introUnits[i]->sprite.getSize();
-				position += introUnits[i]->sprite.drawOffset;
+				Texture2D texture = ResourceManager::GetTexture("sprites");
+				glm::vec3 color = introUnits[i]->sprite.color;
+				glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
 
+				glm::vec2 position = introUnits[i]->sprite.getPosition();
+
+				glm::vec2 size;
+				if (introUnits[i]->sprite.moveAnimate)
+				{
+					size = glm::vec2(32, 32);
+					position += glm::vec2(-8, -8);
+					texture = ResourceManager::GetTexture("movesprites");
+				}
+				else
+				{
+					size = introUnits[i]->sprite.getSize();
+					position += introUnits[i]->sprite.drawOffset;
+
+				}
+				testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
 			}
-			testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
 		}
 		testBatch.end();
 		testBatch.renderBatch();

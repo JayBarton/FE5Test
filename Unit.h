@@ -76,9 +76,10 @@ struct MovementComponent
 	std::vector<glm::ivec2> path;
 	int current;
 	int end;
+	int facing;
 	bool moving = false;
-	void startMovement(const std::vector<glm::ivec2>& path);
-	void getNewDirection();
+	void startMovement(const std::vector<glm::ivec2>& path, int facing = -1);
+	void getNewDirection(int facing);
 	void Update(float deltaTime, InputManager& inputManager, float inputSpeed = 0);
 };
 
@@ -337,7 +338,9 @@ struct Unit
 
 struct SceneUnit
 {
+	bool draw = true;
 	int team;
+	float speed = 1.0f;
 	Sprite sprite;
 	MovementComponent movementComponent;
 };

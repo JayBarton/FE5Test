@@ -8,18 +8,21 @@ const static int DIALOGUE_ACTION = 3;
 const static int ITEM_ACTION = 4;
 const static int NEW_SCENE_UNIT_ACTION = 5;
 const static int SCENE_UNIT_MOVE_ACTION = 6;
+const static int SCENE_UNIT_REMOVE_ACTION = 7;
 
 struct SceneAction
 {
 	int type;
-	SceneAction(int type) : type(type)
+	//The delay between this action and the next action
+	float nextActionDelay;
+	SceneAction(int type, float nextActionDelay = 0) : type(type), nextActionDelay(nextActionDelay)
 	{
 	}
 };
 
 struct CameraMove : public SceneAction
 {
-	CameraMove(int type, glm::vec2 position) : SceneAction(type), position(position)
+	CameraMove(int type, glm::vec2 position, float nextActionDelay = 0) : SceneAction(type, nextActionDelay), position(position)
 	{
 	}
 	glm::vec2 position;
@@ -27,7 +30,7 @@ struct CameraMove : public SceneAction
 
 struct AddUnit : public SceneAction
 {
-	AddUnit(int type, int unitID, glm::vec2 start, glm::vec2 end) : SceneAction(type), unitID(unitID), start(start), end(end)
+	AddUnit(int type, int unitID, glm::vec2 start, glm::vec2 end, float nextActionDelay = 0) : SceneAction(type, nextActionDelay), unitID(unitID), start(start), end(end)
 	{
 	}
 	int unitID;
@@ -37,18 +40,20 @@ struct AddUnit : public SceneAction
 
 struct AddSceneUnit : public SceneAction
 {
-	AddSceneUnit(int type, int unitID, int team, std::vector<glm::ivec2> path) : 
-		SceneAction(type), unitID(unitID), team(team), path(path)
+	AddSceneUnit(int type, int unitID, int team, std::vector<glm::ivec2> path, float nextActionDelay = 0, float nextMoveDelay = -1) :
+		SceneAction(type, nextActionDelay), unitID(unitID), team(team), path(path), nextMoveDelay(nextMoveDelay)
 	{
 	}
 	int unitID;
 	int team;
+	float nextMoveDelay;
 	std::vector<glm::ivec2> path;
 };
 
 struct UnitMove : public SceneAction
 {
-	UnitMove(int type, int unitID, glm::vec2 end) : SceneAction(type), unitID(unitID), end(end)
+	UnitMove(int type, int unitID, glm::vec2 end, float nextActionDelay = 0) : 
+		SceneAction(type, nextActionDelay), unitID(unitID), end(end)
 	{
 	}
 	int unitID;
@@ -57,25 +62,37 @@ struct UnitMove : public SceneAction
 
 struct SceneUnitMove : public SceneAction
 {
-	SceneUnitMove(int type, int unitID, std::vector<glm::ivec2> path) : SceneAction(type), unitID(unitID), path(path)
+	SceneUnitMove(int type, int unitID, std::vector<glm::ivec2> path, float nextActionDelay = 0, float moveSpeed = 1.0f, int facing = -1) :
+		SceneAction(type, nextActionDelay), unitID(unitID), path(path), moveSpeed(moveSpeed), facing(facing)
 	{
 	}
 	int unitID;
+	int facing;
+	float moveSpeed;
 	std::vector<glm::ivec2> path;
+};
+
+struct SceneUnitRemove : public SceneAction
+{
+	SceneUnitRemove(int type, int unitID, float nextActionDelay = 0) : 
+		SceneAction(type, nextActionDelay), unitID(unitID)
+	{
+	}
+	int unitID;
 };
 
 //not really sure what we're doing with this one
 //Maybe it will point to a file the dialogue is in?
 struct DialogueAction : public SceneAction
 {
-	DialogueAction(int type, int ID) : SceneAction(type), ID(ID)
+	DialogueAction(int type, int ID) : SceneAction(type, nextActionDelay), ID(ID)
 	{}
 	int ID;
 };
 
 struct ItemAction : public SceneAction
 {
-	ItemAction(int type, int ID) : SceneAction(type), ID(ID)
+	ItemAction(int type, int ID) : SceneAction(type, nextActionDelay), ID(ID)
 	{}
 	int ID;
 };

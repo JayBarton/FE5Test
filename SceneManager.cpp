@@ -51,8 +51,6 @@ void Scene::extraSetup(Subject<int>* subject)
 void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
 	Camera& camera, InputManager& inputManager, Cursor& cursor, InfoDisplays& displays)
 {
-	//I am thinking scene actions will have a delay on them. -1 will mean until the action is completely finished, anything else will be the time
-	//Until the next action starts
 	if (state != WAITING)
 	{
 		switch (state)
@@ -118,12 +116,23 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			break;
 		case SCENE_UNIT_MOVE:
 			bool moving = false;
+			if (movementDelay >= 0)
+			{
+				delayTimer += deltaTime;
+				if (delayTimer >= movementDelay)
+				{
+					delayTimer = 0;
+					actionIndex++;
+					//need error checking here
+					AddNewSceneUnit(actions[actionIndex]);
+				}
+			}
 			for (int i = 0; i < introUnits.size(); i++)
 			{
 				auto currentUnit = introUnits[i];
 				if (currentUnit->movementComponent.moving)
 				{
-					currentUnit->movementComponent.Update(deltaTime, inputManager, 1.0f);
+					currentUnit->movementComponent.Update(deltaTime, inputManager, currentUnit->speed);
 					moving = true;
 				}
 				else
@@ -133,6 +142,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			}
 			if (!moving)
 			{
+				currentDelay = actions[actionIndex]->nextActionDelay;
 				actionIndex++;
 				state = WAITING;
 			}
@@ -141,194 +151,184 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 	else if (actionIndex < actions.size())
 	{
 		auto currentAction = actions[actionIndex];
-		switch (currentAction->type)
+		delayTimer += deltaTime;
+		if (delayTimer >= currentDelay)
 		{
-		case CAMERA_ACTION:
-		{
-			auto action = static_cast<CameraMove*>(currentAction);
-			camera.SetCenter(action->position);
-			state = CAMERA_MOVE;
-			break;
-		}
-		case NEW_UNIT_ACTION:
-		{
-			auto action = static_cast<AddUnit*>(currentAction);
-			playerManager->AddUnit(action->unitID, action->start);
-			activeUnit = playerManager->playerUnits[playerManager->playerUnits.size() - 1];
-			auto path = pathFinder.findPath(action->start, action->end, 99);
-			activeUnit->movementComponent.startMovement(path);
-			state = UNIT_MOVE;
-			break;
-		}
-		case MOVE_UNIT_ACTION:
-		{
-			auto action = static_cast<UnitMove*>(currentAction);
-			activeUnit = sceneUnits[action->unitID];
-			auto position = activeUnit->sprite.getPosition();
-			TileManager::tileManager.removeUnit(position.x, position.y);
-			auto path = pathFinder.findPath(position, action->end, 99);
-			activeUnit->movementComponent.startMovement(path);
-			state = UNIT_MOVE;
-
-			break;
-		}
-		case DIALOGUE_ACTION:
-		{
-			auto action = static_cast<DialogueAction*>(currentAction);
-			textManager.textLines.clear();
-			std::ifstream f("Levels/Level1Dialogue.json");
-			json data = json::parse(f);
-			json texts = data["text"];
-			for (const auto& text : texts)
+			delayTimer = 0;
+			currentDelay = actions[actionIndex]->nextActionDelay;
+			switch (currentAction->type)
 			{
-				int ID = text["ID"];
-				if (ID == action->ID)
-				{
-					auto dialogues = text["dialogue"];
-					for (const auto& dialogue : dialogues)
-					{
-						Sprite* speaker;
-						if (introUnits.size() > 0)
-						{
-							speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
-						}
-						else
-						{
-							speaker = &sceneUnits[dialogue["speaker"]]->sprite;
-						}
-
-						textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"] });
-					}
-					break;
-				}
+			case CAMERA_ACTION:
+			{
+				auto action = static_cast<CameraMove*>(currentAction);
+				camera.SetCenter(action->position);
+				state = CAMERA_MOVE;
+				break;
 			}
-			textManager.textObjects.clear();
-			textManager.textObjects.push_back(testText);
-			textManager.textObjects.push_back(testText2);
-			textManager.init();
-			textManager.active = true;
-			state = TEXT;
-
-			break;
-		}
-		case GET_ITEM:
-		{
-			auto action = static_cast<ItemAction*>(currentAction);
-			displays.GetItem(action->ID);
-			state = GET_ITEM;
-			break;
-		}
-		case NEW_SCENE_UNIT_ACTION:
-		{
-			auto action = static_cast<AddSceneUnit*>(currentAction);
-
-			SceneUnit* newUnit = new SceneUnit;
-			newUnit->sprite.uv = &UnitResources::unitUVs[action->unitID];
-			newUnit->team = action->team;
-
-			introUnits.push_back(newUnit);
-			newUnit->sprite.SetPosition(action->path[0]);
-			std::reverse(action->path.begin(), action->path.end());
-
-			newUnit->movementComponent.owner = &newUnit->sprite;
-			newUnit->sprite.setSize(glm::vec2(16));
-			newUnit->movementComponent.startMovement(action->path);
-
-			std::ifstream f("BaseStats.json");
-			json data = json::parse(f);
-			json bases;
-
-			bases = data["classes"];
-			for (const auto& unit : bases)
+			case NEW_UNIT_ACTION:
 			{
-				int ID = unit["ID"];
-				if (ID == action->unitID)
-				{
-					auto animData = unit["AnimData"];
-					newUnit->sprite.focusedFacing = animData["FocusFace"];
-				}
+				auto action = static_cast<AddUnit*>(currentAction);
+				playerManager->AddUnit(action->unitID, action->start);
+				activeUnit = playerManager->playerUnits[playerManager->playerUnits.size() - 1];
+				auto path = pathFinder.findPath(action->start, action->end, 99);
+				activeUnit->movementComponent.startMovement(path);
+				state = UNIT_MOVE;
+				break;
 			}
-			//SUPER proof of concept, just want to try out units moving at the same time
-			if (action->unitID == 0)
+			case MOVE_UNIT_ACTION:
 			{
-				//1, 0, glm::vec2(272, 208), glm::vec2(256, 128)));
-				SceneUnit* newUnit = new SceneUnit;
-				newUnit->sprite.uv = &UnitResources::unitUVs[1];
-				newUnit->team = 1;
+				auto action = static_cast<UnitMove*>(currentAction);
+				activeUnit = sceneUnits[action->unitID];
+				auto position = activeUnit->sprite.getPosition();
+				TileManager::tileManager.removeUnit(position.x, position.y);
+				auto path = pathFinder.findPath(position, action->end, 99);
+				activeUnit->movementComponent.startMovement(path);
+				state = UNIT_MOVE;
 
-				introUnits.push_back(newUnit);
-				newUnit->sprite.SetPosition(glm::vec2(272, 208));
-
-				std::vector<glm::ivec2> path;
-				path.push_back(glm::ivec2(272, 208));
-				path.push_back(glm::ivec2(272, 192));
-				path.push_back(glm::ivec2(256, 192));
-				path.push_back(glm::ivec2(256, 128));
-				std::reverse(path.begin(), path.end());
-				newUnit->movementComponent.owner = &newUnit->sprite;
-				newUnit->sprite.setSize(glm::vec2(16));
-				newUnit->movementComponent.startMovement(path);
-
-				std::ifstream f("BaseStats.json");
+				break;
+			}
+			case DIALOGUE_ACTION:
+			{
+				auto action = static_cast<DialogueAction*>(currentAction);
+				textManager.textLines.clear();
+				std::ifstream f("Levels/Level1Dialogue.json");
 				json data = json::parse(f);
-				json bases;
-
-				bases = data["classes"];
-				for (const auto& unit : bases)
+				json texts = data["text"];
+				for (const auto& text : texts)
 				{
-					int ID = unit["ID"];
-					if (ID == 1)
+					int ID = text["ID"];
+					if (ID == action->ID)
 					{
-						auto animData = unit["AnimData"];
-						newUnit->sprite.focusedFacing = animData["FocusFace"];
+						auto dialogues = text["dialogue"];
+						for (const auto& dialogue : dialogues)
+						{
+							Sprite* speaker;
+							if (introUnits.size() > 0)
+							{
+								speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
+							}
+							else
+							{
+								speaker = &sceneUnits[dialogue["speaker"]]->sprite;
+							}
+
+							textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"] });
+						}
+						break;
 					}
 				}
-			}
+				textManager.textObjects.clear();
+				textManager.textObjects.push_back(testText);
+				textManager.textObjects.push_back(testText2);
+				textManager.init();
+				textManager.active = true;
+				state = TEXT;
 
-			state = SCENE_UNIT_MOVE;
-			break;
-		}
-		case SCENE_UNIT_MOVE_ACTION:
-			auto action = static_cast<SceneUnitMove*>(currentAction);
-			auto currentUnit = introUnits[action->unitID];
-			std::reverse(action->path.begin(), action->path.end());
-			currentUnit->movementComponent.startMovement(action->path);
-			state = SCENE_UNIT_MOVE;
-			break;
+				break;
+			}
+			case GET_ITEM:
+			{
+				auto action = static_cast<ItemAction*>(currentAction);
+				displays.GetItem(action->ID);
+				state = GET_ITEM;
+				break;
+			}
+			case NEW_SCENE_UNIT_ACTION:
+			{
+				AddNewSceneUnit(currentAction);
+				state = SCENE_UNIT_MOVE;
+				break;
+			}
+			case SCENE_UNIT_MOVE_ACTION:
+			{
+				auto action = static_cast<SceneUnitMove*>(currentAction);
+				auto currentUnit = introUnits[action->unitID];
+				std::reverse(action->path.begin(), action->path.end());
+				currentUnit->movementComponent.startMovement(action->path, action->facing);
+				state = SCENE_UNIT_MOVE;
+				movementDelay = -1; //In the future it is possible I will also want to incorporate this into here, but for now I do not need it
+				currentUnit->speed = action->moveSpeed;
+				break;
+			}
+			case SCENE_UNIT_REMOVE_ACTION:
+			{
+				auto action = static_cast<SceneUnitRemove*>(currentAction);
+				introUnits[action->unitID]->draw = false;
+				actionIndex++;
+				break;
+			}
+			}
 		}
 	}
 	else
 	{
-		for (int i = 0; i < introUnits.size(); i++)
+		delayTimer += deltaTime;
+		if (delayTimer >= currentDelay)
 		{
-			delete introUnits[i];
-		}
-		introUnits.clear();
-		if (initiator)
-		{
-			//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
-			//But it is worth noting I think
-			if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
+			for (int i = 0; i < introUnits.size(); i++)
 			{
-				cursor.GetRemainingMove();
-				MenuManager::menuManager.mustWait = true;
+				delete introUnits[i];
+			}
+			introUnits.clear();
+			if (initiator)
+			{
+				//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
+				//But it is worth noting I think
+				if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
+				{
+					cursor.GetRemainingMove();
+					MenuManager::menuManager.mustWait = true;
+				}
+				else
+				{
+					cursor.Wait();
+				}
+				initiator = nullptr;
+			}
+			playingScene = false;
+			if (repeat)
+			{
+				actionIndex = 0;
 			}
 			else
 			{
-				cursor.Wait();
+				ClearActions();
 			}
-			initiator = nullptr;
-		}
-		playingScene = false;
-		if (repeat)
-		{
-			actionIndex = 0;
-		}
-		else
-		{
-			ClearActions();
 		}
 	}
+}
+
+void Scene::AddNewSceneUnit(SceneAction* currentAction)
+{
+	auto action = static_cast<AddSceneUnit*>(currentAction);
+
+	SceneUnit* newUnit = new SceneUnit;
+	newUnit->sprite.uv = &UnitResources::unitUVs[action->unitID];
+	newUnit->team = action->team;
+
+	introUnits.push_back(newUnit);
+	newUnit->sprite.SetPosition(action->path[0]);
+	std::reverse(action->path.begin(), action->path.end());
+
+	newUnit->movementComponent.owner = &newUnit->sprite;
+	newUnit->sprite.setSize(glm::vec2(16));
+	newUnit->movementComponent.startMovement(action->path);
+
+	std::ifstream f("BaseStats.json");
+	json data = json::parse(f);
+	json bases;
+
+	bases = data["classes"];
+	for (const auto& unit : bases)
+	{
+		int ID = unit["ID"];
+		if (ID == action->unitID)
+		{
+			auto animData = unit["AnimData"];
+			newUnit->sprite.focusedFacing = animData["FocusFace"];
+		}
+	}
+	movementDelay = action->nextMoveDelay;
 }
 
 void Scene::ClearActions()

@@ -1305,7 +1305,7 @@ void Unit::CheckAttackableTiles(glm::vec2& checkingTile, std::vector<std::vector
     }
 }
 
-void MovementComponent::startMovement(const std::vector<glm::ivec2>& path)
+void MovementComponent::startMovement(const std::vector<glm::ivec2>& path, int facing)
 {
     if (path.size() > 1)
     {
@@ -1315,11 +1315,11 @@ void MovementComponent::startMovement(const std::vector<glm::ivec2>& path)
         moving = true;
         owner->moveAnimate = true;
         previousDirection = glm::vec2(0);
-        getNewDirection();
+        getNewDirection(facing);
     }
 }
 
-void MovementComponent::getNewDirection()
+void MovementComponent::getNewDirection(int facing)
 {
     if (current == end)
     {
@@ -1340,33 +1340,64 @@ void MovementComponent::getNewDirection()
         }
         else
         {
-            //This doesn't work because this gets called for every node, thus resetting the animation every node.
             direction = glm::normalize(nextNode - previousNode);
             if (direction != previousDirection)
             {
-                if (direction.x > 0)
+                if (facing >= 0)
                 {
-                    owner->facing = 2;
-                    owner->currentFrame = 11;
-                    owner->startingFrame = 11;
+                    this->facing = facing;
+                    if (facing == 2)
+                    {
+                        owner->facing = 2;
+                        owner->currentFrame = 11;
+                        owner->startingFrame = 11;
+                    }
+                    else if (facing  == 0)
+                    {
+                        owner->facing = 0;
+                        owner->currentFrame = 3;
+                        owner->startingFrame = 3;
+                    }
+                    else if (facing == 1)
+                    {
+                        owner->facing = 1;
+                        owner->currentFrame = 7;
+                        owner->startingFrame = 7;
+                    }
+                    else if (facing == 3)
+                    {
+                        owner->facing = 3;
+                        owner->currentFrame = 15;
+                        owner->startingFrame = 15;
+                    }
                 }
-                else if (direction.x < 0)
+                else
                 {
-                    owner->facing = 0;
-                    owner->currentFrame = 3;
-                    owner->startingFrame = 3;
-                }
-                else if (direction.y < 0)
-                {
-                    owner->facing = 1;
-                    owner->currentFrame = 7;
-                    owner->startingFrame = 7;
-                }
-                else if (direction.y > 0)
-                {
-                    owner->facing = 3;
-                    owner->currentFrame = 15;
-                    owner->startingFrame = 15;
+                    this->facing = -1;
+                    if (direction.x > 0)
+                    {
+                        owner->facing = 2;
+                        owner->currentFrame = 11;
+                        owner->startingFrame = 11;
+                    }
+                    else if (direction.x < 0)
+                    {
+                        owner->facing = 0;
+                        owner->currentFrame = 3;
+                        owner->startingFrame = 3;
+                    }
+                    else if (direction.y < 0)
+                    {
+                        owner->facing = 1;
+                        owner->currentFrame = 7;
+                        owner->startingFrame = 7;
+                    }
+                    else if (direction.y > 0)
+                    {
+                        owner->facing = 3;
+                        owner->currentFrame = 15;
+                        owner->startingFrame = 15;
+                    }
                 }
                 previousDirection = direction;
             }
@@ -1392,7 +1423,7 @@ void MovementComponent::Update(float deltaTime, InputManager& inputManager, floa
     if (toNextNode == glm::vec2(0))
     {
         owner->SetPosition(newPosition);
-        getNewDirection();
+        getNewDirection(facing);
     }
     else
     {
@@ -1402,7 +1433,7 @@ void MovementComponent::Update(float deltaTime, InputManager& inputManager, floa
         {
             //Snap object to next node's position
             owner->SetPosition(nextNode);
-            getNewDirection();
+            getNewDirection(facing);
             if (moving)
             {
                 //Move the object along towards the new next node by the distance that it overshot
