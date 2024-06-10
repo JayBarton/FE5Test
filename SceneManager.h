@@ -133,6 +133,16 @@ struct VisitActivation : public Activation
 	}
 };
 
+struct IntroActivation : public Activation
+{
+	IntroActivation(Scene* owner, int type);
+	virtual void CheckActivation() override
+	{
+		owner->init();
+	}
+};
+
+
 struct RoundEvents : public Observer<int>
 {
 	EnemyTurnEnd* enemyTurnEnd;

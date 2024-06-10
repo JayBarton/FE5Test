@@ -358,7 +358,7 @@ struct OptionsMenu : public Menu
 	int indicatorIncrement = 24;
 	float yOffset = 0;
 	float goal;
-	bool up = false;;
+	bool up = false;
 	bool down = false;
 };
 

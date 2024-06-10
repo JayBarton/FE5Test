@@ -30,6 +30,12 @@ struct TalkActivation : public Activation
     {}
 };
 
+struct IntroActivation : public Activation
+{
+    IntroActivation(int type) : Activation(type)
+    {}
+};
+
 /*struct VisitActivation : public Activation
 {
     glm::ivec2 position;
@@ -251,6 +257,20 @@ struct SceneActionMenu : public Menu
     bool activationMode = false;
     int swapAction = -1;
     int selectedAction = 0;
+
+    int yIndicator = 0;
+    int indicatorIncrement = 12;
+    float yOffset = 0;
+    float goal;
+    bool up = false;
+    bool down = false;
+    bool firstMove = true;
+
+    float movementDelay = 0.0f;
+    float normalDelay = 0.05f;	
+    float firstDelay = 0.2f;
+
+
     std::vector<std::string> actionNames;
     SceneObjects& sceneObject;
     std::vector<SceneAction*>& sceneActions;
@@ -261,6 +281,7 @@ struct SceneActivationMenu : public Menu
     const static int TALK = 0;
     const static int ENEMY_TURN_END = 1;
     const static int VISIT = 2;
+    const static int INTRO = 3;
     SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
     virtual void Draw() override;
     virtual void SelectOption() override;
@@ -341,4 +362,61 @@ struct ItemActionMenu : public Menu
     int itemID;
     std::vector<SceneAction*>& sceneActions;
     std::vector<Item> items;
+};
+
+struct NewSceneUnitActionMenu : public Menu
+{
+    NewSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    bool delayMode = false;
+
+    std::vector<glm::ivec2> path;
+    std::vector<SceneAction*>& sceneActions;
+    int unitID;
+    int pathIncrement = 16;
+    int team = 0;
+    float nextDelay = 0.0f;
+    float moveDelay = -1;
+    float delayIncrement = 0.1f;
+    glm::vec2 cameraPosition;
+
+};
+
+struct SceneUnitMoveActionMenu : public Menu
+{
+    SceneUnitMoveActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    std::vector<glm::ivec2> path;
+    std::vector<SceneAction*>& sceneActions;
+
+    bool delayMode = false;
+
+    int unitID;
+    int pathIncrement = 16;
+    int facing = -1;
+    float nextDelay = 0.0f;
+    float moveSpeed = 1;
+    float delayIncrement = 0.1f;
+    glm::vec2 cameraPosition;
+
+};
+
+struct RemoveSceneUnitActionMenu : public Menu
+{
+    RemoveSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    int unitID;
+    float delay = 0.0f;
+    float delayIncrement = 0.1f;
+    std::vector<SceneAction*>& sceneActions;
+
 };

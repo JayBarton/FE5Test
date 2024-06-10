@@ -21,6 +21,13 @@ static std::string intToString(int i)
 	return s.str();
 }
 
+static std::string floatToString(float i)
+{
+	std::stringstream s;
+	s << i;
+	return s.str();
+}
+
 static float EaseOut(float t)
 {
 	return 1 - (1 - t) * (1 - t);

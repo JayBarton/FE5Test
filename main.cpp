@@ -730,6 +730,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 
 	int xTiles = 0;
 	int yTiles = 0;
+	int intro = -1;
 	std::string bg = "";
 
 	while (map.good())
@@ -804,12 +805,58 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 						map >> dialogueID;
 						currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
 					}
-					else if (actionType == 4)
+					else if (actionType == ITEM_ACTION)
 					{
 						int itemID = 0;
 						map >> itemID;
 						currentObject->actions[c] = new ItemAction(actionType, itemID);
 					}
+					else if (actionType == NEW_SCENE_UNIT_ACTION)
+					{
+						int unitID;
+						int team;
+						int pathSize;
+						float nextDelay;
+						float moveDelay;
+						std::vector<glm::ivec2> path;
+						map >> unitID >> team >> pathSize;
+						path.resize(pathSize);
+						for (int i = 0; i < pathSize; i++)
+						{
+							map >> path[i].x >> path[i].y;
+						}
+						map >> nextDelay >> moveDelay;
+						currentObject->actions[c] = new AddSceneUnit(actionType, unitID, team, path, nextDelay, moveDelay);
+					}
+					else if (actionType == SCENE_UNIT_MOVE_ACTION)
+					{
+						int unitID;
+						int pathSize;
+						int facing;
+						float nextDelay;
+						float moveSpeed;
+						std::vector<glm::ivec2> path;
+						map >> unitID >> pathSize;
+						path.resize(pathSize);
+						for (int i = 0; i < pathSize; i++)
+						{
+							map >> path[i].x >> path[i].y;
+						}
+						map >> nextDelay >> moveSpeed >> facing;
+						currentObject->actions[c] = new SceneUnitMove(actionType, unitID, path, nextDelay, moveSpeed, facing);
+					}
+					else if (actionType == SCENE_UNIT_REMOVE_ACTION)
+					{
+						int unitID;
+						float nextDelay;
+
+						map >> unitID >> nextDelay;
+						currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
+					}
+				}
+				if (i == 10)
+				{
+					int fuckyou = 2;
 				}
 				int activationType = 0;
 				map >> activationType;
@@ -837,6 +884,11 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				else if (activationType == 2)
 				{
 					currentObject->activation = new VisitActivation(currentObject, activationType);
+				}
+				else if (activationType == 3)
+				{
+					intro = i;
+					currentObject->activation = new IntroActivation(currentObject, activationType);
 				}
 
 				map >> currentObject->repeat;
@@ -887,7 +939,11 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 			}
 		}
 	}
-	Scene* intro = new Scene();
+	if (intro >= 0)
+	{
+		sceneManager.scenes[intro]->init();
+	}
+	/*Scene* intro = new Scene();
 	intro->ID = 10;
 	intro->owner = &sceneManager;
 	intro->actions.resize(4);
@@ -1089,15 +1145,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 
 	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 15));
 
-	/*
-	* 
-	path.clear();
-	path.push_back(glm::ivec2(288, 208));
-	path.push_back(glm::ivec2(288, 144));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 10, path, 0, 0.15f, 0));
-	*/
-
-	intro->init();
+	intro->init();*/
 
 	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 
@@ -1127,28 +1175,33 @@ void Draw()
 		auto menu = MenuManager::menuManager.menus.back();
 		fullScreenMenu = menu->fullScreen;
 	}
-
 	if (!fullScreenMenu)
 	{
 		ResourceManager::GetShader("instance").Use();
 		ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 		TileManager::tileManager.showTiles(Renderer, camera);
-
-		DrawUnitRanges();
-
-		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-		Batch.begin();
-		playerManager.Draw(&Batch);
-		enemyManager.Draw(&Batch);
-		Batch.end();
-	//	Batch.renderBatch();
-
-		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-		if (currentTurn == 0)
+		if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->activation->type == 3)
 		{
-			Renderer->setUVs(cursor.uvs[1]);
-			Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-			Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+
+		}
+		else
+		{
+			DrawUnitRanges();
+
+			ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+			Batch.begin();
+			playerManager.Draw(&Batch);
+			enemyManager.Draw(&Batch);
+			Batch.end();
+			Batch.renderBatch();
+
+			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+			if (currentTurn == 0)
+			{
+				Renderer->setUVs(cursor.uvs[1]);
+				Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+				Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+			}
 		}
 	}
 	if (drawingMenu)
@@ -1166,6 +1219,7 @@ void Draw()
 		{
 			displays.Draw(&camera, Text, shapeVAO);
 		}
+		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
 		auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
 		SBatch testBatch;

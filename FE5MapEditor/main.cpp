@@ -735,6 +735,49 @@ bool loadMap()
                         map >> itemID;
                         currentObject->actions[c] = new ItemAction(actionType, itemID);
                     }
+                    else if (actionType == NEW_SCENE_UNIT_ACTION)
+                    {
+                        int unitID;
+                        int team;
+                        int pathSize;
+                        float nextDelay;
+                        float moveDelay;
+                        std::vector<glm::ivec2> path;
+                        map >> unitID >> team >> pathSize;
+                        path.resize(pathSize);
+                        for (int i = 0; i < pathSize; i++)
+                        {
+                            map >> path[i].x >> path[i].y;
+                        }
+                        map >> nextDelay >> moveDelay;
+                        currentObject->actions[c] = new AddSceneUnit(actionType, unitID, team, path, nextDelay, moveDelay);
+                    }
+                    else if (actionType == SCENE_UNIT_MOVE_ACTION)
+                    {
+                        int unitID;
+                        int pathSize;
+                        int facing;
+                        float nextDelay;
+                        float moveSpeed;
+                        std::vector<glm::ivec2> path;
+                        map >> unitID >> pathSize;
+                        path.resize(pathSize);
+                        for (int i = 0; i < pathSize; i++)
+                        {
+                            map >> path[i].x >> path[i].y;
+                        }
+                        map >> nextDelay >> moveSpeed >> facing;
+                        currentObject->actions[c] = new SceneUnitMove(actionType, unitID, path, nextDelay, moveSpeed, facing);
+                    }
+                    else if (actionType == SCENE_UNIT_REMOVE_ACTION)
+                    {
+                        int unitID;
+                        float nextDelay;
+
+                        map >> unitID >> nextDelay;
+                        currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
+
+                    }
                 }
                 int activationType = 0;
                 map >> activationType;
@@ -751,9 +794,13 @@ bool loadMap()
                     map >> round;
                     currentObject->activation = new EnemyTurnEnd(activationType, round);
                 }
-                else
+                else if(activationType == 2)
                 {
                     currentObject->activation = new Activation(2);
+                }
+                else if (activationType == 3)
+                {
+                    currentObject->activation = new Activation(3);
                 }
                 map >> currentObject->repeat;
             }
@@ -870,6 +917,31 @@ void saveMap()
             {
                 auto action = static_cast<ItemAction*>(currentAction);
                 scenes += intToString(action->ID) + " ";
+            }
+            else if (currentAction->type == NEW_SCENE_UNIT_ACTION)
+            {
+                auto action = static_cast<AddSceneUnit*>(currentAction);
+                scenes += intToString(action->unitID) + " " + intToString(action->team) + " " + intToString(action->path.size()) + " ";
+                for (int i = 0; i < action->path.size(); i++)
+                {
+                    scenes += intToString(action->path[i].x) + " " + intToString(action->path[i].y) + " ";
+                }
+                scenes += floatToString(action->nextActionDelay) + " " + floatToString(action->nextMoveDelay) + " ";
+            }
+            else if (currentAction->type == SCENE_UNIT_MOVE_ACTION)
+            {
+                auto action = static_cast<SceneUnitMove*>(currentAction);
+                scenes += intToString(action->unitID) + " " + intToString(action->path.size()) + " ";
+                for (int i = 0; i < action->path.size(); i++)
+                {
+                    scenes += intToString(action->path[i].x) + " " + intToString(action->path[i].y) + " ";
+                }
+                scenes += floatToString(action->nextActionDelay) + " " + floatToString(action->moveSpeed) + " " + intToString(action->facing) + " ";
+            }
+            else if (currentAction->type == SCENE_UNIT_REMOVE_ACTION)
+            {
+                auto action = static_cast<SceneUnitRemove*>(currentAction);
+                scenes += intToString(action->unitID) + " " + floatToString(action->nextActionDelay) + " ";
             }
         }
         scenes += intToString(currentObject->activation->type) + " ";

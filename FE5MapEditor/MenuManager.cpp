@@ -148,6 +148,16 @@ void MenuManager::SelectOptionMenu(int action, std::vector<SceneAction*>& sceneA
 		break;
 	case ITEM_ACTION:
 		newMenu = new ItemActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case NEW_SCENE_UNIT_ACTION:
+		newMenu = new NewSceneUnitActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case SCENE_UNIT_MOVE_ACTION:
+		newMenu = new SceneUnitMoveActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case SCENE_UNIT_REMOVE_ACTION:
+		newMenu = new RemoveSceneUnitActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
 	}
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
@@ -1107,12 +1117,15 @@ SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVA
 	Menu(Text, camera, shapeVAO), sceneObject(sceneObject), sceneActions(sceneObject.actions)
 {
 	numberOfOptions = sceneActions.size() + 1;
-	actionNames.resize(5);
+	actionNames.resize(8);
 	actionNames[CAMERA_ACTION] = "Camera Action";
 	actionNames[NEW_UNIT_ACTION] = "New Unit Action";
 	actionNames[MOVE_UNIT_ACTION] = "Move Unit Action";
 	actionNames[DIALOGUE_ACTION] = "Dialogue Action";
 	actionNames[ITEM_ACTION] = "Item Action";
+	actionNames[NEW_SCENE_UNIT_ACTION] = "New Scene Unit Action";
+	actionNames[SCENE_UNIT_MOVE_ACTION] = "Scene Unit Move Action";
+	actionNames[SCENE_UNIT_REMOVE_ACTION] = "Scene Unit Remove Action";
 }
 
 void SceneActionMenu::Draw()
@@ -1126,7 +1139,7 @@ void SceneActionMenu::Draw()
 	}
 	else
 	{
-		model = glm::translate(model, glm::vec3(16, 32 + 12 * currentOption, 0.0f));
+		model = glm::translate(model, glm::vec3(16, 32 + yIndicator, 0.0f));
 	}
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
@@ -1159,37 +1172,51 @@ void SceneActionMenu::Draw()
 		if (currentAction->type == CAMERA_ACTION)
 		{
 			auto action = static_cast<CameraMove*>(currentAction);
-			text->RenderText("Camera move: " + intToString(action->position.x) + " " + intToString(action->position.y), 100, 100 + (i * 32), 1);
+			text->RenderText("Camera move: " + intToString(action->position.x) + " " + 
+				intToString(action->position.y), 100, 100 + (i * 32) - yOffset, 1);
 		}
 		else if (currentAction->type == NEW_UNIT_ACTION)
 		{
 			auto action = static_cast<AddUnit*>(currentAction);
 			text->RenderText("New Unit, ID: " + intToString(action->unitID) + ", Start: " + intToString(action->start.x) + 
 				" " + intToString(action->start.y) + ", End: " + intToString(action->end.x) + " " + 
-				intToString(action->end.y), 100, 100 + (i * 32), 1);
+				intToString(action->end.y), 100, 100 + (i * 32) - yOffset, 1);
 		}
 		else if (currentAction->type == MOVE_UNIT_ACTION)
 		{
 			auto action = static_cast<UnitMove*>(currentAction);
 
 			text->RenderText("Move Unit, ID: " + intToString(action->unitID) + ", End: " + intToString(action->end.x) + " " +
-				intToString(action->end.y), 100, 100 + (i * 32), 1);
+				intToString(action->end.y), 100, 100 + (i * 32) - yOffset, 1);
 		}
 		else if (currentAction->type == DIALOGUE_ACTION)
 		{
 			auto action = static_cast<DialogueAction*>(currentAction);
-			text->RenderText("Dialogue, ID: " + intToString(action->ID), 100, 100 + (i * 32), 1);
+			text->RenderText("Dialogue, ID: " + intToString(action->ID), 100, 100 + (i * 32) - yOffset, 1);
 		}
 		else if (currentAction->type == ITEM_ACTION)
 		{
 			auto action = static_cast<ItemAction*>(currentAction);
-			text->RenderText("Item, ID: " + intToString(action->ID), 100, 100 + (i * 32), 1);
+			text->RenderText("Item, ID: " + intToString(action->ID), 100, 100 + (i * 32) - yOffset, 1);
+		}
+		else if (currentAction->type == NEW_SCENE_UNIT_ACTION)
+		{
+			auto action = static_cast<AddSceneUnit*>(currentAction);
+			text->RenderText("New scene Unit :" + intToString(action->unitID) + " Delay: " + floatToString(action->nextActionDelay) + " Move Delay: " + floatToString(action->nextMoveDelay), 100, 100 + (i * 32) - yOffset, 1);
+		}
+		else if (currentAction->type == SCENE_UNIT_MOVE_ACTION)
+		{
+			auto action = static_cast<SceneUnitMove*>(currentAction);
+			text->RenderText("Scene Unit move :" + intToString(action->unitID) + " Delay: " + floatToString(action->nextActionDelay) + " Move Speed: " + floatToString(action->moveSpeed), 100, 100 + (i * 32) - yOffset, 1);
+		}
+		else if (currentAction->type == SCENE_UNIT_REMOVE_ACTION)
+		{
+			auto action = static_cast<SceneUnitRemove*>(currentAction);
+			text->RenderText("Unit to remove: " + intToString(action->unitID) + " Delay: " + floatToString(action->nextActionDelay), 100, 100 + (i * 32) - yOffset, 1);
 		}
 	}
 
-	text->RenderText("Action Menu", 100, 50, 1);
-	text->RenderText(actionNames[selectedAction], 300, 50, 1);
-	text->RenderText("New Action", 100, 100 + (sceneActions.size() * 32), 1);
+	text->RenderText("New Action", 100, 100 + (sceneActions.size() * 32) - yOffset, 1);
 	std::string activationModeString = "Activation Mode: ";
 	if (sceneObject.activation)
 	{
@@ -1207,9 +1234,38 @@ void SceneActionMenu::Draw()
 		{
 			activationModeString += "Visit";
 		}
+		else if (sceneObject.activation->type == 3)
+		{
+			activationModeString += "Intro";
+		}
 	}
 
-	text->RenderText(activationModeString, 400, 100, 1);
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
+
+	ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 200, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Action Menu", 100, 50, 1);
+	text->RenderText(actionNames[selectedAction], 300, 50, 1);
+
+	text->RenderText(activationModeString, 500, 50, 1);
 	std::string repeatText = "Repeat? : ";
 	if (sceneObject.repeat)
 	{
@@ -1219,19 +1275,132 @@ void SceneActionMenu::Draw()
 	{
 		repeatText += "No";
 	}
-	text->RenderText(repeatText, 100, 500, 1);
+	text->RenderText(repeatText, 100, 550, 1);
 
 }
 
 void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
+	int yDirection = 0;
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		yDirection = -1;
+		firstMove = true;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		yDirection = 1;
+		firstMove = true;
+	}
+	if (yDirection > 0)
+	{
+		currentOption++;
+		if (currentOption > numberOfOptions)
+		{
+			currentOption = numberOfOptions;
+		}
+		else
+		{
+			yIndicator += indicatorIncrement;
+			if (yIndicator > 84)
+			{
+				yIndicator = 84;
+				down = true;
+				goal = yOffset + 64;
+				yOffset += 32;
+			}
+		}
+	}
+	else if(yDirection < 0)
+	{
+		currentOption--;
+		if (currentOption < 0)
+		{
+			currentOption = 0;
+		}
+		else
+		{
+			yIndicator -= indicatorIncrement;
+			if (yIndicator < 0)
+			{
+				yIndicator = 0;
+				up = true;
+				goal = yOffset - 64;
+				yOffset -= 32;
+			}
+		}
+	}
+	if (inputManager.isKeyDown(SDLK_UP))
+	{
+		yDirection = -1;
+	}
+	if (inputManager.isKeyDown(SDLK_DOWN))
+	{
+		yDirection = 1;
+	}
+	if (yDirection != 0)
+	{
+		movementDelay += deltaTime;
+		float delayTime = normalDelay;
+		if (firstMove)
+		{
+			delayTime = firstDelay;
+		}
+		if (movementDelay >= delayTime)
+		{
+			if (yDirection > 0)
+			{
+				currentOption++;
+				if (currentOption > numberOfOptions)
+				{
+					currentOption = numberOfOptions;
+				}
+				else
+				{
+					yIndicator += indicatorIncrement;
+					if (yIndicator > 84)
+					{
+						yIndicator = 84;
+						down = true;
+						goal = yOffset + 64;
+						yOffset += 32;
+					}
+				}
+			}
+			else
+			{
+				currentOption--;
+				if (currentOption < 0)
+				{
+					currentOption = 0;
+				}
+				else
+				{
+					yIndicator -= indicatorIncrement;
+					if (yIndicator < 0)
+					{
+						yIndicator = 0;
+						up = true;
+						goal = yOffset - 64;
+						yOffset -= 32;
+					}
+				}
+			}
+			movementDelay = 0.0f;
+			firstMove = false;
+		}
+	}
+	else
+	{
+		movementDelay = 0.0f;
+		firstMove = true;
+	}
 
 	if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
 		selectedAction++;
 		
-		if (selectedAction > ITEM_ACTION)
+		if (selectedAction > SCENE_UNIT_REMOVE_ACTION)
 		{
 			selectedAction = 0;
 		}
@@ -1241,7 +1410,7 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		selectedAction--;
 		if (selectedAction < 0)
 		{
-			selectedAction = ITEM_ACTION;
+			selectedAction = SCENE_UNIT_REMOVE_ACTION;
 		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_DELETE))
@@ -1269,6 +1438,15 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	else if (inputManager.isKeyPressed(SDLK_r))
 	{
 		sceneObject.repeat = !sceneObject.repeat;
+	}
+
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
 	}
 }
 
@@ -1315,7 +1493,7 @@ void SceneActionMenu::CancelOption()
 
 SceneActivationMenu::SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject)
 {
-	numberOfOptions = 3;
+	numberOfOptions = 4;
 
 }
 
@@ -1335,6 +1513,10 @@ void SceneActivationMenu::Draw()
 	{
 		text->RenderText("Visit", 100, 100, 1);
 	}
+	else
+	{
+		text->RenderText("Intro", 100, 100, 1);
+	}
 }
 
 void SceneActivationMenu::SelectOption()
@@ -1351,6 +1533,11 @@ void SceneActivationMenu::SelectOption()
 	else if (currentOption == VISIT)
 	{
 		sceneObject.activation = new Activation(VISIT);
+		CancelOption();
+	}
+	else
+	{
+		sceneObject.activation = new Activation(INTRO);
 		CancelOption();
 	}
 }
@@ -1967,5 +2154,454 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{
 		CancelOption();
+	}
+}
+
+RemoveSceneUnitActionMenu::RemoveSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	unitID = 0;
+}
+
+void RemoveSceneUnitActionMenu::Draw()
+{
+	text->RenderText("Unit to remove: " + intToString(unitID), 100, 200, 1);
+	text->RenderText("Delay: " + floatToString(delay), 300, 200, 1);
+	text->RenderText("Increment: " + floatToString(delayIncrement), 300, 250, 1);
+	text->RenderText("Note for the time being, this unit ID is based on the order they were added to the scene.", 100, 100, 1);
+}
+
+void RemoveSceneUnitActionMenu::SelectOption()
+{
+	SceneUnitRemove* remove = new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, unitID, delay);
+	sceneActions.push_back(remove);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
+}
+
+void RemoveSceneUnitActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		unitID++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		unitID--;
+		if (unitID < 0)
+		{
+			unitID = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		delay -= delayIncrement;
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		delay += delayIncrement;
+	}
+	else if (inputManager.isKeyPressed(SDLK_d))
+	{
+		if (delayIncrement == 0.1f)
+		{
+			delayIncrement = 1;
+		}
+		else if (delayIncrement == 1)
+		{
+			delayIncrement = 0.01f;
+		}
+		else
+		{
+			delayIncrement = 0.1f;
+		}
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+}
+
+NewSceneUnitActionMenu::NewSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	unitID = 0;
+	cameraPosition = camera->getPosition();
+
+}
+
+void NewSceneUnitActionMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(cameraPosition.x, cameraPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	for (int i = 0; i < path.size(); i++)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(path[i].x, path[i].y, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 0.5f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		glm::vec2 drawPosition = glm::vec2(path[i]) + glm::vec2(2, 4);
+		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		text->RenderText(intToString(i), drawPosition.x, drawPosition.y, 1);
+	}
+	if (!delayMode)
+	{
+		text->RenderText("Position: " + intToString(cameraPosition.x) + " " + intToString(cameraPosition.y), 100, 100, 1);
+	}
+	else
+	{
+		text->RenderText("Delay mode, set the delay", 100, 100, 1);
+	}
+	text->RenderText("Unit: " + intToString(unitID), 600, 200, 1);
+	text->RenderText("Team: " + intToString(team), 600, 250, 1);
+	text->RenderText("Path Increment: " + intToString(pathIncrement), 600, 300, 1);
+	text->RenderText("Delay: " + floatToString(nextDelay), 600, 350, 1);
+	text->RenderText("Move Delay: " + floatToString(moveDelay), 600, 400, 1);
+	text->RenderText("Increment: " + floatToString(delayIncrement), 600, 450, 1);
+}
+
+void NewSceneUnitActionMenu::SelectOption()
+{
+	path.push_back(cameraPosition);
+}
+
+void NewSceneUnitActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	glm::ivec2 move(0);
+	if (inputManager.isKeyPressed(SDLK_TAB))
+	{
+		delayMode = !delayMode;
+	}
+	if (!delayMode)
+	{
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			move.y = -1;
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			move.y = 1;
+		}
+		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			move.x = 1;
+		}
+		else if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			move.x = -1;
+		}
+		if (inputManager.isKeyPressed(SDLK_p))
+		{
+			if (pathIncrement == 16)
+			{
+				pathIncrement = 8;
+			}
+			else
+			{
+				pathIncrement = 16;
+			}
+		}
+	}
+	else
+	{
+		if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			nextDelay -= delayIncrement;
+		}
+		else if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			nextDelay += delayIncrement;
+		}
+		else if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			moveDelay += delayIncrement;
+			if (moveDelay < 0)
+			{
+				moveDelay = 0;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			moveDelay -= delayIncrement;
+			if (moveDelay < 0)
+			{
+				moveDelay = -1;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_d))
+		{
+			if (delayIncrement == 0.1f)
+			{
+				delayIncrement = 1;
+			}
+			else if (delayIncrement == 1)
+			{
+				delayIncrement = 0.01f;
+			}
+			else
+			{
+				delayIncrement = 0.1f;
+			}
+		}
+	}
+	//Want to be able to display the unit name in the future
+	if (inputManager.isKeyPressed(SDLK_w))
+	{
+		unitID++;
+		if (unitID > 12)
+		{
+			unitID = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		unitID--;
+		if (unitID < 0)
+		{
+			unitID = 12;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_t))
+	{
+		team++;
+		if (team > 1)
+		{
+			team = 0;
+		}
+	}
+
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_SPACE))
+	{
+		AddSceneUnit* action = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, unitID, team, path, nextDelay, moveDelay);
+		sceneActions.push_back(action);
+		MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		CancelOption();
+	}
+	else
+	{
+		cameraPosition += move * pathIncrement;
+		camera->setPosition(cameraPosition);
+	}
+}
+
+SceneUnitMoveActionMenu::SceneUnitMoveActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+	unitID = 0;
+	cameraPosition = camera->getPosition();
+
+}
+
+void SceneUnitMoveActionMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(cameraPosition.x, cameraPosition.y, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	for (int i = 0; i < path.size(); i++)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(path[i].x, path[i].y, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 0.5f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		glm::vec2 drawPosition = glm::vec2(path[i]) + glm::vec2(2, 4);
+		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		text->RenderText(intToString(i), drawPosition.x, drawPosition.y, 1);
+	}
+	if (!delayMode)
+	{
+		text->RenderText("Position: " + intToString(cameraPosition.x) + " " + intToString(cameraPosition.y), 100, 100, 1);
+	}
+	else
+	{
+		text->RenderText("Delay mode, set the delay", 100, 100, 1);
+	}
+	text->RenderText("Unit: " + intToString(unitID), 600, 200, 1);
+	text->RenderText("facing: " + intToString(facing), 600, 250, 1);
+	text->RenderText("Path Increment: " + intToString(pathIncrement), 600, 300, 1);
+	text->RenderText("Delay: " + floatToString(nextDelay), 600, 350, 1);
+	text->RenderText("Move Speed: " + floatToString(moveSpeed), 600, 400, 1);
+	text->RenderText("Increment: " + floatToString(delayIncrement), 600, 450, 1);
+}
+
+void SceneUnitMoveActionMenu::SelectOption()
+{
+	path.push_back(cameraPosition);
+}
+
+void SceneUnitMoveActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	glm::ivec2 move(0);
+	if (inputManager.isKeyPressed(SDLK_TAB))
+	{
+		delayMode = !delayMode;
+	}
+	if (!delayMode)
+	{
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			move.y = -1;
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			move.y = 1;
+		}
+		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			move.x = 1;
+		}
+		else if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			move.x = -1;
+		}
+		if (inputManager.isKeyPressed(SDLK_p))
+		{
+			if (pathIncrement == 16)
+			{
+				pathIncrement = 8;
+			}
+			else
+			{
+				pathIncrement = 16;
+			}
+		}
+	}
+	else
+	{
+		if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			nextDelay -= delayIncrement;
+		}
+		else if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			nextDelay += delayIncrement;
+		}
+		else if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			moveSpeed += delayIncrement;
+			if (moveSpeed < 0)
+			{
+				moveSpeed = 0;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			moveSpeed -= delayIncrement;
+			if (moveSpeed < 0)
+			{
+				moveSpeed = -1;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_d))
+		{
+			if (delayIncrement == 0.1f)
+			{
+				delayIncrement = 1;
+			}
+			else if (delayIncrement == 1)
+			{
+				delayIncrement = 0.01f;
+			}
+			else
+			{
+				delayIncrement = 0.1f;
+			}
+		}
+	}
+	//Want to be able to display the unit name in the future
+	if (inputManager.isKeyPressed(SDLK_w))
+	{
+		unitID++;
+		if (unitID > 22)
+		{
+			unitID = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		unitID--;
+		if (unitID < 0)
+		{
+			unitID = 22;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_f))
+	{
+		facing++;
+		if (facing > 3)
+		{
+			facing = -1;
+		}
+	}
+
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_SPACE))
+	{
+		SceneUnitMove* action = new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, unitID, path, nextDelay, moveSpeed, facing);
+		sceneActions.push_back(action);
+		MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		CancelOption();
+	}
+	else
+	{
+		cameraPosition += move * pathIncrement;
+		camera->setPosition(cameraPosition);
 	}
 }

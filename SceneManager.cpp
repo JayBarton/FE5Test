@@ -124,7 +124,10 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					delayTimer = 0;
 					actionIndex++;
 					//need error checking here
-					AddNewSceneUnit(actions[actionIndex]);
+					if (actionIndex < actions.size() && actions[actionIndex]->type == NEW_SCENE_UNIT_ACTION)
+					{
+						AddNewSceneUnit(actions[actionIndex]);
+					}
 				}
 			}
 			for (int i = 0; i < introUnits.size(); i++)
@@ -368,6 +371,11 @@ TalkActivation::TalkActivation(Scene* owner, int type, int talker, int listener)
 }
 
 VisitActivation::VisitActivation(Scene* owner, int type) : Activation(owner, type)
+{
+
+}
+
+IntroActivation::IntroActivation(Scene* owner, int type) : Activation(owner, type)
 {
 
 }
