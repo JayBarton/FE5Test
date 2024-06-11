@@ -146,7 +146,7 @@ int main(int argc, char** argv)
 
     std::ifstream f("../BaseStats.json");
     json data = json::parse(f);
-    json enemyData = data["enemies"];
+    json enemyData = data["classes"];
 
     classNames.resize(enemyData.size());
     int currentName = 0;

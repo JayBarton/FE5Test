@@ -366,13 +366,14 @@ struct ItemActionMenu : public Menu
 
 struct NewSceneUnitActionMenu : public Menu
 {
-    NewSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    NewSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions, struct AddSceneUnit* existingAction = nullptr);
     virtual void Draw() override;
     virtual void SelectOption() override;
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
     bool delayMode = false;
 
+    AddSceneUnit* existingAction = nullptr;
     std::vector<glm::ivec2> path;
     std::vector<SceneAction*>& sceneActions;
     int unitID;
@@ -387,14 +388,14 @@ struct NewSceneUnitActionMenu : public Menu
 
 struct SceneUnitMoveActionMenu : public Menu
 {
-    SceneUnitMoveActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    SceneUnitMoveActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions, struct SceneUnitMove* existingAction = nullptr);
     virtual void Draw() override;
     virtual void SelectOption() override;
     virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
 
     std::vector<glm::ivec2> path;
     std::vector<SceneAction*>& sceneActions;
-
+    SceneUnitMove* existingAction;
     bool delayMode = false;
 
     int unitID;

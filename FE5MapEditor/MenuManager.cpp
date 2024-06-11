@@ -1448,6 +1448,24 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		CancelOption();
 	}
+	if (inputManager.isKeyPressed(SDLK_SPACE))
+	{
+		//Edit action
+		auto currentAction = sceneActions[currentOption];
+		if (currentAction->type == NEW_SCENE_UNIT_ACTION)
+		{
+			auto newMenu = new NewSceneUnitActionMenu(text, camera, shapeVAO, sceneActions, static_cast<AddSceneUnit*>(currentAction));
+			MenuManager::menuManager.menus.push_back(newMenu);
+		}
+		else if (currentAction->type == SCENE_UNIT_MOVE_ACTION)
+		{
+
+		}
+		else if (currentAction->type == SCENE_UNIT_REMOVE_ACTION)
+		{
+
+		}
+	}
 }
 
 void SceneActionMenu::SelectOption()
@@ -2226,10 +2244,21 @@ void RemoveSceneUnitActionMenu::CheckInput(InputManager& inputManager, float del
 	}
 }
 
-NewSceneUnitActionMenu::NewSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
-	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+NewSceneUnitActionMenu::NewSceneUnitActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions, AddSceneUnit* existingAction)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions), existingAction(existingAction)
 {
-	unitID = 0;
+	if (existingAction)
+	{
+		unitID = existingAction->unitID;
+		team = existingAction->team;
+		nextDelay = existingAction->nextActionDelay;
+		moveDelay = existingAction->nextMoveDelay;
+		path = existingAction->path;
+	}
+	else
+	{
+		unitID = 0;
+	}
 	cameraPosition = camera->getPosition();
 
 }
@@ -2404,9 +2433,20 @@ void NewSceneUnitActionMenu::CheckInput(InputManager& inputManager, float deltaT
 	}
 	else if (inputManager.isKeyPressed(SDLK_SPACE))
 	{
-		AddSceneUnit* action = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, unitID, team, path, nextDelay, moveDelay);
-		sceneActions.push_back(action);
-		MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		if (existingAction)
+		{
+			existingAction->unitID = unitID;
+			existingAction->team = team;
+			existingAction->nextActionDelay = nextDelay;
+			existingAction->nextMoveDelay = moveDelay;
+			existingAction->path = path;
+		}
+		else
+		{
+			AddSceneUnit* action = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, unitID, team, path, nextDelay, moveDelay);
+			sceneActions.push_back(action);
+			MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		}
 		CancelOption();
 	}
 	else
@@ -2416,10 +2456,20 @@ void NewSceneUnitActionMenu::CheckInput(InputManager& inputManager, float deltaT
 	}
 }
 
-SceneUnitMoveActionMenu::SceneUnitMoveActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
-	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+SceneUnitMoveActionMenu::SceneUnitMoveActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions, SceneUnitMove* existingAction)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions), existingAction(existingAction)
 {
-	unitID = 0;
+	if (existingAction)
+	{
+		unitID = existingAction->unitID;
+		nextDelay = existingAction->nextActionDelay;
+		moveSpeed = existingAction->moveSpeed;
+		path = existingAction->path;
+	}
+	else
+	{
+		unitID = 0;
+	}
 	cameraPosition = camera->getPosition();
 
 }
@@ -2594,9 +2644,19 @@ void SceneUnitMoveActionMenu::CheckInput(InputManager& inputManager, float delta
 	}
 	else if (inputManager.isKeyPressed(SDLK_SPACE))
 	{
-		SceneUnitMove* action = new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, unitID, path, nextDelay, moveSpeed, facing);
-		sceneActions.push_back(action);
-		MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		if (existingAction)
+		{
+			existingAction->unitID = unitID;
+			existingAction->nextActionDelay = nextDelay;
+			existingAction->moveSpeed = moveSpeed;
+			existingAction->path = path;
+		}
+		else
+		{
+			SceneUnitMove* action = new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, unitID, path, nextDelay, moveSpeed, facing);
+			sceneActions.push_back(action);
+			MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+		}
 		CancelOption();
 	}
 	else
