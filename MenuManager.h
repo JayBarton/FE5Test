@@ -97,7 +97,7 @@ struct CantoOptionsMenu : public Menu
 
 struct ItemOptionsMenu : public Menu
 {
-	ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	void DrawWeaponComparison(std::vector<Item*>& inventory);
 	virtual void SelectOption() override;
@@ -108,6 +108,10 @@ struct ItemOptionsMenu : public Menu
 
 	BattleStats currentStats;
 	BattleStats selectedStats;
+
+	SpriteRenderer* renderer;
+	std::vector<glm::vec4> itemIconUVs;
+	std::vector<glm::vec4> proficiencyIconUVs;
 };
 
 struct ItemUseMenu : public Menu
@@ -131,7 +135,7 @@ struct ItemUseMenu : public Menu
 
 struct SelectWeaponMenu : public ItemOptionsMenu
 {
-	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, bool capturing = false);
+	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, SpriteRenderer* Renderer, bool capturing = false);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
@@ -246,7 +250,7 @@ struct DropMenu : public Menu
 
 struct TradeMenu : public Menu
 {
-	TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit);
+	TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -260,6 +264,8 @@ struct TradeMenu : public Menu
 	bool moving = false;
 	bool firstInventory = true;
 	bool moveFromFirst = true;
+	SpriteRenderer* renderer;
+	std::vector<glm::vec4> itemIconUVs;
 };
 
 struct UnitStatsViewMenu : public Menu
@@ -279,7 +285,8 @@ struct UnitStatsViewMenu : public Menu
 	std::vector<Unit*>* unitList;
 
 	//Just here as a proof of concept for now
-	std::vector<glm::vec4> iconUVs;
+	std::vector<glm::vec4> proficiencyIconUVs;
+	std::vector<glm::vec4> itemIconUVs;
 
 	bool firstPage = true;
 	bool examining = false;
@@ -431,6 +438,9 @@ struct MenuManager
 	BattleManager* battleManager = nullptr;
 	PlayerManager* playerManager = nullptr;
 	EnemyManager* enemyManager = nullptr;
+
+	std::vector<glm::vec4> proficiencyIconUVs;
+	std::vector<glm::vec4> itemIconUVs;
 
 	Subject<int> subject;
 

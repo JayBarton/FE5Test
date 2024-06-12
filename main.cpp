@@ -941,7 +941,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	if (intro >= 0)
 	{
-		sceneManager.scenes[intro]->init();
+	//	sceneManager.scenes[intro]->init();
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;

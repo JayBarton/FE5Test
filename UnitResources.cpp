@@ -4,7 +4,6 @@
 
 std::vector<std::vector<glm::vec4>> UnitResources::unitUVs;
 
-
 void UnitResources::LoadUVs()
 {
 	unitUVs.resize(13);

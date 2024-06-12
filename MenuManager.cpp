@@ -124,7 +124,7 @@ void UnitOptionsMenu::SelectOption()
 				}
 			}
 		}
-		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack);
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack, MenuManager::menuManager.renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -149,7 +149,7 @@ void UnitOptionsMenu::SelectOption()
 		{
 			unitsToAttack[i] = unitsInCaptureRange;
 		}
-		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack, true);
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack, MenuManager::menuManager.renderer, true);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -575,9 +575,12 @@ void CantoOptionsMenu::CancelOption()
 	Menu::CancelOption();
 }
 
-ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : Menu(Cursor, Text, Camera, shapeVAO)
+ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer) : Menu(Cursor, Text, Camera, shapeVAO)
 {
 	GetOptions();
+	renderer = Renderer;
+	itemIconUVs = MenuManager::menuManager.itemIconUVs;
+	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 }
 
 void ItemOptionsMenu::Draw()
@@ -585,7 +588,7 @@ void ItemOptionsMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(16, 32 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(24, 82 + 16 * currentOption, 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -604,14 +607,21 @@ void ItemOptionsMenu::Draw()
 	for (int i = 0; i < inventory.size(); i++)
 	{
 		color = glm::vec3(1);
-		int yPosition = 100 + i * 30;
+		int yPosition = 225 + i * 42;
 		auto item = inventory[i];
 		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
 		{
 			color = grey;
 		}
-		text->RenderText(item->name, 96, yPosition, 1, color);
-		text->RenderTextRight(intToString(item->remainingUses), 200, yPosition, 1, 14, color);
+		text->RenderText(item->name, 175, yPosition, 1, color);
+		text->RenderTextRight(intToString(item->remainingUses), 375, yPosition, 1, 14, color);
+
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(itemIconUVs[item->ID]);
+		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
 	}
 	if (inventory[currentOption]->isWeapon)
 	{
@@ -619,20 +629,19 @@ void ItemOptionsMenu::Draw()
 	}
 	else
 	{
-		text->RenderText(inventory[currentOption]->description, 620, 100, 1);
+		text->RenderText(inventory[currentOption]->description, 525, 225, 1);
 	}
 }
 
 void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 {
-	int offSet = 30;
-	int yPosition = 100;
+	int offSet = 42;
+	int yPosition = 225;
 	auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
 
-	int xStatName = 620;
-	int xStatValue = 660;
+	int xStatName = 525;
+	int xStatValue = 575;
 	text->RenderText("Type", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
 	yPosition += offSet;
 	text->RenderText("Atk", xStatName, yPosition, 1);
 	text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
@@ -661,6 +670,13 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 	{
 		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
 	}
+
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	auto texture = ResourceManager::GetTexture("icons");
+
+	renderer->setUVs(proficiencyIconUVs[weaponData.type]);
+	renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, cursor->dimensions);
 }
 
 void ItemOptionsMenu::SelectOption()
@@ -712,6 +728,9 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	profcienciesMap[3] = "C";
 	profcienciesMap[4] = "B";
 	profcienciesMap[5] = "A";
+
+	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
+	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 16);
 }
 
 void MenuManager::AddMenu(int ID)
@@ -724,7 +743,7 @@ void MenuManager::AddMenu(int ID)
 	}
 	else if (ID == 1)
 	{
-		Menu* newMenu = new ItemOptionsMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new ItemOptionsMenu(cursor, text, camera, shapeVAO, renderer);
 		menus.push_back(newMenu);
 	}
 	else if (ID == 2)
@@ -886,8 +905,8 @@ void ItemUseMenu::GetOptions()
 	numberOfOptions = optionsVector.size();
 }
 
-SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, bool capturing)
-	: ItemOptionsMenu(Cursor, Text, camera, shapeVAO), capturing(capturing)
+SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, SpriteRenderer* Renderer, bool capturing)
+	: ItemOptionsMenu(Cursor, Text, camera, shapeVAO, Renderer), capturing(capturing)
 {
 	weapons = validWeapons;
 	unitsToAttack = units;
@@ -902,7 +921,7 @@ void SelectWeaponMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(16, 32 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(24, 82 + 16 * currentOption, 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -916,9 +935,15 @@ void SelectWeaponMenu::Draw()
 	Unit* unit = cursor->selectedUnit;
 	for (int i = 0; i < inventory.size(); i++)
 	{
-		int yPosition = 100 + i * 30;
-		text->RenderText(inventory[i]->name, 96, yPosition, 1);
-		text->RenderTextRight(intToString(inventory[i]->remainingUses), 200, yPosition, 1, 14);
+		int yPosition = 225 + i * 42;
+		text->RenderText(inventory[i]->name, 175, yPosition, 1);
+		text->RenderTextRight(intToString(inventory[i]->remainingUses), 375, yPosition, 1, 14);
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(itemIconUVs[inventory[i]->ID]);
+		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
 	}
 
 	DrawWeaponComparison(weapons);
@@ -933,7 +958,6 @@ void SelectWeaponMenu::SelectOption()
 		if (weapons[currentOption] == unit->inventory[i])
 		{
 			selectedWeapon = i;
-	//		unit->equipWeapon(i);
 			break;
 		}
 	}
@@ -1311,7 +1335,7 @@ void SelectTradeUnit::Draw()
 
 void SelectTradeUnit::SelectOption()
 {
-	Menu* newMenu = new TradeMenu(cursor, text, camera, shapeVAO, tradeUnits[currentOption]);
+	Menu* newMenu = new TradeMenu(cursor, text, camera, shapeVAO, tradeUnits[currentOption], MenuManager::menuManager.renderer);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -1445,9 +1469,12 @@ void SelectTalkMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit) : Menu(Cursor, Text, camera, shapeVAO)
+TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer) 
+	: Menu(Cursor, Text, camera, shapeVAO)
 {
+	renderer = Renderer;
 	tradeUnit = unit;
+	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 	GetOptions();
 }
 
@@ -1471,13 +1498,13 @@ void TradeMenu::Draw()
 	int x = 0;
 	if (firstInventory)
 	{
-		x = 32;
+		x = 8;
 	}
 	else
 	{
-		x = 208;
+		x = 136;
 	}
-	model = glm::translate(model, glm::vec3(x, 64 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(x, 98 + 16 * currentOption, 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -1493,13 +1520,13 @@ void TradeMenu::Draw()
 		model = glm::mat4();
 		if (moveFromFirst)
 		{
-			x = 32;
+			x = 8;
 		}
 		else
 		{
-			x = 208;
+			x = 136;
 		}
-		model = glm::translate(model, glm::vec3(x, 64 + (12 * itemToMove), 0.0f));
+		model = glm::translate(model, glm::vec3(x, 98 + 16 * itemToMove, 0.0f));
 
 		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -1513,17 +1540,29 @@ void TradeMenu::Draw()
 	auto firstUnit = cursor->selectedUnit;
 	text->RenderText(firstUnit->name, 100, 30, 1);
 	text->RenderText(tradeUnit->name, 700, 30, 1);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
 	{
-		text->RenderText(firstUnit->inventory[i]->name, 130, 180 + i * 30, 1);
-		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 230, 180 + i * 30, 1, 14);
+		text->RenderText(firstUnit->inventory[i]->name, 125, 267 + i * 42, 1);
+		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 30, 1, 14);
+		ResourceManager::GetShader("Nsprite").Use();
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(itemIconUVs[firstUnit->inventory[i]->ID]);
+		renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, cursor->dimensions);
 	}
 
 	for (int i = 0; i < tradeUnit->inventory.size(); i++)
 	{
-		text->RenderText(tradeUnit->inventory[i]->name, 670, 180 + i * 30, 1);
-		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 770, 180 + i * 30, 1, 14);
+		text->RenderText(tradeUnit->inventory[i]->name, 525, 267 + i * 42, 1);
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 725, 267 + i * 42, 1, 14);
+
+		ResourceManager::GetShader("Nsprite").Use();
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
+		renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, cursor->dimensions);
 	}
 }
 
@@ -1713,7 +1752,8 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 		}
 	}
 
-	iconUVs = ResourceManager::GetTexture("icons").GetUVs(16, 16);
+	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
+	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 }
 
 void UnitStatsViewMenu::Draw()
@@ -1744,18 +1784,25 @@ void UnitStatsViewMenu::Draw()
 		for (int i = 0; i < inventory.size(); i++)
 		{
 			color = glm::vec3(1);
-			int yPosition = (220 + i * 30) - adjustedOffset;
+			int yPosition = (270 + i * 42) - adjustedOffset;
 			auto item = inventory[i];
 			if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
 			{
 				color = grey;
 			}
-			text->RenderText(item->name, 480, yPosition, 1, color);
-			text->RenderTextRight(intToString(item->remainingUses), 680, yPosition, 1, 14, color);
+			text->RenderText(item->name, 425, yPosition, 1, color);
+			text->RenderTextRight(intToString(item->remainingUses) + "/", 625, yPosition, 1, 14, color);
+			text->RenderTextRight(intToString(item->maxUses), 700, yPosition, 1, 14, color);
 			if (i == unit->equippedWeapon)
 			{
-				text->RenderText("E", 700, yPosition, 1);
+				text->RenderText("E", 750, yPosition, 1);
 			}
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+			auto texture = ResourceManager::GetTexture("icons");
+
+			renderer->setUVs(itemIconUVs[item->ID]);
+			renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 -yOffset)), 0.0f, cursor->dimensions);
 		}
 		if (!examining)
 		{
@@ -1781,7 +1828,7 @@ void UnitStatsViewMenu::Draw()
 			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(128, 75 + (12 * currentOption), 0.0f));
+			model = glm::translate(model, glm::vec3(104, 95 + (16 * currentOption), 0.0f));
 
 			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -1829,26 +1876,26 @@ void UnitStatsViewMenu::Draw()
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(iconUVs[WeaponData::TYPE_SWORD]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_SWORD]);
 		renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_LANCE]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LANCE]);
 		renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_AXE]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_AXE]);
 		renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_BOW]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_BOW]);
 		renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_STAFF]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_STAFF]);
 		renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, cursor->dimensions);
 
-		renderer->setUVs(iconUVs[WeaponData::TYPE_FIRE]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_FIRE]);
 		renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_THUNDER]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_THUNDER]);
 		renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_WIND]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_WIND]);
 		renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_LIGHT]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LIGHT]);
 		renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, cursor->dimensions);
-		renderer->setUVs(iconUVs[WeaponData::TYPE_DARK]);
+		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_DARK]);
 		renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, cursor->dimensions);
 
 		auto& profMap = MenuManager::menuManager.profcienciesMap;
@@ -1918,23 +1965,23 @@ void UnitStatsViewMenu::Draw()
 	SBatch Batch;
 	Batch.init();
 	Batch.begin();
-	unit->Draw(&Batch, glm::vec2(16), true);
+	unit->Draw(&Batch, glm::vec2(16, 10), true);
 	Batch.end();
 	Batch.renderBatch();
 
-	text->RenderText(unit->name, 110, 64, 1);
-	text->RenderText(unit->unitClass, 48, 96, 1);
-	text->RenderText("Lv", 48, 128, 1);
-	text->RenderText("HP", 48, 160, 1);
+	text->RenderText(unit->name, 100, 29, 1);
+	text->RenderText(unit->unitClass, 50, 72, 1);
+	text->RenderText("Lv", 50, 120, 1);
+	text->RenderText("HP", 50, 163, 1);
 
-	text->RenderTextRight(intToString(unit->level), 90, 128, 1, 14);
-	text->RenderTextRight(intToString(unit->currentHP), 90, 160, 1, 14);
+	text->RenderTextRight(intToString(unit->level), 125, 120, 1, 14);
+	text->RenderTextRight(intToString(unit->currentHP), 125, 163, 1, 14);
 
-	text->RenderText("E", 110, 128, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText("/", 110, 160, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("E", 175, 120, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	text->RenderText("/", 175, 163, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 
-	text->RenderTextRight(intToString(unit->experience), 130, 128, 1, 14);
-	text->RenderTextRight(intToString(unit->maxHP), 130, 160, 1, 14);
+	text->RenderTextRight(intToString(unit->experience), 200, 120, 1, 14);
+	text->RenderTextRight(intToString(unit->maxHP), 200, 163, 1, 14);
 
 	text->RenderText("ATK", 500, 64, 1);
 	text->RenderText("HIT", 500, 96, 1);
@@ -1952,6 +1999,12 @@ void UnitStatsViewMenu::Draw()
 		{
 			text->RenderTextRight(intToString(weapon.minRange) + " ~ " + intToString(weapon.maxRange), 542, 128, 1, 30);
 		}
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(proficiencyIconUVs[unit->GetEquippedWeapon().type]);
+		renderer->DrawSprite(texture, glm::vec2(233, 59), 0.0f, cursor->dimensions);
 	}
 	else
 	{
