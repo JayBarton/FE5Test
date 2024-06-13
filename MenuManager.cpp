@@ -772,7 +772,7 @@ void MenuManager::AddUnitStatMenu(Unit* unit)
 
 void MenuManager::AddFullInventoryMenu(int itemID)
 {
-	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID);
+	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID, renderer);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -3788,12 +3788,14 @@ void VendorMenu::CancelOption()
 	ActivateText();
 }
 
-FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem) :
+FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem, SpriteRenderer* Renderer) :
 	Menu(Cursor, Text, camera, shapeVAO), newItem(newItem)
 {
 	numberOfOptions = cursor->selectedUnit->inventory.size() + 1;
 	currentStats = cursor->selectedUnit->CalculateBattleStats();
 	selectedStats = cursor->selectedUnit->CalculateBattleStats(cursor->selectedUnit->inventory[currentOption]->ID);
+	renderer = Renderer;
+	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 }
 
 void FullInventoryMenu::Draw()
@@ -3840,7 +3842,7 @@ void FullInventoryMenu::Draw()
 
 	//Selection
 	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(24, 84 + (16 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(24, 82 + (16 * currentOption), 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -3856,6 +3858,8 @@ void FullInventoryMenu::Draw()
 	auto inventory = unit->inventory;
 	glm::vec3 color = glm::vec3(1);
 	glm::vec3 grey = glm::vec3(0.64f);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+
 	for (int i = 0; i < numberOfOptions - 1; i++)
 	{
 		color = glm::vec3(1);
@@ -3863,10 +3867,22 @@ void FullInventoryMenu::Draw()
 		auto item = inventory[i];
 		text->RenderText(item->name, 175, yPosition, 1, color);
 		text->RenderTextRight(intToString(item->remainingUses), 375, 230 + i * 42, 1, 14, color);
+
+		ResourceManager::GetShader("Nsprite").Use();
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(itemIconUVs[item->ID]);
+		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
 	}
 	auto item = ItemManager::itemManager.items[newItem];
 	text->RenderText(item.name, 175, 225 + (numberOfOptions - 1) * 42, 1, grey);
 	text->RenderTextRight(intToString(item.remainingUses), 375, 230 + (numberOfOptions - 1) * 42, 1, 14, grey);
+
+	ResourceManager::GetShader("Nsprite").Use();
+	auto texture = ResourceManager::GetTexture("icons");
+
+	renderer->setUVs(itemIconUVs[item.ID]);
+	renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * (numberOfOptions - 1)), 0.0f, cursor->dimensions);
 	Item focusedItem = item;
 	if (currentOption < numberOfOptions - 1)
 	{

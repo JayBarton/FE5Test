@@ -1217,7 +1217,7 @@ void Draw()
 		}
 		else if (displays.state != NONE)
 		{
-			displays.Draw(&camera, Text, shapeVAO);
+			displays.Draw(&camera, Text, shapeVAO, Renderer);
 		}
 		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
@@ -1320,7 +1320,7 @@ void DrawText()
 {
 	if (displays.state != NONE)
 	{
-		displays.Draw(&camera, Text, shapeVAO);
+		displays.Draw(&camera, Text, shapeVAO, Renderer);
 	}
 	else if (battleManager.battleActive)
 	{

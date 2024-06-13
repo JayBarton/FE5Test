@@ -5,6 +5,7 @@
 #include "Globals.h"
 #include "Camera.h"
 #include "InputManager.h"
+#include "SpriteRenderer.h"
 #include <glm.hpp>
 #include <SDL.h>
 
@@ -308,7 +309,7 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 	}
 }
 
-void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
+void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, SpriteRenderer* renderer)
 {
 	switch (state)
 	{
@@ -344,9 +345,18 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		Text->RenderText(focusedUnit->name + " bought " + focusedUnit->GetEquippedItem()->name, 300, 300, 1);
 		break;
 	case GOT_ITEM:
-		Text->RenderText(ItemManager::itemManager.items[itemToUse].name, 300, 300, 1);
+	{
+		Text->RenderText(ItemManager::itemManager.items[itemToUse].name, 325, 289, 1);
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(MenuManager::menuManager.itemIconUVs[itemToUse]);
+		renderer->DrawSprite(texture, glm::vec2(88, 106), 0.0f, glm::ivec2(16));
 		break;
+	}
 	case TURN_CHANGE:
+	{
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", turnDisplayAlpha);
 		glm::mat4 model = glm::mat4();
@@ -371,6 +381,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO)
 		//Using text now, I think I'll use a sprite ultimately
 		Text->RenderText(thisTurn, turnTextX, 300, 1);
 		break;
+	}
 	}
 }
 

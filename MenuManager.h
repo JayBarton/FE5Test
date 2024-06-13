@@ -371,7 +371,7 @@ struct OptionsMenu : public Menu
 
 struct FullInventoryMenu : public Menu
 {
-	FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem);
+	FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem, SpriteRenderer* renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -380,6 +380,9 @@ struct FullInventoryMenu : public Menu
 
 	BattleStats currentStats;
 	BattleStats selectedStats;
+
+	SpriteRenderer* renderer;
+	std::vector<glm::vec4> itemIconUVs;
 };
 
 enum VendorState

@@ -81,7 +81,7 @@ struct InfoDisplays
 	void UpdateHealthBarDisplay(float deltaTime);
 	void UpdateLevelUpDisplay(float deltaTime);
 	void UpdateExperienceDisplay(float deltaTime);
-	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO);
+	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO, struct SpriteRenderer* renderer);
 
 	void DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text);
 

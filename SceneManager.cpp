@@ -15,7 +15,7 @@
 #include "ResourceManager.h"
 #include "UnitResources.h"
 
-Scene::Scene()
+Scene::Scene() 
 {
 
 }
