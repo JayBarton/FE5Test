@@ -573,6 +573,43 @@ void Unit::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool
     movementComponent.startMovement(path);
 }
 
+void Unit::carryUnit(Unit* unitToCarry)
+{
+    carriedUnit = unitToCarry;
+    carryingMalus = 2;
+    int buildCompare = getBuild() / 2;
+    if (isMounted())
+    {
+        buildCompare += 5;
+    }
+    if (carriedUnit->build > buildCompare)
+    {
+        buildMalus = 2;
+        if (isMounted()) //???
+        {
+            mount->remainingMoves /= carryingMalus;
+        }
+    }
+}
+
+void Unit::releaseUnit()
+{
+    carryingMalus = 1;
+    buildMalus = 1;
+    if (isMounted())
+    {
+        int buildCompare = getBuild() / 2;
+
+        buildCompare += 5;
+        if (carriedUnit->build > buildCompare)
+        {
+            mount->remainingMoves += getMove() / 2;
+        }
+    }
+    carriedUnit = nullptr;
+
+}
+
 Item* Unit::GetEquippedItem()
 {
     if (equippedWeapon >= 0)
@@ -624,25 +661,7 @@ int Unit::getBuild()
 
 int Unit::getMove()
 {
-    int malus = 1;
-    //If the carried character’s Build is more than half of the user’s Build (Build +5 if the user is mounted), Movement is also halved.
-    if (carriedUnit)
-    {
-        int buildCompare = getBuild();
-        if (isMounted())
-        {
-            buildCompare += 5;
-        }
-        else
-        {
-            buildCompare /= 2;
-        }
-        if (carriedUnit->build > buildCompare)
-        {
-            malus = carryingMalus;
-        }
-    }
-    return (move + mountMov) / malus;
+    return (move + mountMov) / buildMalus;
 }
 
 BattleStats Unit::CalculateBattleStats(int weaponID)

@@ -162,7 +162,7 @@ void UnitOptionsMenu::SelectOption()
 	case RELEASE:
 	{
 		playerUnit->carriedUnit->isDead = true;
-		playerUnit->carriedUnit = nullptr;
+		playerUnit->releaseUnit();
 		if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
 		{
 			cursor->GetRemainingMove();
@@ -172,7 +172,6 @@ void UnitOptionsMenu::SelectOption()
 		{
 			cursor->Wait();
 		}
-		playerUnit->carryingMalus = 1;
 		heldEnemy = false;
 		ClearMenu();
 		break;
@@ -1293,7 +1292,15 @@ void SelectTradeUnit::Draw()
 	{
 		boxHeight += (inventorySize + 1) * 30;
 	}
-	auto targetPosition = tradeUnit->sprite.getPosition();
+	glm::vec2 targetPosition;
+	if (tradeUnit->isCarried)
+	{
+		targetPosition = cursor->selectedUnit->sprite.getPosition();
+	}
+	else
+	{
+		targetPosition = tradeUnit->sprite.getPosition();
+	}
 	int xText = 536;
 	int xIndicator = 169;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
@@ -1319,7 +1326,6 @@ void SelectTradeUnit::Draw()
 
 	renderer->setUVs(cursor->uvs[1]);
 	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-	Unit* unit = cursor->selectedUnit;
 	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
@@ -2325,7 +2331,7 @@ void SelectRescueUnit::SelectOption()
 {
 	auto rescuedUnit = rescueUnits[currentOption];
 	auto playerUnit = cursor->selectedUnit;
-	playerUnit->carriedUnit = rescuedUnit;
+	playerUnit->carryUnit(rescuedUnit);
 	rescuedUnit->isCarried = true;
 	TileManager::tileManager.removeUnit(rescuedUnit->sprite.getPosition().x, rescuedUnit->sprite.getPosition().y);
 	if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
@@ -2337,7 +2343,6 @@ void SelectRescueUnit::SelectOption()
 	{
 		cursor->Wait();
 	}
-	playerUnit->carryingMalus = 2;
 	ClearMenu();
 }
 
@@ -2389,7 +2394,7 @@ void DropMenu::SelectOption()
 	auto heldUnit = playerUnit->carriedUnit;
 	heldUnit->placeUnit(positions[currentOption].x, positions[currentOption].y);
 	heldUnit->isCarried = false;
-	playerUnit->carriedUnit = nullptr;
+	playerUnit->releaseUnit();
 	if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
 	{
 		cursor->GetRemainingMove();
@@ -2399,7 +2404,6 @@ void DropMenu::SelectOption()
 	{
 		cursor->Wait();
 	}
-	playerUnit->carryingMalus = 1;
 	ClearMenu();
 }
 
@@ -2494,18 +2498,14 @@ void SelectTransferUnit::SelectOption()
 	if (playerUnit->carriedUnit != nullptr)
 	{
 		auto heldUnit = playerUnit->carriedUnit;
-		transferUnit->carriedUnit = heldUnit;
-		playerUnit->carriedUnit = nullptr;
-		transferUnit->carryingMalus = 2;
-		playerUnit->carryingMalus = 1;
+		transferUnit->carryUnit(heldUnit);
+		playerUnit->releaseUnit();
 	}
 	else
 	{
 		auto heldUnit = transferUnit->carriedUnit;
-		playerUnit->carriedUnit = heldUnit;
-		transferUnit->carriedUnit = nullptr;
-		transferUnit->carryingMalus = 1;
-		playerUnit->carryingMalus = 2;
+		playerUnit->carryUnit(heldUnit);
+		transferUnit->releaseUnit();
 	}
 
 	Menu::CancelOption();
@@ -3689,7 +3689,7 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (textManager.active)
 	{
-		textManager.Update(deltaTime, inputManager, *cursor);
+		textManager.Update(deltaTime, inputManager);
 	}
 	else if (delay)
 	{
@@ -3950,11 +3950,13 @@ void FullInventoryMenu::Draw()
 	{
 		text->RenderText(focusedItem.description, 500, 225, 1);
 	}
+
+	text->RenderText("Too many items.\nPick an item to\nsend to Supply", 425, 32, 1);
 }
 
 void FullInventoryMenu::SelectOption()
 {
-	if (currentOption < numberOfOptions)
+	if (currentOption < numberOfOptions - 1)
 	{
 		//Would be sending the item to supply, but that's not part of this project
 		cursor->selectedUnit->dropItem(currentOption);

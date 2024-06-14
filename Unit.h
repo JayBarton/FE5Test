@@ -171,6 +171,8 @@ struct Unit
 	int mountMov = 0;
 
 	int carryingMalus = 1;
+	//To see if carrying a unit reduces move speed as well
+	int buildMalus = 1;
 
 	int level = 1;
 	int weaponProficiencies[10] = { 0 };
@@ -223,6 +225,8 @@ struct Unit
 
 	Unit* carriedUnit = nullptr;
 
+	std::string deathMessage = "";
+
 	std::mt19937 *gen = nullptr;
 	std::uniform_int_distribution<int> *distribution = nullptr;
 
@@ -264,6 +268,9 @@ struct Unit
 	void MountAction(bool on);
 
 	void startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove);
+
+	void carryUnit(Unit* unitToCarry);
+	void releaseUnit();
 
 	Item* GetEquippedItem();
 	WeaponData GetEquippedWeapon();

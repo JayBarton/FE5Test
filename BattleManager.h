@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include "Unit.h"
+#include "TextAdvancer.h"
 
 class TextRenderer;
 
@@ -16,7 +17,7 @@ struct BattleManager
 {
 	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
 
-	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution);
+	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InputManager& inputManager);
 
 	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
@@ -60,4 +61,8 @@ struct BattleManager
 
 	Subject<Unit*, Unit*> subject;
 	Subject<Unit*> unitDiedSubject;
+
+	//I seriously need to fix this stuff, just getting repetitive
+	TextObjectManager textManager;
+	TextObject testText;
 };

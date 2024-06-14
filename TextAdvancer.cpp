@@ -4,7 +4,6 @@
 #include "TextRenderer.h"
 #include "Globals.h"
 #include "Unit.h"
-#include "Cursor.h"
 #include "MenuManager.h"
 #include <SDL.h>
 
@@ -40,7 +39,7 @@ void TextObjectManager::init(int line/* = 0 */ )
 	active = false;
 }
 
-void TextObjectManager::Update(float deltaTime, InputManager& inputManager, Cursor& cursor)
+void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 {
 	if (waitingOnInput)
 	{

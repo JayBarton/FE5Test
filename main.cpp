@@ -188,6 +188,11 @@ struct DeathEvent : public Observer<Unit*>
 			playerManager.playerUnits.erase(it);
 			delete deadUnit;
 		}
+		//For use in the future
+		else if (deadUnit->team == 1)
+		{
+
+		}
 	}
 };
 
@@ -489,7 +494,7 @@ int main(int argc, char** argv)
 				//Should be able to level up while in the battle state, need to figure that out
 				if (battleManager.battleActive)
 				{
-					battleManager.Update(deltaTime, &gen, &distribution);
+					battleManager.Update(deltaTime, &gen, &distribution, inputManager);
 					if (camera.moving)
 					{
 						camera.MoveTo(deltaTime, 5.0f);
@@ -627,7 +632,6 @@ int main(int argc, char** argv)
 
 		fps = fpsLimiter.end();
 		//std::cout << fps << std::endl;
-		std::cout << cursor.position.x << " " << cursor.position.y << std::endl;
 	}
 
 	delete Renderer;
@@ -1180,11 +1184,12 @@ void Draw()
 		ResourceManager::GetShader("instance").Use();
 		ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 		TileManager::tileManager.showTiles(Renderer, camera);
-		if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->activation->type == 3)
+		//for intro
+	//	if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->activation->type == 3)
 		{
 
 		}
-		else
+	//	else
 		{
 			DrawUnitRanges();
 

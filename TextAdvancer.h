@@ -50,7 +50,7 @@ struct TextObjectManager
 
 	TextObjectManager();
 	void init(int line = 0);
-	void Update(float deltaTime, class InputManager& inputManager, class Cursor& cursor);
+	void Update(float deltaTime, class InputManager& inputManager);
 	void Draw(TextRenderer* textRenderer);
 	bool ShowText();
 };

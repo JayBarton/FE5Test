@@ -12,6 +12,8 @@
 
 #include "Cursor.h"
 
+#include "TextAdvancer.h"
+
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
@@ -143,7 +145,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	defender->sprite.moveAnimate = true;
 }
  
-void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution)
+void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InputManager& inputManager)
 {
 	if (aiDelay)
 	{
@@ -158,14 +160,21 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 	{
 		if (unitDied)
 		{
-			if (deadUnit->Dying(deltaTime))
+			if (!textManager.active)
 			{
-				deadUnit->isDead = true;
-				TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
-				EndAttack();
-				unitDiedSubject.notify(deadUnit);
-				deadUnit = nullptr;
-				unitDied = false;
+				if (deadUnit->Dying(deltaTime))
+				{
+					deadUnit->isDead = true;
+					TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+					EndAttack();
+					unitDiedSubject.notify(deadUnit);
+					deadUnit = nullptr;
+					unitDied = false;
+				}
+			}
+			else
+			{
+				textManager.Update(deltaTime, inputManager);
 			}
 		}
 		else if (unitCaptured)
@@ -201,12 +210,26 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				{
 					if (capturing)
 					{
-						attacker->carriedUnit = deadUnit;
+						attacker->carryUnit(deadUnit);
 						unitCaptured = true;
 					}
 					else
 					{
 						unitDied = true;
+						if (deadUnit->deathMessage != "")
+						{
+							textManager.textLines.push_back(SpeakerText{nullptr, 0, deadUnit->deathMessage });
+
+							testText.position = glm::vec2(275.0f, 48.0f);
+							testText.displayedPosition = testText.position;
+							testText.charsPerLine = 55;
+							testText.nextIndex = 55;
+
+							textManager.textObjects.clear();
+							textManager.textObjects.push_back(testText);
+							textManager.init();
+							textManager.active = true;
+						}
 					}
 				}
 				else
@@ -435,5 +458,12 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
 		defenderDraw.x += 25;
 		text->RenderText(intToString(defender->currentHP) + "/" + intToString(defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+	}
+	else
+	{
+		if (textManager.ShowText())
+		{
+			textManager.Draw(text);
+		}
 	}
 }

@@ -82,7 +82,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			}
 			break;
 		case TEXT:
-			textManager.Update(deltaTime, inputManager, cursor);
+			textManager.Update(deltaTime, inputManager);
 			if (inputManager.isKeyPressed(SDLK_SPACE))
 			{
 				textManager.active = false;

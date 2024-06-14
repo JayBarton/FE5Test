@@ -73,6 +73,8 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	playerUnits[3]->sprite.drawOffset = glm::vec2(1, 0);
 	playerUnits[4]->sprite.setSize(glm::vec2(15, 16));
 	playerUnits[4]->sprite.drawOffset = glm::vec2(1, 0);
+	playerUnits[4]->currentHP = 1;
+	playerUnits[4]->deathMessage = "Oh I'm dying oh god it hurts.<1";
 
 }
 
