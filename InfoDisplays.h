@@ -80,7 +80,8 @@ struct InfoDisplays
 	void GetItem(int itemID);
 	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
-	void PlayerDied(Unit* unit);
+	void PlayerUnitDied(Unit* unit);
+	void PlayerLost(int messageID);
 
 	void OnUnitLevel(Unit* unit);
 

@@ -223,7 +223,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 						unitDied = true;
 						if (deadUnit->deathMessage != "")
 						{
-							displays.PlayerDied(deadUnit);
+							displays.PlayerUnitDied(deadUnit);
 						}
 					}
 				}

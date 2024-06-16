@@ -1,0 +1,24 @@
+{
+  "text": [
+    {
+      "ID": 0,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "I can't believe Leif is fucking dead.<1"
+        }
+      ]
+    },
+    {
+      "ID": 1,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "speech": "No...Othin...<1"
+        }
+      ]
+    }
+  ]
+}

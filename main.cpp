@@ -97,6 +97,22 @@ std::unordered_map<int, Unit*> sceneUnits;
 std::vector<VisitObject> visitObjects;
 std::vector<Vendor> vendors;
 
+//unitID, dialogueID
+std::unordered_map<int, int> gameOverDialogues;
+
+bool gameOver = false;
+bool gameOverMessage = false;
+bool gameOverScreenTransition = false;
+bool gameOverScreen = false;
+bool fadeInText = false;
+bool canExit = false;
+float gameOverMessageTimer = 0.0f;
+float gameOverMessageDelay = 0.2f;
+float fadeOutAlpha = 0.0f;
+float fadeInAlpha = 0.0f;
+float textAlpha = 0.0f;
+int messageID = -1;
+
 SBatch Batch;
 
 Minimap minimap;
@@ -186,6 +202,12 @@ struct DeathEvent : public Observer<Unit*>
 {
 	virtual void onNotify(Unit* deadUnit)
 	{
+		if (gameOverDialogues.find(deadUnit->sceneID) != gameOverDialogues.end())
+		{
+			gameOver = true;
+			gameOverMessage = true;
+			messageID = gameOverDialogues[deadUnit->sceneID];
+		}
 		if (deadUnit->team == 0)
 		{
 			auto it = std::find(playerManager.playerUnits.begin(), playerManager.playerUnits.end(), deadUnit);
@@ -340,6 +362,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/icons.png", "icons");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovermain.png", "GameOver1");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovertext.png", "GameOver2");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -462,11 +486,6 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-		if (inputManager.isKeyPressed(SDLK_BACKSPACE))
-		{
-			//Doing this dumb thing for a minute
-			sceneManager.scenes[sceneManager.currentScene]->init();
-		}
 		if (MenuManager::menuManager.menus.size() > 0)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
@@ -507,7 +526,70 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-					if (turnTransition)
+					if (gameOver)
+					{
+						if (canExit)
+						{
+							if (inputManager.isKeyPressed(SDLK_RETURN))
+							{
+								//Return to main menu
+								isRunning = false;
+							}
+						}
+						else
+						{
+							float fadeTime = 0.5f;
+							if (gameOverMessage)
+							{
+								gameOverMessageTimer += deltaTime;
+								if (gameOverMessageTimer >= gameOverMessageDelay)
+								{
+									gameOverMessage = false;
+									displays.PlayerLost(messageID);
+								}
+							}
+							else if (displays.state != NONE)
+							{
+								displays.Update(deltaTime, inputManager);
+							}
+							else if (gameOverScreen == false)
+							{
+								gameOverScreenTransition = true;
+							}
+							if (gameOverScreenTransition)
+							{
+								fadeOutAlpha += fadeTime * deltaTime;
+								if (fadeOutAlpha >= 1.0f)
+								{
+									fadeOutAlpha = 1.0f;
+									gameOverScreen = true;
+									gameOverScreenTransition = false;
+								}
+							}
+							else if (gameOverScreen)
+							{
+								if (!fadeInText)
+								{
+									fadeInAlpha += fadeTime * deltaTime;
+									if (fadeInAlpha >= 1)
+									{
+										fadeInAlpha = 1;
+										fadeInText = true;
+									}
+								}
+								else
+								{
+									textAlpha += fadeTime * deltaTime;
+									if (textAlpha >= 1)
+									{
+										textAlpha = 1;
+										canExit = true;
+									}
+								}
+							}
+						}
+					}
+					else if (turnTransition)
 					{
 						if (currentTurn == 0)
 						{
@@ -942,6 +1024,17 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				TileManager::tileManager.placeVendor(position.x, position.y, &vendors[i]);
 			}
 		}
+		else if (thing == "Requirements")
+		{
+			int requiredUnits = 0;
+			map >> requiredUnits;
+			for (int i = 0; i < requiredUnits; i++)
+			{
+				int ID;
+				map >> ID;
+				map >> gameOverDialogues[ID];
+			}
+		}
 	}
 	if (intro >= 0)
 	{
@@ -1173,103 +1266,127 @@ void Draw()
 	bool fullScreenMenu = false;
 	bool drawingMenu = false;
 
-	if (MenuManager::menuManager.menus.size() > 0)
+	if (gameOverScreen)
 	{
-		drawingMenu = true;
-		auto menu = MenuManager::menuManager.menus.back();
-		fullScreenMenu = menu->fullScreen;
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Renderer->setUVs();
+		Texture2D displayTexture = ResourceManager::GetTexture("GameOver1");
+		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224), glm::vec4(1, 1, 1, fadeInAlpha));
+		displayTexture = ResourceManager::GetTexture("GameOver2");
+		Renderer->DrawSprite(displayTexture, glm::vec2(91, 172), 0.0f, glm::vec2(66, 20), glm::vec4(1, 1, 1, textAlpha));
 	}
-	if (!fullScreenMenu)
+	else
 	{
-		ResourceManager::GetShader("instance").Use();
-		ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
-		TileManager::tileManager.showTiles(Renderer, camera);
-		//for intro
-	//	if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->activation->type == 3)
+		if (MenuManager::menuManager.menus.size() > 0)
 		{
-
+			drawingMenu = true;
+			auto menu = MenuManager::menuManager.menus.back();
+			fullScreenMenu = menu->fullScreen;
 		}
-	//	else
+		if (!fullScreenMenu)
 		{
-			DrawUnitRanges();
-
-			if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
+			ResourceManager::GetShader("instance").Use();
+			ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
+			TileManager::tileManager.showTiles(Renderer, camera);
+			//for intro
+		//	if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->activation->type == 3)
 			{
-				displays.DrawFade(&camera, shapeVAO);
+
+			}
+			//	else
+			{
+				DrawUnitRanges();
+
+				if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
+				{
+					displays.DrawFade(&camera, shapeVAO);
+				}
+				ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+				Batch.begin();
+				playerManager.Draw(&Batch);
+				enemyManager.Draw(&Batch);
+				Batch.end();
+				Batch.renderBatch();
+				if (displays.state == NONE)
+				{
+					ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+					if (currentTurn == 0)
+					{
+						Renderer->setUVs(cursor.uvs[1]);
+						Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+						Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+					}
+				}
+			}
+		}
+		if (drawingMenu)
+		{
+			auto menu = MenuManager::menuManager.menus.back();
+			menu->Draw();
+		}
+		else if (sceneManager.PlayingScene())
+		{
+			if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+			{
+				sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
+			}
+			else if (displays.state != NONE)
+			{
+				displays.Draw(&camera, Text, shapeVAO, Renderer);
 			}
 			ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-			Batch.begin();
-			playerManager.Draw(&Batch);
-			enemyManager.Draw(&Batch);
-			Batch.end();
-			Batch.renderBatch();
-			if (displays.state == NONE)
+
+			auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
+			SBatch testBatch;
+			testBatch.init();
+			testBatch.begin();
+			for (int i = 0; i < introUnits.size(); i++)
 			{
-				ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-				if (currentTurn == 0)
+				if (introUnits[i]->draw)
 				{
-					Renderer->setUVs(cursor.uvs[1]);
-					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+					Texture2D texture = ResourceManager::GetTexture("sprites");
+					glm::vec3 color = introUnits[i]->sprite.color;
+					glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
+
+					glm::vec2 position = introUnits[i]->sprite.getPosition();
+
+					glm::vec2 size;
+					if (introUnits[i]->sprite.moveAnimate)
+					{
+						size = glm::vec2(32, 32);
+						position += glm::vec2(-8, -8);
+						texture = ResourceManager::GetTexture("movesprites");
+					}
+					else
+					{
+						size = introUnits[i]->sprite.getSize();
+						position += introUnits[i]->sprite.drawOffset;
+
+					}
+					testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
 				}
 			}
+			testBatch.end();
+			testBatch.renderBatch();
 		}
-	}
-	if (drawingMenu)
-	{
-		auto menu = MenuManager::menuManager.menus.back();
-		menu->Draw();
-	}
-	else if (sceneManager.PlayingScene())
-	{
-		if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+		else if (!fullScreenMenu && !minimap.show)
 		{
-			sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
+			DrawText();
 		}
-		else if (displays.state != NONE)
-		{
-			displays.Draw(&camera, Text, shapeVAO, Renderer);
-		}
-		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", fadeOutAlpha);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
 
-		auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
-		SBatch testBatch;
-		testBatch.init();
-		testBatch.begin();
-		for (int i = 0; i < introUnits.size(); i++)
-		{
-			if (introUnits[i]->draw)
-			{
-				Texture2D texture = ResourceManager::GetTexture("sprites");
-				glm::vec3 color = introUnits[i]->sprite.color;
-				glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
 
-				glm::vec2 position = introUnits[i]->sprite.getPosition();
-
-				glm::vec2 size;
-				if (introUnits[i]->sprite.moveAnimate)
-				{
-					size = glm::vec2(32, 32);
-					position += glm::vec2(-8, -8);
-					texture = ResourceManager::GetTexture("movesprites");
-				}
-				else
-				{
-					size = introUnits[i]->sprite.getSize();
-					position += introUnits[i]->sprite.drawOffset;
-
-				}
-				testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
-			}
-		}
-		testBatch.end();
-		testBatch.renderBatch();
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
 	}
-	else if (!fullScreenMenu && !minimap.show)
-	{
-		DrawText();
-	}
-	minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
 	SDL_GL_SwapWindow(window);
 }
 

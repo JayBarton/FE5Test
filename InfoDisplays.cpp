@@ -8,7 +8,10 @@
 #include "SpriteRenderer.h"
 #include <glm.hpp>
 #include <SDL.h>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
+using json = nlohmann::json;
 
 #include "Items.h"
 #include "EnemyManager.h"
@@ -101,7 +104,7 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	displayTimer = 0.0f;
 }
 
-void InfoDisplays::PlayerDied(Unit* unit)
+void InfoDisplays::PlayerUnitDied(Unit* unit)
 {
 	textManager.textLines.clear();
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage });
@@ -118,6 +121,39 @@ void InfoDisplays::PlayerDied(Unit* unit)
 	textManager.talkActivated = true;
 	turnDisplayAlpha = 0.0f;
 
+	state = PLAYER_DIED;
+}
+
+void InfoDisplays::PlayerLost(int messageID)
+{
+	textManager.textLines.clear();
+
+	std::ifstream f("Levels/GameOverDialogues.json");
+	json data = json::parse(f);
+	json texts = data["text"];
+	for (const auto& text : texts)
+	{
+		int ID = text["ID"];
+		if (ID == messageID)
+		{
+			auto dialogues = text["dialogue"];
+			for (const auto& dialogue : dialogues)
+			{
+				textManager.textLines.push_back(SpeakerText{ nullptr, dialogue["location"], dialogue["speech"] });
+			}
+		}
+	}
+	testText.position = glm::vec2(62, 455);
+	testText.displayedPosition = testText.position;
+	testText.charsPerLine = 55;
+	testText.nextIndex = 55;
+
+	textManager.textObjects.clear();
+	textManager.textObjects.push_back(testText);
+	textManager.init();
+	textManager.active = true;
+	textManager.talkActivated = true;
+	turnDisplayAlpha = 0.0f;
 	state = PLAYER_DIED;
 }
 
@@ -418,7 +454,10 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	}
 	case PLAYER_DEATH:
 	{
-		textManager.Draw(Text);
+		if (textManager.active)
+		{
+			textManager.Draw(Text);
+		}
 		break;
 	}
 	}
