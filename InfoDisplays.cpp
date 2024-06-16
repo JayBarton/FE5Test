@@ -98,6 +98,27 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	turnChangeStart = true;
 	turnDisplayAlpha = 0.0f;
 	turnTextX = -100;
+	displayTimer = 0.0f;
+}
+
+void InfoDisplays::PlayerDied(Unit* unit)
+{
+	textManager.textLines.clear();
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage });
+
+	testText.position = glm::vec2(62, 455);
+	testText.displayedPosition = testText.position;
+	testText.charsPerLine = 55;
+	testText.nextIndex = 55;
+
+	textManager.textObjects.clear();
+	textManager.textObjects.push_back(testText);
+	textManager.init();
+	textManager.active = true;
+	textManager.talkActivated = true;
+	turnDisplayAlpha = 0.0f;
+
+	state = PLAYER_DIED;
 }
 
 void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
@@ -169,6 +190,30 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		break;
 	case TURN_CHANGE:
 		TurnChangeUpdate(inputManager, deltaTime);
+		break;
+	case PLAYER_DIED:
+		turnDisplayAlpha += deltaTime;
+		if (turnDisplayAlpha >= turnDisplayMaxAlpha)
+		{
+			turnDisplayAlpha = turnDisplayMaxAlpha;
+			state = PLAYER_DEATH;
+			unitDeathFadeBack = false;
+		}
+		break;
+	case PLAYER_DEATH:
+		if (textManager.active)
+		{
+			textManager.Update(deltaTime, inputManager);
+		}
+		else
+		{
+			turnDisplayAlpha -= deltaTime;
+			if (turnDisplayAlpha <= 0)
+			{
+				turnDisplayAlpha = 0;
+				state = NONE;
+			}
+		}
 		break;
 	}
 }
@@ -357,18 +402,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	}
 	case TURN_CHANGE:
 	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", turnDisplayAlpha);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		DrawFade(camera, shapeVAO);
 		std::string thisTurn;
 		if (turn == 0)
 		{
@@ -382,7 +416,28 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		Text->RenderText(thisTurn, turnTextX, 300, 1);
 		break;
 	}
+	case PLAYER_DEATH:
+	{
+		textManager.Draw(Text);
+		break;
 	}
+	}
+}
+
+void InfoDisplays::DrawFade(Camera* camera, int shapeVAO)
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", turnDisplayAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 }
 
 void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text)

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Globals.h"
+#include "TextAdvancer.h"
 class Unit;
 class StatGrowths;
 class TextRenderer;
@@ -18,7 +19,9 @@ enum DisplayState
 	ENEMY_TRADE,
 	TURN_CHANGE,
 	ENEMY_BUY,
-	GOT_ITEM
+	GOT_ITEM,
+	PLAYER_DIED,
+	PLAYER_DEATH
 };
 class EnemyManager;
 struct InfoDisplays
@@ -41,7 +44,7 @@ struct InfoDisplays
 	float turnDisplayTime = 1.0f;
 
 	float turnDisplayAlpha = 0.0f;
-	float turnDisplayMaxAlpha = 0.2f;
+	float turnDisplayMaxAlpha = 0.35f;
 
 	float turnTextX = -100;
 	int turnTextXFinal = 400;
@@ -54,8 +57,8 @@ struct InfoDisplays
 	bool usedItem = false;
 	bool turnChangeStart = false;
 	bool healDelay = false;
+	bool unitDeathFadeBack = false;
 	
-
 	float levelUpNoteTime = 1.0f;
 
 	int itemToUse;
@@ -65,6 +68,10 @@ struct InfoDisplays
 
 	float textDisplayTime = 1.0f;
 
+	//I seriously need to fix this stuff, just getting repetitive
+	TextObjectManager textManager;
+	TextObject testText;
+
 	void AddExperience(Unit* unit, Unit* foe);
 	void StartUse(Unit* unit, int index, Camera* camera);
 	void EnemyUse(Unit* enemy, int index);
@@ -73,6 +80,7 @@ struct InfoDisplays
 	void GetItem(int itemID);
 	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
+	void PlayerDied(Unit* unit);
 
 	void OnUnitLevel(Unit* unit);
 
@@ -83,6 +91,8 @@ struct InfoDisplays
 	void UpdateExperienceDisplay(float deltaTime);
 	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO, struct SpriteRenderer* renderer);
 
+	void DrawFade(Camera* camera, int shapeVAO);
+
 	void DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text);
 
 	void DrawHealAnimation(Camera* camera, int shapeVAO);
@@ -90,6 +100,4 @@ struct InfoDisplays
 	void DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text);
 
 	void DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text);
-
-
 };

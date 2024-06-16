@@ -13,6 +13,7 @@
 #include "Cursor.h"
 
 #include "TextAdvancer.h"
+#include "InfoDisplays.h"
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
@@ -145,7 +146,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	defender->sprite.moveAnimate = true;
 }
  
-void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InputManager& inputManager)
+void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InfoDisplays& displays)
 {
 	if (aiDelay)
 	{
@@ -160,7 +161,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 	{
 		if (unitDied)
 		{
-			if (!textManager.active)
+			if (displays.state == NONE)
 			{
 				if (deadUnit->Dying(deltaTime))
 				{
@@ -172,10 +173,14 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					unitDied = false;
 				}
 			}
+			/*if (!textManager.active)
+			{
+
+			}
 			else
 			{
 				textManager.Update(deltaTime, inputManager);
-			}
+			}*/
 		}
 		else if (unitCaptured)
 		{
@@ -218,17 +223,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 						unitDied = true;
 						if (deadUnit->deathMessage != "")
 						{
-							textManager.textLines.push_back(SpeakerText{nullptr, 0, deadUnit->deathMessage });
-
-							testText.position = glm::vec2(275.0f, 48.0f);
-							testText.displayedPosition = testText.position;
-							testText.charsPerLine = 55;
-							testText.nextIndex = 55;
-
-							textManager.textObjects.clear();
-							textManager.textObjects.push_back(testText);
-							textManager.init();
-							textManager.active = true;
+							displays.PlayerDied(deadUnit);
 						}
 					}
 				}
@@ -458,12 +453,5 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
 		defenderDraw.x += 25;
 		text->RenderText(intToString(defender->currentHP) + "/" + intToString(defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
-	}
-	else
-	{
-		if (textManager.ShowText())
-		{
-			textManager.Draw(text);
-		}
 	}
 }

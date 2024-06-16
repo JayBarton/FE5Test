@@ -303,7 +303,7 @@
       "ID": 0,
       "Name": "Leif",
       "Class": "Lord",
-      "ClassID" :  3,
+      "ClassID": 3,
       "Stats": {
         "Level": 1,
         "HP": 22,
@@ -338,7 +338,8 @@
       "Skills": [ 1 ],
       "AnimData": {
         "FocusFace": 3
-      }
+      },
+      "DeathMsg": "...Everyone...\n...I'm sorry...<1"
     },
     {
       "ID": 1,
@@ -380,7 +381,8 @@
       "Skills": [ 0 ],
       "AnimData": {
         "FocusFace": 0
-      }
+      },
+      "DeathMsg": "Lord Lief...\nYou father's...\nDying wish...<1"
     },
     {
       "ID": 2,
@@ -420,7 +422,8 @@
       "Skills": [ 1 ],
       "AnimData": {
         "FocusFace": 2
-      }
+      },
+      "DeathMsg": "Everyone...\nDon't give up...\nBecause someday...Surely...<1"
     },
     {
       "ID": 3,
@@ -460,7 +463,8 @@
       "Skills": [ 3 ],
       "AnimData": {
         "FocusFace": 0
-      }
+      },
+      "DeathMsg": "Father...Mother...\nI'm sorry...\nThis is it for me...<1"
     },
     {
       "ID": 4,
@@ -500,7 +504,8 @@
       "Skills": [ 2 ],
       "AnimData": {
         "FocusFace": 0
-      }
+      },
+      "DeathMsg": "D-damn...\nMe of all people...<1"
     },
     {
       "ID": 5,
@@ -541,7 +546,8 @@
       "Skills": [ 4 ],
       "AnimData": {
         "FocusFace": 3
-      }
+      },
+      "DeathMsg": "My life...\nWasn't good...\nBut it wasn't so bad either...<1"
     },
     {
       "ID": 6,
@@ -581,7 +587,8 @@
       "ClassPower": 2,
       "AnimData": {
         "FocusFace": 2
-      }
+      },
+      "DeathMsg": "No...\n...Help me...\n...Othian...<1"
     },
     {
       "ID": 7,
@@ -620,7 +627,8 @@
       },
       "AnimData": {
         "FocusFace": 3
-      }
+      },
+      "DeathMsg": "Shoot...What bad luck...<1"
     }
   ]
 }

@@ -74,7 +74,6 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	playerUnits[4]->sprite.setSize(glm::vec2(15, 16));
 	playerUnits[4]->sprite.drawOffset = glm::vec2(1, 0);
 	playerUnits[4]->currentHP = 1;
-	playerUnits[4]->deathMessage = "Oh I'm dying oh god it hurts.<1";
 
 }
 
@@ -145,6 +144,10 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			if (unit.find("ClassPower") != unit.end())
 			{
 				newUnit->classPower = unit["ClassPower"];
+			}
+			if (unit.find("DeathMsg") != unit.end())
+			{
+				newUnit->deathMessage = unit["DeathMsg"];
 			}
 			newUnit->subject.addObserver(unitEvents);
 			newUnit->init(gen, distribution);

@@ -157,6 +157,11 @@ struct TurnEvents : public Observer<int>
 			turnUnit = 0;
 			currentRound++;
 			roundSubject.notify(currentRound);
+			if (Settings::settings.autoCursor)
+			{
+				cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
+				cursor.focusedUnit = playerManager.playerUnits[0];
+			}
 		}
 		displays.ChangeTurn(currentTurn);
 	}
@@ -494,7 +499,7 @@ int main(int argc, char** argv)
 				//Should be able to level up while in the battle state, need to figure that out
 				if (battleManager.battleActive)
 				{
-					battleManager.Update(deltaTime, &gen, &distribution, inputManager);
+					battleManager.Update(deltaTime, &gen, &distribution, displays);
 					if (camera.moving)
 					{
 						camera.MoveTo(deltaTime, 5.0f);
@@ -509,11 +514,6 @@ int main(int argc, char** argv)
 							if (turnUnit >= playerManager.playerUnits.size())
 							{
 								turnUnit = 0;
-								if (Settings::settings.autoCursor)
-								{
-									cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
-									cursor.focusedUnit = playerManager.playerUnits[0];
-								}
 								camera.SetMove(cursor.position);
 								turnTransition = false;
 							}
@@ -1193,19 +1193,25 @@ void Draw()
 		{
 			DrawUnitRanges();
 
+			if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
+			{
+				displays.DrawFade(&camera, shapeVAO);
+			}
 			ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 			Batch.begin();
 			playerManager.Draw(&Batch);
 			enemyManager.Draw(&Batch);
 			Batch.end();
 			Batch.renderBatch();
-
-			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-			if (currentTurn == 0)
+			if (displays.state == NONE)
 			{
-				Renderer->setUVs(cursor.uvs[1]);
-				Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-				Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+				ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+				if (currentTurn == 0)
+				{
+					Renderer->setUVs(cursor.uvs[1]);
+					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+				}
 			}
 		}
 	}
