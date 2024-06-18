@@ -100,18 +100,91 @@ std::vector<Vendor> vendors;
 //unitID, dialogueID
 std::unordered_map<int, int> gameOverDialogues;
 
-bool gameOver = false;
-bool gameOverMessage = false;
-bool gameOverScreenTransition = false;
-bool gameOverScreen = false;
-bool fadeInText = false;
-bool canExit = false;
-float gameOverMessageTimer = 0.0f;
-float gameOverMessageDelay = 0.2f;
-float fadeOutAlpha = 0.0f;
-float fadeInAlpha = 0.0f;
-float textAlpha = 0.0f;
-int messageID = -1;
+enum GameOverState
+{
+	START,
+	MESSAGE,
+	FADE_OUT_OF_GAME,
+	FADE_IN_BG,
+	FADE_IN_TEXT
+};
+struct GameOverMode
+{
+	GameOverState state = START;
+	bool active = false;
+	bool canDraw = false;
+	bool canExit = false;
+	float gameOverMessageTimer = 0.0f;
+	float gameOverMessageDelay = 0.2f;
+	float fadeOutAlpha = 0.0f;
+	float fadeInAlpha = 0.0f;
+	float textAlpha = 0.0f;
+	int messageID = -1;
+
+	void init(int messageID)
+	{
+		this->messageID = messageID;
+		active = true;
+	}
+	void Update(float deltaTime, InputManager& inputManager)
+	{
+
+		float fadeTime = 0.5f;
+		switch (state)
+		{
+		case START:
+			gameOverMessageTimer += deltaTime;
+			if (gameOverMessageTimer >= gameOverMessageDelay)
+			{
+				displays.PlayerLost(messageID);
+				state = MESSAGE;
+			}
+			break;
+		case MESSAGE:
+			if (displays.state == NONE)
+			{
+				state = FADE_OUT_OF_GAME;
+			}
+			break;
+		case FADE_OUT_OF_GAME:
+			fadeOutAlpha += fadeTime * deltaTime;
+			if (fadeOutAlpha >= 1.0f)
+			{
+				fadeOutAlpha = 1.0f;
+				state = FADE_IN_BG;
+				canDraw = true;
+			}
+			break;
+		case FADE_IN_BG:
+			fadeInAlpha += fadeTime * deltaTime;
+			if (fadeInAlpha >= 1)
+			{
+				fadeInAlpha = 1;
+				state = FADE_IN_TEXT;
+			}
+			break;
+		case FADE_IN_TEXT:
+			textAlpha += fadeTime * deltaTime;
+			if (textAlpha >= 1)
+			{
+				textAlpha = 1;
+				canExit = true;
+			}
+			break;
+		}
+	}
+
+	void DrawBG(SpriteRenderer* renderer, Camera& camera)
+	{
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Renderer->setUVs();
+		Texture2D displayTexture = ResourceManager::GetTexture("GameOver1");
+		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224), glm::vec4(1, 1, 1, fadeInAlpha));
+		displayTexture = ResourceManager::GetTexture("GameOver2");
+		Renderer->DrawSprite(displayTexture, glm::vec2(91, 172), 0.0f, glm::vec2(66, 20), glm::vec4(1, 1, 1, textAlpha));
+	}
+};
+GameOverMode gameOverMode;
 
 SBatch Batch;
 
@@ -204,9 +277,7 @@ struct DeathEvent : public Observer<Unit*>
 	{
 		if (gameOverDialogues.find(deadUnit->sceneID) != gameOverDialogues.end())
 		{
-			gameOver = true;
-			gameOverMessage = true;
-			messageID = gameOverDialogues[deadUnit->sceneID];
+			gameOverMode.init(gameOverDialogues[deadUnit->sceneID]);
 		}
 		if (deadUnit->team == 0)
 		{
@@ -526,9 +597,9 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-					if (gameOver)
+					if (gameOverMode.active)
 					{
-						if (canExit)
+						if(gameOverMode.canExit)
 						{
 							if (inputManager.isKeyPressed(SDLK_RETURN))
 							{
@@ -538,55 +609,7 @@ int main(int argc, char** argv)
 						}
 						else
 						{
-							float fadeTime = 0.5f;
-							if (gameOverMessage)
-							{
-								gameOverMessageTimer += deltaTime;
-								if (gameOverMessageTimer >= gameOverMessageDelay)
-								{
-									gameOverMessage = false;
-									displays.PlayerLost(messageID);
-								}
-							}
-							else if (displays.state != NONE)
-							{
-								displays.Update(deltaTime, inputManager);
-							}
-							else if (gameOverScreen == false)
-							{
-								gameOverScreenTransition = true;
-							}
-							if (gameOverScreenTransition)
-							{
-								fadeOutAlpha += fadeTime * deltaTime;
-								if (fadeOutAlpha >= 1.0f)
-								{
-									fadeOutAlpha = 1.0f;
-									gameOverScreen = true;
-									gameOverScreenTransition = false;
-								}
-							}
-							else if (gameOverScreen)
-							{
-								if (!fadeInText)
-								{
-									fadeInAlpha += fadeTime * deltaTime;
-									if (fadeInAlpha >= 1)
-									{
-										fadeInAlpha = 1;
-										fadeInText = true;
-									}
-								}
-								else
-								{
-									textAlpha += fadeTime * deltaTime;
-									if (textAlpha >= 1)
-									{
-										textAlpha = 1;
-										canExit = true;
-									}
-								}
-							}
+							gameOverMode.Update(deltaTime, inputManager);
 						}
 					}
 					else if (turnTransition)
@@ -1266,14 +1289,9 @@ void Draw()
 	bool fullScreenMenu = false;
 	bool drawingMenu = false;
 
-	if (gameOverScreen)
+	if (gameOverMode.canDraw)
 	{
-		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		Renderer->setUVs();
-		Texture2D displayTexture = ResourceManager::GetTexture("GameOver1");
-		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224), glm::vec4(1, 1, 1, fadeInAlpha));
-		displayTexture = ResourceManager::GetTexture("GameOver2");
-		Renderer->DrawSprite(displayTexture, glm::vec2(91, 172), 0.0f, glm::vec2(66, 20), glm::vec4(1, 1, 1, textAlpha));
+		gameOverMode.DrawBG(Renderer, camera);
 	}
 	else
 	{
@@ -1375,7 +1393,7 @@ void Draw()
 		}
 		minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", fadeOutAlpha);
+		ResourceManager::GetShader("shape").SetFloat("alpha", gameOverMode.fadeOutAlpha);
 		glm::mat4 model = glm::mat4();
 		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 		model = glm::scale(model, glm::vec3(256, 224, 0.0f));

@@ -50,10 +50,11 @@ struct EnemyManager
 
 	bool canCounter = true;
 	bool enemyMoving = false;
+	bool capturing = false;
 	bool followCamera = false;
 	bool canAct = false;
 	bool skippedUnit = false;
-	Unit* otherUnit = nullptr;
+	Unit* targetUnit = nullptr;
 	InfoDisplays* displays = nullptr;
 
 	Subject<int> subject;

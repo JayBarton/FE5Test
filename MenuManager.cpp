@@ -1646,14 +1646,7 @@ void TradeMenu::SelectOption()
 			}
 		}
 		GetOptions();
-		if (emptyInventory)
-		{
-			currentOption = 0;
-		}
-		else
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		currentOption = 0;
 	}
 }
 

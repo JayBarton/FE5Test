@@ -213,12 +213,33 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                     enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
                     if (state == ATTACK)
                     {
-                        //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
-                        //before the battle actually starts
-                        auto otherStats = otherUnit->CalculateBattleStats();
-                        auto weapon = otherUnit->GetEquippedWeapon();
-                        otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                        battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
+                        if (capturing)
+                        {
+                            capturing = false;
+                            enemy->carryUnit(targetUnit);
+                            targetUnit->isCarried = true;
+                            for (int i = 0; i < targetUnit->inventory.size(); i++)
+                            {
+                                if (enemy->inventory.size() <= 8)
+                                {
+                                    enemy->inventory.push_back(targetUnit->inventory[i]);
+                                    targetUnit->inventory.erase(targetUnit->inventory.begin());
+                                    i--;
+                                }
+                            }
+                            TileManager::tileManager.removeUnit(targetUnit->sprite.getPosition().x, targetUnit->sprite.getPosition().y);
+                            //Still need to account for mounted units
+                            FinishMove();
+                        }
+                        else
+                        {
+                            //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
+                            //before the battle actually starts
+                            auto otherStats = targetUnit->CalculateBattleStats();
+                            auto weapon = targetUnit->GetEquippedWeapon();
+                            targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+                            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true);
+                        }
                     }
                     else if (state == CANTO || state == APPROACHING)
                     {
@@ -426,7 +447,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
     auto position = enemy->sprite.getPosition();
     if (otherUnits.size() > 0)
     {
-        otherUnit = nullptr;
+        targetUnit = nullptr;
 
         battleStats = BattleStats{};
 
@@ -528,12 +549,12 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
                     break;
                 }
             }
-            otherUnit = otherUnits[finalTarget.ID];
+            targetUnit = otherUnits[finalTarget.ID];
 
-            auto otherStats = otherUnit->CalculateBattleStats();
-            auto weapon = otherUnit->GetEquippedWeapon();
+            auto otherStats = targetUnit->CalculateBattleStats();
+            auto weapon = targetUnit->GetEquippedWeapon();
             attackRange = finalTarget.range;
-            otherUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+            targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
             battleStats = finalTarget.battleStats;
             bool canCounter = false;
             skippedUnit = true;
@@ -541,7 +562,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             {
                 canCounter = true;
             }
-            battleManager.SetUp(enemy, otherUnit, battleStats, otherStats, canCounter, camera, true);
+            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true);
         }
     }
     //No units in range
@@ -553,7 +574,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
 
 void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, std::vector<Unit*>& otherUnits)
 {
-    otherUnit = nullptr;
+    targetUnit = nullptr;
     canCounter = true;
     auto position = enemy->sprite.getPosition();
     //Assme this unit moves
@@ -562,6 +583,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     battleStats = BattleStats{};
 
     int cannotCounterBonus = 50;
+    int canCaptureBonus = 60;
 
     Target finalTarget;
     for (int i = 0; i < otherUnits.size(); i++)
@@ -574,8 +596,30 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
         if (currentTarget.attackPositions.size() > 0)
         {
             currentTarget.ID = i;
+            //Target has no weapon, check if we can capture
+            bool canCapture = false;
+            if (otherWeapon.type < 0)
+            {
+                if ((!otherUnit->isMounted() && otherUnit->getBuild() < 20) && (enemy->isMounted() || otherUnit->getBuild() < enemy->getBuild()))
+                {
+                    for (int c = 0; c < currentTarget.attackPositions.size(); c++)
+                    {
+                        if (currentTarget.attackPositions[c].distance == 1)
+                        {
+                            canCapture = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (canCapture)
+            {
+                currentTarget.range = 1;
+                currentTarget.priority += canCaptureBonus;
+                capturing = true;
+            }
             //First want to determine if the other unit can counter. Very high priority if they cannot
-            if (enemy->maxRange > otherWeapon.maxRange)
+            else if (enemy->maxRange > otherWeapon.maxRange)
             {
                 //Only worth considering if this unit can actually reach the range being checked
                 //For ranges greater than 1, this would suggest every space around the other unit is occupied
@@ -615,116 +659,133 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                     canCounter = false;
                 }
             }
-            //Next want to check how much damage this enemy can do to the other unit
-            //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
-            BattleStats tempStats;
-            int maxDamage = 0;
-            int rangeToUse = 0;
-
-            for (int c = 0; c < enemy->weapons.size(); c++)
+            //If we can capture multiple enemies, want to capture the closest one
+            //For the time being, the enemy always wants to capture if possible, so we don't even check priority if there is a capturable unit in range
+            if (canCapture)
             {
-                auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
-                if (currentTarget.priority >= cannotCounterBonus)
-                {
-                    if (weapon.maxRange == currentTarget.range || weapon.minRange == currentTarget.range)
-                    {
-                        //calculate damage
-                        tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
-                        enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
+                currentTarget.priority -= path[otherUnit->sprite.getPosition()].moveCost; //This doesn't work
 
-                        int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
-
-                        int damage = tempStats.attackDamage - otherDefense;
-                        if (damage > maxDamage)
-                        {
-                            maxDamage = damage;
-                            currentTarget.battleStats = tempStats;
-                            currentTarget.weaponToUse = enemy->weapons[c];
-                        }
-                    }
-                }
-                else
-                {
-                    auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
-                    bool canReach = false;
-
-                    //Need to confirm we can reach the unit. Don't need to do this above as it has already been handled
-                    //prefer to attack from as far away as possible
-                    for (int j = 0; j < currentTarget.attackPositions.size(); j++)
-                    {
-                        if (currentTarget.attackPositions[j].distance == weaponData.maxRange)
-                        {
-                            canReach = true;
-                            rangeToUse = weaponData.maxRange;
-                            break;
-                        }
-                    }
-                    if (!canReach)
-                    {
-                        for (int j = 0; j < currentTarget.attackPositions.size(); j++)
-                        {
-                            if (currentTarget.attackPositions[j].distance == weaponData.minRange)
-                            {
-                                canReach = true;
-                                rangeToUse = weaponData.minRange;
-                                break;
-                            }
-                        }
-                    }
-                    tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
-                    if (canReach)
-                    {
-                        //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
-                        //at a closer ranger would do more damage.
-                        //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
-                        enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
-
-                        int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
-
-                        int damage = tempStats.attackDamage - otherDefense;
-                        if (damage > maxDamage)
-                        {
-                            //prioritize sure kills
-                            if (otherUnit->currentHP - damage <= 0)
-                            {
-                                maxDamage = 50;
-                            }
-                            else
-                            {
-                                maxDamage = damage;
-                            }
-                            currentTarget.battleStats = tempStats;
-                            //If we hadn't gotten the range from a unit that cannot counter, get it now
-                            currentTarget.range = rangeToUse;
-                            currentTarget.weaponToUse = enemy->weapons[c];
-                        }
-                    }
-                }
-            }
-            currentTarget.priority += maxDamage;
-            if (currentTarget.priority > finalTarget.priority)
-            {
-                finalTarget = currentTarget;
-            }
-            //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
-            //In that case, check which unit will do less damage on counter
-            //Priority of 0 at this point would suggest zero damage will be dealt
-            //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
-            else if (currentTarget.priority == finalTarget.priority)
-            {
-                auto previousUnit = otherUnits[finalTarget.ID];
-                auto previousWeapon = previousUnit->GetEquippedWeapon();
-                auto foeWeapon = otherUnit->GetEquippedWeapon();
-                auto previousStats = previousUnit->CalculateBattleStats();
-                previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
-                auto otherStats = otherUnit->CalculateBattleStats();
-                otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
-
-                int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
-                int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
-                if (damageTaken < previousDamage)
+                if (currentTarget.priority > finalTarget.priority)
                 {
                     finalTarget = currentTarget;
+                }
+            }
+            else
+            {
+                if (!capturing)
+                {
+                    //Next want to check how much damage this enemy can do to the other unit
+                    //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
+                    BattleStats tempStats;
+                    int maxDamage = 0;
+                    int rangeToUse = 0;
+
+                    for (int c = 0; c < enemy->weapons.size(); c++)
+                    {
+                        auto weapon = enemy->GetWeaponData(enemy->weapons[c]);
+                        if (currentTarget.priority >= cannotCounterBonus)
+                        {
+                            if (weapon.maxRange == currentTarget.range || weapon.minRange == currentTarget.range)
+                            {
+                                //calculate damage
+                                tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+                                enemy->CalculateMagicDefense(weapon, tempStats, currentTarget.range);
+
+                                int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
+
+                                int damage = tempStats.attackDamage - otherDefense;
+                                if (damage > maxDamage)
+                                {
+                                    maxDamage = damage;
+                                    currentTarget.battleStats = tempStats;
+                                    currentTarget.weaponToUse = enemy->weapons[c];
+                                }
+                            }
+                        }
+                        else
+                        {
+                            auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
+                            bool canReach = false;
+
+                            //Need to confirm we can reach the unit. Don't need to do this above as it has already been handled
+                            //prefer to attack from as far away as possible
+                            for (int j = 0; j < currentTarget.attackPositions.size(); j++)
+                            {
+                                if (currentTarget.attackPositions[j].distance == weaponData.maxRange)
+                                {
+                                    canReach = true;
+                                    rangeToUse = weaponData.maxRange;
+                                    break;
+                                }
+                            }
+                            if (!canReach)
+                            {
+                                for (int j = 0; j < currentTarget.attackPositions.size(); j++)
+                                {
+                                    if (currentTarget.attackPositions[j].distance == weaponData.minRange)
+                                    {
+                                        canReach = true;
+                                        rangeToUse = weaponData.minRange;
+                                        break;
+                                    }
+                                }
+                            }
+                            tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
+                            if (canReach)
+                            {
+                                //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
+                                //at a closer ranger would do more damage.
+                                //At the very least, I think if a close range attack would kill, the enemy should do that, but it's not in yet.
+                                enemy->CalculateMagicDefense(weapon, tempStats, rangeToUse);
+
+                                int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
+
+                                int damage = tempStats.attackDamage - otherDefense;
+                                if (damage > maxDamage)
+                                {
+                                    //prioritize sure kills
+                                    if (otherUnit->currentHP - damage <= 0)
+                                    {
+                                        maxDamage = 50;
+                                    }
+                                    else
+                                    {
+                                        maxDamage = damage;
+                                    }
+                                    currentTarget.battleStats = tempStats;
+                                    //If we hadn't gotten the range from a unit that cannot counter, get it now
+                                    currentTarget.range = rangeToUse;
+                                    currentTarget.weaponToUse = enemy->weapons[c];
+                                }
+                            }
+                        }
+                    }
+                    currentTarget.priority += maxDamage;
+                    if (currentTarget.priority > finalTarget.priority)
+                    {
+                        finalTarget = currentTarget;
+                    }
+                    //The way this is written, an equal priority would suggest this enemy will do the same amount of damage to multiple units.
+                    //In that case, check which unit will do less damage on counter
+                    //Priority of 0 at this point would suggest zero damage will be dealt
+                    //I do want enemies to be able to attack even if they won't do any damage, so I'll need to rethink this.
+                    else if (currentTarget.priority == finalTarget.priority)
+                    {
+                        auto previousUnit = otherUnits[finalTarget.ID];
+                        auto previousWeapon = previousUnit->GetEquippedWeapon();
+                        auto foeWeapon = otherUnit->GetEquippedWeapon();
+                        auto previousStats = previousUnit->CalculateBattleStats();
+                        previousUnit->CalculateMagicDefense(previousWeapon, previousStats, finalTarget.range);
+                        auto otherStats = otherUnit->CalculateBattleStats();
+                        otherUnit->CalculateMagicDefense(foeWeapon, otherStats, currentTarget.range);
+
+                        int previousDamage = previousStats.attackDamage - (previousStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
+                        int damageTaken = otherStats.attackDamage - (otherStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic());
+                        if (damageTaken < previousDamage)
+                        {
+                            finalTarget = currentTarget;
+                        }
+                    }
                 }
             }
         }
@@ -736,15 +797,18 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     }
     else
     {
-        for (int i = 0; i < enemy->inventory.size(); i++)
+        if (!capturing)
         {
-            if (finalTarget.weaponToUse == enemy->inventory[i])
+            for (int i = 0; i < enemy->inventory.size(); i++)
             {
-                enemy->equipWeapon(i);
-                break;
+                if (finalTarget.weaponToUse == enemy->inventory[i])
+                {
+                    enemy->equipWeapon(i);
+                    break;
+                }
             }
         }
-        otherUnit = otherUnits[finalTarget.ID];
+        targetUnit = otherUnits[finalTarget.ID];
         auto attackPositions = finalTarget.attackPositions;
         glm::vec2 attackPosition;
         int maxValue = -100;
@@ -892,7 +956,7 @@ void EnemyManager::RangeActivation(Unit* enemy)
                     if (moveCost < closest)
                     {
                         closest = moveCost;
-                        otherUnit = otherUnits[i];
+                        targetUnit = otherUnits[i];
                         otherPosition = p;
                     }
                 }
@@ -1136,7 +1200,7 @@ void EnemyManager::CantoMove()
     auto enemy = enemies[currentEnemy];
     auto position = enemy->sprite.getPosition();
 
-    auto directionToOtherUnit = glm::normalize(glm::vec2(position - otherUnit->sprite.getPosition()));
+    auto directionToOtherUnit = glm::normalize(glm::vec2(position - targetUnit->sprite.getPosition()));
 
     TileManager::tileManager.removeUnit(position.x, position.y);
     state = CANTO;
@@ -1191,6 +1255,7 @@ void EnemyManager::FinishMove()
     enemies[currentEnemy]->hasMoved = true;
     enemies[currentEnemy]->sprite.moveAnimate = false;
     enemyMoving = false;
+    capturing = false;
     NextUnit();
 
     state = GET_TARGET;
