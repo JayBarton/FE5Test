@@ -27,11 +27,14 @@ struct BattleManager
 	
 	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager, Camera& camera);
 
+	void DropHeldUnit();
+
 	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
 	Unit* deadUnit = nullptr;
+	Unit* unitToDrop = nullptr;
 
 	BattleStats attackerStats;
 	BattleStats defenderStats;
@@ -52,6 +55,7 @@ struct BattleManager
 	bool aiDelay = false;
 	bool capturing = false;
 	bool unitCaptured = false;
+	bool droppingUnit = false;
 
 	float delayTimer = 0.0f;
 	float delay = 0.75f;

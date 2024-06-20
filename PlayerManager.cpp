@@ -179,11 +179,19 @@ void PlayerManager::Draw(SpriteRenderer* Renderer)
 	}
 }
 
-void PlayerManager::Draw(SBatch* Batch)
+void PlayerManager::Draw(SBatch* Batch, std::vector<Sprite>& carrySprites)
 {
 	for (int i = 0; i < playerUnits.size(); i++)
 	{
 		playerUnits[i]->Draw(Batch);
+		if (!playerUnits[i]->sprite.moveAnimate && playerUnits[i]->carriedUnit)
+		{
+			Sprite carrySprite;
+			carrySprite.SetPosition(playerUnits[i]->sprite.getPosition() + 6.0f);
+			carrySprite.setSize(glm::vec2(8));
+			carrySprite.currentFrame = playerUnits[i]->carriedUnit->team;
+			carrySprites.push_back(carrySprite);
+		}
 	}
 }
 

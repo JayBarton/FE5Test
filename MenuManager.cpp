@@ -453,7 +453,7 @@ void UnitOptionsMenu::GetOptions()
 			for (int i = 0; i < tradeUnits.size(); i++)
 			{
 				auto currentUnit = tradeUnits[i];
-				if (!currentUnit->isCarried)
+				if (!currentUnit->carryingUnit)
 				{
 					if (!currentUnit->isMounted() && currentUnit->getBuild() < 20 && !currentUnit->carriedUnit)
 					{
@@ -488,7 +488,7 @@ void UnitOptionsMenu::GetOptions()
 			for (int i = 0; i < tradeUnits.size(); i++)
 			{
 				auto currentUnit = tradeUnits[i];
-				if (!currentUnit->isCarried)
+				if (!currentUnit->carryingUnit)
 				{
 					if (!currentUnit->carriedUnit)
 					{
@@ -1293,7 +1293,7 @@ void SelectTradeUnit::Draw()
 		boxHeight += (inventorySize + 1) * 30;
 	}
 	glm::vec2 targetPosition;
-	if (tradeUnit->isCarried)
+	if (tradeUnit->carryingUnit)
 	{
 		targetPosition = cursor->selectedUnit->sprite.getPosition();
 	}
@@ -1753,6 +1753,9 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 
 	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
+	Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
+	carryUVs = carryTexture.GetUVs(8, 8);
+
 }
 
 void UnitStatsViewMenu::Draw()
@@ -1770,7 +1773,6 @@ void UnitStatsViewMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-
 	//page 1
 	if (firstPage || transition)
 	{
@@ -1926,6 +1928,12 @@ void UnitStatsViewMenu::Draw()
 
 		if (unit->carriedUnit)
 		{
+			Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
+
+			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			renderer->setUVs(carryUVs[unit->carriedUnit->team]);
+			renderer->DrawSprite(carryTexture, glm::vec2(39, 159 + yOffset), 0, glm::vec2(8));
+
 			text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
 			text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
 		}
@@ -1959,14 +1967,26 @@ void UnitStatsViewMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	//Would like to not use batch here it's just easier without writing a new function/shader
-	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	SBatch Batch;
-	Batch.init();
-	Batch.begin();
-	unit->Draw(&Batch, glm::vec2(16, 10), true);
-	Batch.end();
-	Batch.renderBatch();
+
+	if (unit->carryingUnit)
+	{
+		Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
+
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		renderer->setUVs(carryUVs[unit->team]);
+		renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
+	}
+	else
+	{
+		//Would like to not use batch here it's just easier without writing a new function/shader
+		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		SBatch Batch;
+		Batch.init();
+		Batch.begin();
+		unit->Draw(&Batch, glm::vec2(16, 10), true);
+		Batch.end();
+		Batch.renderBatch();
+	}
 
 	text->RenderText(unit->name, 100, 29, 1);
 	text->RenderText(unit->unitClass, 50, 72, 1);
@@ -2016,7 +2036,6 @@ void UnitStatsViewMenu::Draw()
 	text->RenderTextRight(intToString(battleStats.hitCrit), 642, 64, 1, 14);
 	text->RenderText("AVO", 600, 96, 1);
 	text->RenderTextRight(intToString(battleStats.hitAvoid), 642, 96, 1, 14);
-
 }
 
 void UnitStatsViewMenu::SelectOption()
@@ -2173,8 +2192,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 
 void UnitStatsViewMenu::CancelOption()
 {
-	cursor->position = (*unitList)[unitIndex]->sprite.getPosition();
-	cursor->focusedUnit = (*unitList)[unitIndex];
+	cursor->SetFocus((*unitList)[unitIndex]);
 	camera->SetMove(cursor->position);
 	Menu::CancelOption();
 }
@@ -2325,7 +2343,6 @@ void SelectRescueUnit::SelectOption()
 	auto rescuedUnit = rescueUnits[currentOption];
 	auto playerUnit = cursor->selectedUnit;
 	playerUnit->carryUnit(rescuedUnit);
-	rescuedUnit->isCarried = true;
 	TileManager::tileManager.removeUnit(rescuedUnit->sprite.getPosition().x, rescuedUnit->sprite.getPosition().y);
 	if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
 	{
@@ -2386,7 +2403,7 @@ void DropMenu::SelectOption()
 	auto playerUnit = cursor->selectedUnit;
 	auto heldUnit = playerUnit->carriedUnit;
 	heldUnit->placeUnit(positions[currentOption].x, positions[currentOption].y);
-	heldUnit->isCarried = false;
+	heldUnit->carryingUnit = nullptr;
 	playerUnit->releaseUnit();
 	if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
 	{

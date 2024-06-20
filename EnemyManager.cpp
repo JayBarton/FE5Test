@@ -178,6 +178,8 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
             }
         }
     }
+
+    escapePoint = glm::ivec2(336, 192);
     //  enemies[14]->currentHP = 14;
     //  enemies[0]->move = 6;
    //   enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
@@ -210,77 +212,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                 enemy->UpdateMovement(deltaTime, inputManager);
                 if (!enemy->movementComponent.moving)
                 {
-                    enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
-                    if (state == ATTACK)
-                    {
-                        if (capturing)
-                        {
-                            capturing = false;
-                            enemy->carryUnit(targetUnit);
-                            targetUnit->isCarried = true;
-                            for (int i = 0; i < targetUnit->inventory.size(); i++)
-                            {
-                                if (enemy->inventory.size() <= 8)
-                                {
-                                    enemy->inventory.push_back(targetUnit->inventory[i]);
-                                    targetUnit->inventory.erase(targetUnit->inventory.begin());
-                                    i--;
-                                }
-                            }
-                            TileManager::tileManager.removeUnit(targetUnit->sprite.getPosition().x, targetUnit->sprite.getPosition().y);
-                            //Still need to account for mounted units
-                            FinishMove();
-                        }
-                        else
-                        {
-                            //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
-                            //before the battle actually starts
-                            auto otherStats = targetUnit->CalculateBattleStats();
-                            auto weapon = targetUnit->GetEquippedWeapon();
-                            targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-                            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true);
-                        }
-                    }
-                    else if (state == CANTO || state == APPROACHING)
-                    {
-                        FinishMove();
-                    }
-                    else if (state == HEALING)
-                    {
-                        displays->EnemyUse(enemy, healIndex);
-                    }
-                    else if (state == TRADING)
-                    {
-                        displays->EnemyTrade(this);
-                    }
-                    else if (state == SHOPPING)
-                    {
-                        if (enemy->sprite.getPosition() == enemy->storeTarget->position)
-                        {
-                            //buy the item cheapest item this enemy can use
-                            int cheapest = 10000;
-                            int selectedItem = -1;
-                            for (int i = 0; i < enemy->storeTarget->items.size(); i++)
-                            {
-                                auto currentItem = enemy->storeTarget->items[i];
-                                if (enemy->canUse(currentItem))
-                                {
-                                    if (ItemManager::itemManager.items[currentItem].value < cheapest)
-                                    {
-                                        cheapest = ItemManager::itemManager.items[i].value;
-                                        selectedItem = currentItem;
-                                    }
-                                }
-                            }
-                            enemy->addItem(selectedItem);
-                            enemy->storeTarget = nullptr;
-                            displays->EnemyBuy(this);
-                        }
-                        else
-                        {
-                            FinishMove();
-                        }
-                    }
+                    TakeAction(enemy, battleManager, camera);
                 }
             }
         }
@@ -293,10 +225,20 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                 skippedUnit = false;
                 while (currentEnemy < enemies.size() && !skippedUnit && !enemyMoving)
                 {
-                    if (enemy->isCarried)
+                    if (enemy->carryingUnit)
                     {
                         NextUnit();
                         skippedUnit = true;
+                    }
+                    else if (enemy->carriedUnit)
+                    {
+                        //escape
+                        auto enemyPosition = enemy->sprite.getPosition();
+                        TileManager::tileManager.removeUnit(enemyPosition.x, enemyPosition.y);
+                        auto path = pathFinder.findPath(enemyPosition, escapePoint, enemy->getMove());
+                        enemy->startMovement(path, enemy->getMove(), false);
+                        enemyMoving = true;
+                        state = ESCAPING;
                     }
                     else if (enemy->stationary)
                     {
@@ -308,6 +250,96 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                     }
                 }
             }
+        }
+    }
+}
+
+void EnemyManager::TakeAction(Unit* enemy, BattleManager& battleManager, Camera& camera)
+{
+    enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
+    if (state == ATTACK)
+    {
+        if (capturing)
+        {
+            capturing = false;
+            enemy->carryUnit(targetUnit);
+            for (int i = 0; i < targetUnit->inventory.size(); i++)
+            {
+                if (enemy->inventory.size() <= 8)
+                {
+                    enemy->inventory.push_back(targetUnit->inventory[i]);
+                    targetUnit->inventory.erase(targetUnit->inventory.begin());
+                    i--;
+                }
+            }
+            TileManager::tileManager.removeUnit(targetUnit->sprite.getPosition().x, targetUnit->sprite.getPosition().y);
+            //Still need to account for mounted units
+            FinishMove();
+        }
+        else
+        {
+            //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
+            //before the battle actually starts
+            auto otherStats = targetUnit->CalculateBattleStats();
+            auto weapon = targetUnit->GetEquippedWeapon();
+            targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true);
+        }
+    }
+    else if (state == CANTO || state == APPROACHING)
+    {
+        FinishMove();
+    }
+    else if (state == HEALING)
+    {
+        displays->EnemyUse(enemy, healIndex);
+    }
+    else if (state == TRADING)
+    {
+        displays->EnemyTrade(this);
+    }
+    else if (state == SHOPPING)
+    {
+        if (enemy->sprite.getPosition() == enemy->storeTarget->position)
+        {
+            //buy the item cheapest item this enemy can use
+            int cheapest = 10000;
+            int selectedItem = -1;
+            for (int i = 0; i < enemy->storeTarget->items.size(); i++)
+            {
+                auto currentItem = enemy->storeTarget->items[i];
+                if (enemy->canUse(currentItem))
+                {
+                    if (ItemManager::itemManager.items[currentItem].value < cheapest)
+                    {
+                        cheapest = ItemManager::itemManager.items[i].value;
+                        selectedItem = currentItem;
+                    }
+                }
+            }
+            enemy->addItem(selectedItem);
+            enemy->storeTarget = nullptr;
+            displays->EnemyBuy(this);
+        }
+        else
+        {
+            FinishMove();
+        }
+    }
+    else if (state == ESCAPING)
+    {
+        if (glm::ivec2(enemy->sprite.getPosition()) == escapePoint)
+        {
+            //run off map
+            std::vector<glm::ivec2> path = { glm::ivec2(escapePoint.x + 32, escapePoint.y), escapePoint };
+            enemy->startMovement(path, enemy->getMove(), false);
+            //display unit leave
+            displays->UnitEscaped(this);
+            state = LEAVING_MAP;
+        }
+        else
+        {
+            FinishMove();
         }
     }
 }
@@ -909,11 +941,19 @@ void EnemyManager::Draw(SpriteRenderer* renderer)
 	}
 }
 
-void EnemyManager::Draw(SBatch* Batch)
+void EnemyManager::Draw(SBatch* Batch, std::vector<Sprite>& carrySprites)
 {
     for (int i = 0; i < enemies.size(); i++)
     {
         enemies[i]->Draw(Batch);
+        if (!enemies[i]->sprite.moveAnimate && enemies[i]->carriedUnit)
+        {
+            Sprite carrySprite;
+            carrySprite.SetPosition(enemies[i]->sprite.getPosition() + 6.0f);
+            carrySprite.setSize(glm::vec2(8));
+            carrySprite.currentFrame = enemies[i]->carriedUnit->team;
+            carrySprites.push_back(carrySprite);
+        }
     }
 }
 
@@ -1259,6 +1299,14 @@ void EnemyManager::FinishMove()
     NextUnit();
 
     state = GET_TARGET;
+}
+
+void EnemyManager::UnitLeaveMap()
+{
+    //Need to remove the enemy and the unit they are carrying
+    //If they are carrying a required unit, it is game over
+    enemies[currentEnemy]->isDead = true;
+    FinishMove();
 }
 
 void EnemyManager::UpdateEnemies(float deltaTime, int idleFrame)

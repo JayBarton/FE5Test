@@ -21,7 +21,9 @@ enum DisplayState
 	ENEMY_BUY,
 	GOT_ITEM,
 	PLAYER_DIED,
-	PLAYER_DEATH
+	PLAYER_DEATH,
+	UNIT_ESCAPED,
+	DELAY
 };
 class EnemyManager;
 struct InfoDisplays
@@ -82,6 +84,7 @@ struct InfoDisplays
 	void ChangeTurn(int currentTurn);
 	void PlayerUnitDied(Unit* unit);
 	void PlayerLost(int messageID);
+	void UnitEscaped(EnemyManager* enemyManager);
 
 	void OnUnitLevel(Unit* unit);
 

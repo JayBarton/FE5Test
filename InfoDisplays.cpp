@@ -157,6 +157,12 @@ void InfoDisplays::PlayerLost(int messageID)
 	state = PLAYER_DIED;
 }
 
+void InfoDisplays::UnitEscaped(EnemyManager* enemyManager)
+{
+	this->enemyManager = enemyManager;
+	state = UNIT_ESCAPED;
+}
+
 void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 {
 	if (state != NONE)
@@ -249,6 +255,18 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 				turnDisplayAlpha = 0;
 				state = NONE;
 			}
+		}
+		break;
+	case UNIT_ESCAPED:
+		if (displayTimer > textDisplayTime)
+		{
+			displayTimer = 0.0f;
+			enemyManager->UnitLeaveMap();
+			state = NONE;
+		}
+		else
+		{
+			enemyManager->GetCurrentUnit()->UpdateMovement(deltaTime, inputManager);
 		}
 		break;
 	}
@@ -363,12 +381,10 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 		{
 			focusedUnit->AddExperience(gainedExperience);
 			displayingExperience = false;
-			if (state == ADD_EXPERIENCE)
-			{
-				focusedUnit = nullptr;
-				state = NONE;
-				subject.notify(0);
-			}
+
+			focusedUnit = nullptr;
+			state = NONE;
+			subject.notify(0);
 			displayTimer = 0;
 		}
 	}
@@ -460,6 +476,22 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		}
 		break;
 	}
+	case UNIT_ESCAPED:
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(96, 96, 0.0f));
+		model = glm::scale(model, glm::vec3(66, 34, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		Text->RenderText("Unit Escaped", 325, 289, 1);
+		break;
 	}
 }
 

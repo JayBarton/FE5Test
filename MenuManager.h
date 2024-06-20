@@ -287,6 +287,7 @@ struct UnitStatsViewMenu : public Menu
 	//Just here as a proof of concept for now
 	std::vector<glm::vec4> proficiencyIconUVs;
 	std::vector<glm::vec4> itemIconUVs;
+	std::vector<glm::vec4> carryUVs;
 
 	bool firstPage = true;
 	bool examining = false;

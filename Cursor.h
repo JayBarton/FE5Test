@@ -51,6 +51,8 @@ struct Cursor
 	void UndoMove();
 	void UndoRemainingMove();
 
+	void SetFocus(Unit* unit);
+
 	void GetUnitOptions();
 
 	void GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>& talkUnits);

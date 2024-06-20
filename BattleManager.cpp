@@ -166,26 +166,24 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				if (deadUnit->Dying(deltaTime))
 				{
 					deadUnit->isDead = true;
-					TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+					if (deadUnit->carriedUnit)
+					{
+						unitToDrop = deadUnit->carriedUnit;
+						unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+					}
+					auto deadPosition = deadUnit->sprite.getPosition();
+					TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
 					EndAttack();
 					unitDiedSubject.notify(deadUnit);
+
 					deadUnit = nullptr;
 					unitDied = false;
 				}
 			}
-			/*if (!textManager.active)
-			{
-
-			}
-			else
-			{
-				textManager.Update(deltaTime, inputManager);
-			}*/
 		}
 		else if (unitCaptured)
 		{
 			//capture animation
-			deadUnit->isCarried = true;
 			TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
 			deadUnit = nullptr;
 			unitCaptured = false;
@@ -375,7 +373,6 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 
 void BattleManager::EndAttack()
 {
-	battleActive = false;
 	if (capturing && !attacker->carriedUnit)
 	{
 		attacker->carryingMalus = 1;
@@ -410,7 +407,20 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 			enemyManager->FinishMove();
 		}
 	}
+	DropHeldUnit();
+	battleActive = false;
 	camera.SetCenter(attacker->sprite.getPosition());
+}
+
+void BattleManager::DropHeldUnit()
+{
+	if (unitToDrop)
+	{
+		auto deadPosition = unitToDrop->sprite.getPosition();
+		unitToDrop->placeUnit(deadPosition.x, deadPosition.y);
+		unitToDrop->carryingUnit = nullptr;
+		unitToDrop = nullptr;
+	}
 }
 
 void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor)

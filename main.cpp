@@ -204,8 +204,9 @@ int turnUnit = 0;
 int idleFrame = 0;
 int idleAnimationDirection = 1;
 float timeForFrame = 0.0f;
+float carryBlinkTime = 0.0f;
 
-float testFrame = 0;
+bool showCarry = false;
 
 struct UnitEvents : public Observer<Unit*>
 {
@@ -248,8 +249,7 @@ struct TurnEvents : public Observer<int>
 			roundSubject.notify(currentRound);
 			if (Settings::settings.autoCursor)
 			{
-				cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
-				cursor.focusedUnit = playerManager.playerUnits[0];
+				cursor.SetFocus(playerManager.playerUnits[0]);
 			}
 		}
 		displays.ChangeTurn(currentTurn);
@@ -304,7 +304,7 @@ struct PostBattleEvents : public Observer<int>
 			//Real brute force here
 			battleManager.defender->sprite.moveAnimate = false;
 			battleManager.defender->sprite.currentFrame = idleFrame;
-			
+
 		}
 		//player used an item
 		else if (ID == 1)
@@ -433,6 +433,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/icons.png", "icons");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/carryingIcons.png", "carryingIcons");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovermain.png", "GameOver1");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovertext.png", "GameOver2");
 
@@ -466,6 +467,7 @@ int main(int argc, char** argv)
 	loadMap("2.map", unitEvents);
 
 	cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
+	cursor.focusedUnit = playerManager.playerUnits[0];
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
@@ -526,9 +528,9 @@ int main(int argc, char** argv)
 		}
 
 		timeForFrame += deltaTime;
+		carryBlinkTime += deltaTime;
 		float animationDelay = 0.0f;
 		animationDelay = 0.27f;
-		testFrame += deltaTime;
 		if (timeForFrame >= animationDelay)
 		{
 			timeForFrame = 0;
@@ -557,6 +559,23 @@ int main(int argc, char** argv)
 				}
 			}
 		}
+		if (showCarry)
+		{
+			if (carryBlinkTime >= 1.0f)
+			{
+				carryBlinkTime = 0.0f;
+				showCarry = !showCarry;
+			}
+		}
+		else
+		{
+			if (carryBlinkTime >= 0.5f)
+			{
+				carryBlinkTime = 0.0f;
+				showCarry = !showCarry;
+			}
+		}
+
 		if (MenuManager::menuManager.menus.size() > 0)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
@@ -1321,10 +1340,21 @@ void Draw()
 				}
 				ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 				Batch.begin();
-				playerManager.Draw(&Batch);
-				enemyManager.Draw(&Batch);
+				std::vector<Sprite> carrySprites;
+				playerManager.Draw(&Batch, carrySprites);
+				enemyManager.Draw(&Batch, carrySprites);
 				Batch.end();
 				Batch.renderBatch();
+				if (showCarry)
+				{
+					for (int i = 0; i < carrySprites.size(); i++)
+					{
+						Texture2D texture = ResourceManager::GetTexture("carryingIcons");
+						auto uvs = texture.GetUVs(8, 8);
+						Renderer->setUVs(uvs[carrySprites[i].currentFrame]);
+						Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, carrySprites[i].getSize());
+					}
+				}
 				if (displays.state == NONE)
 				{
 					ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());

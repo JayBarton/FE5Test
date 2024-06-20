@@ -422,3 +422,14 @@ void Cursor::UndoRemainingMove()
 
 	GetRemainingMove();
 }
+
+void Cursor::SetFocus(Unit* unit)
+{
+	Unit* toFocus = unit;
+	if (toFocus->carryingUnit)
+	{
+		toFocus = toFocus->carryingUnit;
+	}
+	position = toFocus->sprite.getPosition();
+	focusedUnit = toFocus;
+}

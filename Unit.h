@@ -202,7 +202,6 @@ struct Unit
 	bool isPromoted = false;
 
 	bool isDead = false;
-	bool isCarried = false;
 
 	//Not sure if this is staying here
 	bool active = false;
@@ -223,7 +222,10 @@ struct Unit
 
 	Mount* mount = nullptr;
 
+	//Unit being held by this unit
 	Unit* carriedUnit = nullptr;
+	//Unit holding this unit
+	Unit* carryingUnit = nullptr;
 
 	std::string deathMessage = "";
 

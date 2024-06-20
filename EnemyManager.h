@@ -32,7 +32,9 @@ enum ActionState
 	HEALING,
 	TRADING,
 	APPROACHING,
-	SHOPPING
+	SHOPPING,
+	ESCAPING,
+	LEAVING_MAP
 };
 
 class InfoDisplays;
@@ -40,6 +42,8 @@ class Camera;
 struct EnemyManager
 {
 	std::vector<Unit*> enemies;
+	//In the future this can probably be a vector
+	glm::ivec2 escapePoint;
 	int currentEnemy = 0;
 	int attackRange = 0;
 	int healIndex = -1;
@@ -73,8 +77,9 @@ struct EnemyManager
 	void NextUnit();
 	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
 	void Draw(SpriteRenderer* renderer);
-	void Draw(class SBatch* Batch);
+	void Draw(class SBatch* Batch, std::vector<Sprite>& carrySprites);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera, class InputManager& inputManager);
+	void TakeAction(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager);
 	bool CheckStores(Unit* enemy);
 	void GoShopping(glm::vec2& position, Unit* enemy);
@@ -86,6 +91,7 @@ struct EnemyManager
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();
 	void FinishMove();
+	void UnitLeaveMap();
 	void UpdateEnemies(float deltaTime, int idleFrame);
 	void EndTurn();
 	void RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits);

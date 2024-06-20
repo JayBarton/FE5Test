@@ -22,7 +22,7 @@ struct PlayerManager
 	void AddUnit(int unitID, glm::vec2& position);
 
 	void Draw(class SpriteRenderer* Renderer);
-	void Draw(class SBatch* Batch);
+	void Draw(class SBatch* Batch, std::vector<Sprite>& carrySprites);
 
 	void Clear();
 };

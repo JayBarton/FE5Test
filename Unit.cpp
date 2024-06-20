@@ -68,7 +68,7 @@ void Unit::SetFocus()
 
 void Unit::Draw(SpriteRenderer* Renderer)
 {
-    if (!isDead && !isCarried)
+    if (!isDead && !carryingUnit)
     {
         ResourceManager::GetShader("sprite").Use();
         glm::vec3 color = sprite.color;
@@ -87,7 +87,7 @@ void Unit::Draw(SpriteRenderer* Renderer)
 
 void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
 {
-    if (drawAnyway || (!isDead && !isCarried))
+    if (drawAnyway || (!isDead && !carryingUnit))
     {
         Texture2D texture = ResourceManager::GetTexture("sprites");
         glm::vec3 color = sprite.color;
@@ -108,7 +108,6 @@ void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
         {
             size = sprite.getSize();
             position += sprite.drawOffset;
-
         }
 
         Batch->addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team, sprite.getUV());
@@ -576,6 +575,7 @@ void Unit::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool
 void Unit::carryUnit(Unit* unitToCarry)
 {
     carriedUnit = unitToCarry;
+    unitToCarry->carryingUnit = this;
     carryingMalus = 2;
     int buildCompare = getBuild() / 2;
     if (isMounted())
