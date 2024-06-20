@@ -177,6 +177,7 @@ struct SelectEnemyMenu : public Menu
 	DisplayedBattleStats playerStats;
 
 	int selectedWeapon;
+	int attackDistance;
 	std::vector<Unit*> unitsToAttack;
 	SpriteRenderer* renderer = nullptr;
 	bool enemyCanCounter = false;

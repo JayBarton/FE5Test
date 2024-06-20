@@ -272,7 +272,7 @@ void EnemyManager::TakeAction(Unit* enemy, BattleManager& battleManager, Camera&
             auto otherStats = targetUnit->CalculateBattleStats();
             auto weapon = targetUnit->GetEquippedWeapon();
             targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true, capturing);
+            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, attackRange, canCounter, camera, true, capturing);
             capturing = false;
         }
         else
@@ -280,7 +280,7 @@ void EnemyManager::TakeAction(Unit* enemy, BattleManager& battleManager, Camera&
             auto otherStats = targetUnit->CalculateBattleStats();
             auto weapon = targetUnit->GetEquippedWeapon();
             targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
-            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true);
+            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, attackRange, canCounter, camera, true);
         }
     }
     else if (state == CANTO || state == APPROACHING)
@@ -591,7 +591,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             {
                 canCounter = true;
             }
-            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true);
+            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, attackRange, canCounter, camera, true);
         }
     }
     //No units in range
@@ -615,6 +615,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     int canCaptureBonus = 60;
 
     Target finalTarget;
+    finalTarget.priority = -1;
     for (int i = 0; i < otherUnits.size(); i++)
     {
         Target currentTarget;
@@ -820,7 +821,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
         }
     }
     //In range of units but cannot reach any of them, stay where you are
-    if (finalTarget.priority == 0)
+    if (finalTarget.priority == -1)
     {
         DoNothing(enemy, position);
     }

@@ -36,7 +36,6 @@ struct WeaponData
 	const static int LIGHT_BRAND = 6;
 	const static int BRAVE_LANCE = 7;
 
-	//int ID; Not sure I need this
 	int type = -1;
 	int rank = 0;
 	int hit = 0;

@@ -16,7 +16,7 @@
 #include "InfoDisplays.h"
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
-	BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
+	BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
 	this->aiDelay = aiDelay;
 	this->capturing = capturing;
@@ -32,6 +32,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	}
 	else
 	{
+		this->attackDistance = attackDistance;
 		this->attackerStats = attackerStats;
 		this->defenderStats = defenderStats;
 		attackerTurn = true;
@@ -336,7 +337,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= 100)
+	if (roll <= accuracy)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		if (crit > 0)
@@ -389,6 +390,12 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	}
 	else
 	{
+		//Ranged attacks and tomes should eat a use even if they miss
+		//Not the most elegant or extensible solution to this problem, but it works for now
+		if (attackDistance > 1 || thisUnit->GetEquippedWeapon().isTome)
+		{
+			thisUnit->GetEquippedItem()->remainingUses--;
+		}
 		std::cout << thisUnit->name << " Misses\n";
 	}
 }

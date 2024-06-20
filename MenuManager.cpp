@@ -1089,17 +1089,9 @@ void SelectEnemyMenu::SelectOption()
 {
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
 	cursor->selectedUnit->equipWeapon(selectedWeapon);
-	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, enemyCanCounter, *camera, false, capturing);
+	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, attackDistance, enemyCanCounter, *camera, false, capturing);
 	cursor->MoveUnitToTile();
-	if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
-	{
-	//	cursor->GetRemainingMove();
-	}
-	else
-	{
-	//	cursor->Wait();
-	}
-//	MenuManager::menuManager.camera->SetMove(cursor->position); Not sure about this, need to have the camera move so it centers the units
+
 	ClearMenu();
 }
 
@@ -1148,7 +1140,7 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 {
 	auto enemy = unitsToAttack[currentOption];
 	auto unit = cursor->selectedUnit;
-	float attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
+	attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
 	attackDistance /= TileManager::TILE_SIZE;
 	auto enemyWeapon = enemy->GetEquippedWeapon();
 	enemyCanCounter = false;
@@ -1161,42 +1153,10 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 
 	unitNormalStats = unit->CalculateBattleStats(unit->inventory[selectedWeapon]->ID);
 	auto unitWeapon = unit->GetWeaponData(unit->inventory[selectedWeapon]);
-	//int playerDefense = unit->defense;
-	//int enemyDefense = enemy->defense;	
 	enemy->CalculateMagicDefense(enemyWeapon, enemyNormalStats, attackDistance);
 	unit->CalculateMagicDefense(unitWeapon, unitNormalStats, attackDistance);
 	int playerDefense = enemyNormalStats.attackType == 0 ? unit->getDefense() : unit->getMagic();
 	int enemyDefense = unitNormalStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic();
-
-	
-	//Magic resistance stat is just the unit's magic stat
-	/*if (unitWeapon.isMagic)
-	{
-		//Magic swords such as the Light Brand do physical damage when used in close range
-		//so what I'm doing is just negating the previous damage calculation and using strength instead
-		if (attackDistance == 1 && !unitWeapon.isTome)
-		{
-			unitNormalStats.attackDamage -= unit->magic;
-			unitNormalStats.attackDamage += unit->strength;
-		}
-		else
-		{
-			enemyDefense = enemy->magic;
-		}
-	}
-
-	if (enemyWeapon.isMagic)
-	{
-		if (attackDistance == 1 && !enemyWeapon.isTome)
-		{
-			enemyNormalStats.attackDamage -= enemy->magic;
-			enemyNormalStats.attackDamage += enemy->strength;
-		}
-		else
-		{
-			playerDefense = unit->magic;
-		}
-	}*/
 
 	auto playerPosition = unit->sprite.getPosition();
 	auto playerTile = TileManager::tileManager.getTile(playerPosition.x, playerPosition.y);

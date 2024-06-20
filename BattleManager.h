@@ -15,7 +15,7 @@ struct Attack
 class Camera;
 struct BattleManager
 {
-	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
+	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays);
 
@@ -41,6 +41,8 @@ struct BattleManager
 
 	glm::vec2 cameraStart;
 	glm::vec2 battleDirection;
+
+	int attackDistance;
 
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;
