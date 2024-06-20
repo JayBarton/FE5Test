@@ -182,7 +182,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
     escapePoint = glm::ivec2(336, 192);
     //  enemies[14]->currentHP = 14;
     //  enemies[0]->move = 6;
-   //   enemies[0]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+      enemies[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
@@ -234,11 +234,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
                     {
                         //escape
                         auto enemyPosition = enemy->sprite.getPosition();
-                        TileManager::tileManager.removeUnit(enemyPosition.x, enemyPosition.y);
-                        auto path = pathFinder.findPath(enemyPosition, escapePoint, enemy->getMove());
-                        enemy->startMovement(path, enemy->getMove(), false);
-                        enemyMoving = true;
-                        state = ESCAPING;
+                        Escape(enemyPosition, enemy);
                     }
                     else if (enemy->stationary)
                     {
@@ -254,32 +250,33 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
     }
 }
 
+void EnemyManager::Escape(glm::vec2& enemyPosition, Unit* enemy)
+{
+    TileManager::tileManager.removeUnit(enemyPosition.x, enemyPosition.y);
+    auto path = pathFinder.findPath(enemyPosition, escapePoint, enemy->getMove());
+    enemy->startMovement(path, enemy->getMove(), false);
+    enemyMoving = true;
+    state = ESCAPING;
+}
+
 void EnemyManager::TakeAction(Unit* enemy, BattleManager& battleManager, Camera& camera)
 {
     enemy->placeUnit(enemy->sprite.getPosition().x, enemy->sprite.getPosition().y);
     if (state == ATTACK)
     {
+        //The way I am handling this currently, the enemy will only capture if the player target has no weapons, so
+        //I don't actually need to calculate this. However, it seems enemies should be able to capture in other circumstances, so it's going to remain
+        //Here in a nonfunctional state until I decide what to do with it.
         if (capturing)
         {
+            auto otherStats = targetUnit->CalculateBattleStats();
+            auto weapon = targetUnit->GetEquippedWeapon();
+            targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+            battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, canCounter, camera, true, capturing);
             capturing = false;
-            enemy->carryUnit(targetUnit);
-            for (int i = 0; i < targetUnit->inventory.size(); i++)
-            {
-                if (enemy->inventory.size() <= 8)
-                {
-                    enemy->inventory.push_back(targetUnit->inventory[i]);
-                    targetUnit->inventory.erase(targetUnit->inventory.begin());
-                    i--;
-                }
-            }
-            TileManager::tileManager.removeUnit(targetUnit->sprite.getPosition().x, targetUnit->sprite.getPosition().y);
-            //Still need to account for mounted units
-            FinishMove();
         }
         else
         {
-            //When the enemy attacks, it should show an indicator of what unit it is attacking, and there should be a small delay
-            //before the battle actually starts
             auto otherStats = targetUnit->CalculateBattleStats();
             auto weapon = targetUnit->GetEquippedWeapon();
             targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
@@ -1239,54 +1236,60 @@ void EnemyManager::CantoMove()
 {
     auto enemy = enemies[currentEnemy];
     auto position = enemy->sprite.getPosition();
-
-    auto directionToOtherUnit = glm::normalize(glm::vec2(position - targetUnit->sprite.getPosition()));
-
-    TileManager::tileManager.removeUnit(position.x, position.y);
-    state = CANTO;
-    auto path = enemy->FindRemainingMoveRange();
-    int bestValue = 0;
-    glm::ivec2 bestPosition;
-    for (auto const& x : path)
+    if (enemy->carriedUnit)
     {
-        auto tile = TileManager::tileManager.getTile(x.first.x, x.first.y);
-        if (!tile->occupiedBy)
-        {
-            auto tileProperties = tile->properties;
-            auto directionToTarget = glm::normalize(glm::vec2(position - x.first));
-            int oppositeDirectionBonus = 0;
-            //Want to lightly discourage enemies from running past player units, and instead run in the direction they came
-            if (directionToOtherUnit.x * directionToTarget.x > 0 || directionToOtherUnit.y * directionToTarget.y > 0)
-            {
-                oppositeDirectionBonus = -1;
-            }
-            int tileConsiderations = x.second.moveCost + tileProperties.avoid + (tileProperties.defense * 10) + oppositeDirectionBonus;
-            if (tileConsiderations > bestValue)
-            {
-                bestValue = tileConsiderations;
-                bestPosition = x.first;
-
-            }
-        }
-    }
-    //No good spot to canto to
-    if (bestValue == 0)
-    {
-        NoMove(enemy, position);
+        Escape(position, enemy);
     }
     else
     {
-        std::vector<glm::ivec2> followPath;
-        glm::vec2 pathPoint = bestPosition;
-        followPath.push_back(pathPoint);
+        state = CANTO;
+        auto directionToOtherUnit = glm::normalize(glm::vec2(position - targetUnit->sprite.getPosition()));
 
-        while (pathPoint != enemy->sprite.getPosition())
+        TileManager::tileManager.removeUnit(position.x, position.y);
+        auto path = enemy->FindRemainingMoveRange();
+        int bestValue = 0;
+        glm::ivec2 bestPosition;
+        for (auto const& x : path)
         {
-            auto previous = path[pathPoint].previousPosition;
-            followPath.push_back(previous);
-            pathPoint = previous;
+            auto tile = TileManager::tileManager.getTile(x.first.x, x.first.y);
+            if (!tile->occupiedBy)
+            {
+                auto tileProperties = tile->properties;
+                auto directionToTarget = glm::normalize(glm::vec2(position - x.first));
+                int oppositeDirectionBonus = 0;
+                //Want to lightly discourage enemies from running past player units, and instead run in the direction they came
+                if (directionToOtherUnit.x * directionToTarget.x > 0 || directionToOtherUnit.y * directionToTarget.y > 0)
+                {
+                    oppositeDirectionBonus = -1;
+                }
+                int tileConsiderations = x.second.moveCost + tileProperties.avoid + (tileProperties.defense * 10) + oppositeDirectionBonus;
+                if (tileConsiderations > bestValue)
+                {
+                    bestValue = tileConsiderations;
+                    bestPosition = x.first;
+
+                }
+            }
         }
-        enemy->startMovement(followPath, path[bestPosition].moveCost, true);
+        //No good spot to canto to
+        if (bestValue == 0)
+        {
+            NoMove(enemy, position);
+        }
+        else
+        {
+            std::vector<glm::ivec2> followPath;
+            glm::vec2 pathPoint = bestPosition;
+            followPath.push_back(pathPoint);
+
+            while (pathPoint != enemy->sprite.getPosition())
+            {
+                auto previous = path[pathPoint].previousPosition;
+                followPath.push_back(previous);
+                pathPoint = previous;
+            }
+            enemy->startMovement(followPath, path[bestPosition].moveCost, true);
+        }
     }
 }
 

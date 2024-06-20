@@ -18,7 +18,7 @@ using json = nlohmann::json;
 
 void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 {
-	if (unit->isDead)
+	if (unit->isDead || unit->carryingUnit)
 	{
 		focusedUnit = nullptr;
 		state = NONE;

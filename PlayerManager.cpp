@@ -75,7 +75,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	playerUnits[4]->sprite.drawOffset = glm::vec2(1, 0);
 	playerUnits[4]->currentHP = 1;
 	playerUnits[0]->build = 2;
-	playerUnits[2]->build = 2;
+	playerUnits[2]->currentHP = 1;
 
 }
 

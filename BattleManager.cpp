@@ -24,31 +24,63 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	this->attacker = attacker;
 	this->defender = defender;
 	this->canDefenderAttack = canDefenderAttack;
-
-	this->attackerStats = attackerStats;
-	this->defenderStats = defenderStats;
-	attackerTurn = true;
-	defenderTurn = false;
-	checkDouble = true;
-	actionTimer = 0.0f;
-	battleQueue.clear();
-	battleQueue.reserve(3);
-
-	battleQueue.push_back(Attack{1, 0});
-	if (attacker->GetEquippedWeapon().consecutive)
+	if (capturing && defender->GetEquippedWeapon().type < 0)
 	{
-		battleQueue.push_back(Attack{ 1, 0 });
+		//If defender is unarmed and we attempt to capture, it's an automatic success
+		unitCaptured = true;
+		deadUnit = defender;
 	}
-	if (canDefenderAttack)
+	else
 	{
-		Attack defenderAttack{ 0 };
+		this->attackerStats = attackerStats;
+		this->defenderStats = defenderStats;
+		attackerTurn = true;
+		defenderTurn = false;
+		checkDouble = true;
+		actionTimer = 0.0f;
+		battleQueue.clear();
+		battleQueue.reserve(3);
 
-		if (defender->hasSkill(Unit::VANTAGE))
+		battleQueue.push_back(Attack{ 1, 0 });
+		if (attacker->GetEquippedWeapon().consecutive)
 		{
-			defenderAttack.vantageAttack = true;
-			if (attacker->hasSkill(Unit::VANTAGE))
+			battleQueue.push_back(Attack{ 1, 0 });
+		}
+		if (canDefenderAttack)
+		{
+			Attack defenderAttack{ 0 };
+
+			if (defender->hasSkill(Unit::VANTAGE))
 			{
-				battleQueue[0].vantageAttack = true;
+				defenderAttack.vantageAttack = true;
+				if (attacker->hasSkill(Unit::VANTAGE))
+				{
+					battleQueue[0].vantageAttack = true;
+					if (defender->hasSkill(Unit::WRATH))
+					{
+						defenderAttack.wrathAttack = true;
+					}
+					battleQueue.push_back(defenderAttack);
+					if (defender->GetEquippedWeapon().consecutive)
+					{
+						battleQueue.push_back(Attack{ 0, 0 });
+					}
+				}
+				else
+				{
+					if (attacker->hasSkill(Unit::WRATH))
+					{
+						battleQueue[0].wrathAttack = true;
+					}
+					battleQueue.insert(battleQueue.begin(), defenderAttack);
+					if (defender->GetEquippedWeapon().consecutive)
+					{
+						battleQueue.insert(battleQueue.begin(), Attack{ 0, 0 });
+					}
+				}
+			}
+			else
+			{
 				if (defender->hasSkill(Unit::WRATH))
 				{
 					defenderAttack.wrathAttack = true;
@@ -59,91 +91,67 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 					battleQueue.push_back(Attack{ 0, 0 });
 				}
 			}
-			else
+		}
+		if (attackerStats.attackSpeed >= defenderStats.attackSpeed + 4)
+		{
+			battleQueue.push_back(Attack{ 1, 0 });
+			if (attacker->GetEquippedWeapon().consecutive)
 			{
-				if (attacker->hasSkill(Unit::WRATH))
-				{
-					battleQueue[0].wrathAttack = true;
-				}
-				battleQueue.insert(battleQueue.begin(), defenderAttack);
+				battleQueue.push_back(Attack{ 1, 0 });
+			}
+		}
+		else if (defenderStats.attackSpeed >= attackerStats.attackSpeed + 4)
+		{
+			//Want a better check than this
+			if (canDefenderAttack)
+			{
+				battleQueue.push_back(Attack{ 0, 0 });
 				if (defender->GetEquippedWeapon().consecutive)
 				{
-					battleQueue.insert(battleQueue.begin(), Attack{ 0, 0 });
+					battleQueue.push_back(Attack{ 0, 0 });
 				}
 			}
+		}
+		accostQueue = battleQueue;
+		for (int i = 0; i < accostQueue.size(); i++)
+		{
+			accostQueue[i].wrathAttack = false;
+			accostQueue[i].vantageAttack = false;
+		}
+
+		camera.SetCenter(defender->sprite.getPosition());
+		//U G H
+		if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
+		{
+			attacker->sprite.currentFrame = 15;
+			attacker->sprite.startingFrame = 15;
+			defender->sprite.currentFrame = 7;
+			defender->sprite.startingFrame = 7;
+		}
+		else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
+		{
+			attacker->sprite.currentFrame = 7;
+			attacker->sprite.startingFrame = 7;
+			defender->sprite.currentFrame = 15;
+			defender->sprite.startingFrame = 15;
+		}
+		else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
+		{
+			attacker->sprite.currentFrame = 11;
+			attacker->sprite.startingFrame = 11;
+			defender->sprite.currentFrame = 3;
+			defender->sprite.startingFrame = 3;
 		}
 		else
 		{
-			if (defender->hasSkill(Unit::WRATH))
-			{
-				defenderAttack.wrathAttack = true;
-			}
-			battleQueue.push_back(defenderAttack);
-			if (defender->GetEquippedWeapon().consecutive)
-			{
-				battleQueue.push_back(Attack{ 0, 0 });
-			}
+			attacker->sprite.currentFrame = 3;
+			attacker->sprite.startingFrame = 3;
+			defender->sprite.currentFrame = 11;
+			defender->sprite.startingFrame = 11;
 		}
+		attacker->sprite.moveAnimate = true;
+		defender->sprite.moveAnimate = true;
 	}
-	if (attackerStats.attackSpeed >= defenderStats.attackSpeed + 4)
-	{
-		battleQueue.push_back(Attack{ 1, 0 });
-		if (attacker->GetEquippedWeapon().consecutive)
-		{
-			battleQueue.push_back(Attack{ 1, 0 });
-		}
-	}
-	else if (defenderStats.attackSpeed >= attackerStats.attackSpeed + 4)
-	{
-		//Want a better check than this
-		if (canDefenderAttack)
-		{
-			battleQueue.push_back(Attack{ 0, 0 });
-			if (defender->GetEquippedWeapon().consecutive)
-			{
-				battleQueue.push_back(Attack{ 0, 0 });
-			}
-		}
-	}
-	accostQueue = battleQueue;
-	for (int i = 0; i < accostQueue.size(); i++)
-	{
-		accostQueue[i].wrathAttack = false;
-		accostQueue[i].vantageAttack = false;
-	}
-	
-	camera.SetCenter(defender->sprite.getPosition());
-	//U G H
-	if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
-	{
-		attacker->sprite.currentFrame = 15;
-		attacker->sprite.startingFrame = 15;
-		defender->sprite.currentFrame = 7;
-		defender->sprite.startingFrame = 7;
-	}
-	else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
-	{
-		attacker->sprite.currentFrame = 7;
-		attacker->sprite.startingFrame = 7;
-		defender->sprite.currentFrame = 15;
-		defender->sprite.startingFrame = 15;
-	}
-	else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
-	{
-		attacker->sprite.currentFrame = 11;
-		attacker->sprite.startingFrame = 11;
-		defender->sprite.currentFrame = 3;
-		defender->sprite.startingFrame = 3;
-	}
-	else
-	{
-		attacker->sprite.currentFrame = 3;
-		attacker->sprite.startingFrame = 3;
-		defender->sprite.currentFrame = 11;
-		defender->sprite.startingFrame = 11;
-	}
-	attacker->sprite.moveAnimate = true;
-	defender->sprite.moveAnimate = true;
 }
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InfoDisplays& displays)
@@ -184,7 +192,22 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 		else if (unitCaptured)
 		{
 			//capture animation
+			attacker->carryUnit(deadUnit);
 			TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+			//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
+			//This seems bogus to me but it's how it works there so it's how it works here.
+			if (attacker->team != 0)
+			{
+				for (int i = 0; i < deadUnit->inventory.size(); i++)
+				{
+					if (attacker->inventory.size() <= 8)
+					{
+						attacker->inventory.push_back(deadUnit->inventory[i]);
+						deadUnit->inventory.erase(deadUnit->inventory.begin());
+						i--;
+					}
+				}
+			}
 			deadUnit = nullptr;
 			unitCaptured = false;
 			EndAttack();
@@ -213,7 +236,6 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				{
 					if (capturing)
 					{
-						attacker->carryUnit(deadUnit);
 						unitCaptured = true;
 					}
 					else
@@ -430,9 +452,9 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		Renderer->setUVs(cursor->uvs[1]);
 		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 
-		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	}
-	else if (!unitDied)
+	else if (!unitDied && !unitCaptured)
 	{
 		int yOffset = 150;
 		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa

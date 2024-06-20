@@ -193,7 +193,7 @@ EnemyMenu::EnemyMenu(TextRenderer* Text, Camera* camera, int shapeVAO, EnemyMode
 
 	std::ifstream f("../BaseStats.json");
 	json data = json::parse(f);
-	json bases = data["enemies"];
+	json bases = data["classes"];
 	//int currentUnit = 0;
 	weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
 	weaponNameMap["Axe"] = WeaponData::TYPE_AXE;

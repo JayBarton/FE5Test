@@ -80,6 +80,7 @@ struct EnemyManager
 	void Draw(SpriteRenderer* renderer);
 	void Draw(class SBatch* Batch, std::vector<Sprite>& carrySprites);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera, class InputManager& inputManager);
+	void Escape(glm::vec2& enemyPosition, Unit* enemy);
 	void TakeAction(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager);
 	bool CheckStores(Unit* enemy);
