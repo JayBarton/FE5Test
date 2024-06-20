@@ -490,9 +490,14 @@ bool Unit::tryEquip(int index)
 
 bool Unit::canUse(const WeaponData& weapon)
 {
+    auto profToCheck = weaponProficiencies[weapon.type];
+    if (isMounted())
+    {
+        profToCheck = mount->weaponProficiencies[weapon.type];
+    }
     if (weapon.type >= 0)
     {
-        if (weapon.rank > 5)
+        if (weapon.rank > 5 && profToCheck > 0)
         {
             auto it = std::find(uniqueWeapons.begin(), uniqueWeapons.end(), weapon.rank);
             if (it != uniqueWeapons.end())
@@ -500,7 +505,7 @@ bool Unit::canUse(const WeaponData& weapon)
                 return true;
             }
         }
-        return weapon.rank <= weaponProficiencies[weapon.type];
+        return weapon.rank <= profToCheck;
     }
     return false;
 }

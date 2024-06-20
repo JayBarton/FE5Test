@@ -54,6 +54,7 @@ struct Mount
 {
 	Mount(int movementType, int str, int skl, int spd, int def, int mov) : movementType(movementType), str(str), skl(skl), spd(spd), def(def), mov(mov)
 	{
+		weaponProficiencies[2] = 4;
 	}
 	int movementType;
 	int str;
@@ -62,6 +63,8 @@ struct Mount
 	int def;
 	int mov;
 	bool mounted;
+
+	int weaponProficiencies[10] = { 0 };
 
 	int remainingMoves;
 };
