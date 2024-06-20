@@ -472,6 +472,7 @@ int main(int argc, char** argv)
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
 	enemyManager.subject.addObserver(turnEvents);
+	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;
 
 	while (isRunning)
@@ -1345,6 +1346,8 @@ void Draw()
 				enemyManager.Draw(&Batch, carrySprites);
 				Batch.end();
 				Batch.renderBatch();
+				ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
 				if (showCarry)
 				{
 					for (int i = 0; i < carrySprites.size(); i++)
@@ -1357,7 +1360,6 @@ void Draw()
 				}
 				if (displays.state == NONE)
 				{
-					ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 					if (currentTurn == 0)
 					{
 						Renderer->setUVs(cursor.uvs[1]);

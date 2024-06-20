@@ -62,6 +62,7 @@ struct EnemyManager
 	InfoDisplays* displays = nullptr;
 
 	Subject<int> subject;
+	Subject<Unit*> unitEscapedSubject;
 	BattleStats battleStats;
 
 	ActionState state = GET_TARGET;

@@ -1306,6 +1306,11 @@ void EnemyManager::UnitLeaveMap()
     //Need to remove the enemy and the unit they are carrying
     //If they are carrying a required unit, it is game over
     enemies[currentEnemy]->isDead = true;
+    if (enemies[currentEnemy]->carriedUnit)
+    {
+        unitEscapedSubject.notify(enemies[currentEnemy]->carriedUnit);
+        enemies[currentEnemy]->carriedUnit = nullptr;
+    }
     FinishMove();
 }
 
