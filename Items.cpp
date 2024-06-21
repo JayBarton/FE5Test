@@ -74,7 +74,13 @@ void ItemManager::UseItem(Unit* unit, int index)
 	switch (ID)
 	{
 	case HEAL:
-		Heal(unit, index);
+		Heal(unit, ID);
+		break;
+	case HEALTH_RING:
+		subject.notify(unit, ID);
+		unit->currentHP += 7;
+		unit->maxHP += 7;
+		unit->inventory.erase(unit->inventory.begin() + index);
 		break;
 	}
 }

@@ -15,3 +15,6 @@
 13:13:Steel Axe:25:-1:1:1::1700
 14:14:Hammer:20:-1:1:1:Effective against Armored enemies:1200
 15:15:Hand Axe:20:-1:1:1:Can attack at Range:1000
+16:16:Bhuj:60:-1:1:1:Can attack at Range:0
+17:17:Brave Axe:60:-1:1:1:Consecutive Attacks:0
+18:18:Life Ring:1:1::1:Gives HP+7\nVanishes when used.:8000

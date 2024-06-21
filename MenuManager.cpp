@@ -574,7 +574,8 @@ void CantoOptionsMenu::CancelOption()
 	Menu::CancelOption();
 }
 
-ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer) : Menu(Cursor, Text, Camera, shapeVAO)
+ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer) : 
+	Menu(Cursor, Text, Camera, shapeVAO)
 {
 	GetOptions();
 	renderer = Renderer;
@@ -597,10 +598,22 @@ void ItemOptionsMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-
-	//Duplicated this down in ItemUseMenu's Draw.
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
+	DrawItemWindow(inventory, unit);
+	if (inventory[currentOption]->isWeapon)
+	{
+		DrawWeaponComparison(inventory);
+	}
+	else
+	{
+		text->RenderText(inventory[currentOption]->description, 525, 225, 1);
+	}
+}
+
+void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit)
+{
+	//Duplicated this down in ItemUseMenu's Draw.
 	glm::vec3 color = glm::vec3(1);
 	glm::vec3 grey = glm::vec3(0.64f);
 	for (int i = 0; i < inventory.size(); i++)
@@ -621,14 +634,6 @@ void ItemOptionsMenu::Draw()
 
 		renderer->setUVs(itemIconUVs[item->ID]);
 		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
-	}
-	if (inventory[currentOption]->isWeapon)
-	{
-		DrawWeaponComparison(inventory);
-	}
-	else
-	{
-		text->RenderText(inventory[currentOption]->description, 525, 225, 1);
 	}
 }
 
@@ -708,90 +713,8 @@ void ItemOptionsMenu::GetBattleStats()
 	selectedStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
 }
 
-MenuManager MenuManager::menuManager;
-void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, 
-	SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager, EnemyManager* enemyManager)
-{
-	renderer = Renderer;
-	cursor = Cursor;
-	text = Text;
-	camera = Camera;
-	this->battleManager = battleManager;
-	this->shapeVAO = shapeVAO;
-	this->playerManager = playerManager;
-	this->enemyManager = enemyManager;
-
-	profcienciesMap[0] = "-";
-	profcienciesMap[1] = "E";
-	profcienciesMap[2] = "D";
-	profcienciesMap[3] = "C";
-	profcienciesMap[4] = "B";
-	profcienciesMap[5] = "A";
-
-	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
-	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 16);
-}
-
-void MenuManager::AddMenu(int ID)
-{
-	//I don't know if this ID system will stick around
-	if (ID == 0)
-	{
-		Menu* newMenu = new UnitOptionsMenu(cursor, text, camera, shapeVAO);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 1)
-	{
-		Menu* newMenu = new ItemOptionsMenu(cursor, text, camera, shapeVAO, renderer);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 2)
-	{
-		auto currentOption = menus.back()->currentOption;
-		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, cursor->selectedUnit->inventory[currentOption], currentOption);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 3)
-	{
-		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 4)
-	{
-		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO);
-		menus.push_back(newMenu);
-	}
-}
-
-void MenuManager::AddUnitStatMenu(Unit* unit)
-{
-	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, unit, renderer);
-	menus.push_back(newMenu);
-}
-
-void MenuManager::AddFullInventoryMenu(int itemID)
-{
-	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID, renderer);
-	MenuManager::menuManager.menus.push_back(newMenu);
-}
-
-void MenuManager::PreviousMenu()
-{
-	Menu* p = menus.back();
-	menus.pop_back();
-	delete p;
-}
-
-void MenuManager::ClearMenu()
-{
-	mustWait = false;
-	while (menus.size() > 0)
-	{
-		PreviousMenu();
-	}
-}
-
-ItemUseMenu::ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, Item* selectedItem, int index) : Menu(Cursor, Text, Camera, shapeVAO)
+ItemUseMenu::ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, Item* selectedItem, int index, SpriteRenderer* Renderer)
+	: ItemOptionsMenu(Cursor, Text, Camera, shapeVAO, Renderer)
 {
 	inventoryIndex = index;
 	item = selectedItem;
@@ -803,7 +726,7 @@ void ItemUseMenu::Draw()
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(176, 32 + (12 * currentOption), 0.0f));
+	model = glm::translate(model, glm::vec3(152, 86 + (16 * currentOption), 0.0f));
 
 	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
@@ -816,37 +739,26 @@ void ItemUseMenu::Draw()
 
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
-	glm::vec3 color = glm::vec3(1);
-	glm::vec3 grey = glm::vec3(0.64f);
-	for (int i = 0; i < inventory.size(); i++)
-	{
-		color = glm::vec3(1);
-		int yPosition = 100 + i * 30;
-		auto item = inventory[i];
-		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
-		{
-			color = grey;
-		}
-		text->RenderText(item->name, 96, yPosition, 1, color);
-		text->RenderTextRight(intToString(item->remainingUses), 200, yPosition, 1, 14, color);
-	}
-	int yOffset = 100;
+
+	DrawItemWindow(inventory, unit);
+	int yOffset = 225;
 	if (canUse)
 	{
-		text->RenderText("Use", 600, yOffset, 1);
-		yOffset += 30;
+		text->RenderText("Use", 525, yOffset, 1);
+		yOffset += 42;
 	}	
 	if (canEquip)
 	{
-		text->RenderText("Equip", 600, yOffset, 1);
-		yOffset += 30;
+		text->RenderText("Equip", 525, yOffset, 1);
+		yOffset += 42;
 	}
-	color = glm::vec3(1);
+	glm::vec3 grey = glm::vec3(0.64);
+	glm::vec3 color = glm::vec3(1);
 	if (!item->canDrop)
 	{
 		color = grey;
 	}
-	text->RenderText("Drop", 600, yOffset, 1, color);
+	text->RenderText("Drop", 525, yOffset, 1, color);
 }
 
 void ItemUseMenu::SelectOption()
@@ -882,6 +794,11 @@ void ItemUseMenu::CancelOption()
 {
 	Menu::CancelOption();
 	MenuManager::menuManager.menus.back()->GetOptions();
+}
+
+void ItemUseMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
 }
 
 void ItemUseMenu::GetOptions()
@@ -3982,5 +3899,88 @@ void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	else if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
+	}
+}
+
+MenuManager MenuManager::menuManager;
+void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO,
+	SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager, EnemyManager* enemyManager)
+{
+	renderer = Renderer;
+	cursor = Cursor;
+	text = Text;
+	camera = Camera;
+	this->battleManager = battleManager;
+	this->shapeVAO = shapeVAO;
+	this->playerManager = playerManager;
+	this->enemyManager = enemyManager;
+
+	profcienciesMap[0] = "-";
+	profcienciesMap[1] = "E";
+	profcienciesMap[2] = "D";
+	profcienciesMap[3] = "C";
+	profcienciesMap[4] = "B";
+	profcienciesMap[5] = "A";
+
+	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
+	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 19);
+}
+
+void MenuManager::AddMenu(int ID)
+{
+	//I don't know if this ID system will stick around
+	if (ID == 0)
+	{
+		Menu* newMenu = new UnitOptionsMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 1)
+	{
+		Menu* newMenu = new ItemOptionsMenu(cursor, text, camera, shapeVAO, renderer);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 2)
+	{
+		auto currentOption = menus.back()->currentOption;
+		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, cursor->selectedUnit->inventory[currentOption], currentOption, renderer);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 3)
+	{
+		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 4)
+	{
+		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
+}
+
+void MenuManager::AddUnitStatMenu(Unit* unit)
+{
+	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, unit, renderer);
+	menus.push_back(newMenu);
+}
+
+void MenuManager::AddFullInventoryMenu(int itemID)
+{
+	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID, renderer);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::PreviousMenu()
+{
+	Menu* p = menus.back();
+	menus.pop_back();
+	delete p;
+}
+
+void MenuManager::ClearMenu()
+{
+	mustWait = false;
+	while (menus.size() > 0)
+	{
+		PreviousMenu();
 	}
 }

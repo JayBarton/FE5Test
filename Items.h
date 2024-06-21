@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "Globals.h"
 const static int HEAL = 0;
+const static int HEALTH_RING = 1;
 
 struct Item
 {

@@ -52,7 +52,24 @@ void InfoDisplays::StartUse(Unit* unit, int index, Camera* camera)
 {
 	//When I have other usable items, can check/pass in what type here to determine what to do.
 	usedItem = true;
-	StartUnitHeal(unit, unit->maxHP, camera);
+	if (index == 0)
+	{
+		StartUnitHeal(unit, unit->maxHP, camera);
+	}
+	else if (index == 1)
+	{
+		StartUnitStatBoost(unit, camera);
+	}
+}
+
+void InfoDisplays::StartUnitStatBoost(Unit* unit, Camera* camera)
+{
+	statDelay = true;
+	focusedUnit = unit;
+	preLevelStats = new StatGrowths{ focusedUnit->maxHP, focusedUnit->strength, focusedUnit->magic,
+		focusedUnit->skill, focusedUnit->speed, focusedUnit->luck,focusedUnit->defense,focusedUnit->build,focusedUnit->move };
+	camera->SetCenter(focusedUnit->sprite.getPosition());
+	state = STAT_BOOST;
 }
 
 void InfoDisplays::EnemyUse(Unit* unit, int index)
@@ -269,6 +286,29 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 			enemyManager->GetCurrentUnit()->UpdateMovement(deltaTime, inputManager);
 		}
 		break;
+	case STAT_BOOST:
+		if (statDelay)
+		{
+			if (displayTimer >= statDisplayTime)
+			{
+				displayTimer = 0;
+				statDelay = false;
+			}
+		}
+		else
+		{
+			if (inputManager.isKeyPressed(SDLK_RETURN))
+			{
+				displayTimer = statViewTime;
+			}
+			if (displayTimer >= statViewTime)
+			{
+				//Only play units can use stat boosting items...For now.
+				subject.notify(1);
+				state = NONE;
+			}
+		}
+		break;
 	}
 }
 
@@ -477,6 +517,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		break;
 	}
 	case UNIT_ESCAPED:
+	{
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 		glm::mat4 model = glm::mat4();
@@ -492,6 +533,80 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 
 		Text->RenderText("Unit Escaped", 325, 289, 1);
 		break;
+	}
+	case STAT_BOOST:
+	{
+		if (!statDelay)
+		{
+			int x = SCREEN_WIDTH * 0.5f;
+			int y = SCREEN_HEIGHT * 0.5f;
+			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(80, 96, 0.0f));
+
+			model = glm::scale(model, glm::vec3(100, 50, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+
+			Text->RenderTextRight("HP", x - 130, y - 30, 1, 25);
+			Text->RenderTextRight("STR", x - 130, y - 5, 1, 25);
+			Text->RenderTextRight("MAG", x - 130, y + 20, 1, 25);
+			Text->RenderTextRight("SKL", x - 130, y + 45, 1, 25);
+			Text->RenderTextRight("SPD", x - 10, y - 30, 1, 25);
+			Text->RenderTextRight("LCK", x - 10, y - 5, 1, 25);
+			Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
+			Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
+
+			auto unit = focusedUnit;
+			Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 14);
+			if (unit->maxHP > preLevelStats->maxHP)
+			{
+				Text->RenderText(intToString(unit->maxHP - preLevelStats->maxHP), x - 65, y - 30, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->strength), x - 90, y - 5, 1, 14);
+			if (unit->strength > preLevelStats->strength)
+			{
+				Text->RenderText(intToString(unit->strength - preLevelStats->strength), x - 65, y - 5, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->magic), x - 90, y + 20, 1, 14);
+			if (unit->magic > preLevelStats->magic)
+			{
+				Text->RenderText(intToString(unit->magic - preLevelStats->magic), x - 65, y + 20, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->skill), x - 90, y + 45, 1, 14);
+			if (unit->skill > preLevelStats->skill)
+			{
+				Text->RenderText(intToString(unit->skill - preLevelStats->skill), x - 65, y + 45, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->speed), x + 30, y - 30, 1, 14);
+			if (unit->speed > preLevelStats->speed)
+			{
+				Text->RenderText(intToString(unit->speed - preLevelStats->speed), x + 55, y - 30, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->luck), x + 30, y - 5, 1, 14);
+			if (unit->luck > preLevelStats->luck)
+			{
+				Text->RenderText(intToString(unit->luck - preLevelStats->luck), x + 55, y - 5, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->defense), x + 30, y + 20, 1, 14);
+			if (unit->defense > preLevelStats->defense)
+			{
+				Text->RenderText(intToString(unit->defense - preLevelStats->defense), x + 55, y + 20, 1);
+			}
+			Text->RenderTextRight(intToString(preLevelStats->build), x + 30, y + 45, 1, 14);
+			if (unit->build > preLevelStats->build)
+			{
+				Text->RenderText(intToString(unit->build - preLevelStats->build), x + 55, y + 45, 1);
+			}
+		}
+		break;
+	}
 	}
 }
 
@@ -577,7 +692,7 @@ void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer
 	Text->RenderTextRight("LCK", x - 10, y - 5, 1, 25);
 	Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
 	Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
-	//This needs to be redone, need the leveled unit, not the focused unit
+
 	auto unit = focusedUnit;
 	Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 14);
 	if (unit->maxHP > preLevelStats->maxHP)

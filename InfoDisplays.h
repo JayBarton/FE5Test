@@ -23,8 +23,9 @@ enum DisplayState
 	PLAYER_DIED,
 	PLAYER_DEATH,
 	UNIT_ESCAPED,
-	DELAY
+	STAT_BOOST
 };
+
 class EnemyManager;
 struct InfoDisplays
 {
@@ -44,6 +45,8 @@ struct InfoDisplays
 	float healDisplayTime = 0.035f;
 	float healDelayTime = 0.5f;
 	float turnDisplayTime = 1.0f;
+	float statDisplayTime = 0.5f;
+	float statViewTime = 5.0f;
 
 	float turnDisplayAlpha = 0.0f;
 	float turnDisplayMaxAlpha = 0.35f;
@@ -60,6 +63,7 @@ struct InfoDisplays
 	bool turnChangeStart = false;
 	bool healDelay = false;
 	bool unitDeathFadeBack = false;
+	bool statDelay = false;
 	
 	float levelUpNoteTime = 1.0f;
 
@@ -76,6 +80,7 @@ struct InfoDisplays
 
 	void AddExperience(Unit* unit, Unit* foe);
 	void StartUse(Unit* unit, int index, Camera* camera);
+	void StartUnitStatBoost(Unit* unit, Camera* camera);
 	void EnemyUse(Unit* enemy, int index);
 	void EnemyTrade(EnemyManager* enemyManager);
 	void EnemyBuy(EnemyManager* enemyManager);

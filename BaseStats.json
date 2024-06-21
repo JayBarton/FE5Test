@@ -372,7 +372,7 @@
         "Bld": 10,
         "Mov": 1
       },
-      "Inventory": [ 9, 1, 0 ],
+      "Inventory": [ 9, 1, 0, 18 ],
       "WeaponProf": {
         "Lance": 4,
         "Sword": 2
@@ -456,7 +456,7 @@
         "Bld": 30,
         "Mov": 2
       },
-      "Inventory": [ 8 ],
+      "Inventory": [ 8, 17 ],
       "WeaponProf": {
         "Axe": 2
       },
@@ -497,10 +497,11 @@
         "Bld": 25,
         "Mov": 2
       },
-      "Inventory": [ 8 ],
+      "Inventory": [ 8, 16 ],
       "WeaponProf": {
         "Axe": 1
       },
+      "SpecialWeapons": [ 8 ],
       "Skills": [ 2 ],
       "AnimData": {
         "FocusFace": 0

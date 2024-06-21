@@ -99,6 +99,7 @@ struct ItemOptionsMenu : public Menu
 {
 	ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
+	void DrawItemWindow(std::vector<Item*>& inventory, Unit* unit);
 	void DrawWeaponComparison(std::vector<Item*>& inventory);
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
@@ -114,12 +115,13 @@ struct ItemOptionsMenu : public Menu
 	std::vector<glm::vec4> proficiencyIconUVs;
 };
 
-struct ItemUseMenu : public Menu
+struct ItemUseMenu : public ItemOptionsMenu
 {
-	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Item* selectedItem, int inventoryIndex);
+	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Item* selectedItem, int inventoryIndex, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	virtual void  GetOptions() override;
 
@@ -129,6 +131,8 @@ struct ItemUseMenu : public Menu
 
 	int inventoryIndex;
 	Item* item = nullptr;
+	std::vector<glm::vec4> itemIconUVs;
+	SpriteRenderer* renderer;
 	bool canUse = false;
 	bool canEquip = false;
 };

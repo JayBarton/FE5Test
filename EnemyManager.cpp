@@ -182,7 +182,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
     escapePoint = glm::ivec2(336, 192);
     //  enemies[14]->currentHP = 14;
     //  enemies[0]->move = 6;
-      enemies[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+    //  enemies[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
@@ -341,7 +341,7 @@ void EnemyManager::TakeAction(Unit* enemy, BattleManager& battleManager, Camera&
     }
 }
 
-
+//Enemies need to be activated on taking damage
 void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, BattleManager& battleManager)
 {
     if (!enemyMoving)
