@@ -396,6 +396,7 @@ void Cursor::GetRemainingMove()
 	foundTiles = selectedUnit->foundTiles;
 	attackTiles = selectedUnit->attackTiles;
 	costTile = selectedUnit->costTile;
+	selectedUnit->SetFocus();
 }
 
 void Cursor::Undo()
@@ -419,7 +420,7 @@ void Cursor::UndoRemainingMove()
 	selectedUnit->ClearPathData();
 	position = previousPosition;
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
-
+	selectedUnit->SetFocus();
 	GetRemainingMove();
 }
 

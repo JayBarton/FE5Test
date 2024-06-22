@@ -256,9 +256,9 @@ struct TurnEvents : public Observer<int>
 	}
 };
 
-struct BattleEvents : public Observer<Unit*, Unit*>
+struct BattleEvents : public Observer<Unit*, Unit*, bool>
 {
-	virtual void onNotify(Unit* attacker, Unit* defender)
+	virtual void onNotify(Unit* attacker, Unit* defender, bool capturing)
 	{
 		if (currentTurn == 0)
 		{
@@ -298,17 +298,17 @@ struct PostBattleEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
-		if (ID == 0)
+		switch (ID)
 		{
+			//Battle ended
+		case 0:
 			battleManager.EndBattle(&cursor, &enemyManager, camera);
 			//Real brute force here
 			battleManager.defender->sprite.moveAnimate = false;
 			battleManager.defender->sprite.currentFrame = idleFrame;
-
-		}
-		//player used an item
-		else if (ID == 1)
-		{
+			break;
+			//Player used an item
+		case 1:
 			if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
 			{
 				//If the player attacked we need to return control to the cursor
@@ -318,17 +318,22 @@ struct PostBattleEvents : public Observer<int>
 			{
 				cursor.Wait();
 			}
-		}
-		//Enemy used an item
-		//Even if they can canto, if an enemy uses an item I want them to end their move
-		else if (ID == 2)
-		{
+			break;
+			//Enemy used an item
+			//Even if they can canto, if an enemy uses an item I want them to end their move
+		case 2:
 			enemyManager.FinishMove();
-		}
-		else if (ID == 3)
-		{
+			break;
+			//For healing tiles
+		case 3:
 			turnUnit++;
+			break;
+			//Player captures enemy after battle
+		case 4:
+			battleManager.CaptureUnit();
+			break;
 		}
+		
 	}
 };
 //This is identical to above so I'm not sure I even need it here...
@@ -609,7 +614,7 @@ int main(int argc, char** argv)
 				//Should be able to level up while in the battle state, need to figure that out
 				if (battleManager.battleActive)
 				{
-					battleManager.Update(deltaTime, &gen, &distribution, displays);
+					battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
 					if (camera.moving)
 					{
 						camera.MoveTo(deltaTime, 5.0f);

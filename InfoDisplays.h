@@ -64,6 +64,8 @@ struct InfoDisplays
 	bool healDelay = false;
 	bool unitDeathFadeBack = false;
 	bool statDelay = false;
+
+	bool capturing = false;
 	
 	float levelUpNoteTime = 1.0f;
 

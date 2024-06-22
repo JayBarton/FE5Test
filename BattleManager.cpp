@@ -14,6 +14,7 @@
 
 #include "TextAdvancer.h"
 #include "InfoDisplays.h"
+#include "InputManager.h"
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
@@ -29,9 +30,11 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		//If defender is unarmed and we attempt to capture, it's an automatic success
 		unitCaptured = true;
 		deadUnit = defender;
+		drawInfo = false;
 	}
 	else
 	{
+		drawInfo = true;
 		this->attackDistance = attackDistance;
 		this->attackerStats = attackerStats;
 		this->defenderStats = defenderStats;
@@ -155,7 +158,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	}
 }
  
-void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InfoDisplays& displays)
+void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InfoDisplays& displays, InputManager& inputManager)
 {
 	if (aiDelay)
 	{
@@ -192,9 +195,15 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 		}
 		else if (unitCaptured)
 		{
-			//capture animation
-			attacker->carryUnit(deadUnit);
+			//capture animation. Needs to play after the experience display if the player captures. 
+			// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
+			if (deadUnit->carriedUnit)
+			{
+				unitToDrop = deadUnit->carriedUnit;
+				unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+			}
 			TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+			attacker->carryUnit(deadUnit);
 			//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
 			//This seems bogus to me but it's how it works there so it's how it works here.
 			if (attacker->team != 0)
@@ -209,9 +218,19 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					}
 				}
 			}
+			EndAttack();
 			deadUnit = nullptr;
 			unitCaptured = false;
-			EndAttack();
+		}
+		else if (captureAnimation)
+		{
+			defender->movementComponent.Update(deltaTime, inputManager);
+			if (!defender->movementComponent.moving)
+			{
+				defender->hide = true;
+				displays.subject.notify(0);
+				captureAnimation = false;
+			}
 		}
 		else
 		{
@@ -238,10 +257,12 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					if (capturing)
 					{
 						unitCaptured = true;
+						drawInfo = false;
 					}
 					else
 					{
 						unitDied = true;
+						drawInfo = false;
 						if (deadUnit->deathMessage != "")
 						{
 							displays.PlayerUnitDied(deadUnit);
@@ -337,7 +358,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= accuracy)
+	if (roll <= 100)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		if (crit > 0)
@@ -406,7 +427,7 @@ void BattleManager::EndAttack()
 	{
 		attacker->carryingMalus = 1;
 	}
-	subject.notify(attacker, defender);
+	subject.notify(attacker, defender, capturing);
 }
 
 void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera& camera)
@@ -447,9 +468,17 @@ void BattleManager::DropHeldUnit()
 	{
 		auto deadPosition = unitToDrop->sprite.getPosition();
 		unitToDrop->placeUnit(deadPosition.x, deadPosition.y);
+		unitToDrop->hide = false;
 		unitToDrop->carryingUnit = nullptr;
 		unitToDrop = nullptr;
 	}
+}
+
+void BattleManager::CaptureUnit()
+{
+	captureAnimation = true;
+	//This is being called twice right now because I can't figure out how to get the timing right
+	DropHeldUnit();
 }
 
 void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor)
@@ -461,7 +490,7 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 
 		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	}
-	else if (!unitDied && !unitCaptured)
+	else if (drawInfo)
 	{
 		int yOffset = 150;
 		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa

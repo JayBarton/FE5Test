@@ -17,7 +17,7 @@ struct BattleManager
 {
 	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
 
-	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays);
+	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays, class InputManager& inputManager);
 
 	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
@@ -28,6 +28,8 @@ struct BattleManager
 	void EndBattle(class Cursor* cursor, class EnemyManager* enemyManager, Camera& camera);
 
 	void DropHeldUnit();
+
+	void CaptureUnit();
 
 	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor);
 
@@ -59,13 +61,17 @@ struct BattleManager
 	bool unitCaptured = false;
 	bool droppingUnit = false;
 
+	bool captureAnimation = false;
+	//Not crazy about this either, just seems the easiest way to handle drawing at 12:06 am
+	bool drawInfo = true;
+
 	float delayTimer = 0.0f;
 	float delay = 0.75f;
 
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;
 
-	Subject<Unit*, Unit*> subject;
+	Subject<Unit*, Unit*, bool> subject;
 	Subject<Unit*> unitDiedSubject;
 
 };

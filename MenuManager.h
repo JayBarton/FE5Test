@@ -225,6 +225,10 @@ struct SelectRescueUnit : public Menu
 
 	std::vector<Unit*> rescueUnits;
 	SpriteRenderer* renderer;
+
+	Unit* rescuedUnit = nullptr;
+	float rescueTimer = 0.0f;
+	float rescueDelay = 0.15f;
 };
 
 struct SelectTransferUnit : public Menu
@@ -238,6 +242,10 @@ struct SelectTransferUnit : public Menu
 
 	std::vector<Unit*> transferUnits;
 	SpriteRenderer* renderer;
+
+	Unit* transferedUnit = nullptr;
+	float transferDelayTimer = 0.0f;
+	float transferDelay = 0.15f;
 };
 
 struct DropMenu : public Menu
@@ -251,6 +259,10 @@ struct DropMenu : public Menu
 
 	std::vector<glm::ivec2>& positions;
 	SpriteRenderer* renderer;
+
+	Unit* heldUnit = nullptr;
+	float dropTimer = 0.0f;
+	float dropDelay = 0.15f;
 };
 
 struct TradeMenu : public Menu

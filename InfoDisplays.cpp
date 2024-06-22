@@ -18,14 +18,25 @@ using json = nlohmann::json;
 
 void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 {
-	if (unit->isDead || unit->carryingUnit)
+	if (unit->isDead)
 	{
 		focusedUnit = nullptr;
 		state = NONE;
 		subject.notify(0);
 	}
+	//Need to handle if the player unit was captured
+	else if (unit->carryingUnit)
+	{
+		focusedUnit = nullptr;
+		state = NONE;
+		subject.notify(4);
+	}
 	else
 	{
+		if (foe->carryingUnit)
+		{
+			capturing = true;
+		}
 		focusedUnit = unit;
 
 		gainedExperience = unit->CalculateExperience(foe);
@@ -424,8 +435,17 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 
 			focusedUnit = nullptr;
 			state = NONE;
-			subject.notify(0);
 			displayTimer = 0;
+			if (capturing)
+			{
+				subject.notify(4);
+				capturing = false;
+			}
+			else
+			{
+				subject.notify(0);
+			}
+
 		}
 	}
 	else

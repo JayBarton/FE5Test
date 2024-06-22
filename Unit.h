@@ -211,6 +211,10 @@ struct Unit
 	bool stationary = false;
 	bool boss = false;
 
+	//Not crazy about this, want this to hide the unit when they are held. 
+	// I can't just use the carried variable because I need them still visible for animation.
+	bool hide = false;
+
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;

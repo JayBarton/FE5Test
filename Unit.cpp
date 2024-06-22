@@ -87,7 +87,7 @@ void Unit::Draw(SpriteRenderer* Renderer)
 
 void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
 {
-    if (drawAnyway || (!isDead && !carryingUnit))
+    if (drawAnyway || (!isDead && !hide))
     {
         Texture2D texture = ResourceManager::GetTexture("sprites");
         glm::vec3 color = sprite.color;
@@ -595,6 +595,9 @@ void Unit::carryUnit(Unit* unitToCarry)
             mount->remainingMoves /= carryingMalus;
         }
     }
+
+    std::vector<glm::ivec2> path = { sprite.getPosition(), unitToCarry->sprite.getPosition() };
+    unitToCarry->startMovement(path, 0, false);
 }
 
 void Unit::releaseUnit()
@@ -611,6 +614,7 @@ void Unit::releaseUnit()
             mount->remainingMoves += getMove() / 2;
         }
     }
+    carriedUnit->hide = false;
     carriedUnit = nullptr;
 
 }
