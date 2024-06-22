@@ -71,7 +71,7 @@ struct BattleManager
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;
 
-	Subject<Unit*, Unit*, bool> subject;
+	Subject<Unit*, Unit*> subject;
 	Subject<Unit*> unitDiedSubject;
 
 };

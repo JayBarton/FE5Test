@@ -358,7 +358,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= 100)
+	if (roll <= accuracy)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		if (crit > 0)
@@ -427,7 +427,7 @@ void BattleManager::EndAttack()
 	{
 		attacker->carryingMalus = 1;
 	}
-	subject.notify(attacker, defender, capturing);
+	subject.notify(attacker, defender);
 }
 
 void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera& camera)

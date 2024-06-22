@@ -256,9 +256,9 @@ struct TurnEvents : public Observer<int>
 	}
 };
 
-struct BattleEvents : public Observer<Unit*, Unit*, bool>
+struct BattleEvents : public Observer<Unit*, Unit*>
 {
-	virtual void onNotify(Unit* attacker, Unit* defender, bool capturing)
+	virtual void onNotify(Unit* attacker, Unit* defender)
 	{
 		if (currentTurn == 0)
 		{
