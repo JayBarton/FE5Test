@@ -45,7 +45,6 @@ struct UnitOptionsMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption() override;
-	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	virtual void GetOptions() override;
 
@@ -86,14 +85,6 @@ struct UnitOptionsMenu : public Menu
 
 	bool heldFriendly = false;
 	bool heldEnemy = false;
-
-	bool enemyFading = false;
-
-	Unit* releasedEnemy = nullptr;
-	float releaseTimer = 0.0f;
-	float getmeoutofhehre = 0.0f;
-	float releaseDelay = 0.15f;
-	
 };
 
 struct CantoOptionsMenu : public Menu
@@ -234,10 +225,6 @@ struct SelectRescueUnit : public Menu
 
 	std::vector<Unit*> rescueUnits;
 	SpriteRenderer* renderer;
-
-	Unit* rescuedUnit = nullptr;
-	float rescueTimer = 0.0f;
-	float rescueDelay = 0.15f;
 };
 
 struct SelectTransferUnit : public Menu
@@ -251,10 +238,6 @@ struct SelectTransferUnit : public Menu
 
 	std::vector<Unit*> transferUnits;
 	SpriteRenderer* renderer;
-
-	Unit* transferedUnit = nullptr;
-	float transferDelayTimer = 0.0f;
-	float transferDelay = 0.15f;
 };
 
 struct DropMenu : public Menu
@@ -268,10 +251,6 @@ struct DropMenu : public Menu
 
 	std::vector<glm::ivec2>& positions;
 	SpriteRenderer* renderer;
-
-	Unit* heldUnit = nullptr;
-	float dropTimer = 0.0f;
-	float dropDelay = 0.15f;
 };
 
 struct TradeMenu : public Menu
@@ -443,6 +422,33 @@ struct VendorMenu : public Menu
 
 	float delayTime = 0.15f;
 	float delayTimer = 0.0f;
+};
+
+//Not actually a menu, makes unit rescue/release/etc animations easier
+struct UnitMovement :public Menu
+{
+	const static int RESCUE = 0;
+	const static int TRANSFER = 1;
+	const static int DROP = 2;
+	const static int RELEASE = 3;
+
+	UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition = glm::ivec2(0));
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	Unit* receivingUnit = nullptr;
+	Unit* movingUnit = nullptr;
+	float moveTimer = 0.0f;
+	float moveDelay = 0.15f;
+	float removeTimer = 0.0f;
+
+	glm::ivec2 dropPosition;
+
+	int operation = 0;
+
+	bool doneHere = false;
+	bool enemyFading = false;
 };
 
 struct MenuManager

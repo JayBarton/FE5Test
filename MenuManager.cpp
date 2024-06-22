@@ -162,13 +162,11 @@ void UnitOptionsMenu::SelectOption()
 	case RELEASE:
 	{
 		auto playerUnit = cursor->selectedUnit;
-		releasedEnemy = playerUnit->carriedUnit;
-		releasedEnemy->carryingUnit = nullptr;
-		releasedEnemy->hasMoved = false;
-		playerUnit->releaseUnit();
-		std::vector<glm::ivec2> path = { playerUnit->sprite.getPosition() + glm::vec2(0, 16), playerUnit->sprite.getPosition() };
-		releasedEnemy->startMovement(path, 0, false);
+		auto releasedEnemy = playerUnit->carriedUnit;
+		heldEnemy = false;
 
+		Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, releasedEnemy, nullptr, 3, playerUnit->sprite.getPosition() + glm::vec2(0, 16));
+		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case RESCUE:
@@ -260,157 +258,105 @@ void UnitOptionsMenu::CancelOption()
 	}
 }
 
-void UnitOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+void UnitOptionsMenu::Draw()
 {
-	if (releasedEnemy)
+	int xText = 600;
+	int xIndicator = 176;
+	int yOffset = 100;
+	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		releaseTimer += deltaTime;
-		if (enemyFading)
-		{
-			if (releaseTimer >= 0.02f)
-			{
-				releasedEnemy->hide = !releasedEnemy->hide;
-				releaseTimer = 0.0f;
-			}
-			getmeoutofhehre += deltaTime;
-			if (getmeoutofhehre >= 0.5f)
-			{
-				releasedEnemy->isDead = true;
-				auto playerUnit = cursor->selectedUnit;
-				releasedEnemy->isDead = true;
-				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
-				{
-					cursor->GetRemainingMove();
-					MenuManager::menuManager.mustWait = true;
-				}
-				else
-				{
-					cursor->Wait();
-				}
-				heldEnemy = false;
-				ClearMenu();
-			}
-		}
-		else
-		{
-			if (releaseTimer >= releaseDelay)
-			{
-				releasedEnemy->UpdateMovement(deltaTime, inputManager);
-				if (!releasedEnemy->movementComponent.moving)
-				{
-					enemyFading = true;
-				}
-			}
-		}
+		xText = 72;
+		xIndicator = 8;
+	}
+	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	//Just a little test with new line
+	std::string commands = "";
+	if (canTalk)
+	{
+		text->RenderText("Talk", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	if (canAttack)
+	{
+		commands += "Attack\n";
+		text->RenderText("Attack", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	if (canVisit)
+	{
+		text->RenderText("Visit", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	else if (canBuy)
+	{
+		text->RenderText("Vendor", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	if (heldFriendly)
+	{
+		text->RenderText("Drop", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	else if (heldEnemy)
+	{
+		text->RenderText("Release", xText, yOffset, 1);
+		yOffset += 30;
 	}
 	else
 	{
-		Menu::CheckInput(inputManager, deltaTime);
+		if (canCapture)
+		{
+			text->RenderText("Capture", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		if (canRescue)
+		{
+			text->RenderText("Rescue", xText, yOffset, 1);
+			yOffset += 30;
+		}
 	}
-}
-
-void UnitOptionsMenu::Draw()
-{
-	if (!releasedEnemy)
+	if (canTransfer)
 	{
-		int xText = 600;
-		int xIndicator = 176;
-		int yOffset = 100;
-		glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
-		if (fixedPosition.x >= camera->screenWidth * 0.5f)
-		{
-			xText = 72;
-			xIndicator = 8;
-		}
-		//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-		//Just a little test with new line
-		std::string commands = "";
-		if (canTalk)
-		{
-			text->RenderText("Talk", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		if (canAttack)
-		{
-			commands += "Attack\n";
-			text->RenderText("Attack", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		if (canVisit)
-		{
-			text->RenderText("Visit", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		else if (canBuy)
-		{
-			text->RenderText("Vendor", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		if (heldFriendly)
-		{
-			text->RenderText("Drop", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		else if (heldEnemy)
-		{
-			text->RenderText("Release", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		else
-		{
-			if (canCapture)
-			{
-				text->RenderText("Capture", xText, yOffset, 1);
-				yOffset += 30;
-			}
-			if (canRescue)
-			{
-				text->RenderText("Rescue", xText, yOffset, 1);
-				yOffset += 30;
-			}
-		}
-		if (canTransfer)
-		{
-			text->RenderText("Transfer", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		commands += "Items\n";
-		text->RenderText("Items", xText, yOffset, 1);
+		text->RenderText("Transfer", xText, yOffset, 1);
 		yOffset += 30;
-		if (canTrade)
-		{
-			text->RenderText("Trade", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		if (canDismount)
-		{
-			commands += "Dismount\n";
-			text->RenderText("Dismount", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		else if (canMount)
-		{
-			commands += "Mount\n";
-			text->RenderText("Mount", xText, yOffset, 1);
-			yOffset += 30;
-		}
-		commands += "Wait";
-		text->RenderText("Wait", xText, yOffset, 1);
-		//Text->RenderText(commands, xText, 100, 1);
 	}
+	commands += "Items\n";
+	text->RenderText("Items", xText, yOffset, 1);
+	yOffset += 30;
+	if (canTrade)
+	{
+		text->RenderText("Trade", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	if (canDismount)
+	{
+		commands += "Dismount\n";
+		text->RenderText("Dismount", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	else if (canMount)
+	{
+		commands += "Mount\n";
+		text->RenderText("Mount", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	commands += "Wait";
+	text->RenderText("Wait", xText, yOffset, 1);
+	//Text->RenderText(commands, xText, 100, 1);
 }
 
 void UnitOptionsMenu::GetOptions()
@@ -2235,63 +2181,62 @@ SelectRescueUnit::SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* c
 
 void SelectRescueUnit::Draw()
 {
-	if (!rescuedUnit)
+	auto rescueUnit = rescueUnits[currentOption];
+	int boxHeight = 98;
+
+	auto targetPosition = rescueUnit->sprite.getPosition();
+	int xText = 536;
+	int xIndicator = 169;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		auto rescueUnit = rescueUnits[currentOption];
-		int boxHeight = 98;
-
-		auto targetPosition = rescueUnit->sprite.getPosition();
-		int xText = 536;
-		int xIndicator = 169;
-		glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
-		if (fixedPosition.x >= camera->screenWidth * 0.5f)
-		{
-			xText = 32;
-			xIndicator = 7;
-		}
-
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
-
-		model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-
-		renderer->setUVs(cursor->uvs[1]);
-		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-		Unit* unit = cursor->selectedUnit;
-		renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
-
-		int textHeight = 100;
-		text->RenderText(rescueUnit->name, xText, textHeight, 1);
-		textHeight += 30;
-		text->RenderText(rescueUnit->unitClass, xText, textHeight, 1);
-		textHeight += 30;
-		if (auto weapon = rescueUnit->GetEquippedItem())
-		{
-			text->RenderText(weapon->name, xText, textHeight, 1);
-		}
-		textHeight += 30;
-		text->RenderText(intToString(rescueUnit->level), xText + 40, textHeight, 1);
-		textHeight += 30;
-		text->RenderText("HP" + intToString(rescueUnit->maxHP) + "/" + intToString(rescueUnit->currentHP), xText, textHeight, 1);
+		xText = 32;
+		xIndicator = 7;
 	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+
+	int textHeight = 100;
+	text->RenderText(rescueUnit->name, xText, textHeight, 1);
+	textHeight += 30;
+	text->RenderText(rescueUnit->unitClass, xText, textHeight, 1);
+	textHeight += 30;
+	if (auto weapon = rescueUnit->GetEquippedItem())
+	{
+		text->RenderText(weapon->name, xText, textHeight, 1);
+	}
+	textHeight += 30;
+	text->RenderText(intToString(rescueUnit->level), xText + 40, textHeight, 1);
+	textHeight += 30;
+	text->RenderText("HP" + intToString(rescueUnit->maxHP) + "/" + intToString(rescueUnit->currentHP), xText, textHeight, 1);
 }
 
 void SelectRescueUnit::SelectOption()
 {
-	rescuedUnit = rescueUnits[currentOption];
+	auto rescuedUnit = rescueUnits[currentOption];
 	auto playerUnit = cursor->selectedUnit;
-	playerUnit->carryUnit(rescuedUnit);
-	rescuedUnit->hasMoved = false;
 	TileManager::tileManager.removeUnit(rescuedUnit->sprite.getPosition().x, rescuedUnit->sprite.getPosition().y);
+	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, rescuedUnit, playerUnit, 0);
+	MenuManager::menuManager.menus.push_back(newMenu);
+	//playerUnit->carryUnit(rescuedUnit);
+	//rescuedUnit->hasMoved = false;
 }
 
 void SelectRescueUnit::GetOptions()
@@ -2301,49 +2246,21 @@ void SelectRescueUnit::GetOptions()
 
 void SelectRescueUnit::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (rescuedUnit)
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		rescueTimer += deltaTime;
-		if (rescueTimer >= rescueDelay)
+		currentOption--;
+		if (currentOption < 0)
 		{
-			auto playerUnit = cursor->selectedUnit;
-			rescuedUnit->UpdateMovement(deltaTime, inputManager);
-			if (!rescuedUnit->movementComponent.moving)
-			{
-				rescuedUnit->hide = true;
-				rescuedUnit->sprite.moveAnimate = false;
-				rescuedUnit->hasMoved = true;
-				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
-				{
-					cursor->GetRemainingMove();
-					MenuManager::menuManager.mustWait = true;
-				}
-				else
-				{
-					cursor->Wait();
-				}
-				ClearMenu();
-			}
+			currentOption = numberOfOptions - 1;
 		}
 	}
-	else
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		Menu::CheckInput(inputManager, deltaTime);
-		if (inputManager.isKeyPressed(SDLK_LEFT))
+		currentOption++;
+		if (currentOption >= numberOfOptions)
 		{
-			currentOption--;
-			if (currentOption < 0)
-			{
-				currentOption = numberOfOptions - 1;
-			}
-		}
-		else if (inputManager.isKeyPressed(SDLK_RIGHT))
-		{
-			currentOption++;
-			if (currentOption >= numberOfOptions)
-			{
-				currentOption = 0;
-			}
+			currentOption = 0;
 		}
 	}
 }
@@ -2367,12 +2284,10 @@ void DropMenu::Draw()
 void DropMenu::SelectOption()
 {
 	auto playerUnit = cursor->selectedUnit;
-	heldUnit = playerUnit->carriedUnit;
-	heldUnit->carryingUnit = nullptr;
-	heldUnit->hasMoved = false;
-	playerUnit->releaseUnit();
-	std::vector<glm::ivec2> path = { positions[currentOption], playerUnit->sprite.getPosition() };
-	heldUnit->startMovement(path, 0, false);
+	auto heldUnit = playerUnit->carriedUnit;
+
+	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, heldUnit, nullptr, 2, positions[currentOption]);
+	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
 void DropMenu::GetOptions()
@@ -2382,49 +2297,21 @@ void DropMenu::GetOptions()
 
 void DropMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (heldUnit)
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		dropTimer += deltaTime;
-		if (dropTimer >= dropDelay)
+		currentOption--;
+		if (currentOption < 0)
 		{
-			heldUnit->UpdateMovement(deltaTime, inputManager);
-			if (!heldUnit->movementComponent.moving)
-			{
-				heldUnit->hasMoved = true;
-				heldUnit->sprite.moveAnimate = false;
-				auto playerUnit = cursor->selectedUnit;
-				heldUnit->placeUnit(positions[currentOption].x, positions[currentOption].y);
-				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
-				{
-					cursor->GetRemainingMove();
-					MenuManager::menuManager.mustWait = true;
-				}
-				else
-				{
-					cursor->Wait();
-				}
-				ClearMenu();
-			}
+			currentOption = numberOfOptions - 1;
 		}
 	}
-	else
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		Menu::CheckInput(inputManager, deltaTime);
-		if (inputManager.isKeyPressed(SDLK_LEFT))
+		currentOption++;
+		if (currentOption >= numberOfOptions)
 		{
-			currentOption--;
-			if (currentOption < 0)
-			{
-				currentOption = numberOfOptions - 1;
-			}
-		}
-		else if (inputManager.isKeyPressed(SDLK_RIGHT))
-		{
-			currentOption++;
-			if (currentOption >= numberOfOptions)
-			{
-				currentOption = 0;
-			}
+			currentOption = 0;
 		}
 	}
 }
@@ -2439,75 +2326,73 @@ SelectTransferUnit::SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camer
 
 void SelectTransferUnit::Draw()
 {
-	if (!transferedUnit || !transferedUnit->movementComponent.moving)
+	auto transferUnit = transferUnits[currentOption];
+	int boxHeight = 98;
+
+	auto targetPosition = transferUnit->sprite.getPosition();
+	int xText = 536;
+	int xIndicator = 169;
+	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		auto transferUnit = transferUnits[currentOption];
-		int boxHeight = 98;
-
-		auto targetPosition = transferUnit->sprite.getPosition();
-		int xText = 536;
-		int xIndicator = 169;
-		glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
-		if (fixedPosition.x >= camera->screenWidth * 0.5f)
-		{
-			xText = 32;
-			xIndicator = 7;
-		}
-
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
-
-		model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-
-		renderer->setUVs(cursor->uvs[1]);
-		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-		Unit* unit = cursor->selectedUnit;
-		renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
-
-		int textHeight = 100;
-		text->RenderText(transferUnit->name, xText, textHeight, 1);
-		textHeight += 30;
-		text->RenderText(transferUnit->unitClass, xText, textHeight, 1);
-		textHeight += 30;
-		if (auto weapon = transferUnit->GetEquippedItem())
-		{
-			text->RenderText(weapon->name, xText, textHeight, 1);
-		}
-		textHeight += 30;
-		text->RenderText(intToString(transferUnit->level), xText + 40, textHeight, 1);
-		textHeight += 30;
-		text->RenderText("HP" + intToString(transferUnit->maxHP) + "/" + intToString(transferUnit->currentHP), xText, textHeight, 1);
+		xText = 32;
+		xIndicator = 7;
 	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
+
+	model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	renderer->setUVs(cursor->uvs[1]);
+	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	Unit* unit = cursor->selectedUnit;
+	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+
+	int textHeight = 100;
+	text->RenderText(transferUnit->name, xText, textHeight, 1);
+	textHeight += 30;
+	text->RenderText(transferUnit->unitClass, xText, textHeight, 1);
+	textHeight += 30;
+	if (auto weapon = transferUnit->GetEquippedItem())
+	{
+		text->RenderText(weapon->name, xText, textHeight, 1);
+	}
+	textHeight += 30;
+	text->RenderText(intToString(transferUnit->level), xText + 40, textHeight, 1);
+	textHeight += 30;
+	text->RenderText("HP" + intToString(transferUnit->maxHP) + "/" + intToString(transferUnit->currentHP), xText, textHeight, 1);
 }
 
 void SelectTransferUnit::SelectOption()
 {
 	auto transferUnit = transferUnits[currentOption];
 	auto playerUnit = cursor->selectedUnit;
+	Unit* receivingUnit;
+	Unit* transferedUnit;
 	if (playerUnit->carriedUnit != nullptr)
 	{
 		transferedUnit = playerUnit->carriedUnit;
-		transferUnit->carryUnit(transferedUnit);
+		receivingUnit = transferUnit;
 		playerUnit->releaseUnit();
 	}
 	else
 	{
 		transferedUnit = transferUnit->carriedUnit;
-		playerUnit->carryUnit(transferedUnit);
+		receivingUnit = playerUnit;
 		transferUnit->releaseUnit();
-		playerUnit->sprite.moveAnimate = false;
 	}
-	transferedUnit->hasMoved = false;
-	//transferedUnit->SetFocus();
+	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, transferedUnit, receivingUnit, 1);
+	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
 void SelectTransferUnit::GetOptions()
@@ -2517,44 +2402,21 @@ void SelectTransferUnit::GetOptions()
 
 void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (transferedUnit)
+	Menu::CheckInput(inputManager, deltaTime);
+	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		transferDelayTimer += deltaTime;
-		if (transferDelayTimer > transferDelay)
+		currentOption--;
+		if (currentOption < 0)
 		{
-			transferedUnit->UpdateMovement(deltaTime, inputManager);
-			if (!transferedUnit->movementComponent.moving)
-			{
-				transferDelayTimer = 0;
-				transferedUnit->hide = true;
-				transferedUnit->sprite.moveAnimate = false;
-				transferedUnit->hasMoved = true;
-				auto playerUnit = cursor->selectedUnit;
-				playerUnit->sprite.setFocus();
-				Menu::CancelOption();
-				MenuManager::menuManager.menus.back()->GetOptions();
-				MenuManager::menuManager.mustWait = true;
-			}
+			currentOption = numberOfOptions - 1;
 		}
 	}
-	else
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		Menu::CheckInput(inputManager, deltaTime);
-		if (inputManager.isKeyPressed(SDLK_LEFT))
+		currentOption++;
+		if (currentOption >= numberOfOptions)
 		{
-			currentOption--;
-			if (currentOption < 0)
-			{
-				currentOption = numberOfOptions - 1;
-			}
-		}
-		else if (inputManager.isKeyPressed(SDLK_RIGHT))
-		{
-			currentOption++;
-			if (currentOption >= numberOfOptions)
-			{
-				currentOption = 0;
-			}
+			currentOption = 0;
 		}
 	}
 }
@@ -4093,5 +3955,136 @@ void MenuManager::ClearMenu()
 	while (menus.size() > 0)
 	{
 		PreviousMenu();
+	}
+}
+
+UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition) :
+	Menu(Cursor, Text, camera, shapeVAO), movingUnit(movingUnit), receivingUnit(receivingUnit), operation(operation), dropPosition(dropPosition)
+{
+	movingUnit->hasMoved = false;
+
+	if (operation == RESCUE || operation == TRANSFER)
+	{
+		receivingUnit->carryUnit(movingUnit);
+	}
+	if (operation != TRANSFER)
+	{
+		if (receivingUnit == cursor->selectedUnit)
+		{
+			receivingUnit->sprite.moveAnimate = false;
+			if (!receivingUnit->isMounted() || receivingUnit->mount->remainingMoves == 0)
+			{
+				receivingUnit->hasMoved = true;
+				doneHere = true;
+			}
+		}
+	}
+	if (operation == DROP || operation == RELEASE)
+	{
+		movingUnit->carryingUnit = nullptr;
+		movingUnit->hasMoved = false;
+		auto playerUnit = cursor->selectedUnit;
+		playerUnit->releaseUnit();
+		std::vector<glm::ivec2> path = { dropPosition, playerUnit->sprite.getPosition() };
+		movingUnit->startMovement(path, 0, false);
+	}
+}
+
+void UnitMovement::Draw()
+{
+}
+
+void UnitMovement::SelectOption()
+{
+}
+
+void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	moveTimer += deltaTime;
+	if (operation == RELEASE)
+	{
+		if (enemyFading)
+		{
+			if (moveTimer >= 0.02f)
+			{
+				movingUnit->hide = !movingUnit->hide;
+				moveTimer = 0.0f;
+			}
+			removeTimer += deltaTime;
+			if (removeTimer >= 0.5f)
+			{
+				auto playerUnit = cursor->selectedUnit;
+				movingUnit->isDead = true;
+				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
+				{
+					cursor->GetRemainingMove();
+					MenuManager::menuManager.mustWait = true;
+				}
+				else
+				{
+					cursor->Wait();
+				}
+				ClearMenu();
+			}
+		}
+		else
+		{
+			if (moveTimer >= moveDelay)
+			{
+				movingUnit->UpdateMovement(deltaTime, inputManager);
+				if (!movingUnit->movementComponent.moving)
+				{
+					enemyFading = true;
+				}
+			}
+		}
+	}
+	else if (moveTimer >= moveDelay)
+	{
+		auto playerUnit = cursor->selectedUnit;
+		movingUnit->UpdateMovement(deltaTime, inputManager);
+		if (!movingUnit->movementComponent.moving)
+		{
+			movingUnit->sprite.moveAnimate = false;
+			movingUnit->hasMoved = true;
+			switch (operation)
+			{
+			case DROP:
+				movingUnit->placeUnit(dropPosition.x, dropPosition.y);
+				if (!doneHere)
+				{
+					cursor->GetRemainingMove();
+					MenuManager::menuManager.mustWait = true;
+				}
+				else
+				{
+					cursor->Wait();
+				}
+				ClearMenu();
+				break;
+			case RESCUE:
+				movingUnit->hide = true;
+				if (!doneHere)
+				{
+					cursor->GetRemainingMove();
+					MenuManager::menuManager.mustWait = true;
+				}
+				else
+				{
+					cursor->Wait();
+				}
+				ClearMenu();
+				break;
+			case TRANSFER:
+				movingUnit->hide = true;
+				auto playerUnit = cursor->selectedUnit;
+				playerUnit->sprite.setFocus();
+				Menu::CancelOption();
+				Menu::CancelOption();
+				MenuManager::menuManager.menus.back()->GetOptions();
+				MenuManager::menuManager.mustWait = true;
+				break;
+			}
+		}
 	}
 }
