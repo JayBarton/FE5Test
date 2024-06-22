@@ -161,19 +161,14 @@ void UnitOptionsMenu::SelectOption()
 		break;
 	case RELEASE:
 	{
-		playerUnit->carriedUnit->isDead = true;
+		auto playerUnit = cursor->selectedUnit;
+		releasedEnemy = playerUnit->carriedUnit;
+		releasedEnemy->carryingUnit = nullptr;
+		releasedEnemy->hasMoved = false;
 		playerUnit->releaseUnit();
-		if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
-		{
-			cursor->GetRemainingMove();
-			MenuManager::menuManager.mustWait = true;
-		}
-		else
-		{
-			cursor->Wait();
-		}
-		heldEnemy = false;
-		ClearMenu();
+		std::vector<glm::ivec2> path = { playerUnit->sprite.getPosition() + glm::vec2(0, 16), playerUnit->sprite.getPosition() };
+		releasedEnemy->startMovement(path, 0, false);
+
 		break;
 	}
 	case RESCUE:
@@ -265,105 +260,157 @@ void UnitOptionsMenu::CancelOption()
 	}
 }
 
-void UnitOptionsMenu::Draw()
+void UnitOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	int xText = 600;
-	int xIndicator = 176;
-	int yOffset = 100;
-	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
-	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	if (releasedEnemy)
 	{
-		xText = 72;
-		xIndicator = 8;
-	}
-	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-	//Just a little test with new line
-	std::string commands = "";
-	if (canTalk)
-	{
-		text->RenderText("Talk", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	if (canAttack)
-	{
-		commands += "Attack\n";
-		text->RenderText("Attack", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	if (canVisit)
-	{
-		text->RenderText("Visit", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	else if (canBuy)
-	{
-		text->RenderText("Vendor", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	if (heldFriendly)
-	{
-		text->RenderText("Drop", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	else if (heldEnemy)
-	{
-		text->RenderText("Release", xText, yOffset, 1);
-		yOffset += 30;
+		releaseTimer += deltaTime;
+		if (enemyFading)
+		{
+			if (releaseTimer >= 0.02f)
+			{
+				releasedEnemy->hide = !releasedEnemy->hide;
+				releaseTimer = 0.0f;
+			}
+			getmeoutofhehre += deltaTime;
+			if (getmeoutofhehre >= 0.5f)
+			{
+				releasedEnemy->isDead = true;
+				auto playerUnit = cursor->selectedUnit;
+				releasedEnemy->isDead = true;
+				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
+				{
+					cursor->GetRemainingMove();
+					MenuManager::menuManager.mustWait = true;
+				}
+				else
+				{
+					cursor->Wait();
+				}
+				heldEnemy = false;
+				ClearMenu();
+			}
+		}
+		else
+		{
+			if (releaseTimer >= releaseDelay)
+			{
+				releasedEnemy->UpdateMovement(deltaTime, inputManager);
+				if (!releasedEnemy->movementComponent.moving)
+				{
+					enemyFading = true;
+				}
+			}
+		}
 	}
 	else
 	{
-		if (canCapture)
+		Menu::CheckInput(inputManager, deltaTime);
+	}
+}
+
+void UnitOptionsMenu::Draw()
+{
+	if (!releasedEnemy)
+	{
+		int xText = 600;
+		int xIndicator = 176;
+		int yOffset = 100;
+		glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
+		if (fixedPosition.x >= camera->screenWidth * 0.5f)
 		{
-			text->RenderText("Capture", xText, yOffset, 1);
+			xText = 72;
+			xIndicator = 8;
+		}
+		//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		//Just a little test with new line
+		std::string commands = "";
+		if (canTalk)
+		{
+			text->RenderText("Talk", xText, yOffset, 1);
 			yOffset += 30;
 		}
-		if (canRescue)
+		if (canAttack)
 		{
-			text->RenderText("Rescue", xText, yOffset, 1);
+			commands += "Attack\n";
+			text->RenderText("Attack", xText, yOffset, 1);
 			yOffset += 30;
 		}
-	}
-	if (canTransfer)
-	{
-		text->RenderText("Transfer", xText, yOffset, 1);
+		if (canVisit)
+		{
+			text->RenderText("Visit", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		else if (canBuy)
+		{
+			text->RenderText("Vendor", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		if (heldFriendly)
+		{
+			text->RenderText("Drop", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		else if (heldEnemy)
+		{
+			text->RenderText("Release", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		else
+		{
+			if (canCapture)
+			{
+				text->RenderText("Capture", xText, yOffset, 1);
+				yOffset += 30;
+			}
+			if (canRescue)
+			{
+				text->RenderText("Rescue", xText, yOffset, 1);
+				yOffset += 30;
+			}
+		}
+		if (canTransfer)
+		{
+			text->RenderText("Transfer", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		commands += "Items\n";
+		text->RenderText("Items", xText, yOffset, 1);
 		yOffset += 30;
+		if (canTrade)
+		{
+			text->RenderText("Trade", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		if (canDismount)
+		{
+			commands += "Dismount\n";
+			text->RenderText("Dismount", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		else if (canMount)
+		{
+			commands += "Mount\n";
+			text->RenderText("Mount", xText, yOffset, 1);
+			yOffset += 30;
+		}
+		commands += "Wait";
+		text->RenderText("Wait", xText, yOffset, 1);
+		//Text->RenderText(commands, xText, 100, 1);
 	}
-	commands += "Items\n";
-	text->RenderText("Items", xText, yOffset, 1);
-	yOffset += 30;
-	if (canTrade)
-	{
-		text->RenderText("Trade", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	if (canDismount)
-	{
-		commands += "Dismount\n";
-		text->RenderText("Dismount", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	else if (canMount)
-	{
-		commands += "Mount\n";
-		text->RenderText("Mount", xText, yOffset, 1);
-		yOffset += 30;
-	}
-	commands += "Wait";
-	text->RenderText("Wait", xText, yOffset, 1);
-	//Text->RenderText(commands, xText, 100, 1);
 }
 
 void UnitOptionsMenu::GetOptions()

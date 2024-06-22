@@ -358,7 +358,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= accuracy)
+	if (roll <= 100)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		if (crit > 0)

@@ -45,6 +45,7 @@ struct UnitOptionsMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	virtual void GetOptions() override;
 
@@ -85,6 +86,14 @@ struct UnitOptionsMenu : public Menu
 
 	bool heldFriendly = false;
 	bool heldEnemy = false;
+
+	bool enemyFading = false;
+
+	Unit* releasedEnemy = nullptr;
+	float releaseTimer = 0.0f;
+	float getmeoutofhehre = 0.0f;
+	float releaseDelay = 0.15f;
+	
 };
 
 struct CantoOptionsMenu : public Menu
