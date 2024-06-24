@@ -1,12 +1,17 @@
 #include "UnitResources.h"
 #include "TileManager.h"
 #include "ResourceManager.h"
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 std::vector<std::vector<glm::vec4>> UnitResources::unitUVs;
+std::vector<AnimData> UnitResources::animData;
 
 void UnitResources::LoadUVs()
 {
-	unitUVs.resize(13);
+	unitUVs.resize(14);
 
 	unitUVs[0] = ResourceManager::GetTexture("sprites").GetUVs(0, 16, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
 	auto extras = ResourceManager::GetTexture("movesprites").GetUVs(640, 128, 32, 32, 4, 4);
@@ -59,4 +64,25 @@ void UnitResources::LoadUVs()
 	unitUVs[12] = ResourceManager::GetTexture("sprites").GetUVs(48, 32, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
 	extras = ResourceManager::GetTexture("movesprites").GetUVs(128, 128, 32, 32, 4, 4);
 	unitUVs[12].insert(unitUVs[12].end(), extras.begin(), extras.end());
+
+	unitUVs[13] = ResourceManager::GetTexture("sprites").GetUVs(0, 32, TileManager::TILE_SIZE, TileManager::TILE_SIZE, 3, 1);
+	extras = ResourceManager::GetTexture("movesprites").GetUVs(0, 128, 32, 32, 4, 4);
+	unitUVs[13].insert(unitUVs[13].end(), extras.begin(), extras.end());
+}
+
+void UnitResources::LoadAnimData()
+{
+	std::ifstream f("AnimData.json");
+	json data = json::parse(f);
+	json anim = data["AnimData"];
+	animData.resize(14);
+	int current = 0;
+	for (const auto& data : anim)
+	{
+		int face = data["FocusFace"];
+		glm::ivec2 size = glm::ivec2(data["Size"][0], data["Size"][1]);
+		glm::ivec2 offset = glm::ivec2(data["Offset"][0], data["Offset"][1]);
+		animData[current] = AnimData{ face, size, offset };
+		current++;
+	}
 }

@@ -1,0 +1,88 @@
+{
+  "AnimData": [
+    {
+      "ID": 0,
+      "FocusFace": 0,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 1,
+      "FocusFace": 2,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 2,
+      "FocusFace": 3,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 3,
+      "FocusFace": 3,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 4,
+      "FocusFace": 0,
+      "Size": [ 16, 20 ],
+      "Offset": [ 0, -4 ]
+    },
+    {
+      "ID": 5,
+      "FocusFace": 2,
+      "Size": [ 15, 16 ],
+      "Offset": [ 1, 0 ]
+    },
+    {
+      "ID": 6,
+      "FocusFace": 0,
+      "Size": [ 15, 16 ],
+      "Offset": [ 1, 0 ]
+    },
+    {
+      "ID": 7,
+      "FocusFace": 3,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 8,
+      "FocusFace": 2,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 9,
+      "FocusFace": 3,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 10,
+      "FocusFace": 3,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 11,
+      "FocusFace": 3,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 12,
+      "FocusFace": 0,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    },
+    {
+      "ID": 13,
+      "FocusFace": 0,
+      "Size": [ 16, 16 ],
+      "Offset": [ 0, 0 ]
+    }
+  ]
+}

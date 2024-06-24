@@ -204,6 +204,7 @@
     <ClCompile Include="UnitResources.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AnimData.json" />
     <None Include="BaseStats.json" />
     <None Include="Levels\GameOverDialogues.json" />
     <None Include="Levels\Level1Dialogue.json" />

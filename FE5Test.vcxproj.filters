@@ -211,5 +211,6 @@
     <None Include="BaseStats.json" />
     <None Include="Levels\Level1Dialogue.json" />
     <None Include="Levels\GameOverDialogues.json" />
+    <None Include="AnimData.json" />
   </ItemGroup>
 </Project>

@@ -52,11 +52,12 @@ struct BattleStats
 
 struct Mount
 {
-	Mount(int movementType, int str, int skl, int spd, int def, int mov) : movementType(movementType), str(str), skl(skl), spd(spd), def(def), mov(mov)
+	Mount(int movementType, int ID, int str, int skl, int spd, int def, int mov) : movementType(movementType), ID(ID), str(str), skl(skl), spd(spd), def(def), mov(mov)
 	{
 		weaponProficiencies[2] = 4;
 	}
 	int movementType;
+	int ID;
 	int str;
 	int skl;
 	int spd;
@@ -155,6 +156,9 @@ struct Unit
 	std::string name;
 	std::string unitClass; //Not really sure what I'm doing with this
 	int ID;
+	//What I ultimately want is for ID to be an identifyer for the specific unit, while class ID is what class they are. This will hopefully be helpful for mounting/dismounting and promotions/class changes
+	//Currently this is not in use for the enemies at all
+	int classID;
 	//Using this for scene actions/dialogue. This is mainly for the rare case in which a generic enemy does something in a scene
 	int sceneID = -1;
 	int maxHP;

@@ -17,10 +17,7 @@
       "WeaponProf": {
         "Lance": 1
       },
-      "ClassPower": 2,
-      "AnimData": {
-        "FocusFace": 0
-      }
+      "ClassPower": 2
     },
     {
       "ID": 1,
@@ -39,10 +36,7 @@
       "WeaponProf": {
         "Bow": 1
       },
-      "ClassPower": 2,
-      "AnimData": {
-        "FocusFace": 2
-      }
+      "ClassPower": 2
     },
     {
       "ID": 2,
@@ -60,9 +54,6 @@
       },
       "WeaponProf": {
         "Sword": 1
-      },
-      "AnimData": {
-        "FocusFace": 3
       }
     },
     {
@@ -101,9 +92,6 @@
       },
       "WeaponProf": {
         "Sword": 1
-      },
-      "AnimData": {
-        "FocusFace": 3
       }
     },
     {
@@ -123,9 +111,6 @@
       "WeaponProf": {
         "Sword": 1,
         "Lance": 1
-      },
-      "AnimData": {
-        "FocusFace": 0
       }
     },
     {
@@ -144,9 +129,6 @@
       },
       "WeaponProf": {
         "Sword": 3
-      },
-      "AnimData": {
-        "FocusFace": 2
       }
     },
     {
@@ -165,9 +147,6 @@
       },
       "WeaponProf": {
         "Axe": 1
-      },
-      "AnimData": {
-        "FocusFace": 0
       }
     },
     {
@@ -187,9 +166,6 @@
       "WeaponProf": {
         "Axe": 2,
         "Bow": 1
-      },
-      "AnimData": {
-        "FocusFace": 3
       }
     },
     {
@@ -208,9 +184,6 @@
       },
       "WeaponProf": {
         "Bow": 1
-      },
-      "AnimData": {
-        "FocusFace": 2
       }
     },
     {
@@ -229,9 +202,6 @@
       },
       "WeaponProf": {
         "Axe": 1
-      },
-      "AnimData": {
-        "FocusFace": 3
       }
     },
     {
@@ -250,9 +220,6 @@
       },
       "WeaponProf": {
         "Axe": 1
-      },
-      "AnimData": {
-        "FocusFace": 3
       }
     },
     {
@@ -271,9 +238,6 @@
       },
       "WeaponProf": {
         "Axe": 1
-      },
-      "AnimData": {
-        "FocusFace": 3
       }
     },
     {
@@ -292,9 +256,6 @@
       },
       "WeaponProf": {
         "Axe": 1
-      },
-      "AnimData": {
-        "FocusFace": 0
       }
     }
   ],
@@ -336,16 +297,13 @@
       },
       "SpecialWeapons": [ 6 ],
       "Skills": [ 1 ],
-      "AnimData": {
-        "FocusFace": 3
-      },
       "DeathMsg": "...Everyone...\n...I'm sorry...<1"
     },
     {
       "ID": 1,
       "Name": "Finn",
       "Class": "Lance Knight",
-      "ClassID": 4,
+      "ClassID": 13,
       "Stats": {
         "Level": 7,
         "HP": 28,
@@ -372,6 +330,14 @@
         "Bld": 10,
         "Mov": 1
       },
+      "Mount": {
+        "Str": 1,
+        "Skl": 1,
+        "Spd": 2,
+        "Def": 1,
+        "Mov": 3,
+        "AnimID": 4
+      },
       "Inventory": [ 9, 1, 0, 18 ],
       "WeaponProf": {
         "Lance": 4,
@@ -379,9 +345,6 @@
       },
       "SpecialWeapons": [ 7 ],
       "Skills": [ 0 ],
-      "AnimData": {
-        "FocusFace": 0
-      },
       "DeathMsg": "Lord Lief...\nYou father's...\nDying wish...<1"
     },
     {
@@ -420,9 +383,6 @@
         "Sword": 5
       },
       "Skills": [ 1 ],
-      "AnimData": {
-        "FocusFace": 2
-      },
       "DeathMsg": "Everyone...\nDon't give up...\nBecause someday...Surely...<1"
     },
     {
@@ -461,9 +421,6 @@
         "Axe": 2
       },
       "Skills": [ 3 ],
-      "AnimData": {
-        "FocusFace": 0
-      },
       "DeathMsg": "Father...Mother...\nI'm sorry...\nThis is it for me...<1"
     },
     {
@@ -503,9 +460,6 @@
       },
       "SpecialWeapons": [ 8 ],
       "Skills": [ 2 ],
-      "AnimData": {
-        "FocusFace": 0
-      },
       "DeathMsg": "D-damn...\nMe of all people...<1"
     },
     {
@@ -545,9 +499,6 @@
         "Bow": 1
       },
       "Skills": [ 4 ],
-      "AnimData": {
-        "FocusFace": 3
-      },
       "DeathMsg": "My life...\nWasn't good...\nBut it wasn't so bad either...<1"
     },
     {
@@ -586,9 +537,6 @@
         "Bow": 1
       },
       "ClassPower": 2,
-      "AnimData": {
-        "FocusFace": 2
-      },
       "DeathMsg": "No...\n...Help me...\n...Othian...<1"
     },
     {
@@ -625,9 +573,6 @@
       "Inventory": [ 13 ],
       "WeaponProf": {
         "Axe": 2
-      },
-      "AnimData": {
-        "FocusFace": 3
       },
       "DeathMsg": "Shoot...What bad luck...<1"
     }

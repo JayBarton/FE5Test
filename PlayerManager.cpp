@@ -60,19 +60,6 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		playerUnits[currentUnit] = newUnit;
 		currentUnit++;
 	}
-	/*	playerUnits[0]->sprite.setSize(glm::vec2(32, 32));
-	playerUnits[0]->sprite.drawOffset = glm::vec2(-8, -8);*/
-	playerUnits[1]->movementType = Unit::FOOT;
-	playerUnits[1]->mount = new Mount(Unit::HORSE, 1, 1, 2, 1, 3);
-	playerUnits[1]->MountAction(true);
-	playerUnits[1]->sprite.setSize(glm::vec2(16, 20));
-	playerUnits[1]->sprite.drawOffset = glm::vec2(0, -4);
-	playerUnits[2]->sprite.setSize(glm::vec2(15, 16));
-	playerUnits[2]->sprite.drawOffset = glm::vec2(1, 0);
-	playerUnits[3]->sprite.setSize(glm::vec2(15, 16));
-	playerUnits[3]->sprite.drawOffset = glm::vec2(1, 0);
-	playerUnits[4]->sprite.setSize(glm::vec2(15, 16));
-	playerUnits[4]->sprite.drawOffset = glm::vec2(1, 0);
 	playerUnits[4]->currentHP = 1;
 	playerUnits[0]->build = 2;
 	playerUnits[2]->currentHP = 1;
@@ -89,6 +76,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			std::string name = unit["Name"];
 			std::string unitClass = unit["Class"];
 			json stats = unit["Stats"];
+			int classID = unit["ClassID"];
 			int HP = stats["HP"];
 			int str = stats["Str"];
 			int mag = stats["Mag"];
@@ -99,11 +87,10 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			int bld = stats["Bld"];
 			int mov = stats["Mov"];
 			Unit* newUnit = new Unit(unitClass, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
+			newUnit->classID = classID;
 			newUnit->sceneID = ID;
 			newUnit->level = stats["Level"];
 			(*sceneUnits)[newUnit->sceneID] = newUnit;
-			auto animData = unit["AnimData"];
-			newUnit->sprite.focusedFacing = animData["FocusFace"];
 
 			json growths = unit["GrowthRates"];
 			HP = growths["HP"];
@@ -153,7 +140,23 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			}
 			newUnit->subject.addObserver(unitEvents);
 			newUnit->init(gen, distribution);
-			newUnit->sprite.uv = &UnitResources::unitUVs[unit["ClassID"]];
+
+			if (unit.find("Mount") != unit.end())
+			{
+				json mount = unit["Mount"];
+				newUnit->movementType = Unit::FOOT;
+				newUnit->mount = new Mount(Unit::HORSE, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
+				newUnit->MountAction(true);
+			}
+			else
+			{
+				newUnit->sprite.uv = &UnitResources::unitUVs[classID];
+				AnimData animData = UnitResources::animData[classID];
+				newUnit->sprite.focusedFacing = animData.facing;
+				newUnit->sprite.setSize(animData.size);
+				newUnit->sprite.drawOffset = animData.offset;
+			}
+
 			newUnit->placeUnit(position.x, position.y);
 			return newUnit;
 		}

@@ -453,6 +453,7 @@ int main(int argc, char** argv)
 	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
 	UnitResources::LoadUVs();
+	UnitResources::LoadAnimData();
 
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);

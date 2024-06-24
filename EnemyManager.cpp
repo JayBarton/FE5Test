@@ -167,16 +167,10 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 
         enemies[i]->placeUnit(position.x, position.y);
         enemies[i]->sprite.uv = &UnitResources::unitUVs[enemies[i]->ID];
-        //I'm thinking I will move the anim data to its own json, so I won't need to go through here again.
-        for (const auto& enemy : bases)
-        {
-            int ID = enemy["ID"];
-            if (ID == enemies[i]->ID)
-            {
-                auto animData = enemy["AnimData"];
-                enemies[i]->sprite.focusedFacing = animData["FocusFace"];
-            }
-        }
+        AnimData animData = UnitResources::animData[enemies[i]->ID];
+        enemies[i]->sprite.focusedFacing = animData.facing;
+        enemies[i]->sprite.setSize(animData.size);
+        enemies[i]->sprite.drawOffset = animData.offset;
     }
 
     escapePoint = glm::ivec2(336, 192);

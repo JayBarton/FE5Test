@@ -9,6 +9,7 @@
 #include "InputManager.h"
 #include "SBatch.h"
 #include "Settings.h"
+#include "UnitResources.h"
 #include <SDL.h>
 
 Unit::Unit()
@@ -544,6 +545,8 @@ void Unit::MountAction(bool on)
 {
     if (mount)
     {
+        int IDToUse;
+        AnimData animData;
         if (on)
         {
             mount->mounted = true;
@@ -552,6 +555,9 @@ void Unit::MountAction(bool on)
             mountSpd = mount->spd;
             mountDef = mount->def;
             mountMov = mount->mov;
+
+            IDToUse = mount->ID;
+
         }
         else
         {
@@ -561,7 +567,14 @@ void Unit::MountAction(bool on)
             mountSpd = 0;
             mountDef = 0;
             mountMov = 0;
+
+            IDToUse = classID;
         }
+        sprite.uv = &UnitResources::unitUVs[IDToUse];
+        animData = UnitResources::animData[IDToUse];
+        sprite.focusedFacing = animData.facing;
+        sprite.setSize(animData.size);
+        sprite.drawOffset = animData.offset;
     }
 }
 

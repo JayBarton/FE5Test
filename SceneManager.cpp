@@ -327,8 +327,10 @@ void Scene::AddNewSceneUnit(SceneAction* currentAction)
 		int ID = unit["ID"];
 		if (ID == action->unitID)
 		{
-			auto animData = unit["AnimData"];
-			newUnit->sprite.focusedFacing = animData["FocusFace"];
+			AnimData animData = UnitResources::animData[ID];
+			newUnit->sprite.focusedFacing = animData.facing;
+			newUnit->sprite.setSize(animData.size);
+			newUnit->sprite.drawOffset = animData.offset;
 		}
 	}
 	movementDelay = action->nextMoveDelay;
