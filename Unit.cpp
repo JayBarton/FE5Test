@@ -557,7 +557,6 @@ void Unit::MountAction(bool on)
             mountMov = mount->mov;
 
             IDToUse = mount->ID;
-
         }
         else
         {
@@ -575,6 +574,9 @@ void Unit::MountAction(bool on)
         sprite.focusedFacing = animData.facing;
         sprite.setSize(animData.size);
         sprite.drawOffset = animData.offset;
+
+        equippedWeapon = -1;
+        findWeapon();
     }
 }
 

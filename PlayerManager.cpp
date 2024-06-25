@@ -144,8 +144,14 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			if (unit.find("Mount") != unit.end())
 			{
 				json mount = unit["Mount"];
+
 				newUnit->movementType = Unit::FOOT;
 				newUnit->mount = new Mount(Unit::HORSE, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
+				json mountProf = mount["WeaponProf"];
+				for (auto it = mountProf.begin(); it != mountProf.end(); ++it)
+				{
+					newUnit->mount->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
+				}
 				newUnit->MountAction(true);
 			}
 			else

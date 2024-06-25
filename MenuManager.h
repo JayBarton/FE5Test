@@ -484,6 +484,7 @@ struct MenuManager
 
 	//Some actions, such as trading or dismounting will allow the menu to stay open but will force the unit to stay where they have been moved too
 	bool mustWait = false;
+	bool mountActionTaken = false;
 
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 

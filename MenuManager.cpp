@@ -193,19 +193,18 @@ void UnitOptionsMenu::SelectOption()
 	case DISMOUNT:
 	{
 		playerUnit->MountAction(false);
-		canDismount = false;
-		optionsVector.erase(optionsVector.begin() + currentOption);
-		numberOfOptions--;
 		MenuManager::menuManager.mustWait = true;
+		MenuManager::menuManager.mountActionTaken = true;
+		GetOptions();
 		break;
 	}
 	case MOUNT:
 	{
 		playerUnit->MountAction(true);
-		canMount = false;
-		optionsVector.erase(optionsVector.begin() + currentOption);
-		numberOfOptions--;
+		playerUnit->mount->remainingMoves = 0;
 		MenuManager::menuManager.mustWait = true;
+		MenuManager::menuManager.mountActionTaken = true;
+		GetOptions();
 		break;
 	}
 	case TALK:
@@ -505,18 +504,21 @@ void UnitOptionsMenu::GetOptions()
 		optionsVector.insert(optionsVector.begin(), TALK);
 	}
 	//if can dismount
-	if (playerUnit->mount)
+	if (!MenuManager::menuManager.mountActionTaken)
 	{
-		if (playerUnit->mount->mounted)
+		if (playerUnit->mount)
 		{
-			canDismount = true;
-			optionsVector.push_back(DISMOUNT);
-		}
-		else
-		{
-			canMount = true;
-			optionsVector.push_back(MOUNT);
+			if (playerUnit->mount->mounted && !playerUnit->carriedUnit)
+			{
+				canDismount = true;
+				optionsVector.push_back(DISMOUNT);
+			}
+			else if (!playerUnit->mount->mounted)
+			{
+				canMount = true;
+				optionsVector.push_back(MOUNT);
 
+			}
 		}
 	}
 	optionsVector.push_back(WAIT);
@@ -1780,15 +1782,15 @@ void UnitStatsViewMenu::Draw()
 				{
 					text->RenderText("-" + profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1, glm::vec3(0.64f));
 				}
-				text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
-				text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
+				text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
+				text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
 			}
 			else
 			{
 				text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1);
 
-				text->RenderText("-" + profMap[unit->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1, glm::vec3(0.64f));
-				text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
+				text->RenderText("-" + profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1, glm::vec3(0.64f));
+				text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
 			}
 		}
 		else
@@ -3952,6 +3954,7 @@ void MenuManager::PreviousMenu()
 void MenuManager::ClearMenu()
 {
 	mustWait = false;
+	mountActionTaken = false;
 	while (menus.size() > 0)
 	{
 		PreviousMenu();

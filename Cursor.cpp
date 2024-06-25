@@ -40,7 +40,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					//Can't move to where you already are, so just treat as a movement of 0 and open options
 					if (unitCurrentPosition == position)
 					{
-						if (selectedUnit->isMounted())
+						if (selectedUnit->isMounted() && !remainingMove)
 						{
 							selectedUnit->mount->remainingMoves = selectedUnit->getMove();
 						}

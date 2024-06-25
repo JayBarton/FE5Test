@@ -54,7 +54,6 @@ struct Mount
 {
 	Mount(int movementType, int ID, int str, int skl, int spd, int def, int mov) : movementType(movementType), ID(ID), str(str), skl(skl), spd(spd), def(def), mov(mov)
 	{
-		weaponProficiencies[2] = 4;
 	}
 	int movementType;
 	int ID;

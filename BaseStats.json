@@ -336,17 +336,19 @@
         "Spd": 2,
         "Def": 1,
         "Mov": 3,
+        "WeaponProf": {
+          "Lance": 4
+        },
         "AnimID": 4
       },
-      "Inventory": [ 9, 1, 0, 18 ],
-      "WeaponProf": {
-        "Lance": 4,
-        "Sword": 2
+        "Inventory": [ 9, 1, 0, 18 ],
+        "WeaponProf": {
+          "Sword": 2
+        },
+        "SpecialWeapons": [ 7 ],
+        "Skills": [ 0 ],
+        "DeathMsg": "Lord Lief...\nYou father's...\nDying wish...<1"
       },
-      "SpecialWeapons": [ 7 ],
-      "Skills": [ 0 ],
-      "DeathMsg": "Lord Lief...\nYou father's...\nDying wish...<1"
-    },
     {
       "ID": 2,
       "Name": "Eyvale",
