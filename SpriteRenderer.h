@@ -30,7 +30,7 @@ public:
     ~SpriteRenderer();
     // Renders a defined quad textured with given sprite
     //Going to want to split this since I do some shader stuff when drawing units
-    void DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color = glm::vec4(1.0f), float fade = 0, bool grey = false, int team = 0);
+    void DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color = glm::vec4(1.0f), bool flip = false);
 
 	void DrawSprite();
     void setUVs(const glm::vec4 &uv = glm::vec4(0, 1, 0, 1));

@@ -160,6 +160,7 @@ struct Unit
 	int classID;
 	//Using this for scene actions/dialogue. This is mainly for the rare case in which a generic enemy does something in a scene
 	int sceneID = -1;
+	int portraitID;
 	int maxHP;
 	int strength;
 	int magic;

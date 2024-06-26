@@ -162,7 +162,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 				newUnit->sprite.setSize(animData.size);
 				newUnit->sprite.drawOffset = animData.offset;
 			}
-
+			newUnit->portraitID = ID;
 			newUnit->placeUnit(position.x, position.y);
 			return newUnit;
 		}

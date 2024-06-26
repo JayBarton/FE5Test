@@ -15,6 +15,8 @@
 #include "SBatch.h"
 #include "Settings.h"
 
+#include "UnitResources.h"
+
 #include <SDL.h>
 #include <sstream>
 #include <algorithm> 
@@ -630,6 +632,8 @@ void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit)
 		renderer->setUVs(itemIconUVs[item->ID]);
 		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
 	}
+
+	DrawPortrait(unit);
 }
 
 void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
@@ -676,6 +680,16 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 
 	renderer->setUVs(proficiencyIconUVs[weaponData.type]);
 	renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, cursor->dimensions);
+}
+
+void ItemOptionsMenu::DrawPortrait(Unit* unit)
+{
+	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+	auto portraitUVs = portraitTexture.GetUVs(48, 64);
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	renderer->DrawSprite(portraitTexture, glm::vec2(40, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 }
 
 void ItemOptionsMenu::SelectOption()
@@ -754,6 +768,8 @@ void ItemUseMenu::Draw()
 		color = grey;
 	}
 	text->RenderText("Drop", 525, yOffset, 1, color);
+
+	DrawPortrait(unit);
 }
 
 void ItemUseMenu::SelectOption()
@@ -858,6 +874,8 @@ void SelectWeaponMenu::Draw()
 	}
 
 	DrawWeaponComparison(weapons);
+
+	DrawPortrait(unit);
 }
 
 void SelectWeaponMenu::SelectOption()
@@ -1416,8 +1434,10 @@ void TradeMenu::Draw()
 		glBindVertexArray(0);
 	}
 	auto firstUnit = cursor->selectedUnit;
-	text->RenderText(firstUnit->name, 100, 30, 1);
-	text->RenderText(tradeUnit->name, 700, 30, 1);
+	text->RenderText(firstUnit->name, 25, 32, 1);
+	text->RenderText(firstUnit->unitClass, 25, 75, 1);
+	text->RenderText(tradeUnit->name, 425, 32, 1);
+	text->RenderText(tradeUnit->unitClass, 425, 75, 1);
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
@@ -1442,6 +1462,16 @@ void TradeMenu::Draw()
 		renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
 		renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, cursor->dimensions);
 	}
+
+	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+	auto portraitUVs = portraitTexture.GetUVs(48, 64);
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	renderer->setUVs(UnitResources::portraitUVs[firstUnit->portraitID][0]);
+	renderer->DrawSprite(portraitTexture, glm::vec2(72, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
+
+	renderer->setUVs(UnitResources::portraitUVs[tradeUnit->portraitID][0]);
+	renderer->DrawSprite(portraitTexture, glm::vec2(200, 8), 0, glm::vec2(48, 64));
 }
 
 void TradeMenu::SelectOption()
@@ -1861,12 +1891,17 @@ void UnitStatsViewMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+	auto portraitUVs = portraitTexture.GetUVs(48, 64);
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	renderer->DrawSprite(portraitTexture, glm::vec2(96, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 
 	if (unit->carryingUnit)
 	{
 		Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
 
-		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		renderer->setUVs(carryUVs[unit->team]);
 		renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
 	}
@@ -1899,6 +1934,7 @@ void UnitStatsViewMenu::Draw()
 	text->RenderText("ATK", 500, 64, 1);
 	text->RenderText("HIT", 500, 96, 1);
 	text->RenderText("RNG", 500, 128, 1);
+
 	if (unit->equippedWeapon >= 0)
 	{
 		text->RenderTextRight(intToString(battleStats.attackDamage), 542, 64, 1, 14);
@@ -1913,7 +1949,6 @@ void UnitStatsViewMenu::Draw()
 			text->RenderTextRight(intToString(weapon.minRange) + " ~ " + intToString(weapon.maxRange), 542, 128, 1, 30);
 		}
 		ResourceManager::GetShader("Nsprite").Use();
-		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(proficiencyIconUVs[unit->GetEquippedWeapon().type]);
@@ -1938,6 +1973,37 @@ void UnitStatsViewMenu::SelectOption()
 
 void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+/*	animTime += deltaTime;
+	float animationDelay = 0.0f;
+	animationDelay = 8.0f / 60.0f;
+	if (animTime >= animationDelay)
+	{
+		animTime = 0;
+		if (frameDirection > 0)
+		{
+			if (frame < 2)
+			{
+				frame++;
+			}
+			else
+			{
+				frameDirection = -1;
+				frame--;
+			}
+		}
+		else
+		{
+			if (frame > 0)
+			{
+				frame--;
+			}
+			else
+			{
+				frameDirection = 1;
+				frame++;
+			}
+		}
+	}*/
 	if (transition)
 	{
 		int rate = 960;

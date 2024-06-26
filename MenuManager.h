@@ -101,6 +101,7 @@ struct ItemOptionsMenu : public Menu
 	virtual void Draw() override;
 	void DrawItemWindow(std::vector<Item*>& inventory, Unit* unit);
 	void DrawWeaponComparison(std::vector<Item*>& inventory);
+	void DrawPortrait(Unit* unit);
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -132,7 +133,6 @@ struct ItemUseMenu : public ItemOptionsMenu
 	int inventoryIndex;
 	Item* item = nullptr;
 	std::vector<glm::vec4> itemIconUVs;
-	SpriteRenderer* renderer;
 	bool canUse = false;
 	bool canEquip = false;
 };
@@ -304,6 +304,11 @@ struct UnitStatsViewMenu : public Menu
 
 	float t = 0.0f;
 
+
+	//This is just for testing out portraits
+/*	int frame = 0;
+	int frameDirection = 1;
+	float animTime = 0.0f;*/
 };
 
 //No idea what to call this one

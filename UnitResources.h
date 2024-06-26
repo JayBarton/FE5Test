@@ -14,6 +14,7 @@ struct AnimData
 struct UnitResources
 {
 	static std::vector<std::vector<glm::vec4>> unitUVs;
+	static std::vector<std::vector<glm::vec4>> portraitUVs;
 	static std::vector<AnimData> animData;
 
 	static void LoadUVs();

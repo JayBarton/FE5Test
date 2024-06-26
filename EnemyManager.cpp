@@ -171,6 +171,19 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         enemies[i]->sprite.focusedFacing = animData.facing;
         enemies[i]->sprite.setSize(animData.size);
         enemies[i]->sprite.drawOffset = animData.offset;
+
+        if (enemies[i]->ID == 0)
+        {
+            enemies[i]->portraitID = 12;
+        }
+        else if (enemies[i]->ID == 1)
+        {
+            enemies[i]->portraitID = 13;
+        }
+        else if (enemies[i]->ID == 2)
+        {
+            enemies[i]->portraitID = 11;
+        }
     }
 
     escapePoint = glm::ivec2(336, 192);

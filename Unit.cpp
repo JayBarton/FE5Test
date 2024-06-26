@@ -82,7 +82,7 @@ void Unit::Draw(SpriteRenderer* Renderer)
         position += sprite.drawOffset;
         Renderer->setUVs(sprite.getUV());
         Texture2D texture = ResourceManager::GetTexture("sprites");
-        Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team);
+        Renderer->DrawSprite(texture, position, 0.0f, sprite.getSize(), colorAndAlpha);
     }
 }
 

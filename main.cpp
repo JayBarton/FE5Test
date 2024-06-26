@@ -441,6 +441,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/carryingIcons.png", "carryingIcons");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovermain.png", "GameOver1");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovertext.png", "GameOver2");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Portraits.png", "Portraits");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -853,7 +854,7 @@ void init()
 
 	//glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	resizeWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
-	glEnable(GL_CULL_FACE);
+//	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_MULTISAMPLE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
