@@ -75,7 +75,7 @@ void UnitResources::LoadUVs()
 
 	int portraitX = 48;
 	int portraitY = 64;
-	portraitUVs.resize(14);
+	portraitUVs.resize(15);
 	portraitUVs[0] = portraitTextures.GetUVs(0, 0, portraitX, portraitY, 3, 1);
 	portraitUVs[1] = portraitTextures.GetUVs(144, 0, portraitX, portraitY, 3, 1);
 	portraitUVs[2] = portraitTextures.GetUVs(288, 0, portraitX, portraitY, 3, 1);
@@ -90,6 +90,7 @@ void UnitResources::LoadUVs()
 	portraitUVs[11] = portraitTextures.GetUVs(144, 128, portraitX, portraitY, 3, 1);
 	portraitUVs[12] = portraitTextures.GetUVs(288, 128, portraitX, portraitY, 1, 1);
 	portraitUVs[13] = portraitTextures.GetUVs(336, 128, portraitX, portraitY, 1, 1);
+	portraitUVs[13] = portraitTextures.GetUVs(384, 128, portraitX, portraitY, 3, 1);
 }
 
 void UnitResources::LoadAnimData()

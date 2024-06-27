@@ -303,12 +303,6 @@ struct UnitStatsViewMenu : public Menu
 	float goal;
 
 	float t = 0.0f;
-
-
-	//This is just for testing out portraits
-/*	int frame = 0;
-	int frameDirection = 1;
-	float animTime = 0.0f;*/
 };
 
 //No idea what to call this one
@@ -407,7 +401,7 @@ enum VendorState
 
 struct VendorMenu : public Menu
 {
-	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, class Vendor* vendor);
+	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, class Vendor* vendor, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	void ActivateText();
@@ -427,6 +421,8 @@ struct VendorMenu : public Menu
 
 	float delayTime = 0.15f;
 	float delayTimer = 0.0f;
+
+	SpriteRenderer* Renderer;
 };
 
 //Not actually a menu, makes unit rescue/release/etc animations easier

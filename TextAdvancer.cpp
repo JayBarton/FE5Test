@@ -5,6 +5,12 @@
 #include "Globals.h"
 #include "Unit.h"
 #include "MenuManager.h"
+#include "SpriteRenderer.h"
+
+#include "ResourceManager.h"
+#include "UnitResources.h"
+#include "Camera.h"
+
 #include <SDL.h>
 
 TextObject::TextObject()
@@ -13,9 +19,19 @@ TextObject::TextObject()
 	displayedText = "";
 }
 
-void TextObject::Draw(TextRenderer* textRenderer)
+void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera)
 {
 	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
+
+	if (portraitID >= 0)
+	{
+		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+		auto portraitUVs = portraitTexture.GetUVs(48, 64);
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		Renderer->setUVs(UnitResources::portraitUVs[portraitID][frame]);
+		Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::vec4(1), mirrorPortrait);
+	}
 }
 
 TextObjectManager::TextObjectManager()
@@ -36,6 +52,9 @@ void TextObjectManager::init(int line/* = 0 */ )
 			textLines[currentLine].speaker->setFocus();
 		}
 	}
+	//So I'm thinking textObjects will have a bool that will tell them to fade the portrait in, and I'll set both of them here
+	//Going forward, if the portraitID changes, that bool will be set to true again.
+	textObjects[focusedObject].portraitID = textLines[currentLine].portraitID;
 	active = false;
 }
 
@@ -91,6 +110,8 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 						textLines[currentLine].speaker->setFocus();
 					}
 					textObjects[focusedObject].index = 0;
+					textObjects[focusedObject].portraitID = textLines[currentLine].portraitID;
+
 				}
 				waitingOnInput = false;
 			}
@@ -122,6 +143,39 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 
 		displayTimer += deltaTime;
 		auto currentObject = &textObjects[focusedObject];
+
+		animTime += deltaTime;
+		float animationDelay = 0.0f;
+		animationDelay = 8.0f / 60.0f;
+		if (animTime >= animationDelay)
+		{
+			animTime = 0;
+			if (frameDirection > 0)
+			{
+				if (frame < 2)
+				{
+					frame++;
+				}
+				else
+				{
+					frameDirection = -1;
+					frame--;
+				}
+			}
+			else
+			{
+				if (frame > 0)
+				{
+					frame--;
+				}
+				else
+				{
+					frameDirection = 1;
+					frame++;
+				}
+			}
+		}
+
 		if (displayTimer >= delay)
 		{
 			if (currentObject->index < currentObject->text.size())
@@ -137,23 +191,30 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 					{
 						active = false;
 						showAnyway = true;
-						textObjects[focusedObject].index = 0;
+						currentObject->index = 0;
 					}
 					else
 					{
 						waitingOnInput = true;
 					}
+					frame = 0;
+					frameDirection = 1;
+				}
+				else if (nextChar == '\n')
+				{
+					
 				}
 			}
 		}
+		currentObject->frame = frame;
 	}
 }
 
-void TextObjectManager::Draw(TextRenderer* textRenderer)
+void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera)
 {
 	for (int i = 0; i < textObjects.size(); i++)
 	{
-		textObjects[i].Draw(textRenderer);
+		textObjects[i].Draw(textRenderer, Renderer, camera);
 	}
 }
 

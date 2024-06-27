@@ -234,7 +234,7 @@ void UnitOptionsMenu::SelectOption()
 	{
 		auto position = playerUnit->sprite.getPosition();
 		auto vendor = TileManager::tileManager.getVendor(position.x, position.y);
-		Menu* newMenu = new VendorMenu(cursor, text, camera, shapeVAO, playerUnit, vendor);
+		Menu* newMenu = new VendorMenu(cursor, text, camera, shapeVAO, playerUnit, vendor, MenuManager::menuManager.renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -3337,27 +3337,29 @@ void OptionsMenu::RenderText(std::string toWrite, float x, float y, float scale,
 	text->RenderText(toWrite, x, y, 1, color);
 }
 
-VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, Vendor* vendor) : 
-	Menu(Cursor, Text, camera, shapeVAO), buyer(buyer), vendor(vendor)
+VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, Vendor* vendor, SpriteRenderer* Renderer) :
+	Menu(Cursor, Text, camera, shapeVAO), buyer(buyer), vendor(vendor), Renderer(Renderer)
 {
 	fullScreen = true;
 	numberOfOptions = vendor->items.size();
 
 	textManager.textLines.clear();
 
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Got a selection of GOOD things on sale, stranger.<2"});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya buyin'?<2"});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya sellin'?<2"});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Is that all stranger?<2"});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Come back any time<3"});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Ahhh, I'll buy it at a HIGH price.<2" });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Hehehe, thank you.<2" });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Good choice, stranger.<2" });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough cash, stranger.<2" });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough space, stranger.<2" });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "You've got nothing to sell, stranger.<2" });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Got a selection of GOOD things on sale, stranger.<2", 13});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya buyin'?<2", 13});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya sellin'?<2", 13});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Is that all stranger?<2", 13});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Come back any time<3", 13});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Ahhh, I'll buy it at a HIGH price.<2", 13 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Hehehe, thank you.<2", 13 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Good choice, stranger.<2", 13 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough cash, stranger.<2", 13 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough space, stranger.<2", 13 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "You've got nothing to sell, stranger.<2", 13 });
 
 	testText.position = glm::vec2(275.0f, 48.0f);
+	testText.portraitPosition = glm::vec2(16, 16);
+	testText.mirrorPortrait = true;
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
@@ -3453,6 +3455,13 @@ void VendorMenu::Draw()
 			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
 			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
 			text->RenderTextRight(intToString(item.value), 675, yPos + 43 * i + 1, 1, 40); //price
+
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+			auto texture = ResourceManager::GetTexture("icons");
+
+			Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item.ID]);
+			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, cursor->dimensions);
 		}
 	}
 	else
@@ -3470,6 +3479,13 @@ void VendorMenu::Draw()
 			{
 				text->RenderTextRight("----", 675, yPos + 43 * i + 1, 1, 40);
 			}
+
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+			auto texture = ResourceManager::GetTexture("icons");
+
+			Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item->ID]);
+			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, cursor->dimensions);
 		}
 	}
 	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 40);
@@ -3521,7 +3537,7 @@ void VendorMenu::Draw()
 
 	if (textManager.ShowText())
 	{
-		textManager.Draw(text);
+		textManager.Draw(text, Renderer, camera);
 	}
 }
 

@@ -2,20 +2,24 @@
   "text": [
     {
       "ID": 1,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": 6,
           "location": 0,
+          "portrait":  6,
           "speech": "Dad, it's already started!<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 5,
           "speech": "This is bad.<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 5,
           "speech": "Even as strong as Eyvale is,\nthese are imperial soldiers...Let's go.<1"
         }
       ]
@@ -26,6 +30,7 @@
         {
           "speaker": 7,
           "location": 1,
+          "portrait": 7,
           "speech": "Oh man.<1"
         }
       ]
@@ -36,36 +41,43 @@
         {
           "speaker": 2,
           "location": 0,
+          "portrait": 2,
           "speech": "Dagda!? You came?<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 5,
           "speech": "Oh, Eyvale, thank goodness you're alright.<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 5,
           "speech": "Does that kid have something to do with why imperial\nsoldiers have come all the way out here?<0"
         },
         {
           "speaker": 2,
           "location": 0,
+          "portrait": 2,
           "speech": "Yeah, actually,\nthat kid is the prince of the fallen Leonster kingdom.<0"
         },
         {
           "speaker": 2,
           "location": 0,
+          "portrait": 2,
           "speech": "I've been sheltering him, sorry for keeping it from you.<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 5,
           "speech": "I figured it was something like that.<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 5,
           "speech": "Well, it's fine.\nAs long as I get to fight imperial soldiers, I won't complain.<1"
         }
       ]
@@ -76,21 +88,25 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "Mareeta and Nanna were taken by the imperial soldiers.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "Hurry, you have to save them before it's too late.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "Oh, before you go, take this magic bracelet with you. I think it will be useful.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "But just holding it isn't enough. You have to use it.<1"
         }
       ]
@@ -101,21 +117,25 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "You've all returned! Thank goodness...<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "The village, please save the village!<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "Here...Take this medicine, please.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "No, it's fine. Eyvale has done so much for us, this hardly compares...<1"
         }
       ]
@@ -126,6 +146,7 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "Don't know what the fuck this old man is saying, he gives you a sword<1"
         }
       ]
@@ -136,16 +157,19 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "Ah, big brother! I have something good for you.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 9,
           "speech": "This should be useful, right?<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 3,
           "speech": "?\n...This axe?<0"
         },
         {
@@ -171,6 +195,7 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Have you seen Halvan, my brother?\nI hope he's doing alright...<1"
         }
       ]
@@ -181,6 +206,7 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Damn it Orthin, where are you off to now?\nThat useless boy!<1"
         }
       ]
@@ -191,46 +217,55 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Orthin, are you serious?\nYou had better not be getting in Lady Eyvale's way.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 4,
           "speech": "Get off my back old man.\nI don't want another lecture.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Some son I have,\nyour mouth is the only thing that has grown up.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Well, come here. This is for you.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 4,
           "speech": "Ah, thank you very much.\nI can't relax without this axe in my hands.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Honestly, you're such a forgetful guy.\nWho''s ever heard of someone going off to war\nand forgetting their own weapon?<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 4,
           "speech": "Tch,\nHere comes another lecture.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 5,
           "speech": "Hmph.\nWell, hurry up and go help Lady Eyvale.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 4,
           "speech": "You don't need to tell me that!<1"
         }
       ]
@@ -241,31 +276,37 @@
         {
           "speaker": 4,
           "location": 0,
+          "portrait": 4,
           "speech": "Hey, is that Tania?\nWhat are you doing here?<0"
         },
         {
           "speaker": 6,
           "location": 1,
+          "portrait": 6,
           "speech": "Orthin!?\nWhat does it look like I'm doing?\nI came here to help.<0"
         },
         {
           "speaker": 4,
           "location": 0,
+          "portrait": 4,
           "speech": "\"Came here to help\"?\nYou're not going to be of any help to us<0"
         },
         {
           "speaker": 4,
           "location": 0,
+          "portrait": 4,
           "speech": "Go home kid, go on, get.<0"
         },
         {
           "speaker": 6,
           "location": 1,
+          "portrait": 6,
           "speech": "K-kid?! You're the kid!\nYou don't have to tell me to leave, I'm leaving!<0"
         },
         {
           "speaker": 6,
           "location": 1,
+          "portrait": 6,
           "speech": "Who would want to come to a place like this on purpose you jerk!<1"
         }
       ]
@@ -276,16 +317,19 @@
         {
           "speaker": 0,
           "location": 0,
+          "portrait": 10,
           "speech": "Just making sure we can talk to each other<0"
         },
         {
           "speaker": 1,
           "location": 1,
+          "portrait": 11,
           "speech": "I'm talking fine, I think.<0"
         },
         {
           "speaker": 0,
           "location": 0,
+          "portrait": 10,
           "speech": "Yes, yes. Very good.<1"
         }
       ]
@@ -296,21 +340,25 @@
         {
           "speaker": 0,
           "location": 0,
+          "portrait": 10,
           "speech": "On a dillema<0"
         },
         {
           "speaker": 4,
           "location": 1,
+          "portrait": 8,
           "speech": "Between what I need and what I just want.<0"
         },
         {
           "speaker": 0,
           "location": 0,
+          "portrait": 10,
           "speech": "Between your thighs I feel a sensation.<0"
         },
         {
           "speaker": 5,
           "location": 1,
+          "portrait": 9,
           "speech": "How long can I resist the temptation?<1"
         }
       ]

@@ -109,7 +109,8 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			{
 				newUnit->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
 			}
-			if (unit.find("SpecialWeapons") != unit.end()) {
+			if (unit.find("SpecialWeapons") != unit.end()) 
+			{
 				auto specialWeapons = unit["SpecialWeapons"];
 				for (const auto& weapon : specialWeapons)
 				{

@@ -135,9 +135,10 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 void InfoDisplays::PlayerUnitDied(Unit* unit)
 {
 	textManager.textLines.clear();
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage, unit->portraitID });
 
 	testText.position = glm::vec2(62, 455);
+	testText.portraitPosition = glm::vec2(176, 96);
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
@@ -167,7 +168,7 @@ void InfoDisplays::PlayerLost(int messageID)
 			auto dialogues = text["dialogue"];
 			for (const auto& dialogue : dialogues)
 			{
-				textManager.textLines.push_back(SpeakerText{ nullptr, dialogue["location"], dialogue["speech"] });
+				textManager.textLines.push_back(SpeakerText{ nullptr, dialogue["location"], dialogue["speech"], 1 }); //This should vary on the level/loss condition
 			}
 		}
 	}
@@ -532,7 +533,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	{
 		if (textManager.active)
 		{
-			textManager.Draw(Text);
+			textManager.Draw(Text, renderer, camera);
 		}
 		break;
 	}

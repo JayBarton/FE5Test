@@ -1338,7 +1338,7 @@ void Draw()
 			{
 
 			}
-			//	else
+		//	else
 			{
 				DrawUnitRanges();
 
@@ -1383,14 +1383,6 @@ void Draw()
 		}
 		else if (sceneManager.PlayingScene())
 		{
-			if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
-			{
-				sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text);
-			}
-			else if (displays.state != NONE)
-			{
-				displays.Draw(&camera, Text, shapeVAO, Renderer);
-			}
 			ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
 			auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
@@ -1425,6 +1417,14 @@ void Draw()
 			}
 			testBatch.end();
 			testBatch.renderBatch();
+			if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+			{
+				sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
+			}
+			else if (displays.state != NONE)
+			{
+				displays.Draw(&camera, Text, shapeVAO, Renderer);
+			}
 		}
 		else if (!fullScreenMenu && !minimap.show)
 		{

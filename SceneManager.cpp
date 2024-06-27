@@ -28,15 +28,19 @@ Scene::~Scene()
 void Scene::init()
 {
 	playingScene = true;
-	testText.position = glm::vec2(100.0f, 100.0f);
+	testText.position = glm::vec2(62, 48);
 	testText.displayedPosition = testText.position;
+	testText.portraitPosition = glm::vec2(32, 96);
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
+	testText.mirrorPortrait = true;
 
-	testText2.position = glm::vec2(100.0f, 400.0f);
+	testText2.portraitPosition = glm::vec2(176, 96);
+	testText2.position = glm::vec2(62, 455);
 	testText2.charsPerLine = 55;
 	testText2.nextIndex = 55;
 	testText2.displayedPosition = testText2.position;
+	testText2.mirrorPortrait = false;
 	owner->currentScene = ID;
 }
 
@@ -202,6 +206,12 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					int ID = text["ID"];
 					if (ID == action->ID)
 					{
+						testText.portraitID = -1;
+						testText2.portraitID = -1;
+						if (text.find("Start_Portraits") != text.end())
+						{
+							testText2.portraitID = text["Start_Portraits"][0];
+						}
 						auto dialogues = text["dialogue"];
 						for (const auto& dialogue : dialogues)
 						{
@@ -215,7 +225,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 								speaker = &sceneUnits[dialogue["speaker"]]->sprite;
 							}
 
-							textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"] });
+							textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"], dialogue["portrait"]}); // gotta figure this out
 						}
 						break;
 					}
