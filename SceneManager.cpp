@@ -34,6 +34,7 @@ void Scene::init()
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
 	testText.mirrorPortrait = true;
+	testText.fadeIn = true;
 
 	testText2.portraitPosition = glm::vec2(176, 96);
 	testText2.position = glm::vec2(62, 455);
@@ -41,6 +42,7 @@ void Scene::init()
 	testText2.nextIndex = 55;
 	testText2.displayedPosition = testText2.position;
 	testText2.mirrorPortrait = false;
+	testText2.fadeIn = true;
 	owner->currentScene = ID;
 }
 

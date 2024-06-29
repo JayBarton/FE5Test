@@ -990,10 +990,6 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 						currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
 					}
 				}
-				if (i == 10)
-				{
-					int fuckyou = 2;
-				}
 				int activationType = 0;
 				map >> activationType;
 				if (activationType == 0)

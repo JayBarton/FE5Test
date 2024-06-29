@@ -21,7 +21,12 @@ struct TextObject
 	//The currently displayed text
 	std::string displayedText;
 
+	float fadeValue = 0.0f;
+
 	bool mirrorPortrait = false;
+	bool showPortrait = false;
+	bool fadeIn = false;
+	bool fadeOut = false;
 
 	TextObject();
 
@@ -36,10 +41,17 @@ struct SpeakerText
 	int portraitID;
 };
 
+enum TextObjectState
+{
+	WAITING_ON_INPUT,
+	REMOVING_TEXT,
+	PORTRAIT_FADE_IN,
+	READING_TEXT,
+	PORTRAIT_FADE_OUT
+};
+
 struct TextObjectManager
 {
-	bool waitingOnInput = false;
-	bool removingText = false;
 	bool active = false;
 	bool talkActivated = false;
 	bool showAnyway = false;
@@ -60,9 +72,13 @@ struct TextObjectManager
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;
 
+	TextObjectState state;
+
 	TextObjectManager();
 	void init(int line = 0);
 	void Update(float deltaTime, class InputManager& inputManager);
+	void ReadText(InputManager& inputManager, float deltaTime);
+	void GoToNextLine();
 	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
 	bool ShowText();
 };

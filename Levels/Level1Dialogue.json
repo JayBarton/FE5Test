@@ -37,6 +37,7 @@
     },
     {
       "ID": 3,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": 2,
@@ -84,6 +85,7 @@
     },
     {
       "ID": 4,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -113,6 +115,7 @@
     },
     {
       "ID": 5,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -142,6 +145,7 @@
     },
     {
       "ID": 6,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -153,6 +157,7 @@
     },
     {
       "ID": 7,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -191,6 +196,7 @@
     },
     {
       "ID": 8,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -202,6 +208,7 @@
     },
     {
       "ID": 9,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -213,6 +220,7 @@
     },
     {
       "ID": 10,
+      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -272,6 +280,7 @@
     },
     {
       "ID": 11,
+      "Start_Portraits": [ 6 ],
       "dialogue": [
         {
           "speaker": 4,
@@ -313,6 +322,7 @@
     },
     {
       "ID": 12,
+      "Start_Portraits": [ 11 ],
       "dialogue": [
         {
           "speaker": 0,

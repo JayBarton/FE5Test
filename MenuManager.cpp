@@ -3363,6 +3363,7 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
+	testText.showPortrait = true;
 
 	textManager.textObjects.clear();
 	textManager.textObjects.push_back(testText);
