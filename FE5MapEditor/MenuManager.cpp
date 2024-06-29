@@ -162,6 +162,12 @@ void MenuManager::SelectOptionMenu(int action, std::vector<SceneAction*>& sceneA
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
+void MenuManager::OpenRequirementsMenu(std::vector<std::pair<int, int>>& requiredUnits)
+{
+	Menu* newMenu = new RequireUnitsMenu(text, camera, shapeVAO, requiredUnits);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
 void MenuManager::PreviousMenu()
 {
 	Menu* p = menus.back();
@@ -2663,5 +2669,100 @@ void SceneUnitMoveActionMenu::CheckInput(InputManager& inputManager, float delta
 	{
 		cameraPosition += move * pathIncrement;
 		camera->setPosition(cameraPosition);
+	}
+}
+
+RequireUnitsMenu::RequireUnitsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<std::pair<int, int>>& requiredUnits) 
+	: Menu(Text, camera, shapeVAO), requiredUnits(requiredUnits)
+{
+	numberOfOptions = requiredUnits.size() + 1;
+	currentPair = std::pair<int, int>(0, 0);
+}
+
+void RequireUnitsMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(64, 37 + 16 * currentOption, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	for (int i = 0; i < requiredUnits.size(); i++)
+	{
+		if (i != currentOption)
+		{
+			text->RenderText("Required Unit: " + intToString(requiredUnits[i].first) + " GameOverID: " + intToString(requiredUnits[i].second), 200, 100 + 42 * i, 1);
+		}
+	}
+	text->RenderText("Required Unit: " + intToString(currentPair.first) + " GameOverID: " + intToString(currentPair.second), 200, 100 + 42 * currentOption, 1, glm::vec3(1.0f, 1.0f, 0.0f));
+
+}
+
+void RequireUnitsMenu::SelectOption()
+{
+	if (currentOption < requiredUnits.size())
+	{
+		requiredUnits[currentOption] = currentPair;
+		currentOption++;
+	}
+	else
+	{
+		requiredUnits.push_back(currentPair);
+		numberOfOptions++;
+		currentOption++;
+	}
+}
+
+void RequireUnitsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+
+	if (inputManager.isKeyPressed(SDLK_w))
+	{
+		currentPair.first++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_s))
+	{
+		currentPair.first--;
+		if (currentPair.first < 0)
+		{
+			currentPair.first = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_e))
+	{
+		currentPair.second++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_d))
+	{
+		currentPair.second--;
+		if (currentPair.second < 0)
+		{
+			currentPair.second = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_DELETE))
+	{
+		if (currentOption < requiredUnits.size())
+		{
+			requiredUnits.erase(requiredUnits.begin() + currentOption);
+			numberOfOptions--;
+			if (currentOption == requiredUnits.size())
+			{
+				currentOption--;
+			}
+		}
+		else
+		{
+			currentPair = std::pair<int, int>(0, 0);
+		}
 	}
 }

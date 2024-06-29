@@ -104,6 +104,7 @@ struct MenuManager
     void OpenActivationMenu(SceneObjects& sceneObject);
     void OpenTalkMenu(SceneObjects& sceneObject);
     void SelectOptionMenu(int action, std::vector<SceneAction*>& sceneActions);
+    void OpenRequirementsMenu(std::vector<std::pair<int, int>>& requiredUnits);
     void PreviousMenu();
     void ClearMenu();
 
@@ -420,4 +421,15 @@ struct RemoveSceneUnitActionMenu : public Menu
     float delayIncrement = 0.1f;
     std::vector<SceneAction*>& sceneActions;
 
+};
+
+struct RequireUnitsMenu : public Menu
+{
+    RequireUnitsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<std::pair<int, int>>& requiredUnits);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+    std::vector<std::pair<int, int>>& requiredUnits;
+    std::pair<int, int> currentPair;
 };

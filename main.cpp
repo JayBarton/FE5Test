@@ -1070,6 +1070,13 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				TileManager::tileManager.placeVendor(position.x, position.y, &vendors[i]);
 			}
 		}
+		else if (thing == "EnemyEscape")
+		{
+			int x = 0;
+			int y = 0;
+			map >> x >> y;
+			enemyManager.escapePoint = glm::ivec2(x, y);
+		}
 		else if (thing == "Requirements")
 		{
 			int requiredUnits = 0;

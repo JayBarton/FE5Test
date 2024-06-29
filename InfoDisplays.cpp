@@ -142,6 +142,7 @@ void InfoDisplays::PlayerUnitDied(Unit* unit)
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
+	testText.fadeIn = true;
 
 	textManager.textObjects.clear();
 	textManager.textObjects.push_back(testText);
@@ -172,10 +173,13 @@ void InfoDisplays::PlayerLost(int messageID)
 			}
 		}
 	}
+	//This is repeated from up above in player death, need to fix this shit
 	testText.position = glm::vec2(62, 455);
+	testText.portraitPosition = glm::vec2(176, 96);
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
 	testText.nextIndex = 55;
+	testText.fadeIn = true;
 
 	textManager.textObjects.clear();
 	textManager.textObjects.push_back(testText);

@@ -6,6 +6,7 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 4,
           "speech": "I can't believe Leif is fucking dead.<1"
         }
       ]
@@ -16,6 +17,7 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 4,
           "speech": "No...Othin...<1"
         }
       ]

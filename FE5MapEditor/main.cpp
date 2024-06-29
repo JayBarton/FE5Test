@@ -126,9 +126,13 @@ bool loading = true; //not great but it works
 
 std::vector<std::string> classNames;
 
-
 std::vector<SceneObjects*> sceneObjects;
 std::vector<VisitObjects> visitObjects;
+
+//UnitID, game over dialogueID
+std::vector<std::pair<int, int>> requiredUnits;
+
+glm::ivec2 enemyEscapePoint;
 
 SBatch Batch;
 int idleFrame = 0;
@@ -569,6 +573,8 @@ bool loadMap()
 {
     std::ifstream map(mapName);
 
+    enemyEscapePoint = glm::ivec2(-16);
+
     std::cout << "start\n";
     bool good = (bool)map;
     while (map.good())
@@ -844,6 +850,26 @@ bool loadMap()
                 vendors[position] = Vendor{ items };
             }
         }
+        else if (thing == "EnemyEscape")
+        {
+            int x = 0;
+            int y = 0;
+            map >> x >> y;
+            enemyEscapePoint = glm::ivec2(x, y);
+        }
+        else if (thing == "Requirements")
+        {
+            int units = 0;
+            map >> units;
+            requiredUnits.resize(units);
+            for (int i = 0; i < units; i++)
+            {
+                int ID;
+                int gameOverID;
+                map >> ID >> gameOverID;
+                requiredUnits[i] = std::pair<int, int>(ID, gameOverID);
+            }
+        }
     }
     map.close();
     return good;
@@ -859,6 +885,8 @@ void saveMap()
     std::string enemies = "Enemies\n";
     std::string starts = "Starts\n";
     std::string vendorString = "Vendors\n";
+    std::string eEscapeString = "EnemyEscape\n";
+    std::string requiredUnitsString = "Requirements\n";
     enemies += intToString(numberOfEnemies);
 
     starts += intToString(numberOfStarts);
@@ -871,7 +899,7 @@ void saveMap()
         }
         else if (iter.second == 3)
         {
-            starts += "\n" + objectStrings[iter.first];
+            starts += "\n" + objectStrings[iter.first]; //I probably do actually need these ordered for how I am reading them right now
         }
     }
     vendorString += intToString(vendors.size());
@@ -883,6 +911,14 @@ void saveMap()
             vendorString += " " + intToString(iter.second.items[i]);
         }
     }
+    eEscapeString += intToString(enemyEscapePoint.x) + " " + intToString(enemyEscapePoint.y);
+
+    requiredUnitsString += intToString(requiredUnits.size());
+    for (int i = 0; i < requiredUnits.size(); i++)
+    {
+        requiredUnitsString += "\n" + intToString(requiredUnits[i].first) + " " + intToString(requiredUnits[i].second);
+    }
+
     std::string scenes = "Scenes\n";
     scenes += intToString(sceneObjects.size());
     for (int i = 0; i < sceneObjects.size(); i++)
@@ -970,7 +1006,7 @@ void saveMap()
         }
     }
 
-    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n";
+    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n" << eEscapeString << "\n" << requiredUnitsString << "\n";
 
     map.close();
 
@@ -979,7 +1015,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n";
+    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n" << eEscapeString << "\n" << requiredUnitsString << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);
@@ -1038,6 +1074,10 @@ void editInput(SDL_Event& event, bool& isRunning)
                 else if (inputManager.isKeyPressed(SDLK_s))
                 {
                     MenuManager::menuManager.OpenSceneMenu(sceneObjects, visitObjects);
+                }
+                else if (inputManager.isKeyPressed(SDLK_n))
+                {
+                    MenuManager::menuManager.OpenRequirementsMenu(requiredUnits);
                 }
             }
         }
@@ -1112,6 +1152,10 @@ void switchMode()
     {
         newMode = new VendorMode(&displayObject, vendors, numberOfVendors);
     }
+    else if (editMode->type == EditMode::VENDORS)
+    {
+        newMode = new EnemyEscapeMode(&displayObject, enemyEscapePoint);
+    }
     else
     {
         newMode = new TileMode(&displayObject);
@@ -1129,6 +1173,8 @@ void Draw()
 
     if (state != State::NEW_MAP && state != State::MAIN_MENU)
     {
+        ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
         ResourceManager::GetShader("spriteTiles").Use().SetMatrix4("projection", camera.getCameraMatrix());
 
         TileManager::tileManager.showTiles(Renderer, camera);
@@ -1155,8 +1201,7 @@ void Draw()
             }
             else
             {
-                ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-                ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+                ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
                 glm::mat4 model = glm::mat4();
                 model = glm::translate(model, glm::vec3(iter.second.position, 0.0f));
 
@@ -1183,8 +1228,7 @@ void Draw()
         Batch.renderBatch();
         for (auto& iter : vendors)
         {
-            ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-            ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+            ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
             glm::mat4 model = glm::mat4();
             model = glm::translate(model, glm::vec3(iter.first, 0.0f));
 
@@ -1200,6 +1244,20 @@ void Draw()
             glm::vec2 drawPosition = glm::vec2(iter.first) + glm::vec2(4);
             drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
         }
+
+        ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
+        glm::mat4 model = glm::mat4();
+        model = glm::translate(model, glm::vec3(enemyEscapePoint, 0.0f));
+
+        model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+        ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.2f, 0.0f));
+
+        ResourceManager::GetShader("shape").SetMatrix4("model", model);
+        glBindVertexArray(shapeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
         if (MenuManager::menuManager.menus.size() > 0)
         {
             auto menu = MenuManager::menuManager.menus.back();
@@ -1218,18 +1276,14 @@ void Draw()
             }
             else if (editMode->type == EditMode::ENEMY)
             {
-                if (editMode->type == EditMode::ENEMY)
-                {
-                    Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
-                }
+                Text->RenderText("Enemy Mode", SCREEN_WIDTH * 0.5f, 0, 1);
                 Text->RenderText("Current: " + classNames[editMode->currentElement], SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
             }
             else if (editMode->type == EditMode::STARTS)
             {
                 Text->RenderText("Starts Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
 
-                ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-                ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+                ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
                 glm::mat4 model = glm::mat4();
                 model = glm::translate(model, glm::vec3(displayObject.position, 0.0f));
 
@@ -1250,14 +1304,33 @@ void Draw()
             {
                 Text->RenderText("Vendors Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
 
-                ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-                ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
+                ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
                 glm::mat4 model = glm::mat4();
                 model = glm::translate(model, glm::vec3(displayObject.position, 0.0f));
 
                 model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
                 ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
+
+                ResourceManager::GetShader("shape").SetMatrix4("model", model);
+                glBindVertexArray(shapeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+
+                glm::vec2 drawPosition = glm::vec2(displayObject.position) + glm::vec2(4);
+                drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+            }
+            else if (editMode->type == EditMode::ENEMY_ESCAPE)
+            {
+                Text->RenderText("Enemy Escape Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+
+                ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
+                glm::mat4 model = glm::mat4();
+                model = glm::translate(model, glm::vec3(displayObject.position, 0.0f));
+
+                model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+                ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.2f, 0.0f));
 
                 ResourceManager::GetShader("shape").SetMatrix4("model", model);
                 glBindVertexArray(shapeVAO);

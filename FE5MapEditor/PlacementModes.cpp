@@ -16,12 +16,6 @@ void EnemyMode::leftClick(int x, int y)
     }
 }
 
-/*TileMode::TileMode(Object* obj) : EditMode(obj)
-{
-	maxElement = 5;
-	type = TILE;
-}*/
-
 void VendorMode::leftClick(int x, int y)
 {
     glm::vec2 mousePosition(x, y);
@@ -31,4 +25,9 @@ void VendorMode::leftClick(int x, int y)
         vendors[mousePosition] = Vendor{ std::vector<int>() };
     }
     MenuManager::menuManager.AddVendorMenu(this, &vendors[mousePosition]);
+}
+
+void EnemyEscapeMode::leftClick(int x, int y)
+{
+    position = glm::ivec2(x, y);
 }

@@ -186,7 +186,6 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         }
     }
 
-    escapePoint = glm::ivec2(336, 192);
     //  enemies[14]->currentHP = 14;
     //  enemies[0]->move = 6;
     //  enemies[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
