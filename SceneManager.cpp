@@ -226,8 +226,15 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 							{
 								speaker = &sceneUnits[dialogue["speaker"]]->sprite;
 							}
-
-							textManager.textLines.push_back(SpeakerText{ speaker, dialogue["location"], dialogue["speech"], dialogue["portrait"]}); // gotta figure this out
+							int BG = -1;
+							if (dialogue.find("BG") != dialogue.end())
+							{
+								BG = dialogue["BG"];
+							}
+							SpeakerText text{ speaker, dialogue["location"], dialogue["speech"], dialogue["portrait"] };
+							text.BG = BG;
+							textManager.textLines.push_back(text); // gotta figure this out
+						
 						}
 						break;
 					}
@@ -390,6 +397,11 @@ VisitActivation::VisitActivation(Scene* owner, int type) : Activation(owner, typ
 }
 
 IntroActivation::IntroActivation(Scene* owner, int type) : Activation(owner, type)
+{
+
+}
+
+EndingActivation::EndingActivation(Scene* owner, int type) : Activation(owner, type)
 {
 
 }

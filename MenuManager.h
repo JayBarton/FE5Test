@@ -62,6 +62,7 @@ struct UnitOptionsMenu : public Menu
 	const static int TALK = 11;
 	const static int VISIT = 12;
 	const static int VENDOR = 13;
+	const static int SEIZE = 14;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
@@ -82,6 +83,7 @@ struct UnitOptionsMenu : public Menu
 	bool canTalk = false;
 	bool canVisit = false;
 	bool canBuy = false;
+	bool canSeize = false;
 
 	bool heldFriendly = false;
 	bool heldEnemy = false;
@@ -480,6 +482,7 @@ struct MenuManager
 	std::vector<glm::vec4> itemIconUVs;
 
 	Subject<int> subject;
+	Subject<> endingSubject;
 
 	std::unordered_map<int, std::string> profcienciesMap;
 

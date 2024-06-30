@@ -31,3 +31,8 @@ void EnemyEscapeMode::leftClick(int x, int y)
 {
     position = glm::ivec2(x, y);
 }
+
+void SeizeMode::leftClick(int x, int y)
+{
+    position = glm::ivec2(x, y);
+}

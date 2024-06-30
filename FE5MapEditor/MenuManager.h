@@ -47,6 +47,8 @@ struct SceneObjects
     std::vector<class SceneAction*> actions;
     Activation* activation = nullptr;
     bool repeat = false;
+    //I am thinking if I add the ability to delete scenes, I should have some sort of warning that the scene is in use by a visit or something
+    bool inUse = false;
     ~SceneObjects()
     {
         for (int i = 0; i < actions.size(); i++)
@@ -283,6 +285,7 @@ struct SceneActivationMenu : public Menu
     const static int ENEMY_TURN_END = 1;
     const static int VISIT = 2;
     const static int INTRO = 3;
+    const static int ENDING = 4;
     SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject);
     virtual void Draw() override;
     virtual void SelectOption() override;

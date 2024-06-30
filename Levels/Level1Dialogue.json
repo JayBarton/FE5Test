@@ -392,6 +392,24 @@
           "speech": "Another<1"
         }
       ]
+    },
+    {
+      "ID": 16,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 0,
+          "BG": 1,
+          "speech": "This is the ending dialogue.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 4,
+          "speech": "Wow, a unique background? That's crazy man.<1"
+        }
+      ]
     }
   ]
 }

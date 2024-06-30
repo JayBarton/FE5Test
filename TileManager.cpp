@@ -195,6 +195,11 @@ void TileManager::placeVendor(int x, int y, Vendor* vendor)
     getTile(x, y)->vendor = vendor;
 }
 
+void TileManager::placeSeizePoint(int x, int y)
+{
+    getTile(x, y)->seizePoint = true;
+}
+
 bool TileManager::outOfBounds(int x, int y)
 {
     bool out = false;

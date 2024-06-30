@@ -97,6 +97,11 @@ std::unordered_map<int, Unit*> sceneUnits;
 std::vector<VisitObject> visitObjects;
 std::vector<Vendor> vendors;
 
+glm::ivec2 seizePoint;
+int endingID = -1;
+bool endingGame = false;
+bool finished = false;
+
 //unitID, dialogueID
 std::unordered_map<int, int> gameOverDialogues;
 
@@ -345,6 +350,17 @@ struct ItemEvents : public Observer<Unit*, int>
 		displays.StartUse(unit, index, &camera);
 	}
 };
+
+struct EndingEvents : public Observer<>
+{
+	virtual void onNotify()
+	{
+		//Probably want a delay before this...
+		endingGame = true;
+		sceneManager.scenes[endingID]->activation->CheckActivation();
+	}
+};
+
 void loadMap(std::string nextMap, UnitEvents* unitEvents);
 
 std::mt19937 gen;
@@ -442,6 +458,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovermain.png", "GameOver1");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovertext.png", "GameOver2");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Portraits.png", "Portraits");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/EndingBackground.png", "EndingBG");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -465,6 +482,7 @@ int main(int argc, char** argv)
 	DeathEvent* deathEvents = new DeathEvent();
 	PostBattleEvents* postBattleEvents = new PostBattleEvents();
 	ItemEvents* itemEvents = new ItemEvents();
+	EndingEvents* endingEvents = new EndingEvents();
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
@@ -478,6 +496,7 @@ int main(int argc, char** argv)
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
+	MenuManager::menuManager.endingSubject.addObserver(endingEvents);
 	enemyManager.subject.addObserver(turnEvents);
 	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;
@@ -583,8 +602,19 @@ int main(int argc, char** argv)
 				showCarry = !showCarry;
 			}
 		}
-
-		if (MenuManager::menuManager.menus.size() > 0)
+		if (endingGame)
+		{
+			if (sceneManager.PlayingScene())
+			{
+				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
+			}
+			else
+			{
+				finished = true;
+				isRunning = false;
+			}
+		}
+		else if (MenuManager::menuManager.menus.size() > 0)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 		}
@@ -788,6 +818,7 @@ int main(int argc, char** argv)
 	delete postBattleEvents;
 	delete deathEvents;
 	delete itemEvents;
+	delete endingEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();
@@ -1022,6 +1053,11 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 					intro = i;
 					currentObject->activation = new IntroActivation(currentObject, activationType);
 				}
+				else if (activationType == 4)
+				{
+					currentObject->activation = new EndingActivation(currentObject, activationType);
+					endingID = i;
+				}
 
 				map >> currentObject->repeat;
 			}
@@ -1087,6 +1123,14 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				map >> ID;
 				map >> gameOverDialogues[ID];
 			}
+		}
+		else if (thing == "Seize")
+		{
+			int x = 0;
+			int y = 0;
+			map >> x >> y;
+			seizePoint = glm::vec2(x, y);
+			TileManager::tileManager.placeSeizePoint(seizePoint.x, seizePoint.y);
 		}
 	}
 	if (intro >= 0)
@@ -1323,6 +1367,19 @@ void Draw()
 	{
 		gameOverMode.DrawBG(Renderer, camera);
 	}
+	else if (finished)
+	{
+		//This sucks man I just need to stop drawing once the game is over
+		//Need to rewrite so much of this it's a complete mess
+	}
+	else if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->textManager.showBG)
+	{
+		if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+		{
+			sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
+		}
+
+	}
 	else
 	{
 		if (MenuManager::menuManager.menus.size() > 0)
@@ -1376,6 +1433,10 @@ void Draw()
 						Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 						Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 					}
+				}
+				if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->textManager.state == FADE_GAME_OUT)
+				{
+					sceneManager.scenes[sceneManager.currentScene]->textManager.DrawFade(&camera, shapeVAO);
 				}
 			}
 		}

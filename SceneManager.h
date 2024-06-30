@@ -141,6 +141,19 @@ struct IntroActivation : public Activation
 		owner->init();
 	}
 };
+//I understand this and intro are identical. Not sure if I may need different data for the two in the future, so leave em like this for now
+//In the future I can imagine a level that has multiple seize points.
+//Currently, the level only has one, which will automatically trigger the ending scene,
+//If I wanted to expand and have a level with multiple scene points, I would probably need some extra data for what capturing a seize point does
+struct EndingActivation : public Activation
+{
+	EndingActivation(Scene* owner, int type);
+	virtual void CheckActivation() override
+	{
+		owner->textManager.talkActivated = true;
+		owner->init();
+	}
+};
 
 
 struct RoundEvents : public Observer<int>

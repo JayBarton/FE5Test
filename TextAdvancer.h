@@ -30,7 +30,7 @@ struct TextObject
 
 	TextObject();
 
-	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
+	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera, bool canShow);
 };
 
 struct SpeakerText
@@ -39,6 +39,7 @@ struct SpeakerText
 	int location;
 	std::string text;
 	int portraitID;
+	int BG = 0;
 };
 
 enum TextObjectState
@@ -47,7 +48,10 @@ enum TextObjectState
 	REMOVING_TEXT,
 	PORTRAIT_FADE_IN,
 	READING_TEXT,
-	PORTRAIT_FADE_OUT
+	PORTRAIT_FADE_OUT,
+	FADE_GAME_OUT,
+	FADE_BG_IN,
+	FADE_BG_OUT
 };
 
 struct TextObjectManager
@@ -55,6 +59,7 @@ struct TextObjectManager
 	bool active = false;
 	bool talkActivated = false;
 	bool showAnyway = false;
+	bool showBG = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -67,7 +72,10 @@ struct TextObjectManager
 
 	int frame = 0;
 	int frameDirection = 1;
+	int BG = 0;
 	float animTime = 0.0f;
+	float BGAlpha = 0.0f;
+	float blackAlpha = 0.0f;
 
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;
@@ -80,5 +88,6 @@ struct TextObjectManager
 	void ReadText(InputManager& inputManager, float deltaTime);
 	void GoToNextLine();
 	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
+	void DrawFade(Camera* camera, int shapeVAO);
 	bool ShowText();
 };

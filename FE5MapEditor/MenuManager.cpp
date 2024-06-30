@@ -1244,6 +1244,10 @@ void SceneActionMenu::Draw()
 		{
 			activationModeString += "Intro";
 		}
+		else if (sceneObject.activation->type == 4)
+		{
+			activationModeString += "Ending";
+		}
 	}
 
 	model = glm::mat4();
@@ -1517,29 +1521,34 @@ void SceneActionMenu::CancelOption()
 
 SceneActivationMenu::SceneActivationMenu(TextRenderer* Text, Camera* camera, int shapeVAO, SceneObjects& sceneObject) : Menu(Text, camera, shapeVAO), sceneObject(sceneObject)
 {
-	numberOfOptions = 4;
+	numberOfOptions = 5;
 
 }
 
 void SceneActivationMenu::Draw()
 {
+	int xPosition = 100;
+	int yPosition = 100;
 	text->RenderText("Activation Menu", 100, 50, 1);
 	if (currentOption == TALK)
 	{
-		text->RenderText("Talk", 100, 100, 1);
-
+		text->RenderText("Talk", xPosition, yPosition, 1);
 	}
 	else if (currentOption == ENEMY_TURN_END)
 	{
-		text->RenderText("Enemy Turn End", 100, 100, 1);
+		text->RenderText("Enemy Turn End", xPosition, yPosition, 1);
 	}
 	else if (currentOption == VISIT)
 	{
-		text->RenderText("Visit", 100, 100, 1);
+		text->RenderText("Visit", xPosition, yPosition, 1);
+	}
+	else if(currentOption == INTRO)
+	{
+		text->RenderText("Intro", xPosition, yPosition, 1);
 	}
 	else
 	{
-		text->RenderText("Intro", 100, 100, 1);
+		text->RenderText("Ending", xPosition, yPosition, 1);
 	}
 }
 
@@ -1559,9 +1568,14 @@ void SceneActivationMenu::SelectOption()
 		sceneObject.activation = new Activation(VISIT);
 		CancelOption();
 	}
-	else
+	else if (currentOption == INTRO)
 	{
 		sceneObject.activation = new Activation(INTRO);
+		CancelOption();
+	}
+	else
+	{
+		sceneObject.activation = new Activation(ENDING);
 		CancelOption();
 	}
 }

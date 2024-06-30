@@ -53,6 +53,7 @@ struct EditMode
     const static int STARTS = 3;
     const static int VENDORS = 4;
     const static int ENEMY_ESCAPE = 5;
+    const static int SEIZE = 6;
     int currentElement;
     int maxElement;
     //The current edit mode
@@ -305,7 +306,6 @@ struct VendorMode : public EditMode
         }
     }
     virtual void leftClick(int x, int y);
-
 };
 
 struct EnemyEscapeMode : public EditMode
@@ -318,6 +318,18 @@ struct EnemyEscapeMode : public EditMode
     //In the future, it is possible and quite likely I will have more than one enemy escape point. 
     // In that case, I would probably use a map like I do for the other placement modes. 
     // For this project however, I only have the one.
+    glm::ivec2& position;
+
+    virtual void leftClick(int x, int y);
+};
+
+struct SeizeMode : public EditMode
+{
+    SeizeMode(Object* obj, glm::ivec2& position) : EditMode(obj), position(position)
+    {
+        type = SEIZE;
+    }
+
     glm::ivec2& position;
 
     virtual void leftClick(int x, int y);

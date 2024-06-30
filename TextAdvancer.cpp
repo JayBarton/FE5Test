@@ -19,11 +19,11 @@ TextObject::TextObject()
 	displayedText = "";
 }
 
-void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera)
+void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow)
 {
 	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
 
-	if (showPortrait)
+	if (canShow && showPortrait)
 	{
 		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
 		auto portraitUVs = portraitTexture.GetUVs(48, 64);
@@ -58,7 +58,15 @@ void TextObjectManager::init(int line/* = 0 */)
 	active = false;
 	if (textObjects[focusedObject].fadeIn == true)
 	{
-		state = PORTRAIT_FADE_IN;
+		if (thisLine.BG > 0)
+		{
+			BG = thisLine.BG;
+			state = FADE_GAME_OUT;
+		}
+		else
+		{
+			state = PORTRAIT_FADE_IN;
+		}
 		textObjects[focusedObject].showPortrait = true;
 	}
 	else
@@ -155,7 +163,15 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 			focusedObject++;
 			if (focusedObject >= textObjects.size())
 			{
-				active = false;
+				//I'm gonna be honest I have no idea what the fuck this is doing
+				if (showBG)
+				{
+					state = FADE_BG_OUT;
+				}
+				else
+				{
+					active = false;
+				}
 				if (talkActivated)
 				{
 					talkActivated = false;
@@ -169,11 +185,18 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 			{
 				if (textObjects[focusedObject].portraitID >= 0)
 				{
-					textObjects[focusedObject].showPortrait = true;
+					textObjects[focusedObject].showPortrait = false;
 				}
 				else
 				{
-					active = false;
+					if (showBG)
+					{
+						state = FADE_BG_OUT;
+					}
+					else
+					{
+						active = false;
+					}
 					if (talkActivated)
 					{
 						talkActivated = false;
@@ -185,9 +208,33 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 				}
 			}
 		}
-
-		break;
 	}
+		break;
+	case FADE_GAME_OUT:
+		blackAlpha += deltaTime;
+		if (blackAlpha >= 1)
+		{
+			blackAlpha = 1;
+			state = FADE_BG_IN;
+			showBG = true;
+		}
+		break;
+	case FADE_BG_IN:
+		BGAlpha += deltaTime;
+		if (BGAlpha >= 1)
+		{
+			BGAlpha = 1;
+			state = PORTRAIT_FADE_IN;
+		}
+		break;
+	case FADE_BG_OUT:
+		BGAlpha -= deltaTime;
+		if (BGAlpha <= 0)
+		{
+			BGAlpha = 0;
+			active = false;
+		}
+		break;
 	}
 }
 
@@ -302,15 +349,50 @@ void TextObjectManager::GoToNextLine()
 		textObjects[focusedObject].index = 0;
 		textObjects[focusedObject].portraitID = textLines[currentLine].portraitID;
 
+		//Fix this later
+		if (textLines[currentLine].BG >= 0)
+		{
+			if (BG != textLines[currentLine].BG)
+			{
+				BG = textLines[currentLine].BG;
+				//showBG = !showBG;
+			}
+		}
 	}
 }
 
 void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera)
 {
+	if (showBG)
+	{
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		Renderer->setUVs();
+		Texture2D displayTexture = ResourceManager::GetTexture("EndingBG");
+		Renderer->DrawSprite(displayTexture, glm::vec2(0, 72), 0.0f, glm::vec2(256, 88), glm::vec4(1, 1, 1, BGAlpha));
+	}
+
+	bool showPortraits = (state != FADE_BG_IN && state != FADE_GAME_OUT && state != FADE_BG_OUT);
+
 	for (int i = 0; i < textObjects.size(); i++)
 	{
-		textObjects[i].Draw(textRenderer, Renderer, camera);
+		textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits);
 	}
+}
+
+void TextObjectManager::DrawFade(Camera* camera, int shapeVAO)
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", blackAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 }
 
 bool TextObjectManager::ShowText()

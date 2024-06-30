@@ -38,6 +38,7 @@ struct Tile
     Unit* occupiedBy = nullptr;
     VisitObject* visitSpot = nullptr;
     class Vendor* vendor = nullptr;
+    bool seizePoint = false;
 };
 
 #endif // TILE_H

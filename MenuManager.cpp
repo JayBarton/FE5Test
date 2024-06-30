@@ -238,6 +238,11 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
+	case SEIZE:
+		//Message
+		MenuManager::menuManager.endingSubject.notify();
+		ClearMenu();
+		break;
 	//Wait
 	default:
 		cursor->Wait();
@@ -286,6 +291,11 @@ void UnitOptionsMenu::Draw()
 	glBindVertexArray(0);
 	//Just a little test with new line
 	std::string commands = "";
+	if (canSeize)
+	{
+		text->RenderText("Seize", xText, yOffset, 1);
+		yOffset += 30;
+	}
 	if (canTalk)
 	{
 		text->RenderText("Talk", xText, yOffset, 1);
@@ -371,6 +381,7 @@ void UnitOptionsMenu::GetOptions()
 	canTransfer = false;
 	canVisit = false;
 	canBuy = false;
+	canSeize = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
 	auto playerUnit = cursor->selectedUnit;
@@ -378,6 +389,12 @@ void UnitOptionsMenu::GetOptions()
 
 	unitsInRange = playerUnit->inRangeUnits(1);
 	unitsInCaptureRange.clear();
+	//Only Leif can seize
+	if (playerUnit->ID == 0 && TileManager::tileManager.getTile(playerPosition.x, playerPosition.y)->seizePoint)
+	{
+		canSeize = true;
+		optionsVector.push_back(SEIZE);
+	}
 	if (unitsInRange.size() > 0)
 	{
 		canAttack = true;

@@ -133,6 +133,7 @@ std::vector<VisitObjects> visitObjects;
 std::vector<std::pair<int, int>> requiredUnits;
 
 glm::ivec2 enemyEscapePoint;
+glm::ivec2 seizePoint;
 
 SBatch Batch;
 int idleFrame = 0;
@@ -574,6 +575,7 @@ bool loadMap()
     std::ifstream map(mapName);
 
     enemyEscapePoint = glm::ivec2(-16);
+    seizePoint = glm::ivec2(-16);
 
     std::cout << "start\n";
     bool good = (bool)map;
@@ -808,6 +810,10 @@ bool loadMap()
                 {
                     currentObject->activation = new Activation(3);
                 }
+                else
+                {
+                    currentObject->activation = new Activation(4);
+                }
                 map >> currentObject->repeat;
             }
         }
@@ -827,6 +833,7 @@ bool loadMap()
                     int sceneID = 0;
                     map >> unitID >> sceneID;
                     visitObjects[i].sceneMap[unitID] = sceneID;
+                    sceneObjects[sceneID]->inUse = true;
                 }
             }
         }
@@ -870,6 +877,13 @@ bool loadMap()
                 requiredUnits[i] = std::pair<int, int>(ID, gameOverID);
             }
         }
+        else if (thing == "Seize")
+        {
+            int x = 0;
+            int y = 0;
+            map >> x >> y;
+            seizePoint = glm::ivec2(x, y);
+        }
     }
     map.close();
     return good;
@@ -887,6 +901,7 @@ void saveMap()
     std::string vendorString = "Vendors\n";
     std::string eEscapeString = "EnemyEscape\n";
     std::string requiredUnitsString = "Requirements\n";
+    std::string seizeString = "Seize\n";
     enemies += intToString(numberOfEnemies);
 
     starts += intToString(numberOfStarts);
@@ -912,7 +927,7 @@ void saveMap()
         }
     }
     eEscapeString += intToString(enemyEscapePoint.x) + " " + intToString(enemyEscapePoint.y);
-
+    seizeString += intToString(seizePoint.x) + " " + intToString(seizePoint.y);
     requiredUnitsString += intToString(requiredUnits.size());
     for (int i = 0; i < requiredUnits.size(); i++)
     {
@@ -1006,7 +1021,7 @@ void saveMap()
         }
     }
 
-    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n" << eEscapeString << "\n" << requiredUnitsString << "\n";
+    map << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n" << eEscapeString << "\n" << requiredUnitsString << "\n" << seizeString << "\n";
 
     map.close();
 
@@ -1015,7 +1030,7 @@ void saveMap()
     mapP << "Level\n";
     mapP << TileManager::tileManager.saveTiles();
     mapP << "\n";
-    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n" << eEscapeString << "\n" << requiredUnitsString << "\n";
+    mapP << enemies << "\n" << starts << "\n" << scenes << "\n" << visit << "\n" << vendorString << "\n" << eEscapeString << "\n" << requiredUnitsString << "\n" << seizeString << "\n";
     mapP.close();
     //save to debug folder
    /* std::ofstream mapD("E:\\Damon\\dev stuff\\FE5Test\\bin\\Debug/" + mapName);
@@ -1156,6 +1171,10 @@ void switchMode()
     {
         newMode = new EnemyEscapeMode(&displayObject, enemyEscapePoint);
     }
+    else if (editMode->type == EditMode::ENEMY_ESCAPE)
+    {
+        newMode = new SeizeMode(&displayObject, seizePoint);
+    }
     else
     {
         newMode = new TileMode(&displayObject);
@@ -1258,6 +1277,18 @@ void Draw()
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
 
+        model = glm::mat4();
+        model = glm::translate(model, glm::vec3(seizePoint, 0.0f));
+
+        model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+        ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 1.0f));
+
+        ResourceManager::GetShader("shape").SetMatrix4("model", model);
+        glBindVertexArray(shapeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
         if (MenuManager::menuManager.menus.size() > 0)
         {
             auto menu = MenuManager::menuManager.menus.back();
@@ -1331,6 +1362,26 @@ void Draw()
                 model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
                 ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.2f, 0.0f));
+
+                ResourceManager::GetShader("shape").SetMatrix4("model", model);
+                glBindVertexArray(shapeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+
+                glm::vec2 drawPosition = glm::vec2(displayObject.position) + glm::vec2(4);
+                drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+            }
+            else if (editMode->type == EditMode::SEIZE)
+            {
+                Text->RenderText("Seize Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
+
+                ResourceManager::GetShader("shape").Use().SetFloat("alpha", 0.5f);
+                glm::mat4 model = glm::mat4();
+                model = glm::translate(model, glm::vec3(displayObject.position, 0.0f));
+
+                model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+                ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 1.0f));
 
                 ResourceManager::GetShader("shape").SetMatrix4("model", model);
                 glBindVertexArray(shapeVAO);

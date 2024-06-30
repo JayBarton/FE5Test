@@ -79,6 +79,8 @@ public :
     void placeVisit(int x, int y, VisitObject* visit);
     void placeVendor(int x, int y, Vendor* vendor);
 
+    void placeSeizePoint(int x, int y);
+
     //called when the program stops running, clears the tiles
     void clearTiles();
     void cleanUp();
