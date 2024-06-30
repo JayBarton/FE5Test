@@ -58,7 +58,14 @@ using json = nlohmann::json;
 #include <ctime>
 
 void init();
+void IdleAnimation(GLfloat deltaTime);
+void StartTurnChecks();
+void PlayerUpdate(GLfloat deltaTime);
+void EnemyUpdate(GLfloat deltaTime);
+void CarryIconAnimation();
 void Draw();
+void DrawUnits();
+void DrawIntroUnits();
 void DrawUnitRanges();
 void DrawText();
 void resizeWindow(int width, int height);
@@ -554,54 +561,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-		timeForFrame += deltaTime;
-		carryBlinkTime += deltaTime;
-		float animationDelay = 0.0f;
-		animationDelay = 0.27f;
-		if (timeForFrame >= animationDelay)
-		{
-			timeForFrame = 0;
-			if (idleAnimationDirection > 0)
-			{
-				if (idleFrame < 2)
-				{
-					idleFrame++;
-				}
-				else
-				{
-					idleAnimationDirection = -1;
-					idleFrame--;
-				}
-			}
-			else
-			{
-				if (idleFrame > 0)
-				{
-					idleFrame--;
-				}
-				else
-				{
-					idleAnimationDirection = 1;
-					idleFrame++;
-				}
-			}
-		}
-		if (showCarry)
-		{
-			if (carryBlinkTime >= 1.0f)
-			{
-				carryBlinkTime = 0.0f;
-				showCarry = !showCarry;
-			}
-		}
-		else
-		{
-			if (carryBlinkTime >= 0.5f)
-			{
-				carryBlinkTime = 0.0f;
-				showCarry = !showCarry;
-			}
-		}
+		IdleAnimation(deltaTime);
+		CarryIconAnimation();
 		if (endingGame)
 		{
 			if (sceneManager.PlayingScene())
@@ -671,109 +632,24 @@ int main(int argc, char** argv)
 					}
 					else if (turnTransition)
 					{
-						if (currentTurn == 0)
-						{
-							if (turnUnit >= playerManager.playerUnits.size())
-							{
-								turnUnit = 0;
-								camera.SetMove(cursor.position);
-								turnTransition = false;
-							}
-							else
-							{
-								playerManager.playerUnits[turnUnit]->StartTurn(displays, &camera);
-
-								if (displays.state == NONE)
-								{
-									turnUnit++;
-								}
-							}
-						}
-						else
-						{
-							if (turnUnit >= enemyManager.enemies.size())
-							{
-								turnUnit = 0;
-								turnTransition = false;
-							}
-							else
-							{
-								enemyManager.enemies[turnUnit]->StartTurn(displays, &camera);
-
-								if (displays.state == NONE)
-								{
-									turnUnit++;
-								}
-							}
-						}
+						StartTurnChecks();
 					}
 					//nesting getting a little deep here
 					else if (currentTurn == 0)
 					{
-						if (!minimap.show)
-						{
-							if (inputManager.isKeyPressed(SDLK_m))
-							{
-								minimap.show = true;
-							}
-							//Oh man I hate this
-							if (!camera.moving)
-							{
-								cursor.CheckInput(inputManager, deltaTime, camera);
-							}
-							if (!camera.moving)
-							{
-								camera.Follow(cursor.position);
-							}
-							else
-							{
-								camera.MoveTo(deltaTime, 5.0f);
-							}
-						}
-						else
-						{
-							if (inputManager.isKeyPressed(SDLK_m) || inputManager.isKeyPressed(SDLK_z))
-							{
-								minimap.show = false;
-								cursor.position = camera.getPosition();
-							}
-							else
-							{
-								minimap.Update(inputManager, deltaTime, camera);
-							}
-						}
+						PlayerUpdate(deltaTime);
 					}
 					else
 					{
-						//enemy management
-						enemyManager.Update(deltaTime, battleManager, camera, inputManager);
-						if (!camera.moving)
-						{
-							if (enemyManager.followCamera)
-							{
-								if (auto enemy = enemyManager.GetCurrentUnit())
-								{
-									camera.Follow(enemy->sprite.getPosition());
-								}
-							}
-						}
-						else
-						{
-							camera.MoveTo(deltaTime, 5.0f);
-						}
+						EnemyUpdate(deltaTime);
 					}
 				}
 			}
 		}
-		//These two update functions are basically just going to handle animations
-		//if (!sceneManager.scenes[sceneManager.currentScene]->playingScene)
-		{
-			playerManager.Update(deltaTime, idleFrame, inputManager);
-		}
-		//if (!camera.moving)
-		{
-			enemyManager.UpdateEnemies(deltaTime, idleFrame);
-		}
+
+		//Update unit animation
+		playerManager.Update(deltaTime, idleFrame, inputManager);
+		enemyManager.UpdateEnemies(deltaTime, idleFrame);
 		camera.update();
 
 		//ugh
@@ -833,6 +709,157 @@ int main(int argc, char** argv)
 	Mix_Quit();
 
 	return 0;
+}
+
+void EnemyUpdate(GLfloat deltaTime)
+{
+	//enemy management
+	enemyManager.Update(deltaTime, battleManager, camera, inputManager);
+	if (!camera.moving)
+	{
+		if (enemyManager.followCamera)
+		{
+			if (auto enemy = enemyManager.GetCurrentUnit())
+			{
+				camera.Follow(enemy->sprite.getPosition());
+			}
+		}
+	}
+	else
+	{
+		camera.MoveTo(deltaTime, 5.0f);
+	}
+}
+
+void PlayerUpdate(GLfloat deltaTime)
+{
+	if (!minimap.show)
+	{
+		if (inputManager.isKeyPressed(SDLK_m))
+		{
+			minimap.show = true;
+		}
+		//Oh man I hate this
+		if (!camera.moving)
+		{
+			cursor.CheckInput(inputManager, deltaTime, camera);
+		}
+		if (!camera.moving)
+		{
+			camera.Follow(cursor.position);
+		}
+		else
+		{
+			camera.MoveTo(deltaTime, 5.0f);
+		}
+	}
+	else
+	{
+		if (inputManager.isKeyPressed(SDLK_m) || inputManager.isKeyPressed(SDLK_z))
+		{
+			minimap.show = false;
+			cursor.position = camera.getPosition();
+		}
+		else
+		{
+			minimap.Update(inputManager, deltaTime, camera);
+		}
+	}
+}
+
+void StartTurnChecks()
+{
+	if (currentTurn == 0)
+	{
+		if (turnUnit >= playerManager.playerUnits.size())
+		{
+			turnUnit = 0;
+			camera.SetMove(cursor.position);
+			turnTransition = false;
+		}
+		else
+		{
+			playerManager.playerUnits[turnUnit]->StartTurn(displays, &camera);
+
+			if (displays.state == NONE)
+			{
+				turnUnit++;
+			}
+		}
+	}
+	else
+	{
+		if (turnUnit >= enemyManager.enemies.size())
+		{
+			turnUnit = 0;
+			turnTransition = false;
+		}
+		else
+		{
+			enemyManager.enemies[turnUnit]->StartTurn(displays, &camera);
+
+			if (displays.state == NONE)
+			{
+				turnUnit++;
+			}
+		}
+	}
+}
+
+void IdleAnimation(GLfloat deltaTime)
+{
+	timeForFrame += deltaTime;
+	carryBlinkTime += deltaTime;
+	float animationDelay = 0.0f;
+	animationDelay = 0.27f;
+	if (timeForFrame >= animationDelay)
+	{
+		timeForFrame = 0;
+		if (idleAnimationDirection > 0)
+		{
+			if (idleFrame < 2)
+			{
+				idleFrame++;
+			}
+			else
+			{
+				idleAnimationDirection = -1;
+				idleFrame--;
+			}
+		}
+		else
+		{
+			if (idleFrame > 0)
+			{
+				idleFrame--;
+			}
+			else
+			{
+				idleAnimationDirection = 1;
+				idleFrame++;
+			}
+		}
+	}
+}
+
+void CarryIconAnimation()
+{
+	if (showCarry)
+	{
+		if (carryBlinkTime >= 1.0f)
+		{
+			carryBlinkTime = 0.0f;
+			showCarry = !showCarry;
+		}
+	}
+	else
+	{
+		if (carryBlinkTime >= 0.5f)
+		{
+			carryBlinkTime = 0.0f;
+			showCarry = !showCarry;
+		}
+	}
 }
 
 void init()
@@ -1135,7 +1162,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	if (intro >= 0)
 	{
-	//	sceneManager.scenes[intro]->init();
+//		sceneManager.scenes[intro]->init();
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;
@@ -1378,7 +1405,6 @@ void Draw()
 		{
 			sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
 		}
-
 	}
 	else
 	{
@@ -1393,50 +1419,41 @@ void Draw()
 			ResourceManager::GetShader("instance").Use();
 			ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 			TileManager::tileManager.showTiles(Renderer, camera);
-			//for intro
-		//	if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->activation->type == 3)
-			{
+			DrawUnitRanges();
 
+			if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
+			{
+				displays.DrawFade(&camera, shapeVAO); //might be able to remove this from here and just handle it in textmanager...
 			}
-		//	else
+			else
 			{
-				DrawUnitRanges();
-
-				if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
+				sceneManager.scenes[sceneManager.currentScene]->textManager.DrawFade(&camera, shapeVAO);
+			}
+			//for intro
+		//	if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
+			{
+				DrawUnits();
+			}
+			if (sceneManager.PlayingScene())
+			{
+				DrawIntroUnits();
+				//Need another drawfade here
+				if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
 				{
-					displays.DrawFade(&camera, shapeVAO);
+					sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
 				}
-				ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-				Batch.begin();
-				std::vector<Sprite> carrySprites;
-				playerManager.Draw(&Batch, carrySprites);
-				enemyManager.Draw(&Batch, carrySprites);
-				Batch.end();
-				Batch.renderBatch();
-				ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-
-				if (showCarry)
+				else if (displays.state != NONE)
 				{
-					for (int i = 0; i < carrySprites.size(); i++)
-					{
-						Texture2D texture = ResourceManager::GetTexture("carryingIcons");
-						auto uvs = texture.GetUVs(8, 8);
-						Renderer->setUVs(uvs[carrySprites[i].currentFrame]);
-						Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, carrySprites[i].getSize());
-					}
+					displays.Draw(&camera, Text, shapeVAO, Renderer);
 				}
-				if (displays.state == NONE)
+			}
+			else if (displays.state == NONE)
+			{
+				if (currentTurn == 0)
 				{
-					if (currentTurn == 0)
-					{
-						Renderer->setUVs(cursor.uvs[1]);
-						Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-						Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
-					}
-				}
-				if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->textManager.state == FADE_GAME_OUT)
-				{
-					sceneManager.scenes[sceneManager.currentScene]->textManager.DrawFade(&camera, shapeVAO);
+					Renderer->setUVs(cursor.uvs[1]);
+					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 				}
 			}
 		}
@@ -1445,56 +1462,12 @@ void Draw()
 			auto menu = MenuManager::menuManager.menus.back();
 			menu->Draw();
 		}
-		else if (sceneManager.PlayingScene())
-		{
-			ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-
-			auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
-			SBatch testBatch;
-			testBatch.init();
-			testBatch.begin();
-			for (int i = 0; i < introUnits.size(); i++)
-			{
-				if (introUnits[i]->draw)
-				{
-					Texture2D texture = ResourceManager::GetTexture("sprites");
-					glm::vec3 color = introUnits[i]->sprite.color;
-					glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
-
-					glm::vec2 position = introUnits[i]->sprite.getPosition();
-
-					glm::vec2 size;
-					if (introUnits[i]->sprite.moveAnimate)
-					{
-						size = glm::vec2(32, 32);
-						position += glm::vec2(-8, -8);
-						texture = ResourceManager::GetTexture("movesprites");
-					}
-					else
-					{
-						size = introUnits[i]->sprite.getSize();
-						position += introUnits[i]->sprite.drawOffset;
-
-					}
-					testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
-				}
-			}
-			testBatch.end();
-			testBatch.renderBatch();
-			if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
-			{
-				sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
-			}
-			else if (displays.state != NONE)
-			{
-				displays.Draw(&camera, Text, shapeVAO, Renderer);
-			}
-		}
-		else if (!fullScreenMenu && !minimap.show)
+		else if (!fullScreenMenu && !minimap.show && !sceneManager.PlayingScene())
 		{
 			DrawText();
 		}
 		minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
+
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", gameOverMode.fadeOutAlpha);
 		glm::mat4 model = glm::mat4();
@@ -1509,6 +1482,67 @@ void Draw()
 		glBindVertexArray(0);
 	}
 	SDL_GL_SwapWindow(window);
+}
+
+void DrawUnits()
+{
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	Batch.begin();
+	std::vector<Sprite> carrySprites;
+	playerManager.Draw(&Batch, carrySprites);
+	enemyManager.Draw(&Batch, carrySprites);
+	Batch.end();
+	Batch.renderBatch();
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
+	if (showCarry)
+	{
+		for (int i = 0; i < carrySprites.size(); i++)
+		{
+			Texture2D texture = ResourceManager::GetTexture("carryingIcons");
+			auto uvs = texture.GetUVs(8, 8);
+			Renderer->setUVs(uvs[carrySprites[i].currentFrame]);
+			Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, carrySprites[i].getSize());
+		}
+	}
+}
+
+void DrawIntroUnits()
+{
+	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+
+	auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
+	SBatch testBatch;
+	testBatch.init();
+	testBatch.begin();
+	for (int i = 0; i < introUnits.size(); i++)
+	{
+		if (introUnits[i]->draw)
+		{
+			Texture2D texture = ResourceManager::GetTexture("sprites");
+			glm::vec3 color = introUnits[i]->sprite.color;
+			glm::vec4 colorAndAlpha = glm::vec4(color.x, color.y, color.z, introUnits[i]->sprite.alpha);
+
+			glm::vec2 position = introUnits[i]->sprite.getPosition();
+
+			glm::vec2 size;
+			if (introUnits[i]->sprite.moveAnimate)
+			{
+				size = glm::vec2(32, 32);
+				position += glm::vec2(-8, -8);
+				texture = ResourceManager::GetTexture("movesprites");
+			}
+			else
+			{
+				size = introUnits[i]->sprite.getSize();
+				position += introUnits[i]->sprite.drawOffset;
+
+			}
+			testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
+		}
+	}
+	testBatch.end();
+	testBatch.renderBatch();
 }
 
 void DrawUnitRanges()
