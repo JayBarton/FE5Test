@@ -41,7 +41,7 @@ struct Scene
 
 	TextObject testText;
 	TextObject testText2;
-	TextObjectManager textManager;
+	TextObjectManager* textManager;
 
 	//Hopefully here temporarily
 	std::vector<struct SceneUnit*> introUnits;
@@ -52,7 +52,7 @@ struct Scene
 	//The delay between a new movement action starting, since multiple enemies can move at once
 	float movementDelay = -1.0f;
 
-	Scene();
+	Scene(TextObjectManager* textManager);
 	~Scene();
 	//I imagine a lot of this will ne set up in the map editor, so this is temporary
 	void extraSetup(Subject<int>* subject);
@@ -116,7 +116,7 @@ struct TalkActivation : public Activation
 	TalkActivation(Scene* owner, int type, int talker, int listener);
 	virtual void CheckActivation() override
 	{
-		owner->textManager.talkActivated = true;
+		owner->textManager->talkActivated = true;
 		owner->init();
 		owner->activation = nullptr;
 		delete this;
@@ -128,7 +128,7 @@ struct VisitActivation : public Activation
 	VisitActivation(Scene* owner, int type);
 	virtual void CheckActivation() override
 	{
-		owner->textManager.talkActivated = true;
+		owner->textManager->talkActivated = true;
 		owner->init();
 	}
 };
@@ -150,7 +150,7 @@ struct EndingActivation : public Activation
 	EndingActivation(Scene* owner, int type);
 	virtual void CheckActivation() override
 	{
-		owner->textManager.talkActivated = true;
+		owner->textManager->talkActivated = true;
 		owner->init();
 	}
 };

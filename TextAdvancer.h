@@ -46,6 +46,7 @@ enum TextObjectState
 {
 	WAITING_ON_INPUT,
 	REMOVING_TEXT,
+	LAYER_1_FADE_IN,
 	PORTRAIT_FADE_IN,
 	READING_TEXT,
 	PORTRAIT_FADE_OUT,
@@ -60,6 +61,7 @@ struct TextObjectManager
 	bool talkActivated = false;
 	bool showAnyway = false;
 	bool showBG = false;
+	bool fadeIn = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -76,6 +78,8 @@ struct TextObjectManager
 	float animTime = 0.0f;
 	float BGAlpha = 0.0f;
 	float blackAlpha = 0.0f;
+	float layer1Alpha = 0.0f;
+	float layer1MaxAlpha = 0.35f;
 
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;
@@ -84,10 +88,11 @@ struct TextObjectManager
 
 	TextObjectManager();
 	void init(int line = 0);
-	void Update(float deltaTime, class InputManager& inputManager);
+	void Update(float deltaTime, class InputManager& inputManager, bool finished = false);
 	void ReadText(InputManager& inputManager, float deltaTime);
 	void GoToNextLine();
 	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
 	void DrawFade(Camera* camera, int shapeVAO);
+	void DrawLayer1Fade(Camera* camera, int shapeVAO);
 	bool ShowText();
 };

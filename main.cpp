@@ -100,6 +100,8 @@ EnemyManager enemyManager;
 
 InfoDisplays displays;
 
+TextObjectManager textManager;
+
 std::unordered_map<int, Unit*> sceneUnits;
 std::vector<VisitObject> visitObjects;
 std::vector<Vendor> vendors;
@@ -107,7 +109,6 @@ std::vector<Vendor> vendors;
 glm::ivec2 seizePoint;
 int endingID = -1;
 bool endingGame = false;
-bool finished = false;
 
 //unitID, dialogueID
 std::unordered_map<int, int> gameOverDialogues;
@@ -493,6 +494,7 @@ int main(int argc, char** argv)
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
+	displays.init(&textManager);
 	displays.subject.addObserver(postBattleEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 
@@ -565,14 +567,38 @@ int main(int argc, char** argv)
 		CarryIconAnimation();
 		if (endingGame)
 		{
-			if (sceneManager.PlayingScene())
+			if (textManager.active)
+			{
+				textManager.Update(deltaTime, inputManager, true);
+				if (inputManager.isKeyPressed(SDLK_SPACE))
+				{
+					textManager.active = false;
+				}
+			}
+			else if (sceneManager.PlayingScene())
 			{
 				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 			}
 			else
 			{
-				finished = true;
 				isRunning = false;
+			}
+		}
+		else if (textManager.active)
+		{
+			textManager.Update(deltaTime, inputManager);
+			if (inputManager.isKeyPressed(SDLK_SPACE))
+			{
+				textManager.active = false;
+			}
+			//Annoying dupe for now
+			if (sceneManager.PlayingScene())
+			{
+				auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
+				for (int i = 0; i < introUnits.size(); i++)
+				{
+					introUnits[i]->sprite.HandleAnimation(deltaTime, idleFrame);
+				}
 			}
 		}
 		else if (MenuManager::menuManager.menus.size() > 0)
@@ -963,7 +989,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 			{
 				int numberOfActions = 0;
 				map >> numberOfActions;
-				sceneManager.scenes[i] = new Scene();
+				sceneManager.scenes[i] = new Scene(&textManager);
 				auto currentObject = sceneManager.scenes[i];
 				currentObject->ID = i;
 				currentObject->owner = &sceneManager;
@@ -1162,7 +1188,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	if (intro >= 0)
 	{
-//		sceneManager.scenes[intro]->init();
+	//	sceneManager.scenes[intro]->init();
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;
@@ -1394,16 +1420,11 @@ void Draw()
 	{
 		gameOverMode.DrawBG(Renderer, camera);
 	}
-	else if (finished)
+	else if (textManager.showBG)
 	{
-		//This sucks man I just need to stop drawing once the game is over
-		//Need to rewrite so much of this it's a complete mess
-	}
-	else if (sceneManager.PlayingScene() && sceneManager.scenes[sceneManager.currentScene]->textManager.showBG)
-	{
-		if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
+		if (textManager.active)
 		{
-			sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
+			textManager.Draw(Text, Renderer, &camera);
 		}
 	}
 	else
@@ -1421,16 +1442,17 @@ void Draw()
 			TileManager::tileManager.showTiles(Renderer, camera);
 			DrawUnitRanges();
 
-			if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
+			textManager.DrawLayer1Fade(&camera, shapeVAO);
+		/*	if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
 			{
 				displays.DrawFade(&camera, shapeVAO); //might be able to remove this from here and just handle it in textmanager...
 			}
 			else
 			{
-				sceneManager.scenes[sceneManager.currentScene]->textManager.DrawFade(&camera, shapeVAO);
-			}
+				textManager.DrawFade(&camera, shapeVAO);
+			}*/
 			//for intro
-		//	if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
+			//if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
 			{
 				DrawUnits();
 			}
@@ -1438,11 +1460,7 @@ void Draw()
 			{
 				DrawIntroUnits();
 				//Need another drawfade here
-				if (sceneManager.scenes[sceneManager.currentScene]->textManager.active)
-				{
-					sceneManager.scenes[sceneManager.currentScene]->textManager.Draw(Text, Renderer, &camera);
-				}
-				else if (displays.state != NONE)
+				if (displays.state != NONE)
 				{
 					displays.Draw(&camera, Text, shapeVAO, Renderer);
 				}
@@ -1455,6 +1473,11 @@ void Draw()
 					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
 				}
+			}
+			if (textManager.active)
+			{
+				textManager.Draw(Text, Renderer, &camera);
+				textManager.DrawFade(&camera, shapeVAO);
 			}
 		}
 		if (drawingMenu)

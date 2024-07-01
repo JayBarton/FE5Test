@@ -60,7 +60,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		playerUnits[currentUnit] = newUnit;
 		currentUnit++;
 	}
-	playerUnits[4]->currentHP = 1;
+	playerUnits[0]->currentHP = 1;
 	playerUnits[0]->build = 2;
 	playerUnits[2]->currentHP = 1;
 

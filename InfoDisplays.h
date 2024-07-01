@@ -21,7 +21,6 @@ enum DisplayState
 	ENEMY_BUY,
 	GOT_ITEM,
 	PLAYER_DIED,
-	PLAYER_DEATH,
 	UNIT_ESCAPED,
 	STAT_BOOST
 };
@@ -77,8 +76,10 @@ struct InfoDisplays
 	float textDisplayTime = 1.0f;
 
 	//I seriously need to fix this stuff, just getting repetitive
-	TextObjectManager textManager;
+	TextObjectManager* textManager;
 	TextObject testText;
+
+	void init(TextObjectManager* textManager);
 
 	void AddExperience(Unit* unit, Unit* foe);
 	void StartUse(Unit* unit, int index, Camera* camera);

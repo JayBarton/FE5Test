@@ -16,6 +16,11 @@ using json = nlohmann::json;
 #include "Items.h"
 #include "EnemyManager.h"
 
+void InfoDisplays::init(TextObjectManager* textManager)
+{
+	this->textManager = textManager;
+}
+
 void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 {
 	if (unit->isDead)
@@ -134,8 +139,8 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 
 void InfoDisplays::PlayerUnitDied(Unit* unit)
 {
-	textManager.textLines.clear();
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage, unit->portraitID });
+	textManager->textLines.clear();
+	textManager->textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage, unit->portraitID });
 
 	testText.position = glm::vec2(62, 455);
 	testText.portraitPosition = glm::vec2(176, 96);
@@ -144,11 +149,11 @@ void InfoDisplays::PlayerUnitDied(Unit* unit)
 	testText.nextIndex = 55;
 	testText.fadeIn = true;
 
-	textManager.textObjects.clear();
-	textManager.textObjects.push_back(testText);
-	textManager.init();
-	textManager.active = true;
-	textManager.talkActivated = true;
+	textManager->textObjects.clear();
+	textManager->textObjects.push_back(testText);
+	textManager->init();
+	textManager->active = true;
+	textManager->talkActivated = true;
 	turnDisplayAlpha = 0.0f;
 
 	state = PLAYER_DIED;
@@ -156,7 +161,7 @@ void InfoDisplays::PlayerUnitDied(Unit* unit)
 
 void InfoDisplays::PlayerLost(int messageID)
 {
-	textManager.textLines.clear();
+	textManager->textLines.clear();
 
 	std::ifstream f("Levels/GameOverDialogues.json");
 	json data = json::parse(f);
@@ -169,7 +174,7 @@ void InfoDisplays::PlayerLost(int messageID)
 			auto dialogues = text["dialogue"];
 			for (const auto& dialogue : dialogues)
 			{
-				textManager.textLines.push_back(SpeakerText{ nullptr, dialogue["location"], dialogue["speech"], 1 }); //This should vary on the level/loss condition
+				textManager->textLines.push_back(SpeakerText{ nullptr, dialogue["location"], dialogue["speech"], 1 }); //This should vary on the level/loss condition
 			}
 		}
 	}
@@ -181,11 +186,11 @@ void InfoDisplays::PlayerLost(int messageID)
 	testText.nextIndex = 55;
 	testText.fadeIn = true;
 
-	textManager.textObjects.clear();
-	textManager.textObjects.push_back(testText);
-	textManager.init();
-	textManager.active = true;
-	textManager.talkActivated = true;
+	textManager->textObjects.clear();
+	textManager->textObjects.push_back(testText);
+	textManager->init();
+	textManager->active = true;
+	textManager->talkActivated = true;
 	turnDisplayAlpha = 0.0f;
 	state = PLAYER_DIED;
 }
@@ -267,27 +272,9 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		TurnChangeUpdate(inputManager, deltaTime);
 		break;
 	case PLAYER_DIED:
-		turnDisplayAlpha += deltaTime;
-		if (turnDisplayAlpha >= turnDisplayMaxAlpha)
+		if (!textManager->active)
 		{
-			turnDisplayAlpha = turnDisplayMaxAlpha;
-			state = PLAYER_DEATH;
-			unitDeathFadeBack = false;
-		}
-		break;
-	case PLAYER_DEATH:
-		if (textManager.active)
-		{
-			textManager.Update(deltaTime, inputManager);
-		}
-		else
-		{
-			turnDisplayAlpha -= deltaTime;
-			if (turnDisplayAlpha <= 0)
-			{
-				turnDisplayAlpha = 0;
-				state = NONE;
-			}
+			state = NONE;
 		}
 		break;
 	case UNIT_ESCAPED:
@@ -531,14 +518,6 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		}
 		//Using text now, I think I'll use a sprite ultimately
 		Text->RenderText(thisTurn, turnTextX, 300, 1);
-		break;
-	}
-	case PLAYER_DEATH:
-	{
-		if (textManager.active)
-		{
-			textManager.Draw(Text, renderer, camera);
-		}
 		break;
 	}
 	case UNIT_ESCAPED:

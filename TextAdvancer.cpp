@@ -62,12 +62,13 @@ void TextObjectManager::init(int line/* = 0 */)
 		{
 			BG = thisLine.BG;
 			state = FADE_GAME_OUT;
+			fadeIn = true;
 		}
 		else
 		{
-			state = PORTRAIT_FADE_IN;
+			state = LAYER_1_FADE_IN;
+			fadeIn = true;
 		}
-		textObjects[focusedObject].showPortrait = true;
 	}
 	else
 	{
@@ -76,7 +77,7 @@ void TextObjectManager::init(int line/* = 0 */)
 	}
 }
 
-void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
+void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool finished)
 {
 	switch (state)
 	{
@@ -170,7 +171,9 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 				}
 				else
 				{
-					active = false;
+					state = LAYER_1_FADE_IN;
+					fadeIn = false;
+					//active = false;
 				}
 				if (talkActivated)
 				{
@@ -181,7 +184,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 					textLines[currentLine].speaker->moveAnimate = false;
 				}
 			}
-			else
+		/*	else
 			{
 				if (textObjects[focusedObject].portraitID >= 0)
 				{
@@ -206,17 +209,30 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 						textLines[currentLine].speaker->moveAnimate = false;
 					}
 				}
-			}
+			}*/
 		}
 	}
 		break;
 	case FADE_GAME_OUT:
-		blackAlpha += deltaTime;
-		if (blackAlpha >= 1)
+		if (fadeIn)
 		{
-			blackAlpha = 1;
-			state = FADE_BG_IN;
-			showBG = true;
+			blackAlpha += deltaTime;
+			if (blackAlpha >= 1)
+			{
+				blackAlpha = 1;
+				state = FADE_BG_IN;
+				showBG = true;
+			}
+		}
+		else
+		{
+			blackAlpha -= deltaTime;
+			if (blackAlpha <= 0)
+			{
+				blackAlpha = 0;
+				//Not strictly true, need to see if there is more text
+				active = false;
+			}
 		}
 		break;
 	case FADE_BG_IN:
@@ -225,6 +241,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 		{
 			BGAlpha = 1;
 			state = PORTRAIT_FADE_IN;
+			textObjects[focusedObject].showPortrait = true;
 		}
 		break;
 	case FADE_BG_OUT:
@@ -232,7 +249,38 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager)
 		if (BGAlpha <= 0)
 		{
 			BGAlpha = 0;
-			active = false;
+			if (!finished)
+			{
+				state = FADE_GAME_OUT;
+				showBG = false;
+				fadeIn = false;
+			}
+			else
+			{
+				active = false;
+			}
+		}
+		break;
+	case LAYER_1_FADE_IN:
+		if (fadeIn)
+		{
+			layer1Alpha += deltaTime;
+			if (layer1Alpha >= layer1MaxAlpha)
+			{
+				layer1Alpha = layer1MaxAlpha;
+				state = PORTRAIT_FADE_IN;
+				//Figure out how to put both portraits on
+				textObjects[focusedObject].showPortrait = true;
+			}
+		}
+		else
+		{
+			layer1Alpha -= deltaTime;
+			if (layer1Alpha <= 0)
+			{
+				layer1Alpha = 0;
+				active = false;
+			}
 		}
 		break;
 	}
@@ -383,6 +431,22 @@ void TextObjectManager::DrawFade(Camera* camera, int shapeVAO)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", blackAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
+void TextObjectManager::DrawLayer1Fade(Camera* camera, int shapeVAO)
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", layer1Alpha);
 	glm::mat4 model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 	model = glm::scale(model, glm::vec3(256, 224, 0.0f));

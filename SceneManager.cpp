@@ -15,7 +15,7 @@
 #include "ResourceManager.h"
 #include "UnitResources.h"
 
-Scene::Scene() 
+Scene::Scene(TextObjectManager* textManager) : textManager(textManager)
 {
 
 }
@@ -88,12 +88,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			}
 			break;
 		case TEXT:
-			textManager.Update(deltaTime, inputManager);
-			if (inputManager.isKeyPressed(SDLK_SPACE))
-			{
-				textManager.active = false;
-			}
-			if (!textManager.active)
+			if (!textManager->active)
 			{
 				actionIndex++;
 				state = WAITING;
@@ -199,7 +194,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			case DIALOGUE_ACTION:
 			{
 				auto action = static_cast<DialogueAction*>(currentAction);
-				textManager.textLines.clear();
+				textManager->textLines.clear();
 				std::ifstream f("Levels/Level1Dialogue.json");
 				json data = json::parse(f);
 				json texts = data["text"];
@@ -233,17 +228,17 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 							}
 							SpeakerText text{ speaker, dialogue["location"], dialogue["speech"], dialogue["portrait"] };
 							text.BG = BG;
-							textManager.textLines.push_back(text); // gotta figure this out
+							textManager->textLines.push_back(text); // gotta figure this out
 						
 						}
 						break;
 					}
 				}
-				textManager.textObjects.clear();
-				textManager.textObjects.push_back(testText);
-				textManager.textObjects.push_back(testText2);
-				textManager.init();
-				textManager.active = true;
+				textManager->textObjects.clear();
+				textManager->textObjects.push_back(testText);
+				textManager->textObjects.push_back(testText2);
+				textManager->init();
+				textManager->active = true;
 				state = TEXT;
 
 				break;
