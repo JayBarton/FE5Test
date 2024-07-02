@@ -1188,7 +1188,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	if (intro >= 0)
 	{
-	//	sceneManager.scenes[intro]->init();
+		sceneManager.scenes[intro]->init();
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;
@@ -1452,7 +1452,7 @@ void Draw()
 				textManager.DrawFade(&camera, shapeVAO);
 			}*/
 			//for intro
-			//if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
+	//		if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
 			{
 				DrawUnits();
 			}

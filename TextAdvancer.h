@@ -62,6 +62,7 @@ struct TextObjectManager
 	bool showAnyway = false;
 	bool showBG = false;
 	bool fadeIn = false;
+	bool finishing = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;

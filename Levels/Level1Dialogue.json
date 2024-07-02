@@ -7,7 +7,7 @@
         {
           "speaker": 6,
           "location": 0,
-          "portrait":  6,
+          "portrait": 6,
           "speech": "Dad, it's already started!<0"
         },
         {
@@ -346,6 +346,7 @@
     },
     {
       "ID": 13,
+      "Start_Portraits": [ 8 ],
       "dialogue": [
         {
           "speaker": 0,
@@ -369,7 +370,19 @@
           "speaker": 5,
           "location": 1,
           "portrait": 9,
-          "speech": "How long can I resist the temptation?<1"
+          "speech": "<4"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "How long can I resist the temptation?<0"
+        },
+        {
+          "speaker": 5,
+          "location": 1,
+          "portrait": 9,
+          "speech": "..........<1"
         }
       ]
     },
@@ -379,6 +392,7 @@
         {
           "speaker": 22,
           "location": 0,
+          "portrait": 2,
           "speech": "Placeholder<1"
         }
       ]
@@ -389,6 +403,7 @@
         {
           "speaker": 22,
           "location": 0,
+          "portrait": 3,
           "speech": "Another<1"
         }
       ]
@@ -398,15 +413,15 @@
       "dialogue": [
         {
           "speaker": -1,
-          "location": 0,
+          "location": 1,
           "portrait": 0,
           "BG": 1,
           "speech": "This is the ending dialogue.<0"
         },
         {
           "speaker": -1,
-          "location": 1,
-          "portrait": 4,
+          "location": 0,
+          "portrait": 2,
           "speech": "Wow, a unique background? That's crazy man.<1"
         }
       ]

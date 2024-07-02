@@ -94,6 +94,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			if (nextOption == 1)
 			{
 				state = PORTRAIT_FADE_OUT;
+				finishing = true;
 				focusedObject = 0; //Just temporary
 			}
 			else if (nextOption == 3)
@@ -117,7 +118,26 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			textObjects[focusedObject].displayedPosition = textObjects[focusedObject].position;
 
 			displayTimer = 0;
-			state = READING_TEXT;
+			int portraitID = textLines[currentLine].portraitID;
+			if (textObjects[focusedObject].portraitID != portraitID)
+			{
+				//if object ID was greater than 0, we need to fade out the old portrait and fade in the new one
+				if (textObjects[focusedObject].portraitID >= 0)
+				{
+					//fade old portrait out
+					state = PORTRAIT_FADE_OUT;
+				}
+				else
+				{
+					state = PORTRAIT_FADE_IN;
+					textObjects[focusedObject].showPortrait = true;
+					textObjects[focusedObject].portraitID = portraitID;
+				}
+			}
+			else
+			{
+				state = READING_TEXT;
+			}
 		}
 		break;
 	case PORTRAIT_FADE_IN:
@@ -159,47 +179,21 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		if (currentObject.fadeValue <= 0)
 		{
 			currentObject.fadeValue = 0;
-			currentObject.fadeIn = false;
-			currentObject.showPortrait = false;
-			focusedObject++;
-			if (focusedObject >= textObjects.size())
+			if (finishing)
 			{
-				//I'm gonna be honest I have no idea what the fuck this is doing
-				if (showBG)
+				currentObject.fadeIn = false;
+				currentObject.showPortrait = false;
+				focusedObject++;
+				if (focusedObject >= textObjects.size())
 				{
-					state = FADE_BG_OUT;
+					focusedObject = 0;
 				}
-				else
+				if (!textObjects[focusedObject].showPortrait)
 				{
 					state = LAYER_1_FADE_IN;
+					finishing = false;
+
 					fadeIn = false;
-					//active = false;
-				}
-				if (talkActivated)
-				{
-					talkActivated = false;
-				}
-				else
-				{
-					textLines[currentLine].speaker->moveAnimate = false;
-				}
-			}
-		/*	else
-			{
-				if (textObjects[focusedObject].portraitID >= 0)
-				{
-					textObjects[focusedObject].showPortrait = false;
-				}
-				else
-				{
-					if (showBG)
-					{
-						state = FADE_BG_OUT;
-					}
-					else
-					{
-						active = false;
-					}
 					if (talkActivated)
 					{
 						talkActivated = false;
@@ -209,7 +203,20 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 						textLines[currentLine].speaker->moveAnimate = false;
 					}
 				}
-			}*/
+			}
+			else
+			{
+				if (showBG)
+				{
+					state = FADE_BG_OUT;
+				}
+				else if (!finishing)
+				{
+					state = PORTRAIT_FADE_IN;
+					currentObject.portraitID = textLines[currentLine].portraitID;
+					currentObject.showPortrait = true;
+				}
+			}
 		}
 	}
 		break;
@@ -389,15 +396,26 @@ void TextObjectManager::GoToNextLine()
 			state = REMOVING_TEXT;
 			textObjects[focusedObject].displayedPosition = textObjects[focusedObject].position;
 		}
+		else
+		{
+			int portraitID = textLines[currentLine].portraitID;
+			if (textObjects[focusedObject].portraitID != portraitID)
+			{
+				state = PORTRAIT_FADE_IN;
+				textObjects[focusedObject].showPortrait = true;
+				textObjects[focusedObject].portraitID = portraitID;
+			}
+		}
 		textObjects[focusedObject].text = textLines[currentLine].text;
 		if (!talkActivated)
 		{
 			textLines[currentLine].speaker->setFocus();
 		}
 		textObjects[focusedObject].index = 0;
-		textObjects[focusedObject].portraitID = textLines[currentLine].portraitID;
 
 		//Fix this later
+		//The idea here was to be able to swtich backgrounds during dialogue, but I'm not sure if I would even want to support that
+		//Seems like it would make more sense to just have that be a separate dialogue action.
 		if (textLines[currentLine].BG >= 0)
 		{
 			if (BG != textLines[currentLine].BG)
