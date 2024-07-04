@@ -142,7 +142,7 @@ public:
 
     Sprite *parent = nullptr;
 
-private:
+//private:
 
     glm::vec2 size;
     glm::vec2 position;

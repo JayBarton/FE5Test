@@ -70,6 +70,8 @@ void DrawUnitRanges();
 void DrawText();
 void resizeWindow(int width, int height);
 
+void SuspendGame();
+
 const static int TILE_SIZE = 16;
 
 SDL_Window *window;
@@ -370,6 +372,7 @@ struct EndingEvents : public Observer<>
 };
 
 void loadMap(std::string nextMap, UnitEvents* unitEvents);
+void loadSuspendedGame(std::string saveFile, std::string map);
 
 std::mt19937 gen;
 //gen.seed(1);
@@ -498,8 +501,8 @@ int main(int argc, char** argv)
 	displays.subject.addObserver(postBattleEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 
-	loadMap("2.map", unitEvents);
-
+	//loadMap("2.map", unitEvents);
+	loadSuspendedGame("whatever", "2.map");
 	cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
 	cursor.focusedUnit = playerManager.playerUnits[0];
 
@@ -561,6 +564,11 @@ int main(int argc, char** argv)
 			{
 				isRunning = false;
 			}
+		}
+
+		if (inputManager.isKeyPressed(SDLK_s))
+		{
+			SuspendGame();
 		}
 
 		IdleAnimation(deltaTime);
@@ -1188,7 +1196,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	if (intro >= 0)
 	{
-		sceneManager.scenes[intro]->init();
+	//	sceneManager.scenes[intro]->init();
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;
@@ -1691,4 +1699,227 @@ void resizeWindow(int width, int height)
 	int vpx = round(float(width) / 2.0f - float(aspectWidth) / 2.0f);
 	int vpy = round(float(height) / 2.0f - float(aspectHeight) / 2.0f);
 	glViewport(vpx, vpy, aspectWidth, aspectHeight);
+}
+
+json UnitToJson(Unit* unit)
+{
+	//Look I'm going to move this all elsewhere and it will be real nice over there don't worry about it
+	std::vector<std::string> weaponNames;
+	weaponNames.resize(10);
+	weaponNames[WeaponData::TYPE_SWORD] = "Sword";
+	weaponNames[WeaponData::TYPE_AXE] = "Axe";
+	weaponNames[WeaponData::TYPE_LANCE] = "Lance";
+	weaponNames[WeaponData::TYPE_BOW] = "Bow";
+	weaponNames[WeaponData::TYPE_STAFF] = "Staff";
+	weaponNames[WeaponData::TYPE_FIRE] = "Fire";
+	weaponNames[WeaponData::TYPE_THUNDER] = "Thunder";
+	weaponNames[WeaponData::TYPE_WIND] = "Wind";
+	weaponNames[WeaponData::TYPE_LIGHT] = "Light";
+	weaponNames[WeaponData::TYPE_DARK] = "Dark";
+
+	json j;
+	json stats;
+	j["ID"] = unit->ID;
+	j["Name"] = unit->name;
+	j["Class"] = unit->unitClass;
+	j["ClassID"] = unit->classID;
+
+	stats["HP"] = unit->maxHP,
+	stats["Str"] = unit->strength,
+	stats["Mag"] = unit->magic,
+	stats["Skl"] = unit->skill,
+	stats["Spd"] = unit->speed,
+	stats["Lck"] = unit->luck,
+	stats["Def"] = unit->defense,
+	stats["Bld"] = unit->build,
+	stats["Mov"] = unit->move,
+	stats["Level"] = unit->level;
+
+	stats["currentHP"] = unit->currentHP;
+	stats["exp"] = unit->experience;
+
+	j["ClassPower"] = unit->classPower;
+	j["Position"] = { unit->sprite.position.x, unit->sprite.position.y };
+
+	if (unit->skills.size() > 0)
+	{
+		for (int i = 0; i < unit->skills.size(); i++)
+		{
+			j["Skills"].push_back(unit->skills[i]);
+		}
+	}
+	if (unit->uniqueWeapons.size() > 0)
+	{
+		for (int i = 0; i < unit->uniqueWeapons.size(); i++)
+		{
+			j["SpecialWeapons"].push_back(unit->uniqueWeapons[i]);
+		}
+	}
+	j["Stats"] = stats;
+
+	j["Inventory"] = json::array();
+
+	for (int i = 0; i < unit->inventory.size(); ++i) 
+	{
+		j["Inventory"].push_back({ unit->inventory[i]->ID, unit->inventory[i]->remainingUses });
+	}
+	json weaponProf;
+	for (int i = 0; i < 10; i++)
+	{
+		if (unit->weaponProficiencies[i] > 0)
+		{
+			weaponProf[weaponNames[i]] = unit->weaponProficiencies[i];
+		}
+	}
+	j["WeaponProf"] = weaponProf;
+
+	if (unit->mount)
+	{
+		auto mount = unit->mount;
+		json mountData;
+		mountData["Str"] = mount->str;
+		mountData["Skl"] = mount->skl;
+		mountData["Spd"] = mount->spd;
+		mountData["Def"] = mount->def;
+		mountData["Mov"] = mount->mov;
+
+		json mWeaponProf;
+		for (int i = 0; i < 10; i++)
+		{
+			if (mount->weaponProficiencies[i] > 0)
+			{
+				mWeaponProf[weaponNames[i]] = mount->weaponProficiencies[i];
+			}
+		}
+		mountData["WeaponProf"] = mWeaponProf;
+		mountData["AnimID"] = mount->ID;
+		j["Mount"] = mountData;
+	}
+
+	return j;
+}
+
+//I need to keep track of unit growth rates, but I'm not sure if I actually need to save them, since they are already saved elsewhere
+//For the player I can just go back to the json and grab that, for enemies I think I should be able to save the ID of the growths they are using
+//And load that.
+void WriteUnit(std::ofstream& objectStream, Unit* unit)
+{
+	//Standard stuff to save
+	//Not sure if class power strictly needs to be saved
+	objectStream << unit->name << "\n" << unit->unitClass << "\n" << unit->ID << " "
+		<< unit->classID << " " << unit->sceneID << " " << unit->portraitID << " "
+		<< unit->maxHP << " " << unit->strength << " " << unit->magic << " "
+		<< unit->skill << " " << unit->speed << " " << unit->luck << " "
+		<< unit->defense << " " << unit->build << " " << unit->move << " "
+		<< unit->level << " " << unit->classPower;
+	for (int i = 0; i < 10; i++)
+	{
+		objectStream << unit->weaponProficiencies[i] << " ";
+	}
+	objectStream << unit->uniqueWeapons.size() << " ";
+	for (int i = 0; i < unit->uniqueWeapons.size(); i++)
+	{
+		objectStream << unit->uniqueWeapons[i] << " ";
+	}
+	objectStream << unit->skills.size() << " ";
+	for (int i = 0; i < unit->skills.size(); i++)
+	{
+		objectStream << unit->skills[i] << " ";
+	}
+	for (int i = 0; i < unit->inventory.size(); i++)
+	{
+		objectStream << unit->inventory[i]->ID << " ";
+	}
+
+	if (unit->mount)
+	{
+		auto mount = unit->mount;
+		objectStream << 1 << " " << mount->movementType << " " << mount->ID << " " << mount->str << " " << mount->skl << " " << mount->spd << " " << mount->def << " " << mount->mov << " ";
+		for (int i = 0; i < 10; i++)
+		{
+			objectStream << mount->weaponProficiencies[i] << " ";
+		}
+	}
+	else
+	{
+		objectStream << 0 << " ";
+	}
+
+//	objectStream << "\"" << unit->deathMessage << "\" "; //Like growths, I don't know that death message needs to be saved, should be accessable from json...
+	objectStream << unit->sprite.position.x << " " << unit->sprite.position.y << "\n";
+}
+
+void SuspendGame()
+{
+	json j;
+	std::ofstream txtFile("text_out.txt");
+
+	for (int i = 0; i < playerManager.playerUnits.size(); i++)
+	{
+		WriteUnit(txtFile, playerManager.playerUnits[i]);
+		j["player"].push_back(UnitToJson(playerManager.playerUnits[i]));
+	}
+	txtFile << "\n";
+	for (int i = 0; i < enemyManager.enemies.size(); i++)
+	{
+		auto unit = enemyManager.enemies[i];
+		WriteUnit(txtFile, unit);
+		txtFile << unit->activationType << " " << unit->stationary << " " << unit->boss << " " << unit->active << "\n";
+		json something = UnitToJson(enemyManager.enemies[i]);
+	//	j["enemy"].push_back(UnitToJson(enemyManager.enemies[i]));
+		json AI;
+		json ugh;
+		AI["activationType"] = unit->activationType;
+		AI["stationary"] = unit->stationary;
+		AI["boss"] = unit->boss;
+		AI["active"] = unit->active;
+		something["AI"] = AI;
+		j["enemy"].push_back(something);
+	}
+	
+//	j["player"] = playerUnits;
+//	j["enemy"] = enemyUnits;
+
+	std::ofstream file("test_out.json");
+	if (file.is_open()) {
+		file << j.dump(4);  // Pretty-print with 4-space indentation
+		file.close();
+	}
+	//file << std::setw(4) << j << std::endl;
+}
+
+//levelMap should probably be part of the saveFile
+void loadSuspendedGame(std::string saveFile, std::string levelMap)
+{
+	std::ifstream map(levelDirectory + levelMap);
+
+	int xTiles = 0;
+	int yTiles = 0;
+	while (map.good())
+	{
+		std::string thing;
+		map >> thing;
+
+		if (thing == "Level")
+		{
+			map >> xTiles >> yTiles;
+			TileManager::tileManager.setTiles(map, xTiles, yTiles);
+		}
+	}
+
+	std::ifstream f("test_out.json");
+	json data = json::parse(f);
+	json enemy = data["enemy"];
+	playerManager.Load(data["player"]);
+	enemyManager.Load(enemy, &gen, &distribution, &playerManager.playerUnits, &vendors);
+
+	map.close();
+
+	levelWidth = xTiles * TileManager::TILE_SIZE;
+	levelHeight = yTiles * TileManager::TILE_SIZE;
+	camera = Camera(256, 224, levelWidth, levelHeight);
+
+	camera.setPosition(glm::vec2(0, 0));
+	//	camera.setScale(2.0f);
+	camera.update();
 }

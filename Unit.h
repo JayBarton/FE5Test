@@ -5,6 +5,13 @@
 #include <unordered_map>
 #include "Sprite.h"
 #include "Globals.h"
+
+
+#include <nlohmann/json.hpp>
+
+// for convenience
+using json = nlohmann::json;
+
 class SpriteRenderer;
 class InputManager;
 

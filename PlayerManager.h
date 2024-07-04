@@ -19,6 +19,7 @@ struct PlayerManager
 
 	void LoadUnits(std::ifstream& map);
 	Unit* LoadUnit(nlohmann::json& bases, int unitID, glm::vec2& position);
+	void Load(json saveData);
 	void AddUnit(int unitID, glm::vec2& position);
 
 	void Draw(class SpriteRenderer* Renderer);
