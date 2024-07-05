@@ -86,6 +86,7 @@ Camera camera;
 Texture2D Texture;
 
 std::string levelDirectory = "Levels/";
+std::string currentLevel;
 int levelWidth;
 int levelHeight;
 
@@ -240,9 +241,9 @@ struct TurnEvents : public Observer<int>
 		if (ID == 0)
 		{
 			cursor.focusedUnit = nullptr;
-			for (int i = 0; i < playerManager.playerUnits.size(); i++)
+			for (int i = 0; i < playerManager.units.size(); i++)
 			{
-				playerManager.playerUnits[i]->EndTurn();
+				playerManager.units[i]->EndTurn();
 			}
 			//Whatever enemy manager set up here
 			//Probably going to want to figure out some sort of priority for the order in which enemies act
@@ -264,7 +265,7 @@ struct TurnEvents : public Observer<int>
 			roundSubject.notify(currentRound);
 			if (Settings::settings.autoCursor)
 			{
-				cursor.SetFocus(playerManager.playerUnits[0]);
+				cursor.SetFocus(playerManager.units[0]);
 			}
 		}
 		displays.ChangeTurn(currentTurn);
@@ -296,9 +297,9 @@ struct DeathEvent : public Observer<Unit*>
 		}
 		if (deadUnit->team == 0)
 		{
-			auto it = std::find(playerManager.playerUnits.begin(), playerManager.playerUnits.end(), deadUnit);
+			auto it = std::find(playerManager.units.begin(), playerManager.units.end(), deadUnit);
 			sceneUnits.erase(deadUnit->sceneID);
-			playerManager.playerUnits.erase(it);
+			playerManager.units.erase(it);
 			delete deadUnit;
 		}
 		//For use in the future
@@ -372,7 +373,7 @@ struct EndingEvents : public Observer<>
 };
 
 void loadMap(std::string nextMap, UnitEvents* unitEvents);
-void loadSuspendedGame(std::string saveFile, std::string map);
+void loadSuspendedGame();
 
 std::mt19937 gen;
 //gen.seed(1);
@@ -500,11 +501,12 @@ int main(int argc, char** argv)
 	displays.init(&textManager);
 	displays.subject.addObserver(postBattleEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
+	enemyManager.init(&gen, &distribution);
 
-	//loadMap("2.map", unitEvents);
-	loadSuspendedGame("whatever", "2.map");
-	cursor.position = playerManager.playerUnits[0]->sprite.getPosition();
-	cursor.focusedUnit = playerManager.playerUnits[0];
+//	loadMap("2.map", unitEvents);
+	loadSuspendedGame();
+	cursor.position = playerManager.units[0]->sprite.getPosition();
+	cursor.focusedUnit = playerManager.units[0];
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
@@ -805,7 +807,7 @@ void StartTurnChecks()
 {
 	if (currentTurn == 0)
 	{
-		if (turnUnit >= playerManager.playerUnits.size())
+		if (turnUnit >= playerManager.units.size())
 		{
 			turnUnit = 0;
 			camera.SetMove(cursor.position);
@@ -813,7 +815,7 @@ void StartTurnChecks()
 		}
 		else
 		{
-			playerManager.playerUnits[turnUnit]->StartTurn(displays, &camera);
+			playerManager.units[turnUnit]->StartTurn(displays, &camera);
 
 			if (displays.state == NONE)
 			{
@@ -823,14 +825,14 @@ void StartTurnChecks()
 	}
 	else
 	{
-		if (turnUnit >= enemyManager.enemies.size())
+		if (turnUnit >= enemyManager.units.size())
 		{
 			turnUnit = 0;
 			turnTransition = false;
 		}
 		else
 		{
-			enemyManager.enemies[turnUnit]->StartTurn(displays, &camera);
+			enemyManager.units[turnUnit]->StartTurn(displays, &camera);
 
 			if (displays.state == NONE)
 			{
@@ -955,7 +957,7 @@ void init()
 void loadMap(std::string nextMap, UnitEvents* unitEvents)
 {
 	std::ifstream map(levelDirectory + nextMap);
-
+	currentLevel = nextMap;
 	int xTiles = 0;
 	int yTiles = 0;
 	int intro = -1;
@@ -973,11 +975,11 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		}
 		else if (thing == "Enemies")
 		{
-			enemyManager.SetUp(map, &gen, &distribution, &playerManager.playerUnits, &vendors);
+			enemyManager.SetUp(map, &playerManager.units, &vendors);
 			//proof of concept
-			for (int i = 0; i < enemyManager.enemies.size(); i++)
+			for (int i = 0; i < enemyManager.units.size(); i++)
 			{
-				auto unit = enemyManager.enemies[i];
+				auto unit = enemyManager.units[i];
 				if (unit->sceneID >= 0)
 				{
 					sceneUnits[unit->sceneID] = unit;
@@ -1497,7 +1499,7 @@ void Draw()
 		{
 			DrawText();
 		}
-		minimap.Draw(playerManager.playerUnits, enemyManager.enemies, camera, shapeVAO, Renderer);
+		minimap.Draw(playerManager.units, enemyManager.units, camera, shapeVAO, Renderer);
 
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", gameOverMode.fadeOutAlpha);
@@ -1853,44 +1855,46 @@ void SuspendGame()
 {
 	json j;
 	std::ofstream txtFile("text_out.txt");
-
-	for (int i = 0; i < playerManager.playerUnits.size(); i++)
+	json map;
+	map["Level"] = currentLevel;
+	for (int i = 0; i < playerManager.units.size(); i++)
 	{
-		WriteUnit(txtFile, playerManager.playerUnits[i]);
-		j["player"].push_back(UnitToJson(playerManager.playerUnits[i]));
+		WriteUnit(txtFile, playerManager.units[i]);
+		j["player"].push_back(UnitToJson(playerManager.units[i]));
 	}
 	txtFile << "\n";
-	for (int i = 0; i < enemyManager.enemies.size(); i++)
+	for (int i = 0; i < enemyManager.units.size(); i++)
 	{
-		auto unit = enemyManager.enemies[i];
+		auto unit = enemyManager.units[i];
 		WriteUnit(txtFile, unit);
 		txtFile << unit->activationType << " " << unit->stationary << " " << unit->boss << " " << unit->active << "\n";
-		json something = UnitToJson(enemyManager.enemies[i]);
-	//	j["enemy"].push_back(UnitToJson(enemyManager.enemies[i]));
+		json something = UnitToJson(enemyManager.units[i]);
 		json AI;
-		json ugh;
 		AI["activationType"] = unit->activationType;
 		AI["stationary"] = unit->stationary;
 		AI["boss"] = unit->boss;
 		AI["active"] = unit->active;
+		
 		something["AI"] = AI;
 		j["enemy"].push_back(something);
 	}
-	
-//	j["player"] = playerUnits;
-//	j["enemy"] = enemyUnits;
+	j["Map"] = map;
 
 	std::ofstream file("test_out.json");
 	if (file.is_open()) {
 		file << j.dump(4);  // Pretty-print with 4-space indentation
 		file.close();
 	}
-	//file << std::setw(4) << j << std::endl;
 }
 
 //levelMap should probably be part of the saveFile
-void loadSuspendedGame(std::string saveFile, std::string levelMap)
+void loadSuspendedGame()
 {
+	std::ifstream f("test_out.json");
+	json data = json::parse(f);
+
+	json mapLevel = data["Map"];
+	std::string levelMap = mapLevel["Level"];
 	std::ifstream map(levelDirectory + levelMap);
 
 	int xTiles = 0;
@@ -1898,20 +1902,66 @@ void loadSuspendedGame(std::string saveFile, std::string levelMap)
 	while (map.good())
 	{
 		std::string thing;
-		map >> thing;
-
+		//	map >> thing;
+		std::getline(map, thing);
 		if (thing == "Level")
 		{
 			map >> xTiles >> yTiles;
 			TileManager::tileManager.setTiles(map, xTiles, yTiles);
 		}
+		else if (thing == "Vendors")
+		{
+			int numberOfVendors = 0;
+			map >> numberOfVendors;
+			vendors.resize(numberOfVendors);
+			for (int i = 0; i < numberOfVendors; i++)
+			{
+				glm::ivec2 position;
+				map >> position.x >> position.y;
+				int numberOfItems = 0;
+				map >> numberOfItems;
+				std::vector<int> items;
+				items.resize(numberOfItems);
+				for (int c = 0; c < numberOfItems; c++)
+				{
+					map >> items[c];
+				}
+				vendors[i] = Vendor{ items, position };
+				TileManager::tileManager.placeVendor(position.x, position.y, &vendors[i]);
+			}
+		}
+		else if (thing == "EnemyEscape")
+		{
+			int x = 0;
+			int y = 0;
+			map >> x >> y;
+			enemyManager.escapePoint = glm::ivec2(x, y);
+		}
+		else if (thing == "Requirements")
+		{
+			int requiredUnits = 0;
+			map >> requiredUnits;
+			for (int i = 0; i < requiredUnits; i++)
+			{
+				int ID;
+				map >> ID;
+				map >> gameOverDialogues[ID];
+			}
+		}
+		else if (thing == "Seize")
+		{
+			int x = 0;
+			int y = 0;
+			map >> x >> y;
+			seizePoint = glm::vec2(x, y);
+			TileManager::tileManager.placeSeizePoint(seizePoint.x, seizePoint.y);
+		}
 	}
 
-	std::ifstream f("test_out.json");
-	json data = json::parse(f);
+
 	json enemy = data["enemy"];
 	playerManager.Load(data["player"]);
-	enemyManager.Load(enemy, &gen, &distribution, &playerManager.playerUnits, &vendors);
+	enemyManager.Load(enemy, &playerManager.units, &vendors);
 
 	map.close();
 

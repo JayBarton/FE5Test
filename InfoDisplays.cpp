@@ -99,7 +99,7 @@ void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)
 {
 	state = ENEMY_TRADE;
 	this->enemyManager = enemyManager;
-	focusedUnit = enemyManager->enemies[enemyManager->currentEnemy];
+	focusedUnit = enemyManager->units[enemyManager->currentEnemy];
 	itemToUse = enemyManager->healIndex;
 }
 
@@ -107,7 +107,7 @@ void InfoDisplays::EnemyBuy(EnemyManager* enemyManager)
 {
 	state = ENEMY_BUY;
 	this->enemyManager = enemyManager;
-	focusedUnit = enemyManager->enemies[enemyManager->currentEnemy];
+	focusedUnit = enemyManager->units[enemyManager->currentEnemy];
 }
 
 void InfoDisplays::GetItem(int itemID)

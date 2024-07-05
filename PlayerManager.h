@@ -1,14 +1,8 @@
 #pragma once
-#include <vector>
 #include "Unit.h"
-#include <nlohmann/json.hpp>
-struct PlayerManager
+#include "UnitManager.h"
+struct PlayerManager : public UnitManager
 {
-	std::vector<Unit*> playerUnits;
-	std::unordered_map<std::string, int> weaponNameMap;
-
-	std::mt19937* gen;
-	std::uniform_int_distribution<int>* distribution;
 	Observer<class Unit*>* unitEvents;
 	std::unordered_map<int, Unit*>* sceneUnits;
 

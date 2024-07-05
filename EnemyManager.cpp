@@ -17,7 +17,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution,
+void EnemyManager::SetUp(std::ifstream& map,
     std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors)
 {
     std::vector<JSONUnit> unitBases;
@@ -98,7 +98,7 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
 
     int numberOfEnemies;
     map >> numberOfEnemies;
-    enemies.resize(numberOfEnemies);
+    units.resize(numberOfEnemies);
     for (int i = 0; i < numberOfEnemies; i++)
     {
         glm::vec2 position;
@@ -107,12 +107,12 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
         int growthID;
         int inventorySize;
         map >> type >> position.x >> position.y >> level >> growthID >> inventorySize;
-        enemies[i] = new Unit(unitBases[type]);
-        enemies[i]->classID = enemies[i]->ID;
-        enemies[i]->init(gen, distribution);
+        units[i] = new Unit(unitBases[type]);
+        units[i]->classID = units[i]->ID;
+        units[i]->init(gen, distribution);
 
-        enemies[i]->team = 1;
-        enemies[i]->growths = unitGrowths[growthID];
+        units[i]->team = 1;
+        units[i]->growths = unitGrowths[growthID];
         std::vector<int> inventory;
         inventory.resize(inventorySize);
         for (int c = 0; c < inventorySize; c++)
@@ -130,21 +130,21 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
             {
                 map >> stats[c];
             }
-            enemies[i]->maxHP = stats[0];
-            enemies[i]->currentHP = stats[0];
-            enemies[i]->strength = stats[1];
-            enemies[i]->magic = stats[2];
-            enemies[i]->skill = stats[3];
-            enemies[i]->speed = stats[4];
-            enemies[i]->luck = stats[5];
-            enemies[i]->defense = stats[6];
-            enemies[i]->build = stats[7];
-            enemies[i]->move = stats[8];
-            enemies[i]->level = level;
+            units[i]->maxHP = stats[0];
+            units[i]->currentHP = stats[0];
+            units[i]->strength = stats[1];
+            units[i]->magic = stats[2];
+            units[i]->skill = stats[3];
+            units[i]->speed = stats[4];
+            units[i]->luck = stats[5];
+            units[i]->defense = stats[6];
+            units[i]->build = stats[7];
+            units[i]->move = stats[8];
+            units[i]->level = level;
         }
         else
         {
-            enemies[i]->LevelEnemy(level - 1);
+            units[i]->LevelEnemy(level - 1);
         }
         int editedProfs;
         map >> editedProfs;
@@ -153,155 +153,56 @@ void EnemyManager::SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int
             int profs[10];
             for (int c = 0; c < 10; c++)
             {
-                map >> enemies[i]->weaponProficiencies[c];
+                map >> units[i]->weaponProficiencies[c];
             }
         }
 
-        map >> enemies[i]->activationType >> enemies[i]->stationary >> enemies[i]->boss;
+        map >> units[i]->activationType >> units[i]->stationary >> units[i]->boss;
 
-        map >> enemies[i]->sceneID;
+        map >> units[i]->sceneID;
 
         for (int c = 0; c < inventorySize; c++)
         {
-            enemies[i]->addItem(inventory[c]);
+            units[i]->addItem(inventory[c]);
         }
 
-        enemies[i]->placeUnit(position.x, position.y);
-        enemies[i]->sprite.uv = &UnitResources::unitUVs[enemies[i]->ID];
-        AnimData animData = UnitResources::animData[enemies[i]->ID];
-        enemies[i]->sprite.focusedFacing = animData.facing;
-        enemies[i]->sprite.setSize(animData.size);
-        enemies[i]->sprite.drawOffset = animData.offset;
+        units[i]->placeUnit(position.x, position.y);
+        units[i]->sprite.uv = &UnitResources::unitUVs[units[i]->ID];
+        AnimData animData = UnitResources::animData[units[i]->ID];
+        units[i]->sprite.focusedFacing = animData.facing;
+        units[i]->sprite.setSize(animData.size);
+        units[i]->sprite.drawOffset = animData.offset;
 
-        if (enemies[i]->ID == 0)
+        if (units[i]->ID == 0)
         {
-            enemies[i]->portraitID = 12;
+            units[i]->portraitID = 12;
         }
-        else if (enemies[i]->ID == 1)
+        else if (units[i]->ID == 1)
         {
-            enemies[i]->portraitID = 13;
+            units[i]->portraitID = 13;
         }
-        else if (enemies[i]->ID == 2)
+        else if (units[i]->ID == 2)
         {
-            enemies[i]->portraitID = 11;
+            units[i]->portraitID = 11;
         }
     }
 
-    //  enemies[14]->currentHP = 14;
-    //  enemies[0]->move = 6;
-    //  enemies[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
+    //  units[14]->currentHP = 14;
+    //  units[0]->move = 6;
+    //  units[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
 
-void EnemyManager::Load(json saveData, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors)
+void EnemyManager::Load(json saveData, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors)
 {
-    std::unordered_map<std::string, int> weaponNameMap;
-    weaponNameMap["Sword"] = WeaponData::TYPE_SWORD;
-    weaponNameMap["Axe"] = WeaponData::TYPE_AXE;
-    weaponNameMap["Lance"] = WeaponData::TYPE_LANCE;
-    weaponNameMap["Bow"] = WeaponData::TYPE_BOW;
-    weaponNameMap["Thunder"] = WeaponData::TYPE_THUNDER;
-    weaponNameMap["Fire"] = WeaponData::TYPE_FIRE;
-    weaponNameMap["Wind"] = WeaponData::TYPE_WIND;
-    weaponNameMap["Dark"] = WeaponData::TYPE_DARK;
-    weaponNameMap["Light"] = WeaponData::TYPE_LIGHT;
-    weaponNameMap["Staff"] = WeaponData::TYPE_STAFF;
-    enemies.resize(saveData.size());
+    this->playerUnits = playerUnits;
+    this->vendors = vendors;
+    units.resize(saveData.size());
     int current = 0;
     for (const auto& unit : saveData)
     {
-        int ID = unit["ID"];
+        Unit* newUnit = LoadUnitFromSuspend(unit);
 
-        std::string name = unit["Name"];
-        std::string unitClass = unit["Class"];
-        json stats = unit["Stats"];
-        int classID = unit["ClassID"];
-        int HP = stats["HP"];
-        int str = stats["Str"];
-        int mag = stats["Mag"];
-        int skl = stats["Skl"];
-        int spd = stats["Spd"];
-        int lck = stats["Lck"];
-        int def = stats["Def"];
-        int bld = stats["Bld"];
-        int mov = stats["Mov"];
-        Unit* newUnit = new Unit(unitClass, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
-        newUnit->classID = classID;
-        newUnit->sceneID = ID;
-        newUnit->level = stats["Level"];
-        //   (*sceneUnits)[newUnit->sceneID] = newUnit;
-
-       /*    json growths = unit["GrowthRates"];
-           HP = growths["HP"];
-           str = growths["Str"];
-           mag = growths["Mag"];
-           skl = growths["Skl"];
-           spd = growths["Spd"];
-           lck = growths["Lck"];
-           def = growths["Def"];
-           bld = growths["Bld"];
-           mov = growths["Mov"];*/
-
-           //   newUnit->growths = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, mov };
-        json weaponProf = unit["WeaponProf"];
-        for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
-        {
-            newUnit->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
-        }
-        if (unit.find("SpecialWeapons") != unit.end())
-        {
-            auto specialWeapons = unit["SpecialWeapons"];
-            for (const auto& weapon : specialWeapons)
-            {
-                newUnit->uniqueWeapons.push_back(int(weapon));
-            }
-        }
-
-        if (unit.find("Skills") != unit.end())
-        {
-            auto skills = unit["Skills"];
-            for (const auto& skill : skills)
-            {
-                newUnit->skills.push_back(int(skill));
-            }
-        }
-        json inventory = unit["Inventory"];
-        for (const auto& item : inventory)
-        {
-            newUnit->addItem(int(item[0]));
-            newUnit->inventory[newUnit->inventory.size() - 1]->remainingUses = item[1];
-        }
-        if (unit.find("ClassPower") != unit.end())
-        {
-            newUnit->classPower = unit["ClassPower"];
-        }
-        if (unit.find("DeathMsg") != unit.end())
-        {
-            newUnit->deathMessage = unit["DeathMsg"];
-        }
-        //    newUnit->subject.addObserver(unitEvents);
-        newUnit->init(gen, distribution);
-
-        if (unit.find("Mount") != unit.end())
-        {
-            json mount = unit["Mount"];
-
-            newUnit->movementType = Unit::FOOT;
-            newUnit->mount = new Mount(Unit::HORSE, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
-            json mountProf = mount["WeaponProf"];
-            for (auto it = mountProf.begin(); it != mountProf.end(); ++it)
-            {
-                newUnit->mount->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
-            }
-            newUnit->MountAction(true);
-        }
-        else
-        {
-            newUnit->sprite.uv = &UnitResources::unitUVs[classID];
-            AnimData animData = UnitResources::animData[classID];
-            newUnit->sprite.focusedFacing = animData.facing;
-            newUnit->sprite.setSize(animData.size);
-            newUnit->sprite.drawOffset = animData.offset;
-        }
+        newUnit->currentHP = unit["Stats"]["currentHP"];
         if (newUnit->ID == 0)
         {
             newUnit->portraitID = 12;
@@ -314,26 +215,29 @@ void EnemyManager::Load(json saveData, std::mt19937* gen, std::uniform_int_distr
         {
             newUnit->portraitID = 11;
         }
-        newUnit->placeUnit(unit["Position"][0], unit["Position"][1]);
-
-
-        newUnit->currentHP = stats["currentHP"];
         newUnit->team = 1;
+        newUnit->sceneID = -1;
+        //check if sceneID exists in json, if so set it
+        auto AI = unit["AI"];
+        newUnit->activationType = AI["activationType"];
+        newUnit->active = AI["active"];
+        newUnit->boss = AI["boss"];
+        newUnit->stationary = AI["stationary"];
 
-        enemies[current] = (newUnit);
+        units[current] = newUnit;
         current++;
     }
 }
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)
 {
-    if (currentEnemy >= enemies.size())
+    if (currentEnemy >= units.size())
     {
         EndTurn();
     }
     else
     {
-        auto enemy = enemies[currentEnemy];
+        auto enemy = units[currentEnemy];
 
         if (enemyMoving)
         {
@@ -363,7 +267,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
             {
                 timer = 0.0f;
                 skippedUnit = false;
-                while (currentEnemy < enemies.size() && !skippedUnit && !enemyMoving)
+                while (currentEnemy < units.size() && !skippedUnit && !enemyMoving)
                 {
                     if (enemy->carryingUnit)
                     {
@@ -1073,23 +977,23 @@ std::vector<Unit*> EnemyManager::GetOtherUnits(Unit* enemy)
 
 void EnemyManager::Draw(SpriteRenderer* renderer)
 {
-	for (int i = 0; i < enemies.size(); i++)
+	for (int i = 0; i < units.size(); i++)
 	{
-		enemies[i]->Draw(renderer);
+		units[i]->Draw(renderer);
 	}
 }
 
 void EnemyManager::Draw(SBatch* Batch, std::vector<Sprite>& carrySprites)
 {
-    for (int i = 0; i < enemies.size(); i++)
+    for (int i = 0; i < units.size(); i++)
     {
-        enemies[i]->Draw(Batch);
-        if (!enemies[i]->sprite.moveAnimate && enemies[i]->carriedUnit)
+        units[i]->Draw(Batch);
+        if (!units[i]->sprite.moveAnimate && units[i]->carriedUnit)
         {
             Sprite carrySprite;
-            carrySprite.SetPosition(enemies[i]->sprite.getPosition() + 6.0f);
+            carrySprite.SetPosition(units[i]->sprite.getPosition() + 6.0f);
             carrySprite.setSize(glm::vec2(8));
-            carrySprite.currentFrame = enemies[i]->carriedUnit->team;
+            carrySprite.currentFrame = units[i]->carriedUnit->team;
             carrySprites.push_back(carrySprite);
         }
     }
@@ -1375,7 +1279,7 @@ void EnemyManager::HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell,
 
 void EnemyManager::CantoMove()
 {
-    auto enemy = enemies[currentEnemy];
+    auto enemy = units[currentEnemy];
     auto position = enemy->sprite.getPosition();
     if (enemy->carriedUnit)
     {
@@ -1436,8 +1340,8 @@ void EnemyManager::CantoMove()
 
 void EnemyManager::FinishMove()
 {
-    enemies[currentEnemy]->hasMoved = true;
-    enemies[currentEnemy]->sprite.moveAnimate = false;
+    units[currentEnemy]->hasMoved = true;
+    units[currentEnemy]->sprite.moveAnimate = false;
     enemyMoving = false;
     capturing = false;
     NextUnit();
@@ -1449,28 +1353,28 @@ void EnemyManager::UnitLeaveMap()
 {
     //Need to remove the enemy and the unit they are carrying
     //If they are carrying a required unit, it is game over
-    enemies[currentEnemy]->isDead = true;
-    if (enemies[currentEnemy]->carriedUnit)
+    units[currentEnemy]->isDead = true;
+    if (units[currentEnemy]->carriedUnit)
     {
-        unitEscapedSubject.notify(enemies[currentEnemy]->carriedUnit);
-        enemies[currentEnemy]->carriedUnit = nullptr;
+        unitEscapedSubject.notify(units[currentEnemy]->carriedUnit);
+        units[currentEnemy]->carriedUnit = nullptr;
     }
     FinishMove();
 }
 
 void EnemyManager::UpdateEnemies(float deltaTime, int idleFrame)
 {
-    for (int i = 0; i < enemies.size(); i++)
+    for (int i = 0; i < units.size(); i++)
     {
-        enemies[i]->Update(deltaTime, idleFrame);
+        units[i]->Update(deltaTime, idleFrame);
     }
 }
 
 void EnemyManager::EndTurn()
 {
-    for (int i = 0; i < enemies.size(); i++)
+    for (int i = 0; i < units.size(); i++)
     {
-        enemies[i]->EndTurn();
+        units[i]->EndTurn();
     }
     subject.notify(1);
     std::cout << "Player Turn Start\n";
@@ -1479,13 +1383,13 @@ void EnemyManager::EndTurn()
 
 void EnemyManager::RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits)
 {
-    for (int i = 0; i < enemies.size(); i++)
+    for (int i = 0; i < units.size(); i++)
     {
-        if (enemies[i]->isDead)
+        if (units[i]->isDead)
         {
-            sceneUnits.erase(enemies[i]->sceneID);
-            delete enemies[i];
-            enemies.erase(enemies.begin() + i);
+            sceneUnits.erase(units[i]->sceneID);
+            delete units[i];
+            units.erase(units.begin() + i);
             i--;
         }
     }
@@ -1493,18 +1397,18 @@ void EnemyManager::RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits)
 
 void EnemyManager::Clear()
 {
-    for (int i = 0; i < enemies.size(); i++)
+    for (int i = 0; i < units.size(); i++)
     {
-        delete enemies[i];
+        delete units[i];
     }
-    enemies.clear();
+    units.clear();
 }
 
 Unit* EnemyManager::GetCurrentUnit()
 {
-    if (currentEnemy < enemies.size())
+    if (currentEnemy < units.size())
     {
-        return enemies[currentEnemy];
+        return units[currentEnemy];
     }
     return nullptr;
 }

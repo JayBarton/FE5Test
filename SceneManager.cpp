@@ -173,7 +173,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			{
 				auto action = static_cast<AddUnit*>(currentAction);
 				playerManager->AddUnit(action->unitID, action->start);
-				activeUnit = playerManager->playerUnits[playerManager->playerUnits.size() - 1];
+				activeUnit = playerManager->units[playerManager->units.size() - 1];
 				auto path = pathFinder.findPath(action->start, action->end, 99);
 				activeUnit->movementComponent.startMovement(path);
 				state = UNIT_MOVE;

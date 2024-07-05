@@ -1654,11 +1654,11 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 	fullScreen = true;
 	if (unit->team == 0)
 	{
-		unitList = &MenuManager::menuManager.playerManager->playerUnits;
+		unitList = &MenuManager::menuManager.playerManager->units;
 	}
 	else if (unit->team == 1)
 	{
-		unitList = &MenuManager::menuManager.enemyManager->enemies;
+		unitList = &MenuManager::menuManager.enemyManager->units;
 	}
 
 	for (int i = 0; i < unitList->size(); i++)
@@ -2508,12 +2508,12 @@ void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 
 UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
 {
-	numberOfOptions = MenuManager::menuManager.playerManager->playerUnits.size();
+	numberOfOptions = MenuManager::menuManager.playerManager->units.size();
 	fullScreen = true;
 	unitData.resize(numberOfOptions);
 	for (int i = 0; i < numberOfOptions; i++)
 	{
-		auto unit = MenuManager::menuManager.playerManager->playerUnits[i];
+		auto unit = MenuManager::menuManager.playerManager->units[i];
 		unitData[i] = std::make_pair(unit, unit->CalculateBattleStats());
 	}
 	if (MenuManager::menuManager.unitViewSortType > 0)
@@ -2743,7 +2743,7 @@ void UnitListMenu::SelectOption()
 		{
 			for (int i = 0; i < unitData.size(); i++)
 			{
-				auto unit = MenuManager::menuManager.playerManager->playerUnits[i];
+				auto unit = MenuManager::menuManager.playerManager->units[i];
 				unitData[i] = std::make_pair(unit, unit->CalculateBattleStats());
 			}
 		}
@@ -3068,23 +3068,23 @@ void StatusMenu::Draw()
 	text->RenderText("Combatants", 100, 310, 1);
 	text->RenderText("Commander", 400, 310, 1);
 
-	text->RenderText(MenuManager::menuManager.playerManager->playerUnits[0]->name, 100, 375, 1);
+	text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 100, 375, 1);
 	text->RenderText("-----", 100, 431, 1);
 
-	text->RenderText(MenuManager::menuManager.playerManager->playerUnits[0]->name, 450, 396, 1);
-	text->RenderText(MenuManager::menuManager.playerManager->playerUnits[0]->unitClass, 400, 439, 1);
+	text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 450, 396, 1);
+	text->RenderText(MenuManager::menuManager.playerManager->units[0]->unitClass, 400, 439, 1);
 	text->RenderText("HP", 400, 530, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText(intToString(MenuManager::menuManager.playerManager->playerUnits[0]->currentHP), 475, 530, 1);
+	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->currentHP), 475, 530, 1);
 	text->RenderText("/", 500, 530, 1);
-	text->RenderText(intToString(MenuManager::menuManager.playerManager->playerUnits[0]->maxHP), 515, 530, 1);
-	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->playerUnits[0]->level), 575, 487, 1, 14);
+	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
+	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 14);
 
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
 	Batch.init();
 	Batch.begin();
-	MenuManager::menuManager.playerManager->playerUnits[0]->Draw(&Batch, glm::vec2(128, 144), true);
+	MenuManager::menuManager.playerManager->units[0]->Draw(&Batch, glm::vec2(128, 144), true);
 	Batch.end();
 	Batch.renderBatch();
 

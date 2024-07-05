@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "UnitManager.h"
 #include <glm.hpp>
 #include "Unit.h"
 //Want turnsubject, move to it's own file later
@@ -39,9 +40,8 @@ enum ActionState
 
 class InfoDisplays;
 class Camera;
-struct EnemyManager
+struct EnemyManager : public UnitManager
 {
-	std::vector<Unit*> enemies;
 	//In the future this can probably be a vector
 	glm::ivec2 escapePoint;
 	int currentEnemy = 0;
@@ -76,8 +76,8 @@ struct EnemyManager
 	void ApproachNearest(glm::vec2& position, Unit* enemy);
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void NextUnit();
-	void SetUp(std::ifstream& map, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
-	void Load(json saveData, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
+	void SetUp(std::ifstream& map, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
+	void Load(json saveData, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
 	void Draw(SpriteRenderer* renderer);
 	void Draw(class SBatch* Batch, std::vector<Sprite>& carrySprites);
 	void Update(float deltaTime, BattleManager& battleManager, Camera& camera, class InputManager& inputManager);
