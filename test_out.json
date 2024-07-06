@@ -1,4 +1,18 @@
 {
+    "Carried": [
+        [
+            0,
+            4,
+            0,
+            2
+        ],
+        [
+            1,
+            9,
+            0,
+            0
+        ]
+    ],
     "Map": {
         "CurrentRound": 1,
         "Level": "2.map"
@@ -25,6 +39,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Archer",
             "ClassID": 1,
             "ClassPower": 2,
@@ -35,6 +50,7 @@
                     20
                 ]
             ],
+            "LevelID": 0,
             "Name": "Archer",
             "Position": [
                 176.0,
@@ -65,6 +81,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -75,6 +92,7 @@
                     20
                 ]
             ],
+            "LevelID": 1,
             "Name": "Soldier",
             "Position": [
                 288.0,
@@ -105,6 +123,7 @@
                 "boss": false,
                 "stationary": true
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -115,6 +134,7 @@
                     20
                 ]
             ],
+            "LevelID": 2,
             "Name": "Soldier",
             "Position": [
                 208.0,
@@ -145,6 +165,7 @@
                 "boss": false,
                 "stationary": true
             },
+            "Carried": false,
             "Class": "Archer",
             "ClassID": 1,
             "ClassPower": 2,
@@ -159,6 +180,7 @@
                     3
                 ]
             ],
+            "LevelID": 3,
             "Name": "Archer",
             "Position": [
                 144.0,
@@ -189,6 +211,7 @@
                 "boss": false,
                 "stationary": true
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -199,6 +222,7 @@
                     20
                 ]
             ],
+            "LevelID": 4,
             "Name": "Soldier",
             "Position": [
                 288.0,
@@ -229,6 +253,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -239,6 +264,7 @@
                     20
                 ]
             ],
+            "LevelID": 5,
             "Name": "Soldier",
             "Position": [
                 240.0,
@@ -269,6 +295,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -279,6 +306,7 @@
                     20
                 ]
             ],
+            "LevelID": 6,
             "Name": "Soldier",
             "Position": [
                 208.0,
@@ -309,6 +337,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -323,6 +352,7 @@
                     3
                 ]
             ],
+            "LevelID": 7,
             "Name": "Soldier",
             "Position": [
                 160.0,
@@ -353,6 +383,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -363,6 +394,7 @@
                     20
                 ]
             ],
+            "LevelID": 8,
             "Name": "Soldier",
             "Position": [
                 160.0,
@@ -393,6 +425,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -403,10 +436,11 @@
                     20
                 ]
             ],
+            "LevelID": 9,
             "Name": "Soldier",
             "Position": [
                 64.0,
-                256.0
+                240.0
             ],
             "Stats": {
                 "Bld": 9,
@@ -433,6 +467,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -443,6 +478,7 @@
                     20
                 ]
             ],
+            "LevelID": 10,
             "Name": "Soldier",
             "Position": [
                 192.0,
@@ -473,6 +509,7 @@
                 "boss": false,
                 "stationary": true
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -483,6 +520,7 @@
                     20
                 ]
             ],
+            "LevelID": 11,
             "Name": "Soldier",
             "Position": [
                 128.0,
@@ -513,6 +551,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Archer",
             "ClassID": 1,
             "ClassPower": 2,
@@ -523,6 +562,7 @@
                     20
                 ]
             ],
+            "LevelID": 12,
             "Name": "Archer",
             "Position": [
                 256.0,
@@ -553,6 +593,7 @@
                 "boss": false,
                 "stationary": false
             },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -563,6 +604,7 @@
                     20
                 ]
             ],
+            "LevelID": 13,
             "Name": "Soldier",
             "Position": [
                 272.0,
@@ -593,6 +635,7 @@
                 "boss": true,
                 "stationary": true
             },
+            "Carried": false,
             "Class": "Sword Armour",
             "ClassID": 2,
             "ClassPower": 3,
@@ -603,6 +646,7 @@
                     30
                 ]
             ],
+            "LevelID": 14,
             "Name": "Sword Armour",
             "Position": [
                 272.0,
@@ -629,25 +673,18 @@
     ],
     "player": [
         {
+            "Carried": true,
             "Class": "Lord",
             "ClassID": 3,
             "ClassPower": 3,
             "HasMoved": false,
             "ID": 0,
-            "Inventory": [
-                [
-                    2,
-                    60
-                ],
-                [
-                    1,
-                    40
-                ]
-            ],
+            "Inventory": [],
+            "LevelID": 0,
             "Name": "Leif",
             "Position": [
-                48.0,
-                304.0
+                64.0,
+                240.0
             ],
             "Skills": [
                 1
@@ -674,6 +711,7 @@
             }
         },
         {
+            "Carried": false,
             "Class": "Lance Knight",
             "ClassID": 13,
             "ClassPower": 3,
@@ -695,8 +733,17 @@
                 [
                     18,
                     1
+                ],
+                [
+                    1,
+                    40
+                ],
+                [
+                    2,
+                    60
                 ]
             ],
+            "LevelID": 1,
             "Mount": {
                 "AnimID": 4,
                 "Def": 1,
@@ -738,6 +785,7 @@
             }
         },
         {
+            "Carried": true,
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 3,
@@ -757,9 +805,10 @@
                     1
                 ]
             ],
+            "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                48.0,
+                64.0,
                 288.0
             ],
             "Skills": [
@@ -784,6 +833,7 @@
             }
         },
         {
+            "Carried": false,
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
@@ -799,6 +849,7 @@
                     60
                 ]
             ],
+            "LevelID": 3,
             "Name": "Halvan",
             "Position": [
                 32.0,
@@ -826,6 +877,7 @@
             }
         },
         {
+            "Carried": false,
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
@@ -841,6 +893,7 @@
                     60
                 ]
             ],
+            "LevelID": 4,
             "Name": "Othin",
             "Position": [
                 64.0,

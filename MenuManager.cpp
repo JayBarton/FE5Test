@@ -134,15 +134,16 @@ void UnitOptionsMenu::SelectOption()
 	{
 		std::vector<Item*> validWeapons;
 		std::vector<std::vector<Unit*>> unitsToAttack;
-		for (int i = 0; i < playerUnit->weapons.size(); i++)
+		auto playerWeapons = playerUnit->GetOrderedWeapons();
+		for (int i = 0; i < playerWeapons.size(); i++)
 		{
 			bool weaponInRange = false;
-			auto weapon = playerUnit->GetWeaponData(playerUnit->weapons[i]);
+			auto weapon = playerUnit->GetWeaponData(playerWeapons[i]);
 			if (playerUnit->canUse(weapon))
 			{
 				if (1 <= weapon.maxRange && 1 >= weapon.minRange)
 				{
-					validWeapons.push_back(playerUnit->weapons[i]);
+					validWeapons.push_back(playerWeapons[i]);
 				}
 			}
 		}
@@ -4065,31 +4066,36 @@ UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	Menu(Cursor, Text, camera, shapeVAO), movingUnit(movingUnit), receivingUnit(receivingUnit), operation(operation), dropPosition(dropPosition)
 {
 	movingUnit->hasMoved = false;
-
+	if (movingUnit->carryingUnit)
+	{
+		movingUnit->sprite.SetPosition(movingUnit->carryingUnit->sprite.getPosition());
+	}
+	auto playerUnit = cursor->selectedUnit;
 	if (operation == RESCUE || operation == TRANSFER)
 	{
 		receivingUnit->carryUnit(movingUnit);
 	}
 	if (operation != TRANSFER)
 	{
-		if (receivingUnit == cursor->selectedUnit)
+		if (receivingUnit == playerUnit)
 		{
 			receivingUnit->sprite.moveAnimate = false;
-			if (!receivingUnit->isMounted() || receivingUnit->mount->remainingMoves == 0)
-			{
-				receivingUnit->hasMoved = true;
-				doneHere = true;
-			}
 		}
 	}
 	if (operation == DROP || operation == RELEASE)
 	{
 		movingUnit->carryingUnit = nullptr;
 		movingUnit->hasMoved = false;
-		auto playerUnit = cursor->selectedUnit;
+		
 		playerUnit->releaseUnit();
+	//	movingUnit->sprite.SetPosition(playerUnit->sprite.getPosition());
 		std::vector<glm::ivec2> path = { dropPosition, playerUnit->sprite.getPosition() };
 		movingUnit->startMovement(path, 0, false);
+	}
+	if (!playerUnit->isMounted() || playerUnit->mount->remainingMoves == 0)
+	{
+		playerUnit->hasMoved = true;
+		doneHere = true;
 	}
 }
 
@@ -4117,6 +4123,7 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 			if (removeTimer >= 0.5f)
 			{
 				auto playerUnit = cursor->selectedUnit;
+				//Need to call the death message
 				movingUnit->isDead = true;
 				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
 				{

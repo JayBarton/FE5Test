@@ -594,6 +594,14 @@ void Unit::startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool
 
 void Unit::carryUnit(Unit* unitToCarry)
 {
+    holdUnit(unitToCarry);
+
+    std::vector<glm::ivec2> path = { sprite.getPosition(), unitToCarry->sprite.getPosition() };
+    unitToCarry->startMovement(path, 0, false);
+}
+
+void Unit::holdUnit(Unit* unitToCarry)
+{
     carriedUnit = unitToCarry;
     unitToCarry->carryingUnit = this;
     carryingMalus = 2;
@@ -610,9 +618,6 @@ void Unit::carryUnit(Unit* unitToCarry)
             mount->remainingMoves /= carryingMalus;
         }
     }
-
-    std::vector<glm::ivec2> path = { sprite.getPosition(), unitToCarry->sprite.getPosition() };
-    unitToCarry->startMovement(path, 0, false);
 }
 
 void Unit::releaseUnit()

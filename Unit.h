@@ -168,6 +168,9 @@ struct Unit
 	//Using this for scene actions/dialogue. This is mainly for the rare case in which a generic enemy does something in a scene
 	int sceneID = -1;
 	int portraitID;
+	//Yet another ID. Need this one for figuring out what units are carrying units when loading a suspended game
+	int levelID = -1;
+
 	int maxHP;
 	int strength;
 	int magic;
@@ -290,6 +293,7 @@ struct Unit
 	void startMovement(const std::vector<glm::ivec2>& path, int moveCost, bool remainingMove);
 
 	void carryUnit(Unit* unitToCarry);
+	void holdUnit(Unit* unitToCarry);
 	void releaseUnit();
 
 	Item* GetEquippedItem();

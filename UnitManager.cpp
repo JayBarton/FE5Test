@@ -49,6 +49,7 @@ Unit* UnitManager::LoadUnitFromSuspend(const json& unit)
 	Unit* newUnit = new Unit(unitClass, name, ID, HP, str, mag, skl, spd, lck, def, bld, mov);
 	newUnit->classID = classID;
 	newUnit->level = stats["Level"];
+	newUnit->levelID = unit["LevelID"];
 	//   (*sceneUnits)[newUnit->sceneID] = newUnit;
 
 	/*    json growths = unit["GrowthRates"];
@@ -123,6 +124,9 @@ Unit* UnitManager::LoadUnitFromSuspend(const json& unit)
 		newUnit->sprite.drawOffset = animData.offset;
 	}
 	newUnit->portraitID = ID;
-	newUnit->placeUnit(unit["Position"][0], unit["Position"][1]);
+	if (!unit["Carried"])
+	{
+		newUnit->placeUnit(unit["Position"][0], unit["Position"][1]);
+	}
 	return newUnit;
 }

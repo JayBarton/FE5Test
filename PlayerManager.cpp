@@ -80,6 +80,8 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 			newUnit->sceneID = ID;
 			newUnit->level = stats["Level"];
 			(*sceneUnits)[newUnit->sceneID] = newUnit;
+			newUnit->levelID = levelID;
+			levelID++;
 
 			json growths = unit["GrowthRates"];
 			HP = growths["HP"];
@@ -183,7 +185,7 @@ void PlayerManager::Load(json saveData)
 		units[current] = newUnit;
 		current++;
 	}
-
+	levelID = current;
 }
 
 void PlayerManager::AddUnit(int unitID, glm::vec2& position)

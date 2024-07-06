@@ -508,10 +508,9 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	loadMap("2.map", unitEvents);
-	//loadSuspendedGame();
-	cursor.position = playerManager.units[0]->sprite.getPosition();
-	cursor.focusedUnit = playerManager.units[0];
+	//loadMap("2.map", unitEvents);
+	loadSuspendedGame();
+	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
@@ -1726,6 +1725,7 @@ json UnitToJson(Unit* unit)
 	json j;
 	json stats;
 	j["ID"] = unit->ID;
+	j["LevelID"] = unit->levelID;
 	j["Name"] = unit->name;
 	j["Class"] = unit->unitClass;
 	j["ClassID"] = unit->classID;
@@ -1802,9 +1802,13 @@ json UnitToJson(Unit* unit)
 		j["Mount"] = mountData;
 	}
 
-	if (unit->carriedUnit)
+	if (unit->carryingUnit)
 	{
-
+		j["Carried"] = true;
+	}
+	else
+	{
+		j["Carried"] = false;
 	}
 
 	return j;
@@ -1817,7 +1821,6 @@ json UnitToJson(Unit* unit)
 void SuspendGame()
 {
 	json j;
-	std::ofstream txtFile("text_out.txt");
 	json map;
 	map["Level"] = currentLevel;
 	map["CurrentRound"] = currentRound;
@@ -1827,18 +1830,25 @@ void SuspendGame()
 		json unitData = UnitToJson(playerManager.units[i]);
 		unitData["HasMoved"] = unit->hasMoved;
 		j["player"].push_back(unitData);
+		if (unit->carriedUnit)
+		{
+			j["Carried"].push_back({ 0, unit->levelID, unit->carriedUnit->team, unit->carriedUnit->levelID });
+		}
 	}
-	txtFile << "\n";
 	for (int i = 0; i < enemyManager.units.size(); i++)
 	{
 		auto unit = enemyManager.units[i];
-		txtFile << unit->activationType << " " << unit->stationary << " " << unit->boss << " " << unit->active << "\n";
 		json something = UnitToJson(enemyManager.units[i]);
 		json AI;
 		AI["activationType"] = unit->activationType;
 		AI["stationary"] = unit->stationary;
 		AI["boss"] = unit->boss;
 		AI["active"] = unit->active;
+
+		if (unit->carriedUnit)
+		{
+			j["Carried"].push_back({ 1, unit->levelID, unit->carriedUnit->team, unit->carriedUnit->levelID });
+		}
 		
 		something["AI"] = AI;
 		j["enemy"].push_back(something);
@@ -1893,6 +1903,54 @@ void loadSuspendedGame()
 			json enemy = data["enemy"];
 			playerManager.Load(data["player"]);
 			enemyManager.Load(enemy, &playerManager.units, &vendors);
+
+			for (const auto& carryData : data["Carried"])
+			{
+				Unit* carryingUnit = nullptr;
+				Unit* carriedUnit = nullptr;
+				std::vector<Unit*>* carryingUnitTeam;
+				std::vector<Unit*>* carriedUnitTeam;
+				if (carryData[0] == 0)
+				{
+					carryingUnitTeam = &playerManager.units;
+				}
+				else
+				{
+					carryingUnitTeam = &enemyManager.units;
+				}
+				if (carryData[2] == 0)
+				{
+					carriedUnitTeam = &playerManager.units;
+				}
+				else
+				{
+					carriedUnitTeam = &enemyManager.units;
+				}
+				for (int i = 0; i < carryingUnitTeam->size(); i++)
+				{
+					auto unit = (*carryingUnitTeam)[i];
+					auto levelID = carryData[1];
+					if (unit->levelID == levelID)
+					{
+						carryingUnit = unit;
+						break;
+					}
+				}
+				for (int i = 0; i < carriedUnitTeam->size(); i++)
+				{
+					auto unit = (*carriedUnitTeam)[i];
+					auto levelID = carryData[3];
+					if (unit->levelID == levelID)
+					{
+						carriedUnit = unit;
+						break;
+					}
+				}
+			///	TileManager::tileManager.removeUnit(carriedUnit->sprite.getPosition().x, carriedUnit->sprite.getPosition().y);
+				carryingUnit->holdUnit(carriedUnit);
+				carriedUnit->hide = true;
+			}
+
 		}
 		else if (thing == "Scenes")
 		{

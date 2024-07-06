@@ -111,6 +111,9 @@ void EnemyManager::SetUp(std::ifstream& map,
         units[i]->classID = units[i]->ID;
         units[i]->init(gen, distribution);
 
+        units[i]->levelID = levelID;
+        levelID++;
+
         units[i]->team = 1;
         units[i]->growths = unitGrowths[growthID];
         std::vector<int> inventory;
@@ -227,6 +230,7 @@ void EnemyManager::Load(json saveData, std::vector<Unit*>* playerUnits, std::vec
         units[current] = newUnit;
         current++;
     }
+    levelID = current;
 }
 
 void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera& camera, InputManager& inputManager)

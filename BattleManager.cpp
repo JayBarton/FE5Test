@@ -472,6 +472,7 @@ void BattleManager::DropHeldUnit()
 		auto deadPosition = unitToDrop->sprite.getPosition();
 		unitToDrop->placeUnit(deadPosition.x, deadPosition.y);
 		unitToDrop->hide = false;
+		unitToDrop->carryingUnit->releaseUnit(); //once I am deleting the unit properly this shouldn't be neccessary
 		unitToDrop->carryingUnit = nullptr;
 		unitToDrop = nullptr;
 	}
