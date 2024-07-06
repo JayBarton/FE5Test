@@ -1381,20 +1381,6 @@ void EnemyManager::EndTurn()
 
 }
 
-void EnemyManager::RemoveDeadUnits(std::unordered_map<int, Unit*>& sceneUnits)
-{
-    for (int i = 0; i < units.size(); i++)
-    {
-        if (units[i]->isDead)
-        {
-            sceneUnits.erase(units[i]->sceneID);
-            delete units[i];
-            units.erase(units.begin() + i);
-            i--;
-        }
-    }
-}
-
 void EnemyManager::Clear()
 {
     for (int i = 0; i < units.size(); i++)

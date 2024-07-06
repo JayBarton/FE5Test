@@ -51,7 +51,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	}
 	//units[0]->currentHP = 1;
 //	units[0]->build = 2;
-	//units[2]->currentHP = 1;
+	units[2]->currentHP = 1;
 
 }
 
@@ -170,10 +170,15 @@ void PlayerManager::Load(json saveData)
 
 		newUnit->currentHP = unit["Stats"]["currentHP"];
 		newUnit->experience = unit["Stats"]["exp"];
-	    newUnit->subject.addObserver(unitEvents);
+	    
+		newUnit->hasMoved = unit["HasMoved"];
+
+		newUnit->subject.addObserver(unitEvents);
 
 		newUnit->team = 0;
 		newUnit->sceneID = newUnit->ID;
+
+		(*sceneUnits)[newUnit->sceneID] = newUnit;
 
 		units[current] = newUnit;
 		current++;

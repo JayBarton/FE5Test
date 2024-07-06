@@ -1,7 +1,22 @@
 {
     "Map": {
+        "CurrentRound": 1,
         "Level": "2.map"
     },
+    "Scenes": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+    ],
     "enemy": [
         {
             "AI": {
@@ -385,13 +400,13 @@
             "Inventory": [
                 [
                     10,
-                    19
+                    20
                 ]
             ],
             "Name": "Soldier",
             "Position": [
-                48.0,
-                224.0
+                64.0,
+                256.0
             ],
             "Stats": {
                 "Bld": 9,
@@ -404,7 +419,7 @@
                 "Skl": 0,
                 "Spd": 3,
                 "Str": 5,
-                "currentHP": 10,
+                "currentHP": 22,
                 "exp": 0
             },
             "WeaponProf": {
@@ -617,11 +632,12 @@
             "Class": "Lord",
             "ClassID": 3,
             "ClassPower": 3,
+            "HasMoved": false,
             "ID": 0,
             "Inventory": [
                 [
                     2,
-                    59
+                    60
                 ],
                 [
                     1,
@@ -631,7 +647,7 @@
             "Name": "Leif",
             "Position": [
                 48.0,
-                240.0
+                304.0
             ],
             "Skills": [
                 1
@@ -650,8 +666,8 @@
                 "Skl": 2,
                 "Spd": 5,
                 "Str": 4,
-                "currentHP": 15,
-                "exp": 10
+                "currentHP": 22,
+                "exp": 0
             },
             "WeaponProf": {
                 "Sword": 3
@@ -661,6 +677,7 @@
             "Class": "Lance Knight",
             "ClassID": 13,
             "ClassPower": 3,
+            "HasMoved": false,
             "ID": 1,
             "Inventory": [
                 [
@@ -724,6 +741,7 @@
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 3,
+            "HasMoved": false,
             "ID": 2,
             "Inventory": [
                 [
@@ -758,7 +776,7 @@
                 "Skl": 18,
                 "Spd": 20,
                 "Str": 9,
-                "currentHP": 28,
+                "currentHP": 1,
                 "exp": 0
             },
             "WeaponProf": {
@@ -769,6 +787,7 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
+            "HasMoved": false,
             "ID": 3,
             "Inventory": [
                 [
@@ -810,6 +829,7 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
+            "HasMoved": false,
             "ID": 4,
             "Inventory": [
                 [
@@ -848,120 +868,6 @@
             },
             "WeaponProf": {
                 "Axe": 1
-            }
-        },
-        {
-            "Class": "Bow Fighter",
-            "ClassID": 8,
-            "ClassPower": 2,
-            "ID": 6,
-            "Inventory": [
-                [
-                    3,
-                    40
-                ],
-                [
-                    7,
-                    1
-                ]
-            ],
-            "Name": "Tania",
-            "Position": [
-                80.0,
-                144.0
-            ],
-            "Stats": {
-                "Bld": 4,
-                "Def": 2,
-                "HP": 20,
-                "Lck": 6,
-                "Level": 1,
-                "Mag": 1,
-                "Mov": 6,
-                "Skl": 6,
-                "Spd": 10,
-                "Str": 3,
-                "currentHP": 20,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Bow": 1
-            }
-        },
-        {
-            "Class": "Warrior",
-            "ClassID": 7,
-            "ClassPower": 3,
-            "ID": 5,
-            "Inventory": [
-                [
-                    14,
-                    20
-                ],
-                [
-                    15,
-                    20
-                ]
-            ],
-            "Name": "Dagda",
-            "Position": [
-                80.0,
-                128.0
-            ],
-            "Skills": [
-                4
-            ],
-            "Stats": {
-                "Bld": 15,
-                "Def": 10,
-                "HP": 43,
-                "Lck": 2,
-                "Level": 6,
-                "Mag": 1,
-                "Mov": 7,
-                "Skl": 11,
-                "Spd": 9,
-                "Str": 14,
-                "currentHP": 43,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Axe": 5,
-                "Bow": 1
-            }
-        },
-        {
-            "Class": "Mountain Thief",
-            "ClassID": 9,
-            "ClassPower": 3,
-            "ID": 7,
-            "Inventory": [
-                [
-                    13,
-                    25
-                ]
-            ],
-            "Name": "Marty",
-            "Position": [
-                64.0,
-                112.0
-            ],
-            "Stats": {
-                "Bld": 15,
-                "Def": 6,
-                "HP": 32,
-                "Lck": 6,
-                "Level": 1,
-                "Mag": 0,
-                "Mov": 6,
-                "Skl": 0,
-                "Spd": 0,
-                "Str": 9,
-                "currentHP": 32,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Axe": 2
             }
         }
     ]

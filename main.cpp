@@ -236,8 +236,6 @@ struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
-		//Going to need instant feedback on enemy deaths in the future, but with how enemy manager's update works currently that won't work right now
-		enemyManager.RemoveDeadUnits(sceneUnits);
 		if (ID == 0)
 		{
 			cursor.focusedUnit = nullptr;
@@ -305,7 +303,14 @@ struct DeathEvent : public Observer<Unit*>
 		//For use in the future
 		else if (deadUnit->team == 1)
 		{
-
+			auto it = std::find(enemyManager.units.begin(), enemyManager.units.end(), deadUnit);
+			sceneUnits.erase(deadUnit->sceneID);
+			enemyManager.units.erase(it);
+			if (currentTurn == 1)
+			{
+				enemyManager.currentEnemy--;
+			}
+			delete deadUnit;
 		}
 	}
 };
@@ -503,8 +508,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-//	loadMap("2.map", unitEvents);
-	loadSuspendedGame();
+	loadMap("2.map", unitEvents);
+	//loadSuspendedGame();
 	cursor.position = playerManager.units[0]->sprite.getPosition();
 	cursor.focusedUnit = playerManager.units[0];
 
@@ -1098,7 +1103,6 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 						currentObject->activation = new TalkActivation(currentObject, activationType, talker, listener);
 						sceneUnits[talker]->talkData.push_back({ currentObject, listener });
 					}
-
 				}
 				else if (activationType == 1)
 				{
@@ -1798,58 +1802,17 @@ json UnitToJson(Unit* unit)
 		j["Mount"] = mountData;
 	}
 
+	if (unit->carriedUnit)
+	{
+
+	}
+
 	return j;
 }
 
 //I need to keep track of unit growth rates, but I'm not sure if I actually need to save them, since they are already saved elsewhere
 //For the player I can just go back to the json and grab that, for enemies I think I should be able to save the ID of the growths they are using
 //And load that.
-void WriteUnit(std::ofstream& objectStream, Unit* unit)
-{
-	//Standard stuff to save
-	//Not sure if class power strictly needs to be saved
-	objectStream << unit->name << "\n" << unit->unitClass << "\n" << unit->ID << " "
-		<< unit->classID << " " << unit->sceneID << " " << unit->portraitID << " "
-		<< unit->maxHP << " " << unit->strength << " " << unit->magic << " "
-		<< unit->skill << " " << unit->speed << " " << unit->luck << " "
-		<< unit->defense << " " << unit->build << " " << unit->move << " "
-		<< unit->level << " " << unit->classPower;
-	for (int i = 0; i < 10; i++)
-	{
-		objectStream << unit->weaponProficiencies[i] << " ";
-	}
-	objectStream << unit->uniqueWeapons.size() << " ";
-	for (int i = 0; i < unit->uniqueWeapons.size(); i++)
-	{
-		objectStream << unit->uniqueWeapons[i] << " ";
-	}
-	objectStream << unit->skills.size() << " ";
-	for (int i = 0; i < unit->skills.size(); i++)
-	{
-		objectStream << unit->skills[i] << " ";
-	}
-	for (int i = 0; i < unit->inventory.size(); i++)
-	{
-		objectStream << unit->inventory[i]->ID << " ";
-	}
-
-	if (unit->mount)
-	{
-		auto mount = unit->mount;
-		objectStream << 1 << " " << mount->movementType << " " << mount->ID << " " << mount->str << " " << mount->skl << " " << mount->spd << " " << mount->def << " " << mount->mov << " ";
-		for (int i = 0; i < 10; i++)
-		{
-			objectStream << mount->weaponProficiencies[i] << " ";
-		}
-	}
-	else
-	{
-		objectStream << 0 << " ";
-	}
-
-//	objectStream << "\"" << unit->deathMessage << "\" "; //Like growths, I don't know that death message needs to be saved, should be accessable from json...
-	objectStream << unit->sprite.position.x << " " << unit->sprite.position.y << "\n";
-}
 
 void SuspendGame()
 {
@@ -1857,16 +1820,18 @@ void SuspendGame()
 	std::ofstream txtFile("text_out.txt");
 	json map;
 	map["Level"] = currentLevel;
+	map["CurrentRound"] = currentRound;
 	for (int i = 0; i < playerManager.units.size(); i++)
 	{
-		WriteUnit(txtFile, playerManager.units[i]);
-		j["player"].push_back(UnitToJson(playerManager.units[i]));
+		auto unit = playerManager.units[i];
+		json unitData = UnitToJson(playerManager.units[i]);
+		unitData["HasMoved"] = unit->hasMoved;
+		j["player"].push_back(unitData);
 	}
 	txtFile << "\n";
 	for (int i = 0; i < enemyManager.units.size(); i++)
 	{
 		auto unit = enemyManager.units[i];
-		WriteUnit(txtFile, unit);
 		txtFile << unit->activationType << " " << unit->stationary << " " << unit->boss << " " << unit->active << "\n";
 		json something = UnitToJson(enemyManager.units[i]);
 		json AI;
@@ -1879,6 +1844,18 @@ void SuspendGame()
 		j["enemy"].push_back(something);
 	}
 	j["Map"] = map;
+	j["Scenes"] = json::array();
+	for (int i = 0; i < sceneManager.scenes.size(); i++)
+	{
+		if (!sceneManager.scenes[i] || !sceneManager.scenes[i]->activation)
+		{
+			j["Scenes"].push_back(false);
+		}
+		else
+		{
+			j["Scenes"].push_back(true);
+		}
+	}
 
 	std::ofstream file("test_out.json");
 	if (file.is_open()) {
@@ -1895,10 +1872,14 @@ void loadSuspendedGame()
 
 	json mapLevel = data["Map"];
 	std::string levelMap = mapLevel["Level"];
+	currentRound = mapLevel["CurrentRound"];
+	currentLevel = mapLevel["Level"];
 	std::ifstream map(levelDirectory + levelMap);
 
 	int xTiles = 0;
 	int yTiles = 0;
+
+	//j["Scenes"]
 	while (map.good())
 	{
 		std::string thing;
@@ -1908,6 +1889,156 @@ void loadSuspendedGame()
 		{
 			map >> xTiles >> yTiles;
 			TileManager::tileManager.setTiles(map, xTiles, yTiles);
+
+			json enemy = data["enemy"];
+			playerManager.Load(data["player"]);
+			enemyManager.Load(enemy, &playerManager.units, &vendors);
+		}
+		else if (thing == "Scenes")
+		{
+			int numberOfScenes = 0;
+			map >> numberOfScenes;
+			sceneManager.scenes.resize(numberOfScenes);
+			auto sceneStatus = data["Scenes"];
+			for (int i = 0; i < numberOfScenes; i++)
+			{
+				sceneManager.scenes[i] = new Scene(&textManager);
+				if (sceneStatus[i] == true)
+				{
+					int numberOfActions = 0;
+					map >> numberOfActions;
+					
+					auto currentObject = sceneManager.scenes[i];
+					currentObject->ID = i;
+					currentObject->owner = &sceneManager;
+					currentObject->actions.resize(numberOfActions);
+					for (int c = 0; c < numberOfActions; c++)
+					{
+						int actionType = 0;
+						map >> actionType;
+						if (actionType == CAMERA_ACTION)
+						{
+							glm::vec2 position;
+							map >> position.x >> position.y;
+							currentObject->actions[c] = new CameraMove(actionType, position);
+						}
+						else if (actionType == NEW_UNIT_ACTION)
+						{
+							int unitID;
+							glm::vec2 start;
+							glm::vec2 end;
+							map >> unitID >> start.x >> start.y >> end.x >> end.y;
+							currentObject->actions[c] = new AddUnit(actionType, unitID, start, end);
+						}
+						else if (actionType == MOVE_UNIT_ACTION)
+						{
+							int unitID;
+							glm::vec2 end;
+							map >> unitID >> end.x >> end.y;
+							currentObject->actions[c] = new UnitMove(actionType, unitID, end);
+						}
+						else if (actionType == DIALOGUE_ACTION)
+						{
+							int dialogueID;
+							map >> dialogueID;
+							currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
+						}
+						else if (actionType == ITEM_ACTION)
+						{
+							int itemID = 0;
+							map >> itemID;
+							currentObject->actions[c] = new ItemAction(actionType, itemID);
+						}
+						else if (actionType == NEW_SCENE_UNIT_ACTION)
+						{
+							int unitID;
+							int team;
+							int pathSize;
+							float nextDelay;
+							float moveDelay;
+							std::vector<glm::ivec2> path;
+							map >> unitID >> team >> pathSize;
+							path.resize(pathSize);
+							for (int i = 0; i < pathSize; i++)
+							{
+								map >> path[i].x >> path[i].y;
+							}
+							map >> nextDelay >> moveDelay;
+							currentObject->actions[c] = new AddSceneUnit(actionType, unitID, team, path, nextDelay, moveDelay);
+						}
+						else if (actionType == SCENE_UNIT_MOVE_ACTION)
+						{
+							int unitID;
+							int pathSize;
+							int facing;
+							float nextDelay;
+							float moveSpeed;
+							std::vector<glm::ivec2> path;
+							map >> unitID >> pathSize;
+							path.resize(pathSize);
+							for (int i = 0; i < pathSize; i++)
+							{
+								map >> path[i].x >> path[i].y;
+							}
+							map >> nextDelay >> moveSpeed >> facing;
+							currentObject->actions[c] = new SceneUnitMove(actionType, unitID, path, nextDelay, moveSpeed, facing);
+						}
+						else if (actionType == SCENE_UNIT_REMOVE_ACTION)
+						{
+							int unitID;
+							float nextDelay;
+
+							map >> unitID >> nextDelay;
+							currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
+						}
+					}
+					int activationType = 0;
+					map >> activationType;
+					if (activationType == 0)
+					{
+						int talker = 0;
+						int listener = 0;
+						map >> talker >> listener;
+						if (sceneUnits.count(talker)) //Not currently going to work for enemy scene units...
+						{
+							currentObject->activation = new TalkActivation(currentObject, activationType, talker, listener);
+							sceneUnits[talker]->talkData.push_back({ currentObject, listener });
+						}
+					}
+					else if (activationType == 1)
+					{
+						int round = 0;
+						map >> round;
+						currentObject->activation = new EnemyTurnEnd(currentObject, activationType, round);
+						currentObject->extraSetup(&roundSubject);
+					}
+					else if (activationType == 2)
+					{
+						currentObject->activation = new VisitActivation(currentObject, activationType);
+					}
+					else if (activationType == 3) //Should never be hitting this
+					{
+					//	intro = i;
+						currentObject->activation = new IntroActivation(currentObject, activationType);
+					}
+					else if (activationType == 4)
+					{
+						currentObject->activation = new EndingActivation(currentObject, activationType);
+						endingID = i;
+					}
+
+					map >> currentObject->repeat;
+				}
+				else
+				{
+					std::string suicide;
+				//	map >> suicide;
+					std::string junk;
+					//std::getline(map, junk);
+					map.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+					map.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				}
+			}
 		}
 		else if (thing == "Vendors")
 		{
@@ -1957,11 +2088,6 @@ void loadSuspendedGame()
 			TileManager::tileManager.placeSeizePoint(seizePoint.x, seizePoint.y);
 		}
 	}
-
-
-	json enemy = data["enemy"];
-	playerManager.Load(data["player"]);
-	enemyManager.Load(enemy, &playerManager.units, &vendors);
 
 	map.close();
 

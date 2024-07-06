@@ -186,9 +186,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					auto deadPosition = deadUnit->sprite.getPosition();
 					TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
 					EndAttack();
-					unitDiedSubject.notify(deadUnit);
 
-					deadUnit = nullptr;
 					unitDied = false;
 				}
 			}
@@ -460,6 +458,11 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 	DropHeldUnit();
 	battleActive = false;
 	camera.SetCenter(attacker->sprite.getPosition());
+	if (deadUnit)
+	{
+		unitDiedSubject.notify(deadUnit);
+		deadUnit = nullptr;
+	}
 }
 
 void BattleManager::DropHeldUnit()
