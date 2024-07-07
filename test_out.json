@@ -1,20 +1,6 @@
 {
-    "Carried": [
-        [
-            0,
-            4,
-            0,
-            2
-        ],
-        [
-            1,
-            9,
-            0,
-            0
-        ]
-    ],
     "Map": {
-        "CurrentRound": 1,
+        "CurrentRound": 0,
         "Level": "2.map"
     },
     "Scenes": [
@@ -421,7 +407,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -439,8 +425,8 @@
             "LevelID": 9,
             "Name": "Soldier",
             "Position": [
-                64.0,
-                240.0
+                128.0,
+                224.0
             ],
             "Stats": {
                 "Bld": 9,
@@ -673,18 +659,27 @@
     ],
     "player": [
         {
-            "Carried": true,
+            "Carried": false,
             "Class": "Lord",
             "ClassID": 3,
             "ClassPower": 3,
             "HasMoved": false,
             "ID": 0,
-            "Inventory": [],
+            "Inventory": [
+                [
+                    2,
+                    60
+                ],
+                [
+                    1,
+                    40
+                ]
+            ],
             "LevelID": 0,
             "Name": "Leif",
             "Position": [
-                64.0,
-                240.0
+                48.0,
+                304.0
             ],
             "Skills": [
                 1
@@ -715,7 +710,7 @@
             "Class": "Lance Knight",
             "ClassID": 13,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 1,
             "Inventory": [
                 [
@@ -725,28 +720,13 @@
                 [
                     1,
                     40
-                ],
-                [
-                    0,
-                    3
-                ],
-                [
-                    18,
-                    1
-                ],
-                [
-                    1,
-                    40
-                ],
-                [
-                    2,
-                    60
                 ]
             ],
             "LevelID": 1,
             "Mount": {
                 "AnimID": 4,
                 "Def": 1,
+                "IsMounted": true,
                 "Mov": 3,
                 "Skl": 1,
                 "Spd": 2,
@@ -758,7 +738,7 @@
             "Name": "Finn",
             "Position": [
                 32.0,
-                304.0
+                272.0
             ],
             "Skills": [
                 0
@@ -785,7 +765,7 @@
             }
         },
         {
-            "Carried": true,
+            "Carried": false,
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 3,
@@ -808,7 +788,7 @@
             "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                64.0,
+                48.0,
                 288.0
             ],
             "Skills": [
@@ -837,7 +817,7 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 3,
             "Inventory": [
                 [
@@ -847,6 +827,10 @@
                 [
                     17,
                     60
+                ],
+                [
+                    0,
+                    3
                 ]
             ],
             "LevelID": 3,
@@ -861,7 +845,7 @@
             "Stats": {
                 "Bld": 12,
                 "Def": 5,
-                "HP": 28,
+                "HP": 35,
                 "Lck": 2,
                 "Level": 2,
                 "Mag": 0,
@@ -869,7 +853,7 @@
                 "Skl": 7,
                 "Spd": 7,
                 "Str": 7,
-                "currentHP": 28,
+                "currentHP": 35,
                 "exp": 0
             },
             "WeaponProf": {

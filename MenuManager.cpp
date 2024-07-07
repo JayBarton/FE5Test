@@ -383,6 +383,7 @@ void UnitOptionsMenu::GetOptions()
 	canVisit = false;
 	canBuy = false;
 	canSeize = false;
+	canRescue = false;
 	optionsVector.clear();
 	optionsVector.reserve(5);
 	auto playerUnit = cursor->selectedUnit;

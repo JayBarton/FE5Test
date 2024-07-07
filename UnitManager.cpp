@@ -113,7 +113,14 @@ Unit* UnitManager::LoadUnitFromSuspend(const json& unit)
 		{
 			newUnit->mount->weaponProficiencies[weaponNameMap[it.key()]] = int(it.value());
 		}
-		newUnit->MountAction(true);
+		if (mount["IsMounted"])
+		{
+			newUnit->MountAction(true);
+		}
+		else
+		{
+			newUnit->MountAction(false);
+		}
 	}
 	else
 	{
