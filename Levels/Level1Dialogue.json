@@ -180,16 +180,19 @@
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 3,
           "speech": "It's a good looking axe, isn't it?<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 3,
           "speech": "Awhile back, while I was walking in the hills,\na strange old lady came out of the lake and gave it to me.<0"
         },
         {
           "speaker": -1,
           "location": 0,
+          "portrait": 3,
           "speech": "But I don't really have a use for an axe, so I'm giving it to you.<1"
         }
       ]

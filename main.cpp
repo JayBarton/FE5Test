@@ -508,8 +508,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	loadMap("2.map", unitEvents);
-	//loadSuspendedGame();
+	//loadMap("2.map", unitEvents);
+	loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
@@ -1825,6 +1825,7 @@ void SuspendGame()
 	json map;
 	map["Level"] = currentLevel;
 	map["CurrentRound"] = currentRound;
+	map["Funds"] = playerManager.funds;
 	for (int i = 0; i < playerManager.units.size(); i++)
 	{
 		auto unit = playerManager.units[i];
@@ -1885,6 +1886,7 @@ void loadSuspendedGame()
 	std::string levelMap = mapLevel["Level"];
 	currentRound = mapLevel["CurrentRound"];
 	currentLevel = mapLevel["Level"];
+	playerManager.funds = mapLevel["Funds"];
 	std::ifstream map(levelDirectory + levelMap);
 
 	int xTiles = 0;
@@ -1947,7 +1949,6 @@ void loadSuspendedGame()
 						break;
 					}
 				}
-			///	TileManager::tileManager.removeUnit(carriedUnit->sprite.getPosition().x, carriedUnit->sprite.getPosition().y);
 				carryingUnit->holdUnit(carriedUnit);
 				carriedUnit->hide = true;
 			}
@@ -2090,13 +2091,56 @@ void loadSuspendedGame()
 				}
 				else
 				{
-					std::string suicide;
-				//	map >> suicide;
-					std::string junk;
-					//std::getline(map, junk);
 					map.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 					map.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 				}
+			}
+		}
+		else if (thing == "Visits")
+		{
+			int numberOfVisits = 0;
+			map >> numberOfVisits;
+			visitObjects.resize(numberOfVisits);
+			bool redraw = false;
+			for (int i = 0; i < numberOfVisits; i++)
+			{
+				glm::ivec2 position;
+				map >> position.x >> position.y;
+				int numberOfIDs = 0;
+				map >> numberOfIDs;
+				bool allGood = true;
+				for (int c = 0; c < numberOfIDs; c++)
+				{
+					int unitID = 0;
+					int sceneID = 0;
+					map >> unitID >> sceneID;
+					if (sceneManager.scenes[sceneID]->activation)
+					{
+						visitObjects[i].position = position;
+						visitObjects[i].sceneMap[unitID] = sceneManager.scenes[sceneID];
+						sceneManager.scenes[sceneID]->visit = &visitObjects[i];
+					}
+					else
+					{
+						allGood = false;
+					}
+				}
+				if (allGood)
+				{
+					TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);
+				}
+				else
+				{
+					TileManager::tileManager.getTile(position.x, position.y)->uvID = 30;
+					redraw = true;
+					visitObjects.erase(visitObjects.begin() + i);
+					i--;
+					numberOfVisits--;
+				}
+			}
+			if (redraw)
+			{
+				TileManager::tileManager.reDraw();
 			}
 		}
 		else if (thing == "Vendors")
