@@ -177,7 +177,9 @@ void PathFinder::findChildren(Node* currentNode)
 void PathFinder::addChild(const glm::vec2& position, int cost, Node *parent)
 {
     auto thisTile = TileManager::tileManager.getTile(position.x, position.y);
-    if (thisTile)
+    //Added the check on the movement cost recently
+    //I cannot recall if there is a reason I wasn't ignoring tiles with a high movement cost(cliffs)
+    if (thisTile && thisTile->properties.movementCost < 20) 
     {
         //Want to treat tiles occupied by another team as impassable.
         //Tiles occupied by the same team are passable, so they can be added to the path, though they cannot be the final node
@@ -188,7 +190,7 @@ void PathFinder::addChild(const glm::vec2& position, int cost, Node *parent)
         //pathable. This should allow the enemies to approach locations even if they are not reachable.
         //This is mainly for stores.
         //Not a massive deal if this doesn't work 100% since it isn't going to be in the first level anyway
-        if (thisTile->occupiedBy && thisTile->occupiedBy->team == 0)
+        if (thisTile->occupiedBy && thisTile->occupiedBy->team == 0) 
         {
             cost += 20;
         }

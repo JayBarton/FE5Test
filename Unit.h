@@ -146,7 +146,7 @@ struct Unit
 	}
 
 	Unit(JSONUnit jUnit) : 
-		Unit(jUnit.className, jUnit.name, jUnit.ID, jUnit.HP, jUnit.str, jUnit.mag, jUnit.skl, jUnit.spd, jUnit.lck, jUnit.def, jUnit.bld, jUnit.bld)
+		Unit(jUnit.className, jUnit.name, jUnit.ID, jUnit.HP, jUnit.str, jUnit.mag, jUnit.skl, jUnit.spd, jUnit.lck, jUnit.def, jUnit.bld, jUnit.mov)
 	{
 		std::copy(std::begin(jUnit.weaponProficiencies), std::end(jUnit.weaponProficiencies), weaponProficiencies);
 		skills = jUnit.skills;

@@ -381,10 +381,11 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents);
 void loadSuspendedGame();
 
 std::mt19937 gen;
-//gen.seed(1);
 std::uniform_int_distribution<int> distribution(0, 99);
 int main(int argc, char** argv)
 {
+	//gen.seed(2);
+
 	init();
 	Batch.init();
 	GLfloat deltaTime = 0.0f;
@@ -508,8 +509,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	//loadMap("2.map", unitEvents);
-	loadSuspendedGame();
+	loadMap("2.map", unitEvents);
+	//loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);

@@ -1,6 +1,6 @@
 {
     "Map": {
-        "CurrentRound": 0,
+        "CurrentRound": 1,
         "Funds": 0,
         "Level": "2.map"
     },
@@ -50,7 +50,7 @@
                 "Lck": 3,
                 "Level": 1,
                 "Mag": 0,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 0,
                 "Spd": 3,
                 "Str": 6,
@@ -92,7 +92,7 @@
                 "Lck": 0,
                 "Level": 1,
                 "Mag": 1,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 2,
                 "Spd": 3,
                 "Str": 6,
@@ -134,7 +134,7 @@
                 "Lck": 4,
                 "Level": 10,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 3,
                 "Spd": 3,
                 "Str": 4,
@@ -180,7 +180,7 @@
                 "Lck": 0,
                 "Level": 3,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 0,
                 "Spd": 0,
                 "Str": 5,
@@ -222,7 +222,7 @@
                 "Lck": 2,
                 "Level": 1,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 2,
                 "Spd": 0,
                 "Str": 6,
@@ -264,7 +264,7 @@
                 "Lck": 0,
                 "Level": 1,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 3,
                 "Spd": 0,
                 "Str": 5,
@@ -306,7 +306,7 @@
                 "Lck": 2,
                 "Level": 4,
                 "Mag": 0,
-                "Mov": 7,
+                "Mov": 6,
                 "Skl": 1,
                 "Spd": 0,
                 "Str": 5,
@@ -348,7 +348,7 @@
                 "Lck": 3,
                 "Level": 5,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 2,
                 "Spd": 2,
                 "Str": 7,
@@ -394,7 +394,7 @@
                 "Lck": 2,
                 "Level": 6,
                 "Mag": 4,
-                "Mov": 7,
+                "Mov": 6,
                 "Skl": 1,
                 "Spd": 2,
                 "Str": 6,
@@ -408,7 +408,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": false,
+                "active": true,
                 "boss": false,
                 "stationary": false
             },
@@ -426,8 +426,8 @@
             "LevelID": 9,
             "Name": "Soldier",
             "Position": [
-                128.0,
-                224.0
+                64.0,
+                240.0
             ],
             "Stats": {
                 "Bld": 9,
@@ -436,7 +436,7 @@
                 "Lck": 2,
                 "Level": 1,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 0,
                 "Spd": 3,
                 "Str": 5,
@@ -478,7 +478,7 @@
                 "Lck": 0,
                 "Level": 1,
                 "Mag": 0,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 2,
                 "Spd": 0,
                 "Str": 6,
@@ -520,7 +520,7 @@
                 "Lck": 0,
                 "Level": 1,
                 "Mag": 2,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 3,
                 "Spd": 2,
                 "Str": 6,
@@ -562,7 +562,7 @@
                 "Lck": 2,
                 "Level": 1,
                 "Mag": 3,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 3,
                 "Spd": 3,
                 "Str": 5,
@@ -604,7 +604,7 @@
                 "Lck": 2,
                 "Level": 1,
                 "Mag": 2,
-                "Mov": 6,
+                "Mov": 5,
                 "Skl": 2,
                 "Spd": 3,
                 "Str": 5,
@@ -646,7 +646,7 @@
                 "Lck": 3,
                 "Level": 5,
                 "Mag": 1,
-                "Mov": 9,
+                "Mov": 5,
                 "Skl": 1,
                 "Spd": 1,
                 "Str": 6,
@@ -664,7 +664,7 @@
             "Class": "Lord",
             "ClassID": 3,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 0,
             "Inventory": [
                 [
@@ -679,7 +679,7 @@
             "LevelID": 0,
             "Name": "Leif",
             "Position": [
-                48.0,
+                208.0,
                 304.0
             ],
             "Skills": [
@@ -711,7 +711,7 @@
             "Class": "Lance Knight",
             "ClassID": 13,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 1,
             "Inventory": [
                 [
@@ -746,7 +746,7 @@
             },
             "Name": "Finn",
             "Position": [
-                32.0,
+                240.0,
                 304.0
             ],
             "Skills": [
@@ -778,7 +778,7 @@
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 2,
             "Inventory": [
                 [
@@ -797,8 +797,8 @@
             "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                48.0,
-                288.0
+                160.0,
+                304.0
             ],
             "Skills": [
                 1
@@ -826,7 +826,7 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 3,
             "Inventory": [
                 [
@@ -841,8 +841,8 @@
             "LevelID": 3,
             "Name": "Halvan",
             "Position": [
-                32.0,
-                288.0
+                192.0,
+                304.0
             ],
             "Skills": [
                 3
@@ -885,7 +885,7 @@
             "LevelID": 4,
             "Name": "Othin",
             "Position": [
-                80.0,
+                224.0,
                 304.0
             ],
             "Skills": [

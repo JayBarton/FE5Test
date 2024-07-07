@@ -935,7 +935,7 @@ void EnemyManager::ApproachNearest(glm::vec2& position, Unit* enemy)
         if (!playerUnit->isDead)
         {
             auto playerPosition = playerUnit->sprite.getPosition();
-
+            //Wrong. Need to be pathing to find the closest unit most likely
             auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y);
             if (mDistance < minDistance)
             {
