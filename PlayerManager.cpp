@@ -182,6 +182,28 @@ void PlayerManager::Load(json saveData)
 
 		(*sceneUnits)[newUnit->sceneID] = newUnit;
 
+		std::ifstream f("BaseStats.json");
+		json data = json::parse(f);
+		json bases = data["PlayerUnits"];
+		for (const auto& growth : bases)
+		{
+			if (newUnit->ID == growth["ID"])
+			{
+				json growths = growth["GrowthRates"];
+				int HP = growths["HP"];
+				int str = growths["Str"];
+				int mag = growths["Mag"];
+				int skl = growths["Skl"];
+				int spd = growths["Spd"];
+				int lck = growths["Lck"];
+				int def = growths["Def"];
+				int bld = growths["Bld"];
+				int mov = growths["Mov"];
+
+				newUnit->growths = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, mov };
+			}
+		}
+
 		units[current] = newUnit;
 		current++;
 	}

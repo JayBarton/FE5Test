@@ -1,6 +1,6 @@
 {
     "Map": {
-        "CurrentRound": 1,
+        "CurrentRound": 0,
         "Funds": 0,
         "Level": "2.map"
     },
@@ -408,7 +408,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -426,8 +426,8 @@
             "LevelID": 9,
             "Name": "Soldier",
             "Position": [
-                64.0,
-                240.0
+                128.0,
+                224.0
             ],
             "Stats": {
                 "Bld": 9,
@@ -664,7 +664,7 @@
             "Class": "Lord",
             "ClassID": 3,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 0,
             "Inventory": [
                 [
@@ -679,7 +679,7 @@
             "LevelID": 0,
             "Name": "Leif",
             "Position": [
-                208.0,
+                48.0,
                 304.0
             ],
             "Skills": [
@@ -711,7 +711,7 @@
             "Class": "Lance Knight",
             "ClassID": 13,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 1,
             "Inventory": [
                 [
@@ -746,7 +746,7 @@
             },
             "Name": "Finn",
             "Position": [
-                240.0,
+                32.0,
                 304.0
             ],
             "Skills": [
@@ -778,7 +778,7 @@
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 2,
             "Inventory": [
                 [
@@ -797,8 +797,8 @@
             "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                160.0,
-                304.0
+                48.0,
+                288.0
             ],
             "Skills": [
                 1
@@ -826,7 +826,7 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 3,
             "Inventory": [
                 [
@@ -841,8 +841,8 @@
             "LevelID": 3,
             "Name": "Halvan",
             "Position": [
-                192.0,
-                304.0
+                32.0,
+                288.0
             ],
             "Skills": [
                 3
@@ -870,7 +870,7 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 4,
             "Inventory": [
                 [
@@ -885,8 +885,8 @@
             "LevelID": 4,
             "Name": "Othin",
             "Position": [
-                224.0,
-                304.0
+                64.0,
+                288.0
             ],
             "Skills": [
                 2

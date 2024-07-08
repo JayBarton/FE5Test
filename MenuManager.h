@@ -454,6 +454,17 @@ struct UnitMovement :public Menu
 	bool enemyFading = false;
 };
 
+struct SuspendMenu : public Menu
+{
+	SuspendMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
+
+	bool suspended = false;
+	SpriteRenderer* Renderer;
+};
+
 struct MenuManager
 {
 	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, 
@@ -483,6 +494,7 @@ struct MenuManager
 
 	Subject<int> subject;
 	Subject<> endingSubject;
+	Subject<int> suspendSubject;
 
 	std::unordered_map<int, std::string> profcienciesMap;
 

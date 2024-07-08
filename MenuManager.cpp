@@ -2247,11 +2247,12 @@ void ExtraMenu::SelectOption()
 		break;
 	}
 	case SUSPEND:
-		std::cout << "Suspend menu\n";
-
+	{
+		Menu* newMenu = new SuspendMenu(cursor, text, camera, shapeVAO, MenuManager::menuManager.renderer);
+		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
+	}
 	case END:
-		std::cout << "End turn menu\n";
 		MenuManager::menuManager.subject.notify(0);
 		ClearMenu();
 		break;
@@ -4196,6 +4197,127 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 				MenuManager::menuManager.mustWait = true;
 				break;
 			}
+		}
+	}
+}
+
+SuspendMenu::SuspendMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO), Renderer(Renderer)
+{
+	numberOfOptions = 2;
+	currentOption = 1;
+	
+}
+
+void SuspendMenu::Draw()
+{
+	if (suspended)
+	{
+
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(72, 104, 0.0f));
+
+		model = glm::scale(model, glm::vec3(106, 82, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		text->RenderText("So may resume\nthis chapter\nfrom the main\nmenu", 275, 310, 1);
+	}
+	else
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(72, 104, 0.0f));
+
+		model = glm::scale(model, glm::vec3(109, 50, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(88 + 32 * currentOption, 132, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		text->RenderText("Suspend the game?", 275, 310, 1);
+		text->RenderText("Yes", 325, 353, 1);
+		text->RenderText("No", 425, 353, 1);
+	}
+
+	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+	auto portraitUVs = portraitTexture.GetUVs(48, 64);
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	Renderer->setUVs(UnitResources::portraitUVs[9][0]);
+	Renderer->DrawSprite(portraitTexture, glm::vec2(103, 40), 0, glm::vec2(48, 64), glm::vec4(1), true);
+}
+
+void SuspendMenu::SelectOption()
+{
+	if (currentOption == 0)
+	{
+		MenuManager::menuManager.suspendSubject.notify(0);
+		suspended = true;
+	}
+	else
+	{
+		//Going to be a fade effect
+		CancelOption();
+	}
+}
+
+void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (suspended)
+	{
+		if (inputManager.isKeyPressed(SDLK_SPACE))
+		{
+			MenuManager::menuManager.suspendSubject.notify(1);
+		}
+	}
+	else
+	{
+		if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			currentOption--;
+			if (currentOption < 0)
+			{
+				currentOption = numberOfOptions - 1;
+			}
+		}
+		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			currentOption++;
+			if (currentOption >= numberOfOptions)
+			{
+				currentOption = 0;
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_RETURN))
+		{
+			SelectOption();
+		}
+		else if (inputManager.isKeyPressed(SDLK_z))
+		{
+			CancelOption();
 		}
 	}
 }

@@ -377,6 +377,21 @@ struct EndingEvents : public Observer<>
 	}
 };
 
+struct SuspendEvent : public Observer<int>
+{
+	virtual void onNotify(int option)
+	{
+		if (option == 0)
+		{
+			SuspendGame();
+		}
+		else
+		{
+			endingGame = true;
+		}
+	}
+};
+
 void loadMap(std::string nextMap, UnitEvents* unitEvents);
 void loadSuspendedGame();
 
@@ -494,6 +509,7 @@ int main(int argc, char** argv)
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
 	ItemManager::itemManager.SetUpItems();
+
 	UnitEvents* unitEvents = new UnitEvents();
 	TurnEvents* turnEvents = new TurnEvents();
 	BattleEvents* battleEvents = new BattleEvents();
@@ -501,6 +517,8 @@ int main(int argc, char** argv)
 	PostBattleEvents* postBattleEvents = new PostBattleEvents();
 	ItemEvents* itemEvents = new ItemEvents();
 	EndingEvents* endingEvents = new EndingEvents();
+	SuspendEvent* suspendEvents = new SuspendEvent();
+
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
@@ -516,6 +534,7 @@ int main(int argc, char** argv)
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	MenuManager::menuManager.subject.addObserver(turnEvents);
 	MenuManager::menuManager.endingSubject.addObserver(endingEvents);
+	MenuManager::menuManager.suspendSubject.addObserver(suspendEvents);
 	enemyManager.subject.addObserver(turnEvents);
 	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;
@@ -736,6 +755,7 @@ int main(int argc, char** argv)
 	delete deathEvents;
 	delete itemEvents;
 	delete endingEvents;
+	delete suspendEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();
@@ -1455,16 +1475,8 @@ void Draw()
 			ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 			TileManager::tileManager.showTiles(Renderer, camera);
 			DrawUnitRanges();
-
+			//need another bloody fade from the suspend menu good LORD
 			textManager.DrawLayer1Fade(&camera, shapeVAO);
-		/*	if (displays.state == PLAYER_DEATH || displays.state == PLAYER_DIED)
-			{
-				displays.DrawFade(&camera, shapeVAO); //might be able to remove this from here and just handle it in textmanager...
-			}
-			else
-			{
-				textManager.DrawFade(&camera, shapeVAO);
-			}*/
 			//for intro
 	//		if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
 			{
@@ -1816,10 +1828,8 @@ json UnitToJson(Unit* unit)
 	return j;
 }
 
-//I need to keep track of unit growth rates, but I'm not sure if I actually need to save them, since they are already saved elsewhere
-//For the player I can just go back to the json and grab that, for enemies I think I should be able to save the ID of the growths they are using
-//And load that.
-
+//Current method does not save growth rates. For players we just load the from the json since they aren't going to change
+//For enemies, since they cannot level up, I don't really care what their growths are after the level starts, so we don't save or load them at all
 void SuspendGame()
 {
 	json j;
