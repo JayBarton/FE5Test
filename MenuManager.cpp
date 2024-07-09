@@ -2220,7 +2220,7 @@ void ExtraMenu::SelectOption()
 	{
 	case UNIT:
 	{
-		Menu* newMenu = new UnitListMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new UnitListMenu(cursor, text, camera, shapeVAO, MenuManager::menuManager.renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -2234,16 +2234,6 @@ void ExtraMenu::SelectOption()
 	{
 		Menu* newMenu = new OptionsMenu(cursor, text, camera, shapeVAO);
 		MenuManager::menuManager.menus.push_back(newMenu);
-		/*	if (unitSpeed < 5)
-			{
-				unitSpeed = 5.0f;
-				std::cout << "Speed up\n";
-			}
-			else
-			{
-				std::cout << "Speed down\n";
-				unitSpeed = 2.5f;
-			}*/
 		break;
 	}
 	case SUSPEND:
@@ -2509,7 +2499,8 @@ void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer) : 
+	Menu(Cursor, Text, camera, shapeVAO), Renderer(Renderer)
 {
 	numberOfOptions = MenuManager::menuManager.playerManager->units.size();
 	fullScreen = true;
@@ -2533,7 +2524,7 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	pageSortOptions[WEAPON_RANKS] = 11;
 	pageSortOptions[SKILLS] = 2;
 
-	sortNames.resize(35);
+	sortNames.resize(37);
 	sortNames[0] = "Name";
 	sortNames[1] = "Class";
 	sortNames[2] = "LV";
@@ -2571,6 +2562,22 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	sortNames[32] = "Wind";
 	sortNames[33] = "Light";
 	sortNames[34] = "Dark";
+
+	sortNames[35] = "Name";
+	sortNames[36] = "Skills";
+
+	profOrder[0] = WeaponData::TYPE_SWORD;
+	profOrder[1] = WeaponData::TYPE_LANCE;
+	profOrder[2] = WeaponData::TYPE_AXE;
+	profOrder[3] = WeaponData::TYPE_BOW;
+	profOrder[4] = WeaponData::TYPE_STAFF;
+	profOrder[5] = WeaponData::TYPE_FIRE;
+	profOrder[6] = WeaponData::TYPE_THUNDER;
+	profOrder[7] = WeaponData::TYPE_WIND;
+	profOrder[8] = WeaponData::TYPE_LIGHT;
+	profOrder[9] = WeaponData::TYPE_DARK;
+
+	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 }
 
 void UnitListMenu::Draw()
@@ -2613,7 +2620,7 @@ void UnitListMenu::Draw()
 	SBatch Batch;
 	Batch.init();
 	Batch.begin();
-
+	glm::vec3 greenText = glm::vec3(0.8f, 1.0f, 0.8f);
 	std::string pageName = "";
 	switch (currentPage)
 	{
@@ -2629,14 +2636,14 @@ void UnitListMenu::Draw()
 			auto unit = unitData[i].first;
 			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
-			int textY = 162 + 42 * i;
+			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
 
 			text->RenderText(unit->unitClass, 202, textY, 1.0f);
 			text->RenderTextRight(intToString(unit->level), 480, textY, 1.0f, 14);
-			text->RenderTextRight(intToString(unit->experience), 560, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(unit->experience), 560, textY, 1.0f, 14, greenText);
 			text->RenderText(intToString(unit->currentHP) + "/", 690, textY, 1.0f);
-			text->RenderText(intToString(unit->maxHP), 720, textY, 1.0f, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderText(intToString(unit->maxHP), 720, textY, 1.0f, greenText);
 		}
 		break;
 	case EQUIPMENT:
@@ -2651,14 +2658,14 @@ void UnitListMenu::Draw()
 			auto unit = unitData[i].first;
 			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
-			int textY = 162 + 42 * i;
+			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
 			//Should probably just save the battle stats to an array rather than recalculating them here over and over...
 			auto battleStats = unitData[i].second;
 			text->RenderText(unit->GetEquippedItem()->name, 300, textY, 1.0f); //need to account for no equipped
 			text->RenderTextRight(intToString(battleStats.attackDamage), 500, textY, 1, 14);
-			text->RenderTextRight(intToString(battleStats.hitAccuracy), 575, textY, 1, 14);
-			text->RenderTextRight(intToString(battleStats.hitAvoid), 700, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(battleStats.hitAccuracy), 575, textY, 1, 14, greenText);
+			text->RenderTextRight(intToString(battleStats.hitAvoid), 700, textY, 1.0f, 14);
 		}
 		break;
 	case COMBAT_STATS:
@@ -2676,15 +2683,15 @@ void UnitListMenu::Draw()
 			auto unit = unitData[i].first;
 			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
-			int textY = 166 + 42 * i;
+			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
 			text->RenderTextRight(intToString(unit->getStrength()), 275, textY, 1, 14);
-			text->RenderTextRight(intToString(unit->getMagic()), 350, textY, 1, 14);
-			text->RenderTextRight(intToString(unit->getSkill()), 425, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
-			text->RenderTextRight(intToString(unit->getSpeed()), 500, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
-			text->RenderTextRight(intToString(unit->getLuck()), 575, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
-			text->RenderTextRight(intToString(unit->getDefense()), 650, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
-			text->RenderTextRight(intToString(unit->getBuild()), 725, textY, 1.0f, 14, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderTextRight(intToString(unit->getMagic()), 350, textY, 1, 14, greenText);
+			text->RenderTextRight(intToString(unit->getSkill()), 425, textY, 1.0f, 14);
+			text->RenderTextRight(intToString(unit->getSpeed()), 500, textY, 1.0f, 14, greenText);
+			text->RenderTextRight(intToString(unit->getLuck()), 575, textY, 1.0f, 14);
+			text->RenderTextRight(intToString(unit->getDefense()), 650, textY, 1.0f, 14, greenText);
+			text->RenderTextRight(intToString(unit->getBuild()), 725, textY, 1.0f, 14);
 		}
 		break;
 	case PERSONAL:
@@ -2699,33 +2706,99 @@ void UnitListMenu::Draw()
 			auto unit = unitData[i].first;
 			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
 
-			int textY = 166 + 42 * i;
+			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
 			text->RenderTextRight(intToString(unit->getMove()), 300, textY, 1, 14);
-			text->RenderTextRight("--", 350, textY, 1, 14);
+			text->RenderTextRight("--", 350, textY, 1, 14, greenText);
 			text->RenderText("----", 450, textY, 1);
 			if (unit->carriedUnit)
 			{
-				text->RenderText(unit->carriedUnit->name, 600, textY, 1);
+				text->RenderText(unit->carriedUnit->name, 600, textY, 1, greenText);
 			}
 			else
 			{
-				text->RenderText("-----", 600, textY, 1);
+				text->RenderText("-----", 600, textY, 1, greenText);
 			}
 		}
 		break;
 	case WEAPON_RANKS:
+	{
 		pageName = "Weapon Ranks";
+
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		for (int i = 0; i < 10; i++)
+		{
+			Renderer->setUVs(proficiencyIconUVs[profOrder[i]]);
+			Renderer->DrawSprite(texture, glm::vec2(85 + 16 * i, 34), 0.0f, cursor->dimensions);
+		}
+
+		for (int i = 0; i < numberOfOptions; i++)
+		{
+			auto unit = unitData[i].first;
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
+
+			int textY = 160 + 42 * i;
+			text->RenderText(unit->name, 106, textY, 1.0f);
+
+			auto& profMap = MenuManager::menuManager.profcienciesMap;
+			auto toDisplay = unit->weaponProficiencies;
+
+			if (unit->isMounted())
+			{
+				toDisplay = unit->mount->weaponProficiencies;
+			}
+
+			int textX = 275;
+			int xOffset = 50;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_SWORD]], textX, textY, 1);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_LANCE]], textX, textY, 1, greenText);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_AXE]], textX, textY, 1);
+			textX += xOffset;
+
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_BOW]], textX, textY, 1, greenText);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_STAFF]], textX, textY, 1);
+			textX += xOffset;
+
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_FIRE]], textX, textY, 1, greenText);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_THUNDER]], textX, textY, 1);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_WIND]], textX, textY, 1, greenText);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_LIGHT]], textX, textY, 1);
+			textX += xOffset;
+			text->RenderText(profMap[toDisplay[WeaponData::TYPE_DARK]], textX, textY, 1, greenText);
+		}
+
 		break;
+	}
 	case SKILLS:
+	{
 		pageName = "Skills";
 		break;
+	}
 	}
 	Batch.end();
 	Batch.renderBatch();
 	text->RenderTextCenter(pageName, 106, 29, 1, 40, glm::vec3(0.9f, 0.9f, 1.0f));
 	text->RenderText("Name", 106, 96, 1);
-	text->RenderText(sortNames[sortType], 471, 29, 1); //sort type
+	if (sortType >= 25 && sortType <= 34)
+	{
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		Renderer->setUVs(proficiencyIconUVs[profOrder[sortType - 25]]);
+		Renderer->DrawSprite(texture, glm::vec2(148, 9), 0.0f, cursor->dimensions);
+	}
+	else
+	{
+		text->RenderText(sortNames[sortType], 471, 29, 1); //sort type
+	}
 	text->RenderText(intToString(currentPage + 1) , 700, 29, 1);
 	text->RenderText("/", 711, 29, 1);
 	text->RenderText(intToString(numberOfPages), 723, 29, 1);
@@ -2786,13 +2859,16 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			if (currentPage < numberOfPages)
 			{
-				sortIndicator++;
-				if (sortIndicator > pageSortOptions[currentPage] - 1)
+				if (sortType < 36)
 				{
-					sortIndicator = 0;
-					currentPage++;
+					sortIndicator++;
+					if (sortIndicator > pageSortOptions[currentPage] - 1)
+					{
+						sortIndicator = 0;
+						currentPage++;
+					}
+					sortType++;
 				}
-				sortType++;
 			}
 		}
 		else if (inputManager.isKeyPressed(SDLK_LEFT))
@@ -2825,14 +2901,17 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		if (inputManager.isKeyPressed(SDLK_RIGHT))
 		{
-			sortType -= sortIndicator;
-			sortType += pageSortOptions[currentPage];
-			currentPage++;
-			if (currentPage >= numberOfPages - 1)
+			if (currentPage < numberOfPages - 1)
 			{
-				currentPage = numberOfPages - 1;
+				sortType -= sortIndicator;
+				sortType += pageSortOptions[currentPage];
+				currentPage++;
+				if (currentPage >= numberOfPages - 1)
+				{
+					currentPage = numberOfPages - 1;
+				}
+				sortIndicator = 0;
 			}
-			sortIndicator = 0;
 		}
 		else if (inputManager.isKeyPressed(SDLK_LEFT))
 		{
@@ -2981,12 +3060,12 @@ void UnitListMenu::SortView()
 		break;
 	case 26:
 		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
-			return a.first->weaponProficiencies[WeaponData::TYPE_AXE] > b.first->weaponProficiencies[WeaponData::TYPE_AXE];
+			return a.first->weaponProficiencies[WeaponData::TYPE_LANCE] > b.first->weaponProficiencies[WeaponData::TYPE_LANCE];
 			});
 		break;
 	case 27:
 		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
-			return a.first->weaponProficiencies[WeaponData::TYPE_LANCE] > b.first->weaponProficiencies[WeaponData::TYPE_LANCE];
+			return a.first->weaponProficiencies[WeaponData::TYPE_AXE] > b.first->weaponProficiencies[WeaponData::TYPE_AXE];
 			});
 		break;
 	case 28:

@@ -329,7 +329,7 @@ struct UnitListMenu : public Menu
 	const static int WEAPON_RANKS = 4;
 	const static int SKILLS = 5;
 
-	UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -346,6 +346,10 @@ struct UnitListMenu : public Menu
 	std::vector<int> pageSortOptions;
 	std::vector<std::string> sortNames;
 	std::vector <std::pair<Unit*, BattleStats>> unitData;
+
+	SpriteRenderer* Renderer;
+	std::vector<glm::vec4> proficiencyIconUVs;
+	int profOrder[10];
 };
 
 struct StatusMenu : public Menu
