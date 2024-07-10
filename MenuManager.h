@@ -275,6 +275,12 @@ struct TradeMenu : public Menu
 	std::vector<glm::vec4> itemIconUVs;
 };
 
+struct SkillInfo
+{
+	std::string name;
+	std::string description;
+};
+
 struct UnitStatsViewMenu : public Menu
 {
 	UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer);
@@ -294,7 +300,10 @@ struct UnitStatsViewMenu : public Menu
 	//Just here as a proof of concept for now
 	std::vector<glm::vec4> proficiencyIconUVs;
 	std::vector<glm::vec4> itemIconUVs;
+	std::vector<glm::vec4> skillIconUVs;
 	std::vector<glm::vec4> carryUVs;
+
+	std::vector<SkillInfo> skillInfo;
 
 	bool firstPage = true;
 	bool examining = false;
@@ -349,6 +358,7 @@ struct UnitListMenu : public Menu
 
 	SpriteRenderer* Renderer;
 	std::vector<glm::vec4> proficiencyIconUVs;
+	std::vector<glm::vec4> skillIconUVs;
 	int profOrder[10];
 };
 
@@ -495,6 +505,7 @@ struct MenuManager
 
 	std::vector<glm::vec4> proficiencyIconUVs;
 	std::vector<glm::vec4> itemIconUVs;
+	std::vector<glm::vec4> skillIconUVs;
 
 	Subject<int> subject;
 	Subject<> endingSubject;

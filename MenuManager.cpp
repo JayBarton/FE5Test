@@ -1604,7 +1604,7 @@ void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		firstInventory = true;
 		auto firstInv = cursor->selectedUnit->inventory;
-		if (tradeUnit->inventory.size() > firstInv.size())
+		if (currentOption >= firstInv.size())
 		{
 			currentOption = firstInv.size() - 1;
 		}
@@ -1614,7 +1614,7 @@ void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		auto firstInv = cursor->selectedUnit->inventory;
 		firstInventory = false;
-		if (firstInv.size() > tradeUnit->inventory.size())
+		if (currentOption >= tradeUnit->inventory.size())
 		{
 			currentOption = tradeUnit->inventory.size() - 1;
 		}
@@ -1674,9 +1674,17 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 
 	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
+	skillIconUVs = MenuManager::menuManager.skillIconUVs;
 	Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
 	carryUVs = carryTexture.GetUVs(8, 8);
 
+	skillInfo.resize(6);
+	skillInfo[0] = { "Prayer", "Dodge when low\non health" };
+	skillInfo[1] = { "Continue", "Double attacks\nsomethimes" };
+	skillInfo[2] = { "Wrath", "Critical on\ncounter" };
+	skillInfo[3] = { "Vantage", "Always attack\nfirst" };
+	skillInfo[4] = { "Accost", "Long battles\nor somethin" };
+	skillInfo[5] = { "Charisma", "Bonuses for\nbuddies" };
 }
 
 void UnitStatsViewMenu::Draw()
@@ -1747,8 +1755,7 @@ void UnitStatsViewMenu::Draw()
 		}
 		else
 		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			ResourceManager::GetShader("shape").Use();
 			glm::mat4 model = glm::mat4();
 			model = glm::translate(model, glm::vec3(104, 95 + (16 * currentOption), 0.0f));
 
@@ -1819,6 +1826,27 @@ void UnitStatsViewMenu::Draw()
 		renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, cursor->dimensions);
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_DARK]);
 		renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, cursor->dimensions);
+
+		if (examining)
+		{
+			ResourceManager::GetShader("shape").Use();
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(120 + 16 * currentOption, 200, 0.0f));
+
+			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+		}
+		for (int i = 0; i < unit->skills.size(); i++)
+		{
+			renderer->setUVs(skillIconUVs[unit->skills[i]]);
+			renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, cursor->dimensions);
+		}
 
 		auto& profMap = MenuManager::menuManager.profcienciesMap;
 
@@ -1894,10 +1922,33 @@ void UnitStatsViewMenu::Draw()
 		text->RenderText("Weapon Ranks", 434, 246 + adjustedOffset, 1);
 
 		text->RenderText("Skills", 434, 503 + adjustedOffset, 1);
+		ResourceManager::GetShader("shape").Use();
+		if (examining)
+		{
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(16, 112, 0.0f));
+
+			model = glm::scale(model, glm::vec3(96, 104, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.19f, 0.18f, 0.16f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+
+			renderer->setUVs(skillIconUVs[unit->skills[currentOption]]);
+			renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, cursor->dimensions);
+
+			text->RenderText(skillInfo[unit->skills[currentOption]].name, 125, 332, 1);
+
+			text->RenderText(skillInfo[unit->skills[currentOption]].description, 75, 393, 1);
+
+			text->RenderText("Personal Skill", 75, 525, 1, glm::vec3(0.8f, 1.0f, 0.8f));
+		}
 	}
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	ResourceManager::GetShader("shape").Use();
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 
@@ -1992,37 +2043,6 @@ void UnitStatsViewMenu::SelectOption()
 
 void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-/*	animTime += deltaTime;
-	float animationDelay = 0.0f;
-	animationDelay = 8.0f / 60.0f;
-	if (animTime >= animationDelay)
-	{
-		animTime = 0;
-		if (frameDirection > 0)
-		{
-			if (frame < 2)
-			{
-				frame++;
-			}
-			else
-			{
-				frameDirection = -1;
-				frame--;
-			}
-		}
-		else
-		{
-			if (frame > 0)
-			{
-				frame--;
-			}
-			else
-			{
-				frameDirection = 1;
-				frame++;
-			}
-		}
-	}*/
 	if (transition)
 	{
 		int rate = 960;
@@ -2133,37 +2153,47 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		else
 		{
-			bool moved = false;
-			if (inputManager.isKeyPressed(SDLK_UP))
+			if (firstPage)
 			{
-				moved = true;
-				currentOption--;
-				if (currentOption < 0)
+				if (inputManager.isKeyPressed(SDLK_UP))
 				{
-					currentOption = numberOfOptions - 1;
+					currentOption--;
+					if (currentOption < 0)
+					{
+						currentOption = numberOfOptions - 1;
+					}
+				}
+				else if (inputManager.isKeyPressed(SDLK_DOWN))
+				{
+					currentOption++;
+					if (currentOption >= numberOfOptions)
+					{
+						currentOption = 0;
+					}
 				}
 			}
-			else if (inputManager.isKeyPressed(SDLK_DOWN))
+			else
 			{
-				moved = true;
-				currentOption++;
-				if (currentOption >= numberOfOptions)
+				if (inputManager.isKeyPressed(SDLK_LEFT))
 				{
-					currentOption = 0;
+					currentOption--;
+					if (currentOption < 0)
+					{
+						currentOption = numberOfOptions - 1;
+					}
+				}
+				else if (inputManager.isKeyPressed(SDLK_RIGHT))
+				{
+					currentOption++;
+					if (currentOption >= numberOfOptions)
+					{
+						currentOption = 0;
+					}
 				}
 			}
 			if (inputManager.isKeyPressed(SDLK_z))
 			{
 				examining = false;
-			}
-
-			if (firstPage)
-			{
-				if (moved)
-				{
-					auto inventory = unit->inventory;
-					//	battleStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
-				}
 			}
 		}
 	}
@@ -2578,6 +2608,7 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	profOrder[9] = WeaponData::TYPE_DARK;
 
 	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
+	skillIconUVs = MenuManager::menuManager.skillIconUVs;
 }
 
 void UnitListMenu::Draw()
@@ -2780,6 +2811,21 @@ void UnitListMenu::Draw()
 	case SKILLS:
 	{
 		pageName = "Skills";
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+		for (int i = 0; i < numberOfOptions; i++)
+		{
+			auto unit = unitData[i].first;
+			unit->Draw(&Batch, glm::vec2(16, 56 + 16 * i), true);
+
+			int textY = 160 + 42 * i;
+			text->RenderText(unit->name, 106, textY, 1.0f);
+			for (int c = 0; c < unit->skills.size(); c++)
+			{
+				Renderer->setUVs(skillIconUVs[unit->skills[c]]);
+				Renderer->DrawSprite(texture, glm::vec2(80 + 16 * c, 56 + 16 * i), 0.0f, cursor->dimensions);
+			}
+		}
 		break;
 	}
 	}
@@ -4081,6 +4127,7 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 
 	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
 	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 19);
+	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
 }
 
 void MenuManager::AddMenu(int ID)
