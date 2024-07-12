@@ -501,7 +501,7 @@ int main(int argc, char** argv)
 
 	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(0, 0, TILE_SIZE, TILE_SIZE, 2, 1, 2);
 	minimap.cursorUvs = ResourceManager::GetTexture("cursor").GetUVs(32, 0, 70, 62, 2, 1, 2);
-	cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
+	//cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
 	UnitResources::LoadUVs();
 	UnitResources::LoadAnimData();

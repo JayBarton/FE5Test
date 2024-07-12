@@ -394,6 +394,8 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		}
 		else
 		{
+			//If I move active out of the base unit and have it only a property of ai units, will need a check here
+			otherUnit->active = true;
 			if (thisUnit->hasSkill(Unit::CONTINUE) && !attack.continuedAttack)
 			{
 				auto roll = (*distribution)(*gen);

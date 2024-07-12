@@ -4392,7 +4392,7 @@ void SuspendMenu::Draw()
 	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	Renderer->setUVs(UnitResources::portraitUVs[9][0]);
+	Renderer->setUVs(UnitResources::portraitUVs[20][0]);
 	Renderer->DrawSprite(portraitTexture, glm::vec2(103, 40), 0, glm::vec2(48, 64), glm::vec4(1), true);
 }
 
