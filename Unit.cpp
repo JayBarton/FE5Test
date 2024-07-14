@@ -937,12 +937,12 @@ void Unit::addToOpenSet(pathCell newCell, std::vector<pathCell>& checking, std::
     position = checking.size() - 1;
     while (position != 0)
     {
-        if (checking[position].moveCost < checking[position / 2].moveCost)
+        if (checking[position].moveCost < checking[(position-1) / 2].moveCost)
         {
             pathCell tempNode = checking[position];
-            checking[position] = checking[position / 2];
-            checking[position / 2] = tempNode;
-            position /= 2;
+            checking[position] = checking[(position-1) / 2];
+            checking[(position-1) / 2] = tempNode;
+            position = (position-1)/ 2;
         }
         else
         {
@@ -1181,19 +1181,51 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
             {
                 costs[checkingTile.x][checkingTile.y] = movementCost;
             }
-            if (movementCost <= range)
-            {
-                auto otherUnit = thisTile->occupiedBy;
+            auto otherUnit = thisTile->occupiedBy;
 
-                if (otherUnit && otherUnit != this && otherUnit->team != team)
+            if (range >= 0)
+            {
+                if (movementCost <= range)
                 {
-                    foundUnits.push_back(otherUnit);
+                    if (otherUnit && otherUnit != this && otherUnit->team != team)
+                    {
+                        foundUnits.push_back(otherUnit);
+                    }
+                    pathCell newCell{ checkingTile, movementCost };
+                    addToOpenSet(newCell, checking, checked, costs);
+                    path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
                 }
-                pathCell newCell{ checkingTile, movementCost };
-                addToOpenSet(newCell, checking, checked, costs);
-                foundTiles.push_back(tilePosition);
-                costTile.push_back(movementCost);
-                path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+            }
+            else
+            {
+              /*  if (movementCost <= getMove())
+                {
+                    if (otherUnit && otherUnit != this && otherUnit->team != team)
+                    {
+                        foundUnits.push_back(otherUnit);
+                    }
+                    pathCell newCell{ checkingTile, movementCost };
+                    addToOpenSet(newCell, checking, checked, costs);
+                    path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+                }
+                else*/
+                {
+                    if (foundUnits.size() == 0)
+                    {
+                        pathCell newCell{ checkingTile, movementCost };
+                        if (otherUnit && otherUnit != this && otherUnit->team != team)
+                        {
+                            foundUnits.push_back(otherUnit);
+                            checking.clear();
+                        }
+                        else
+                        {
+                            addToOpenSet(newCell, checking, checked, costs);
+                        }
+                        path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
+
+                    }
+                }
             }
         }
     }

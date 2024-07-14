@@ -424,7 +424,7 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
             //Not a huge fan of this, but it works for now
             else if (enemy->GetEquippedItem() || !CheckStores(enemy))
             {
-                FindUnitInAttackRange(enemy, path, camera);
+                FindUnitInAttackRange(enemy, path);
             }
         }
         //Else if not active, dijkstra within a specified range, default to movement + max range + 1. 
@@ -439,7 +439,7 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
                 //Move this into range activation if it works
                 if (enemyMoving)
                 {
-                    camera.SetMove(enemy->sprite.getPosition());
+            //        camera.SetMove(enemy->sprite.getPosition());
                 }
             }
             else
@@ -454,9 +454,13 @@ void EnemyManager::DefaultUpdate(float deltaTime, Unit* enemy, Camera& camera, B
                 if (enemyMoving)
                 {
                     enemy->active = true;
-                    camera.SetMove(enemy->sprite.getPosition());
+               //     camera.SetMove(enemy->sprite.getPosition());
                 }
             }
+        }
+        if (enemyMoving)
+        {
+            camera.SetMove(enemy->sprite.getPosition());
         }
     }
 }
@@ -924,32 +928,6 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
     }
 }
 
-void EnemyManager::ApproachNearest(glm::vec2& position, Unit* enemy)
-{
-    state = APPROACHING;
-    int minDistance = 1000;
-    int index = -1;
-    for (int i = 0; i < playerUnits->size(); i++)
-    {
-        auto playerUnit = (*playerUnits)[i];
-        if (!playerUnit->isDead)
-        {
-            auto playerPosition = playerUnit->sprite.getPosition();
-            //Wrong. Need to be pathing to find the closest unit most likely
-            auto mDistance = abs(position.x - playerPosition.x) + abs(position.y - playerPosition.y);
-            if (mDistance < minDistance)
-            {
-                minDistance = mDistance;
-                index = i;
-            }
-        }
-    }
-    auto playerUnit = (*playerUnits)[index];
-    auto path = pathFinder.findPath(position, playerUnit->sprite.getPosition(), enemy->getMove());
-    enemy->startMovement(path, enemy->getMove(), false);
-    enemyMoving = true;
-}
-
 void EnemyManager::NoMove(Unit* enemy, glm::vec2& position)
 {
     enemy->placeUnit(position.x, position.y);
@@ -1100,24 +1078,65 @@ void EnemyManager::DoNothing(Unit* enemy, glm::vec2& position)
     timer = turnStartDelay;
 }
 
-void EnemyManager::FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, Camera& camera)
+void EnemyManager::FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path)
 {
     std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-
-    //If not in range of any units, enemy approaches the nearest unit
     if (otherUnits.size() == 0)
     {
-        auto position = enemy->sprite.getPosition();
-        TileManager::tileManager.removeUnit(position.x, position.y);
-        ApproachNearest(position, enemy);
-        if (enemyMoving)
-        {
-            camera.SetMove(enemy->sprite.getPosition());
-        }
+        ApproachNearest(enemy, otherUnits);
     }
     else
     {
         GetPriority(enemy, path, otherUnits);
+    }
+}
+
+void EnemyManager::ApproachNearest(Unit* enemy, std::vector<Unit*>& otherUnits)
+{
+    auto path = enemy->FindApproachMoveRange(otherUnits, -1);
+    auto enemyPosition = enemy->sprite.getPosition();
+    TileManager::tileManager.removeUnit(enemyPosition.x, enemyPosition.y);
+
+    auto position = otherUnits[0]->sprite.getPosition();
+    if (path[position].moveCost > enemy->getMove())
+    {
+        state = APPROACHING;
+       
+        glm::vec2 pathPoint = position;
+
+        while (path[pathPoint].moveCost > enemy->getMove())
+        {
+            auto previous = path[pathPoint].previousPosition;
+            pathPoint = previous;
+        }
+
+        std::vector<glm::ivec2> followPath;
+
+        bool blocked = true;
+        while (blocked)
+        {
+            blocked = false;
+            auto thisTile = TileManager::tileManager.getTile(pathPoint.x, pathPoint.y);
+            if (thisTile)
+            {
+                if (thisTile->occupiedBy)
+                {
+                    pathPoint = path[pathPoint].previousPosition;
+                    blocked = true;
+                }
+            }
+        }
+
+        followPath.push_back(pathPoint);
+
+        while (pathPoint != enemy->sprite.getPosition())
+        {
+            auto previous = path[pathPoint].previousPosition;
+            followPath.push_back(previous);
+            pathPoint = previous;
+        }
+        enemy->startMovement(followPath, enemy->getMove(), false);
+        enemyMoving = true;
     }
 }
 
@@ -1188,18 +1207,7 @@ void EnemyManager::FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathC
     }
     else
     {
-        std::vector<Unit*> otherUnits = GetOtherUnits(enemy);
-
-        //If not in range of any units, enemy approaches the nearest unit
-        if (otherUnits.size() == 0)
-        {
-            auto position = enemy->sprite.getPosition();
-            ApproachNearest(position, enemy);
-        }
-        else
-        {
-            GetPriority(enemy, path, otherUnits);
-        }
+        FindUnitInAttackRange(enemy, path);
     }
 }
 
@@ -1463,12 +1471,12 @@ void EnemyManager::addToOpenSet(pathCell newCell, std::vector<pathCell>& checkin
     position = checking.size() - 1;
     while (position != 0)
     {
-        if (checking[position].moveCost < checking[position / 2].moveCost)
+        if (checking[position].moveCost < checking[(position-1) / 2].moveCost)
         {
             pathCell tempNode = checking[position];
-            checking[position] = checking[position / 2];
-            checking[position / 2] = tempNode;
-            position /= 2;
+            checking[position] = checking[(position-1) / 2];
+            checking[(position-1) / 2] = tempNode;
+            position = (position-1) / 2;
         }
         else
         {

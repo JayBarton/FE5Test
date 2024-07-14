@@ -124,7 +124,32 @@ void Sprite::HandleAnimation(float deltaTime, int idleFrame)
 {
     if (moveAnimate)
     {
-        playAnimation(deltaTime, 4, true);
+        //playAnimation(deltaTime, 4, true);
+        timeForFrame += deltaTime;
+        float animationDelay = 0.0f;
+        //This delay was eyeballed from the original game. I don't think it's exact, but I don't know how else to derive it.
+        animationDelay = 0.11f; 
+        if (timeForFrame >= animationDelay)
+        {
+            timeForFrame = 0;
+            moveDelay++;
+            if (moveDelay > 2)
+            {
+                moveDelay = 0;
+            }
+            else
+            {
+                int lastFrame = startingFrame + 4 - 1;
+                if (currentFrame < lastFrame)
+                {
+                    currentFrame++;
+                }
+                else
+                {
+                    currentFrame = startingFrame;
+                }
+            }
+        }
     }
     else
     {

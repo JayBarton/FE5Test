@@ -73,7 +73,6 @@ struct EnemyManager : public UnitManager
 	PathFinder pathFinder;
 
 	void GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, std::vector<Unit*>& otherUnits);
-	void ApproachNearest(glm::vec2& position, Unit* enemy);
 	void NoMove(Unit* enemy, glm::vec2& position);
 	void NextUnit();
 	void SetUp(std::ifstream& map, std::vector<Unit*>* playerUnits, std::vector<Vendor>* vendors);
@@ -89,7 +88,8 @@ struct EnemyManager : public UnitManager
 	void StationaryUpdate(Unit* enemy, BattleManager& battleManager, Camera& camera);
 	void RangeActivation(Unit* enemy);
 	void DoNothing(Unit* enemy, glm::vec2& position);
-	void FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path, Camera& camera);
+	void FindUnitInAttackRange(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
+	void ApproachNearest(Unit* enemy, std::vector<Unit*>& otherUnits);
 	void FindHealItem(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void HealSelf(Unit* enemy, std::unordered_map<glm::vec2, pathCell, vec2Hash>& path);
 	void CantoMove();

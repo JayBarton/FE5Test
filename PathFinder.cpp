@@ -16,12 +16,12 @@ void PathFinder::addToOpenSet(Node *node)
     position = openSet.size() - 1;
     while(position != 0)
     {
-        if(openSet[position].fValue < openSet[position / 2].fValue)
+        if(openSet[position].fValue < openSet[(position-1) / 2].fValue)
         {
             Node tempNode = openSet[position];
-            openSet[position] = openSet[position/2];
-            openSet[position/2] = tempNode;
-            position/=2;
+            openSet[position] = openSet[(position - 1) /2];
+            openSet[(position - 1) /2] = tempNode;
+            position = (position - 1) / 2;
         }
         else
         {

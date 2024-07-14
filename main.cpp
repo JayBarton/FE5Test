@@ -1491,15 +1491,6 @@ void Draw()
 					displays.Draw(&camera, Text, shapeVAO, Renderer);
 				}
 			}
-			else if (displays.state == NONE)
-			{
-				if (currentTurn == 0)
-				{
-					Renderer->setUVs(cursor.uvs[1]);
-					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
-				}
-			}
 			if (textManager.active)
 			{
 				textManager.Draw(Text, Renderer, &camera);
@@ -1514,6 +1505,15 @@ void Draw()
 		else if (!fullScreenMenu && !minimap.show && !sceneManager.PlayingScene())
 		{
 			DrawText();
+			if (displays.state == NONE)
+			{
+				if (currentTurn == 0 && !cursor.movingUnit)
+				{
+					Renderer->setUVs(cursor.uvs[1]);
+					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+				}
+			}
 		}
 		minimap.Draw(playerManager.units, enemyManager.units, camera, shapeVAO, Renderer);
 
