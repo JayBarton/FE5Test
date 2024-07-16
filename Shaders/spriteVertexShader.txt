@@ -10,13 +10,13 @@ uniform vec4 uvs[INSTANCE_COUNT];
 uniform mat4 model[INSTANCE_COUNT];
 uniform vec4 spriteColor[INSTANCE_COUNT];
 uniform float u_colorFactor[INSTANCE_COUNT];
-uniform float fadeFactor[INSTANCE_COUNT];
 uniform int paletteRow[INSTANCE_COUNT];
+uniform float hitFactor[INSTANCE_COUNT];
 uniform mat4 projection;
 
 out vec4 c;
 out float uc;
-out float ff;
+out float hf;
 flat out int pr;
 
 void main()
@@ -47,8 +47,8 @@ void main()
 	);
 	c = spriteColor[index];
 	uc = u_colorFactor[index];
-	ff = fadeFactor[index];
 	pr = paletteRow[index];
+	hf = hitFactor[index];
 
 	TextureCoordinates = uvCoords[gl_VertexID];
 	gl_Position = projection * model[index] * vec4(position[gl_VertexID], 0.0, 1.0);

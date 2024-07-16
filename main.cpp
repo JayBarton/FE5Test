@@ -623,7 +623,10 @@ int main(int argc, char** argv)
 			textManager.Update(deltaTime, inputManager);
 			if (inputManager.isKeyPressed(SDLK_SPACE))
 			{
-				textManager.active = false;
+				textManager.state = PORTRAIT_FADE_OUT;
+				textManager.finishing = true;
+				//if(textManager.state)
+				//textManager.active = false;
 			}
 			//Annoying dupe for now
 			if (sceneManager.PlayingScene())
@@ -1504,14 +1507,25 @@ void Draw()
 		}
 		else if (!fullScreenMenu && !minimap.show && !sceneManager.PlayingScene())
 		{
-			DrawText();
-			if (displays.state == NONE)
+			if (displays.state != NONE)
 			{
-				if (currentTurn == 0 && !cursor.movingUnit)
+				displays.Draw(&camera, Text, shapeVAO, Renderer);
+			}
+			else if (battleManager.battleActive)
+			{
+				battleManager.Draw(Text, camera, Renderer, &cursor);
+			}
+			else
+			{
+				DrawText();
+				if (displays.state == NONE)
 				{
-					Renderer->setUVs(cursor.uvs[1]);
-					Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-					Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+					if (currentTurn == 0 && !cursor.movingUnit)
+					{
+						Renderer->setUVs(cursor.uvs[1]);
+						Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+						Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+					}
 				}
 			}
 		}
@@ -1587,7 +1601,7 @@ void DrawIntroUnits()
 				position += introUnits[i]->sprite.drawOffset;
 
 			}
-			testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - introUnits[i]->sprite.alpha, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
+			testBatch.addToBatch(texture.ID, position, size, colorAndAlpha, 0, false, introUnits[i]->team, introUnits[i]->sprite.getUV());
 		}
 	}
 	testBatch.end();
@@ -1650,15 +1664,8 @@ void DrawUnitRanges()
 
 void DrawText()
 {
-	if (displays.state != NONE)
-	{
-		displays.Draw(&camera, Text, shapeVAO, Renderer);
-	}
-	else if (battleManager.battleActive)
-	{
-		battleManager.Draw(Text, camera, Renderer, &cursor);
-	}
-	else if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
+
+	if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
 	{
 		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
 		if (Settings::settings.showTerrain)

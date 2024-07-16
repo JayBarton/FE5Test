@@ -229,6 +229,11 @@ struct Unit
 	// I can't just use the carried variable because I need them still visible for animation.
 	bool hide = false;
 
+	bool tookHit = false;
+	bool hitRecover = false;
+
+	float hitA = 0.0f;
+
 	const static int INVENTORY_SLOTS = 8;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
@@ -261,6 +266,8 @@ struct Unit
 	void Draw(class SBatch* Renderer, glm::vec2 position = glm::vec2(-1), bool drawAnyway = false);
 
 	bool Dying(float deltaTime);
+
+	void TakeDamage(int damage);
 
 	void LevelUp();
 	int CalculateExperience(Unit* enemy);

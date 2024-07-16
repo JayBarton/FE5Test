@@ -52,6 +52,30 @@ void Unit::Update(float deltaTime, int idleFrame)
     {
         sprite.HandleAnimation(deltaTime, idleFrame);
     }
+    if (tookHit)
+    {
+        float effectSpeed = 10.0f;
+        if (!hitRecover)
+        {
+            hitA += deltaTime * effectSpeed;
+            if (hitA >= 0.9f)
+            {
+                hitA = 0.9f;
+                hitRecover = true;
+            }
+        }
+        else
+        {
+
+            hitA -= deltaTime * effectSpeed;
+            if (hitA <= 0)
+            {
+                hitA = 0;
+                hitRecover = false;
+                tookHit = false;
+            }
+        }
+    }
 }
 
 void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
@@ -111,7 +135,7 @@ void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
             position += sprite.drawOffset;
         }
 
-        Batch->addToBatch(texture.ID, position, size, colorAndAlpha, 1.0f - sprite.alpha, hasMoved, team, sprite.getUV());
+        Batch->addToBatch(texture.ID, position, size, colorAndAlpha, hitA, hasMoved, team, sprite.getUV());
     }
 }
 
@@ -124,6 +148,18 @@ bool Unit::Dying(float deltaTime)
         return true;
     }
     return false;
+}
+
+void Unit::TakeDamage(int damage)
+{
+    currentHP -= damage;
+
+    if (currentHP < 0)
+    {
+        currentHP = 0;
+    }
+    tookHit = true;
+    hitA = 0.0f;
 }
 
 void Unit::LevelUp()

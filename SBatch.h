@@ -8,8 +8,8 @@
 struct bSprite
 {
 public:
-    bSprite(GLuint id, glm::vec2 position, int width, int height, const glm::vec4& theUV, const glm::vec4& color, float fade, bool grey, int team) :
-        textureID(id), spritePosition(position), spriteWidth(width), spriteHeight(height), uv(theUV), color(color), fade(fade), grey(grey), team(team)
+    bSprite(GLuint id, glm::vec2 position, int width, int height, const glm::vec4& theUV, const glm::vec4& color, float hitFactor, bool grey, int team) :
+        textureID(id), spritePosition(position), spriteWidth(width), spriteHeight(height), uv(theUV), color(color),  hitFactor(hitFactor), grey(grey), team(team)
     {
     }
     GLuint textureID;
@@ -18,7 +18,7 @@ public:
     int spriteHeight;
     glm::vec4 uv;
     glm::vec4 color;
-    float fade;
+    float hitFactor;
     bool grey;
     int team;
 };
@@ -30,7 +30,7 @@ struct SBatch
     void init();
     void begin();
     void end();
-    void addToBatch(GLuint id, glm::vec2 position, glm::vec2 size, const glm::vec4& color = glm::vec4(1.0f), float fade = 0, bool grey = false, int team = 0, const glm::vec4& uv = glm::vec4(0));
+    void addToBatch(GLuint id, glm::vec2 position, glm::vec2 size, const glm::vec4& color = glm::vec4(1.0f), float hitFactor = 0, bool grey = false, int team = 0, const glm::vec4& uv = glm::vec4(0));
     void sortSprites();
     void createRenderBatches();
     void renderBatch();

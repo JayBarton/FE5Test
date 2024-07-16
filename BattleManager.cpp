@@ -127,29 +127,37 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		//U G H
 		if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
 		{
+			attacker->sprite.facing = 3;
 			attacker->sprite.currentFrame = 15;
 			attacker->sprite.startingFrame = 15;
+			defender->sprite.facing = 1;
 			defender->sprite.currentFrame = 7;
 			defender->sprite.startingFrame = 7;
 		}
 		else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
 		{
+			attacker->sprite.facing = 1;
 			attacker->sprite.currentFrame = 7;
 			attacker->sprite.startingFrame = 7;
+			defender->sprite.facing = 3;
 			defender->sprite.currentFrame = 15;
 			defender->sprite.startingFrame = 15;
 		}
 		else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
 		{
+			attacker->sprite.facing = 2;
 			attacker->sprite.currentFrame = 11;
 			attacker->sprite.startingFrame = 11;
+			defender->sprite.facing = 0;
 			defender->sprite.currentFrame = 3;
 			defender->sprite.startingFrame = 3;
 		}
 		else
 		{
+			attacker->sprite.facing = 0;
 			attacker->sprite.currentFrame = 3;
 			attacker->sprite.startingFrame = 3;
+			defender->sprite.facing = 2;
 			defender->sprite.currentFrame = 11;
 			defender->sprite.startingFrame = 11;
 		}
@@ -171,6 +179,17 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 	}
 	else if (battleActive)
 	{
+		if (missedText.active)
+		{
+			missedText.position.y -= 48.0f * deltaTime;
+			missedText.scale += 1.5f * deltaTime;
+			delayTimer += deltaTime;
+			if (delayTimer >= 0.25f)
+			{
+				delayTimer = 0.0f;
+				missedText.active = false;
+			}
+		}
 		if (unitDied)
 		{
 			if (displays.state == NONE)
@@ -232,80 +251,140 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 		}
 		else
 		{
-			actionTimer += deltaTime;
-			if (actionTimer >= actionDelay)
+			if (actingUnit)
 			{
-				actionTimer = 0;
-
-				if (battleQueue.size() > 0)
+				auto adaga = actingUnit->sprite.getPosition();
+				auto newPosition = actingUnit->sprite.getPosition() + movementDirection * 2.5f;
+				actingUnit->sprite.SetPosition(newPosition);
+				auto distance = glm::length(actingUnit->sprite.getPosition() - startPosition);
+				if (distance > 8)
 				{
-					auto attack = battleQueue[0];
-					battleQueue.erase(battleQueue.begin());
-					if (attack.firstAttacker)
+					std::cout << actingUnit->sprite.getPosition().x << std::endl;
+					actingUnit->sprite.SetPosition(startPosition + movementDirection * 8.0f);
+					if (!moveBack)
 					{
-						PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+						auto attack = battleQueue[0];
+						battleQueue.erase(battleQueue.begin());
+						if (attack.firstAttacker)
+						{
+							PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+						}
+						else
+						{
+							PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+						}
+						startPosition = actingUnit->sprite.getPosition();
+						moveBack = true;
+						movementDirection *= -1;
 					}
 					else
 					{
-						PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+						actingUnit = nullptr;
+						moveBack = false;
 					}
 				}
-				else if (deadUnit)
+			}
+			else
+			{
+				actionTimer += deltaTime;
+				if (actionTimer >= actionDelay)
 				{
-					if (capturing)
+					actionTimer = 0;
+
+					if (battleQueue.size() > 0)
 					{
-						unitCaptured = true;
-						drawInfo = false;
+						auto attack = battleQueue[0];
+						if (attack.firstAttacker)
+						{
+							actingUnit = attacker;
+
+							//PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+						}
+						else
+						{
+							actingUnit = defender;
+							///PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+						}
+						if (actingUnit->sprite.facing == 0)
+						{
+							movementDirection = glm::ivec2(-1, 0);
+						}
+						else if (actingUnit->sprite.facing == 1)
+						{
+							movementDirection = glm::ivec2(0, -1);
+						}
+						else if (actingUnit->sprite.facing == 2)
+						{
+							movementDirection = glm::ivec2(1, 0);
+						}
+						else
+						{
+							movementDirection = glm::ivec2(0, 1);
+						}
+						startPosition = actingUnit->sprite.getPosition();
+					}
+					else if (deadUnit)
+					{
+						if (capturing)
+						{
+							unitCaptured = true;
+							drawInfo = false;
+						}
+						else
+						{
+							unitDied = true;
+							drawInfo = false;
+							if (deadUnit->deathMessage != "")
+							{
+								displays.PlayerUnitDied(deadUnit);
+							}
+						}
 					}
 					else
 					{
-						unitDied = true;
-						drawInfo = false;
-						if (deadUnit->deathMessage != "")
+						//if either unit has accost and accost has not fired
+						//reset battle queue
+						if (!accostFired)
 						{
-							displays.PlayerUnitDied(deadUnit);
+							CheckAccost();
 						}
-					}
-				}
-				else
-				{
-					//if either unit has accost and accost has not fired
-					//reset battle queue
-					if (!accostFired)
-					{
-						if (attacker->hasSkill(Unit::ACCOST))
-						{
-							if (attacker->currentHP > defender->currentHP && attackerStats.attackSpeed > defenderStats.attackSpeed)
-							{
-								battleQueue = accostQueue;
-								accostFired = true;
-								std::cout << attacker->name << " Accosts\n";
-
-							}
-						}
-						else if (defender->hasSkill(Unit::ACCOST))
-						{
-							if (defender->currentHP > attacker->currentHP && defenderStats.attackSpeed > attackerStats.attackSpeed)
-							{
-								battleQueue = accostQueue;
-								accostFired = true;
-								std::cout << defender->name << " Accosts\n";
-							}
-						}
-						//No one has accost, we're done
+						//We are in an accost round, and it should only fire once(I think)
 						else
 						{
 							EndAttack();
 						}
 					}
-					//We are in an accost round, and it should only fire once(I think)
-					else
-					{
-						EndAttack();
-					}
 				}
 			}
 		}
+	}
+}
+
+void BattleManager::CheckAccost()
+{
+	if (attacker->hasSkill(Unit::ACCOST))
+	{
+		if (attacker->currentHP > defender->currentHP && attackerStats.attackSpeed > defenderStats.attackSpeed)
+		{
+			battleQueue = accostQueue;
+			accostFired = true;
+			std::cout << attacker->name << " Accosts\n";
+
+		}
+	}
+	else if (defender->hasSkill(Unit::ACCOST))
+	{
+		if (defender->currentHP > attacker->currentHP && defenderStats.attackSpeed > attackerStats.attackSpeed)
+		{
+			battleQueue = accostQueue;
+			accostFired = true;
+			std::cout << defender->name << " Accosts\n";
+		}
+	}
+	//No one has accost, we're done
+	else
+	{
+		EndAttack();
 	}
 }
 
@@ -356,17 +435,17 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= 100)
+	if (roll <= accuracy)
 	{
 		int dealtDamage = theseStats.attackDamage;
+		int critFactor = 1;
 		if (crit > 0)
 		{
 			//if the hit lands, do another roll to determine if it is a critical hit. 
 			//I don't know this for a fact, but I am assuming if crit rate is zero or 100, we don't bother
 			if (crit == 100)
 			{
-				std::cout << "CRITICAL" << std::endl;
-				dealtDamage *= 2;
+				critFactor = 2;
 			}
 			else
 			{
@@ -374,15 +453,22 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 				std::cout << "crit roll " << roll << std::endl;
 				if (roll <= crit)
 				{
-					std::cout << "CRITICAL" << std::endl;
-					dealtDamage *= 2;
+					critFactor = 2;
 				}
 			}
 		}
+		if (critFactor > 1)
+		{
+			missedText.message = "CRITICAL!";
+			missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
+			missedText.active = true;
+			missedText.scale = 0.5f;
+		}
+		dealtDamage *= critFactor;
 		dealtDamage -= foeDefense;
-		int remainingHealth = otherUnit->currentHP - dealtDamage;
 		thisUnit->GetEquippedItem()->remainingUses--;
-		otherUnit->currentHP = remainingHealth;
+		otherUnit->TakeDamage(dealtDamage);
+
 		std::cout << thisUnit->name << " Attacks\n";
 
 		//Need to figure this out
@@ -417,7 +503,10 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		{
 			thisUnit->GetEquippedItem()->remainingUses--;
 		}
-		std::cout << thisUnit->name << " Misses\n";
+		missedText.message = "Miss!";
+		missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
+		missedText.active = true;
+		missedText.scale = 0.5f;
 	}
 }
 
@@ -527,5 +616,12 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
 		defenderDraw.x += 25;
 		text->RenderText(intToString(defender->currentHP) + "/" + intToString(defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+
+		if (missedText.active)
+		{
+			glm::vec2 drawPosition = glm::vec2(missedText.position.x, missedText.position.y);
+			drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
+		}
 	}
 }

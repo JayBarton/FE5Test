@@ -22,7 +22,7 @@
         {
             "AI": {
                 "activationType": 2,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -64,7 +64,7 @@
         {
             "AI": {
                 "activationType": 2,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -106,7 +106,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": true
             },
@@ -148,7 +148,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": true
             },
@@ -194,7 +194,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": true
             },
@@ -236,7 +236,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -278,7 +278,7 @@
         {
             "AI": {
                 "activationType": 0,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -320,7 +320,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -362,7 +362,7 @@
         {
             "AI": {
                 "activationType": 2,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -408,7 +408,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -450,7 +450,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -492,7 +492,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": true
             },
@@ -534,7 +534,7 @@
         {
             "AI": {
                 "activationType": 0,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -576,7 +576,7 @@
         {
             "AI": {
                 "activationType": 0,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -618,7 +618,7 @@
         {
             "AI": {
                 "activationType": 0,
-                "active": true,
+                "active": false,
                 "boss": true,
                 "stationary": true
             },

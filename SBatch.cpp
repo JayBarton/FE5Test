@@ -34,9 +34,9 @@ void SBatch::end()
     createRenderBatches();
 }
 
-void SBatch::addToBatch(GLuint id, glm::vec2 position, glm::vec2 size, const glm::vec4& color, float fade, bool grey, int team, const glm::vec4& uv)
+void SBatch::addToBatch(GLuint id, glm::vec2 position, glm::vec2 size, const glm::vec4& color, float hitFactor, bool grey, int team, const glm::vec4& uv)
 {
-    theSprites.emplace_back(id, position, size.x, size.y, uv, color, fade, grey, team);
+    theSprites.emplace_back(id, position, size.x, size.y, uv, color, hitFactor, grey, team);
 }
 
 void SBatch::sortSprites()
@@ -57,12 +57,14 @@ void SBatch::createRenderBatches()
     std::vector<glm::vec4> uvCoords;
     std::vector<glm::vec4> colors;
     std::vector<int> paletteRows;
-    std::vector<float> greys;
+    std::vector<float> greys; //can probably an int or even a bool
+    std::vector<float> hitFactors;
     uvCoords.resize(theSprites.size());
     models.resize(theSprites.size());
     colors.resize(theSprites.size());
     paletteRows.resize(theSprites.size());
     greys.resize(theSprites.size());
+    hitFactors.resize(theSprites.size());
 
     int theOffset = 0;
     int currentSprite = 0;
@@ -85,6 +87,7 @@ void SBatch::createRenderBatches()
     colors[currentSprite] = theSprites[currentSprite].color;
     paletteRows[currentSprite] = theSprites[currentSprite].team;
     greys[currentSprite] = theSprites[currentSprite].grey;
+    hitFactors[currentSprite] = theSprites[currentSprite].hitFactor;
     theOffset++;
 
     for (currentSprite = 1; currentSprite < theSprites.size(); currentSprite++)
@@ -115,6 +118,7 @@ void SBatch::createRenderBatches()
         colors[currentSprite] = theSprites[currentSprite].color;
         paletteRows[currentSprite] = theSprites[currentSprite].team;
         greys[currentSprite] = theSprites[currentSprite].grey;
+        hitFactors[currentSprite] = theSprites[currentSprite].hitFactor;
         theOffset++;
     }
 
@@ -123,6 +127,7 @@ void SBatch::createRenderBatches()
     ResourceManager::GetShader("sprite").Use().SetVector4fv("spriteColor", theSprites.size(), glm::value_ptr(colors[0]));
 
     ResourceManager::GetShader("sprite").Use().SetFloatv("u_colorFactor", &greys[0], GL_TRUE, theSprites.size());
+    ResourceManager::GetShader("sprite").Use().SetFloatv("hitFactor", &hitFactors[0], GL_TRUE, theSprites.size());
     ResourceManager::GetShader("sprite").Use().SetInteger2("paletteRow", &paletteRows[0], GL_TRUE, theSprites.size());
 }
 

@@ -12,12 +12,25 @@ struct Attack
 	bool vantageAttack = false;
 	bool wrathAttack = false;
 };
+
+struct MissText
+{
+	std::string message;
+	glm::vec2 position;
+	glm::vec2 movePosition;
+	float lifeTime = 0.5f;
+	float scale = 0.5f;
+	bool active;
+};
+
 class Camera;
 struct BattleManager
 {
 	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays, class InputManager& inputManager);
+
+	void CheckAccost();
 
 	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
@@ -37,6 +50,11 @@ struct BattleManager
 	Unit* defender = nullptr;
 	Unit* deadUnit = nullptr;
 	Unit* unitToDrop = nullptr;
+	Unit* actingUnit = nullptr;
+
+	glm::vec2 movementDirection;
+	glm::vec2 startPosition;
+	bool moveBack = false;
 
 	BattleStats attackerStats;
 	BattleStats defenderStats;
@@ -74,4 +92,5 @@ struct BattleManager
 	Subject<Unit*, Unit*> subject;
 	Subject<Unit*> unitDiedSubject;
 
+	MissText missedText;
 };

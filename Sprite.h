@@ -122,7 +122,7 @@ public:
     bool active;
     bool updateDrawMatrix;
     bool moveAnimate = false;
-    int something = 0;
+    int moveDelay = 0;
 
     int currentFrame = 0;
     int startingFrame = 0;
