@@ -481,7 +481,7 @@ int main(int argc, char** argv)
 
 //	ResourceManager::LoadShader("Shaders/postVertexShader.txt", "Shaders/postFragmentShader.txt", nullptr, "postprocessing");
 
-	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Tiles.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
@@ -527,7 +527,7 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	loadMap("2.map", unitEvents);
+	loadMap("6.map", unitEvents);
 	//loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
@@ -721,7 +721,7 @@ int main(int argc, char** argv)
 			if (visitObjects[i].toDelete)
 			{
 				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->visitSpot = nullptr;
-				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->uvID = 30;
+				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->uvID = 184;
 				TileManager::tileManager.reDraw();
 				visitObjects[i].sceneMap.clear();
 				visitObjects.erase(visitObjects.begin() + i);
@@ -2149,7 +2149,7 @@ void loadSuspendedGame()
 				}
 				else
 				{
-					TileManager::tileManager.getTile(position.x, position.y)->uvID = 30;
+					TileManager::tileManager.getTile(position.x, position.y)->uvID = 184;
 					redraw = true;
 					visitObjects.erase(visitObjects.begin() + i);
 					i--;

@@ -1221,6 +1221,16 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
 
             if (range >= 0)
             {
+                //The idea of what I'm doing here is as follows
+                //If a unit is approaching another unit, they are most likely moving up to at least their attack range
+                //So, past their movement range, I don't actually want to check the tile cost, since anything past that is probably
+                //Part of their attack range. I do want to make sure the tile is not a wall. if it is not, act as thought its movement cost is 1.
+                //This could have Unintended Consequences, so if things break down check here
+                if (thisTile->properties.movementCost < 20 && movementCost >= range)
+                {
+                    movementCost = mCost + 1;
+                    costs[checkingTile.x][checkingTile.y] = movementCost;
+                }
                 if (movementCost <= range)
                 {
                     if (otherUnit && otherUnit != this && otherUnit->team != team)
@@ -1234,17 +1244,6 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
             }
             else
             {
-              /*  if (movementCost <= getMove())
-                {
-                    if (otherUnit && otherUnit != this && otherUnit->team != team)
-                    {
-                        foundUnits.push_back(otherUnit);
-                    }
-                    pathCell newCell{ checkingTile, movementCost };
-                    addToOpenSet(newCell, checking, checked, costs);
-                    path[tilePosition] = { tilePosition, movementCost, glm::ivec2(startCell.position) * TileManager::TILE_SIZE };
-                }
-                else*/
                 {
                     if (foundUnits.size() == 0)
                     {

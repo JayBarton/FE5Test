@@ -93,7 +93,7 @@ struct TileMode : public EditMode
 {
     TileMode(Object* obj) : EditMode(obj)
     {
-        maxElement = 29;
+        maxElement = 183;
         type = TILE;
     }
     void rightClick(int x, int y)

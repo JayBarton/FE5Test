@@ -29,17 +29,18 @@ void TileManager::setUp(int width, int height)
 
     tiles = new Tile[totalTiles];
 
-    tileTypes.resize(7);
+    tileTypes.resize(10);
     tileTypes[0] = { "Plains", 0, 0, 1, 0, glm::vec3(0.321, 0.667, 0.321)};
-    tileTypes[1] = { "--", 20, 5, 20, 0, glm::vec3(0.29, 0.286, 0.29)};
-    tileTypes[2] = { "House", 10, 1, 1, 0, glm::vec3(1, 0.38, 0.709)};
-    tileTypes[3] = { "Peak", 40, 5, 20, 0, glm::vec3(0.388, 0.188, 0.03)};
-    tileTypes[4] = {"Forest", 20, 2, 2, 0, glm::vec3(0.129, 0.411, 0.192)};
-    tileTypes[5] = {"Cliff", 0, 0, 20, 0, glm::vec3(0.129, 0.411, 0.192) };
-    tileTypes[6] = {"Gate", 30, 10, 1, 1, glm::vec3(1, 0.38, 0.709) };
+    tileTypes[1] = { "Forest", 20, 2, 2, 0, glm::vec3(0.129, 0.411, 0.192) };
+    tileTypes[2] = { "Thicket", 30, 5, 2, 0, glm::vec3(0.129, 0.411, 0.192) };
+    tileTypes[3] = { "Road", 0, 0, 1, 0, glm::vec3(0.9, 0.63, 0.41) };
+    tileTypes[4] = { "Cliff", 0, 0, 20, 0, glm::vec3(0.129, 0.411, 0.192) };
+    tileTypes[5] = { "Peak", 40, 5, 20, 0, glm::vec3(0.388, 0.188, 0.03) };
+    tileTypes[6] = { "--", 20, 5, 20, 0, glm::vec3(0.29, 0.286, 0.29)};
+    tileTypes[7] = { "Gate", 30, 10, 1, 1, glm::vec3(1, 0.38, 0.709) };
+    tileTypes[8] = { "Vendor", 10, 1, 1, 0, glm::vec3(1, 0.38, 0.709)};
+    tileTypes[9] = { "House", 10, 1, 1, 0, glm::vec3(1, 0.38, 0.709)};
 
-  /*  tileTypes[2] = {2, "Mountain", 30, 5, 2, 0};
-    tileTypes[5] = { 5, "Road", 0, 0, 1, 0 };*/
 }
 
 bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
@@ -77,33 +78,45 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
         if (tileType >= -1 && tileType < TILE_SPRITES)
         {
             int ID = -1;
-            if (tileType >= 29)
+            if (tileType < 70)
             {
-                ID = 6;
+                ID = 0;
             }
-            else if (tileType >= 28)
-            {
-                ID = 5;
-            }
-            else if (tileType >= 23)
-            {
-                ID = 4;
-            }
-            else if (tileType >= 15)
-            {
-                ID = 3;
-            }
-            else if (tileType >= 14)
-            {
-                ID = 2;
-            }
-            else if (tileType >= 4)
+            else if (tileType < 78)
             {
                 ID = 1;
             }
-            else
+            else if (tileType < 89)
             {
-                ID = 0;
+                ID = 2;
+            }
+            else if (tileType < 108)
+            {
+                ID = 3;
+            }
+            else if (tileType < 125)
+            {
+                ID = 4;
+            }
+            else if (tileType < 154)
+            {
+                ID = 5;
+            }
+            else if (tileType < 181)
+            {
+                ID = 6;
+            }
+            else if (tileType < 182)
+            {
+                ID = 7;
+            }
+            else if (tileType < 183)
+            {
+                ID = 8;
+            }
+            else if (tileType < 184)
+            {
+                ID = 9;
             }
             auto properties = tileTypes[ID];
             tiles[i] = { x, y, tileType, properties };

@@ -214,7 +214,7 @@ int main(int argc, char** argv)
     ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 
    // ResourceManager::LoadTexture("spritesheet.png", "sprites");
-    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/tilesheet2.png", "tiles");
+    ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Tiles.png", "tiles");
     ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
     ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
 
@@ -1050,18 +1050,45 @@ void editInput(SDL_Event& event, bool& isRunning)
 {
     if (MenuManager::menuManager.menus.size() == 0)
     {
+        if (editMode->type == EditMode::TILE)
+        {
+            if (inputManager.isKeyPressed(SDLK_1))
+            {
+                editMode->currentElement = 0;
+            }
+            else if (inputManager.isKeyPressed(SDLK_2))
+            {
+                editMode->currentElement = 75;
+            }
+            else if (inputManager.isKeyPressed(SDLK_3))
+            {
+                editMode->currentElement = 83;
+            }
+            else if (inputManager.isKeyPressed(SDLK_4))
+            {
+                editMode->currentElement = 93;
+            }
+            else if (inputManager.isKeyPressed(SDLK_5))
+            {
+                editMode->currentElement = 110;
+            }
+            else if (inputManager.isKeyPressed(SDLK_6))
+            {
+                editMode->currentElement = 125;
+            }
+            else if (inputManager.isKeyPressed(SDLK_7))
+            {
+                editMode->currentElement = 153;
+            }
+            else if (inputManager.isKeyPressed(SDLK_8))
+            {
+                editMode->currentElement = 181;
+            }
+            editMode->dObject->type = editMode->currentElement;
+        }
         if (event.type == SDL_KEYDOWN)
         {
-            if (event.key.keysym.sym == SDLK_1)
-            {
-                if (editMode->type != EditMode::TILE)
-                {
-                    EditMode* newMode = new TileMode(&displayObject);
-                    delete editMode;
-                    editMode = newMode;
-                }
-            }
-            else if (event.key.keysym.sym == SDLK_TAB)
+            if (event.key.keysym.sym == SDLK_TAB)
             {
                 switchMode();
             }
@@ -1303,6 +1330,48 @@ void Draw()
                 Renderer->DrawSprite(displayTexture, displayObject.position, 0.0f, displayObject.dimensions);
                 Text->RenderText("Tile Mode", SCREEN_WIDTH * 0.5f - TILE_SIZE, 0, 1);
                 Text->RenderText("Current: " + intToString(editMode->currentElement), SCREEN_WIDTH * 0.5f + 128, TILE_SIZE, 1);
+                std::string tileType;
+                if (editMode->currentElement < 70)
+                {
+                    tileType = "Plains";
+                }
+                else if (editMode->currentElement < 78)
+                {
+                    tileType = "Forest";
+                }
+                else if (editMode->currentElement < 89)
+                {
+                    tileType = "Thicket";
+                }
+                else if (editMode->currentElement < 108)
+                {
+                    tileType = "Road";
+                }
+                else if (editMode->currentElement < 124)
+                {
+                    tileType = "Cliff";
+                }
+                else if (editMode->currentElement < 154)
+                {
+                    tileType = "Peak";
+                }
+                else if (editMode->currentElement < 180)
+                {
+                    tileType = "---";
+                }
+                else if (editMode->currentElement < 182)
+                {
+                    tileType = "Gate";
+                }
+                else if (editMode->currentElement < 183)
+                {
+                    tileType = "Vendor";
+                }
+                else if (editMode->currentElement < 184)
+                {
+                    tileType = "House";
+                }
+                Text->RenderText(tileType, SCREEN_WIDTH * 0.5f + 128, 42, 1);
 
             }
             else if (editMode->type == EditMode::ENEMY)
