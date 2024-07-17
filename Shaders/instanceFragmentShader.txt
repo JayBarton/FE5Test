@@ -4,10 +4,14 @@ out vec4 color;
 
 uniform sampler2D image;
 uniform vec4 spriteColor;
-uniform float u_colorFactor;
-uniform float fadeFactor;
+uniform float subtractValue;
 
 void main()
 {    
     color = vec4(spriteColor) * texture(image, TextureCoordinates);
+	
+	if(subtractValue > 0)
+	{
+		color -= vec4(vec3(subtractValue/255.0f), 0);
+	}
 }  

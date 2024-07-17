@@ -129,7 +129,8 @@
       },
       "WeaponProf": {
         "Sword": 3
-      }
+      },
+      "ClassPower": 5
     },
     {
       "ID": 6,
@@ -384,6 +385,7 @@
       "WeaponProf": {
         "Sword": 5
       },
+      "ClassPower": 5,
       "Skills": [ 1 ],
       "DeathMsg": "Everyone...\nDon't give up...\nBecause someday...Surely...<1"
     },

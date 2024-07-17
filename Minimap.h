@@ -19,6 +19,8 @@ struct Minimap
 
 	float flashEffect;
 
+	float fadeAlpha = 0.0f;
+
 	std::vector<glm::vec4> cursorUvs;
 
 	ShapeBatch shapeBatch;

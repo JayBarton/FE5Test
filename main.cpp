@@ -527,7 +527,7 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	loadMap("6.map", unitEvents);
+	loadMap("2.map", unitEvents);
 	//loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
@@ -823,6 +823,9 @@ void PlayerUpdate(GLfloat deltaTime)
 		{
 			minimap.show = false;
 			cursor.position = camera.getPosition();
+			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
 		}
 		else
 		{

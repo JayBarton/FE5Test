@@ -71,7 +71,7 @@ bool Camera::outSideBox(glm::vec2 p)
 	glm::vec2 pScreen = worldToScreen(p);
 	if (pScreen.x > boxW || pScreen.x < boxX || pScreen.y >boxH || pScreen.y < boxY)
 	{
-outSide = true;
+		outSide = true;
 	}
 
 	return outSide;

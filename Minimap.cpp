@@ -14,6 +14,11 @@ void Minimap::Update(InputManager& inputManager, float deltaTime, Camera& camera
 	{
 		flashEffect = 0.0f;
 	}
+	fadeAlpha += 0.5f * deltaTime;
+	if (fadeAlpha >= 0.5f)
+	{
+		fadeAlpha = 0.5f;
+	}
 }
 
 void Minimap::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
@@ -57,21 +62,15 @@ void Minimap::Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit
 		if (held)
 		{
 			transparent = 0.4f;
+			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
 		}
 		else
 		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 0.55f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-			model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
+			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 66);
+			ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 66);
+			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 66);
 		}
 
 		ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getOrthoMatrix());

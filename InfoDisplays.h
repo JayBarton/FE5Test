@@ -48,7 +48,7 @@ struct InfoDisplays
 	float statViewTime = 5.0f;
 
 	float turnDisplayAlpha = 0.0f;
-	float turnDisplayMaxAlpha = 0.35f;
+	float turnDisplayMaxAlpha = 58.0f;
 
 	float turnTextX = -100;
 	int turnTextXFinal = 400;
@@ -102,8 +102,6 @@ struct InfoDisplays
 	void UpdateLevelUpDisplay(float deltaTime);
 	void UpdateExperienceDisplay(float deltaTime);
 	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO, struct SpriteRenderer* renderer);
-
-	void DrawFade(Camera* camera, int shapeVAO);
 
 	void DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text);
 

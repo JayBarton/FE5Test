@@ -9,6 +9,7 @@ in vec4 c;
 in float uc;
 in float hf;
 flat in int pr;
+uniform float subtractValue;
 
 void main()
 {    
@@ -19,5 +20,9 @@ void main()
 	float grey = 0.21 * indexedColor.r + 0.71 * indexedColor.g + 0.07 * indexedColor.b;
 	indexedColor = mix(indexedColor, vec4(1, 1, 1, indexedColor.a), hf);
 	color = vec4(indexedColor.rgb * (1.0 - uc) + (grey * uc), indexedColor.a);
+	if(subtractValue > 0)
+	{
+		color -= vec4(vec3(subtractValue/255.0f), 0);
+	}
 //	color = sample;
 }  
