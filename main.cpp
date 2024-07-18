@@ -133,8 +133,8 @@ struct GameOverMode
 	float gameOverMessageTimer = 0.0f;
 	float gameOverMessageDelay = 0.2f;
 	float fadeOutAlpha = 0.0f;
-	float fadeInAlpha = 0.0f;
-	float textAlpha = 0.0f;
+	float fadeInAlpha = 255.0f;
+	float textAlpha = 255.0f;
 	int messageID = -1;
 
 	void init(int messageID)
@@ -172,18 +172,18 @@ struct GameOverMode
 			}
 			break;
 		case FADE_IN_BG:
-			fadeInAlpha += fadeTime * deltaTime;
-			if (fadeInAlpha >= 1)
+			fadeInAlpha -= 100 * deltaTime;
+			if (fadeInAlpha <= 0)
 			{
-				fadeInAlpha = 1;
+				fadeInAlpha = 0;
 				state = FADE_IN_TEXT;
 			}
 			break;
 		case FADE_IN_TEXT:
-			textAlpha += fadeTime * deltaTime;
-			if (textAlpha >= 1)
+			textAlpha -= 100 * deltaTime;
+			if (textAlpha <= 0)
 			{
-				textAlpha = 1;
+				textAlpha = 0;
 				canExit = true;
 			}
 			break;
@@ -192,12 +192,15 @@ struct GameOverMode
 
 	void DrawBG(SpriteRenderer* renderer, Camera& camera)
 	{
+		auto fuck = ResourceManager::GetShader("Nsprite");
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", fadeInAlpha);
 		Renderer->setUVs();
 		Texture2D displayTexture = ResourceManager::GetTexture("GameOver1");
-		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224), glm::vec4(1, 1, 1, fadeInAlpha));
+		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224));
+		ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", textAlpha);
 		displayTexture = ResourceManager::GetTexture("GameOver2");
-		Renderer->DrawSprite(displayTexture, glm::vec2(91, 172), 0.0f, glm::vec2(66, 20), glm::vec4(1, 1, 1, textAlpha));
+		Renderer->DrawSprite(displayTexture, glm::vec2(91, 172), 0.0f, glm::vec2(66, 20));
 	}
 };
 GameOverMode gameOverMode;
@@ -472,6 +475,7 @@ int main(int argc, char** argv)
 
 	ResourceManager::GetShader("Nsprite").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0);
 
 	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
@@ -824,7 +828,7 @@ void PlayerUpdate(GLfloat deltaTime)
 			minimap.show = false;
 			cursor.position = camera.getPosition();
 			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
-			ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("Nsprite").Use().SetFloat("subtractValue", 0);
 			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
 		}
 		else
@@ -1567,8 +1571,10 @@ void DrawUnits()
 		{
 			Texture2D texture = ResourceManager::GetTexture("carryingIcons");
 			auto uvs = texture.GetUVs(8, 8);
+		//	Renderer->setUVs();
 			Renderer->setUVs(uvs[carrySprites[i].currentFrame]);
 			Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, carrySprites[i].getSize());
+		//	Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, glm::vec2(64, 32));
 		}
 	}
 }

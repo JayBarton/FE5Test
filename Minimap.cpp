@@ -62,15 +62,6 @@ void Minimap::Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit
 		if (held)
 		{
 			transparent = 0.4f;
-			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
-			ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 0);
-			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
-		}
-		else
-		{
-			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 66);
-			ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 66);
-			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 66);
 		}
 
 		ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getOrthoMatrix());
@@ -125,6 +116,7 @@ void Minimap::Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit
 
 		//ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0);
 
 		Renderer->setUVs(cursorUvs[0]);
 		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
@@ -133,5 +125,19 @@ void Minimap::Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit
 		cameraPosition /= 4;
 		cameraPosition += glm::vec2(startX - 3, startY - 3) ;
 		Renderer->DrawSprite(displayTexture, cameraPosition, 0.0f, glm::vec2(70, 62));
+
+		//duplicate on the check, we're just doing it, don't worry about it
+		if (held)
+		{
+			ResourceManager::GetShader("instance").SetFloat("subtractValue", 0, true);
+			ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0, true);
+			ResourceManager::GetShader("sprite").SetFloat("subtractValue", 0, true);
+		}
+		else
+		{
+			ResourceManager::GetShader("instance").SetFloat("subtractValue", 66, true);
+			ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 66, true);
+			ResourceManager::GetShader("sprite").SetFloat("subtractValue", 66, true);
+		}
 	}
 }
