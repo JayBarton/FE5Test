@@ -135,6 +135,7 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	turnDisplayAlpha = 0.0f;
 	turnTextX = -100;
 	displayTimer = 0.0f;
+	playTurnChange = true;
 }
 
 void InfoDisplays::PlayerUnitDied(Unit* unit)
@@ -315,6 +316,11 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 
 void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 {
+	if (playTurnChange)
+	{
+		ResourceManager::PlaySound("turnEnd");
+		playTurnChange = false;
+	}
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		state = NONE;
@@ -322,6 +328,7 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 		ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
 		ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", 0);
 		ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
+		ResourceManager::StopSound(-1);
 	}
 	else
 	{

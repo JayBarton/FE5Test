@@ -23,6 +23,7 @@
 
 Menu::Menu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : cursor(Cursor), text(Text), camera(Camera), shapeVAO(shapeVAO)
 {
+	ResourceManager::PlaySound("select2");
 }
 
 void Menu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -68,9 +69,13 @@ void Menu::EndUnitMove()
 
 }
 
-void Menu::CancelOption()
+void Menu::CancelOption(int num)
 {
-	MenuManager::menuManager.PreviousMenu();
+	for (int i = 0; i < num; i++)
+	{
+		MenuManager::menuManager.PreviousMenu();
+	}
+	ResourceManager::PlaySound("cancel"); 
 }
 
 void Menu::ClearMenu()
@@ -252,7 +257,7 @@ void UnitOptionsMenu::SelectOption()
 	}
 }
 
-void UnitOptionsMenu::CancelOption()
+void UnitOptionsMenu::CancelOption(int num)
 {
 	if (MenuManager::menuManager.mustWait)
 	{
@@ -584,7 +589,7 @@ void CantoOptionsMenu::SelectOption()
 	ClearMenu();
 }
 
-void CantoOptionsMenu::CancelOption()
+void CantoOptionsMenu::CancelOption(int num)
 {
 	cursor->UndoRemainingMove();
 	Menu::CancelOption();
@@ -793,6 +798,7 @@ void ItemUseMenu::Draw()
 
 void ItemUseMenu::SelectOption()
 {
+	ResourceManager::PlaySound("select2");
 	switch (optionsVector[currentOption])
 	{
 	case USE:
@@ -805,7 +811,7 @@ void ItemUseMenu::SelectOption()
 		MenuManager::menuManager.PreviousMenu();
 		//swap equipment
 		break;
-	case DROP:
+	case DROP: //This is actually supposed to be opening another menu
 		if (item->canDrop)
 		{
 			cursor->selectedUnit->dropItem(inventoryIndex);
@@ -814,13 +820,17 @@ void ItemUseMenu::SelectOption()
 			MenuManager::menuManager.PreviousMenu();
 			MenuManager::menuManager.menus.back()->GetOptions();
 		}
+		else
+		{
+			//ResourceManager::PlaySound("no good"); //Play the sound when you cannot drop the item. Yep, it plays both this and the select
+		}
 		break;
 	default:
 		break;
 	}
 }
 
-void ItemUseMenu::CancelOption()
+void ItemUseMenu::CancelOption(int num)
 {
 	Menu::CancelOption();
 	MenuManager::menuManager.menus.back()->GetOptions();
@@ -1074,15 +1084,14 @@ void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-void SelectEnemyMenu::CancelOption()
+void SelectEnemyMenu::CancelOption(int num)
 {
 	//Obvious but stupid solution to resetting this malus after cancelling a capture action
 	if (capturing)
 	{
 		cursor->selectedUnit->carryingMalus = 1;
 	}
-	Menu::CancelOption();
-	Menu::CancelOption();
+	Menu::CancelOption(2);
 }
 
 void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
@@ -1622,8 +1631,9 @@ void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-void TradeMenu::CancelOption()
+void TradeMenu::CancelOption(int num)
 {
+	ResourceManager::PlaySound("cancel");
 	if (moving)
 	{
 		moving = false;
@@ -2145,6 +2155,10 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						numberOfOptions = unit->skills.size();
 					}
 				}
+				if (examining)
+				{
+					ResourceManager::PlaySound("select1");
+				}
 			}
 			else if (inputManager.isKeyPressed(SDLK_z))
 			{
@@ -2193,13 +2207,14 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			}
 			if (inputManager.isKeyPressed(SDLK_z))
 			{
+				ResourceManager::PlaySound("cancel");
 				examining = false;
 			}
 		}
 	}
 }
 
-void UnitStatsViewMenu::CancelOption()
+void UnitStatsViewMenu::CancelOption(int num)
 {
 	cursor->SetFocus((*unitList)[unitIndex]);
 	camera->SetMove(cursor->position);
@@ -2856,6 +2871,7 @@ void UnitListMenu::SelectOption()
 	{
 		cursor->position = unitData[currentOption].first->sprite.getPosition();
 		cursor->focusedUnit = unitData[currentOption].first;
+		ResourceManager::PlaySound("select2");
 		CloseAndSaveView();
 	}
 	else
@@ -3872,7 +3888,7 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-void VendorMenu::CancelOption()
+void VendorMenu::CancelOption(int num)
 {
 	if (state == GREETING)
 	{
@@ -4317,8 +4333,7 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 				movingUnit->hide = true;
 				auto playerUnit = cursor->selectedUnit;
 				playerUnit->sprite.setFocus();
-				Menu::CancelOption();
-				Menu::CancelOption();
+				Menu::CancelOption(2);
 				MenuManager::menuManager.menus.back()->GetOptions();
 				MenuManager::menuManager.mustWait = true;
 				break;

@@ -17,7 +17,7 @@ struct Menu
 	virtual ~Menu() {}
 	virtual void Draw() = 0;
 	virtual void SelectOption() = 0;
-	virtual void CancelOption();
+	virtual void CancelOption(int num = 1);
 	virtual void GetOptions() {};
 	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
 	void EndUnitMove();
@@ -44,7 +44,7 @@ struct UnitOptionsMenu : public Menu
 	UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
-	virtual void CancelOption() override;
+	virtual void CancelOption(int num = 1) override;
 
 	virtual void GetOptions() override;
 
@@ -94,7 +94,7 @@ struct CantoOptionsMenu : public Menu
 	CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
-	virtual void CancelOption() override;
+	virtual void CancelOption(int num = 1) override;
 };
 
 struct ItemOptionsMenu : public Menu
@@ -123,7 +123,7 @@ struct ItemUseMenu : public ItemOptionsMenu
 	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Item* selectedItem, int inventoryIndex, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
-	virtual void CancelOption() override;
+	virtual void CancelOption(int num = 1) override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	virtual void  GetOptions() override;
@@ -173,7 +173,7 @@ struct SelectEnemyMenu : public Menu
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
-	virtual void CancelOption();
+	virtual void CancelOption(int num = 1);
 	void CanEnemyCounter(bool capturing = false);
 	//Using these so I can handle formatting once rather than doing it repeatedly in draw
 	//I think I am still going to need the normal battle stats for actual combat calculations
@@ -263,7 +263,7 @@ struct TradeMenu : public Menu
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
-	virtual void CancelOption() override;
+	virtual void CancelOption(int num = 1) override; //
 
 	Unit* tradeUnit = nullptr;
 	int itemToMove;
@@ -287,7 +287,7 @@ struct UnitStatsViewMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
-	virtual void CancelOption() override;
+	virtual void CancelOption(int num = 1) override;
 
 	Unit* unit;
 	BattleStats battleStats;
@@ -422,7 +422,7 @@ struct VendorMenu : public Menu
 	virtual void SelectOption() override;
 	void ActivateText();
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
-	virtual void CancelOption() override;
+	virtual void CancelOption(int num = 1) override; //
 
 	Unit* buyer;
 	Vendor* vendor;

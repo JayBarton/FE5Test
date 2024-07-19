@@ -67,9 +67,33 @@ Mix_Chunk* ResourceManager::LoadSound(const GLchar* file, std::string name)
 	}
 }
 
-void ResourceManager::PlaySound(std::string name)
+void ResourceManager::PlaySound(std::string name, int channel, bool delay)
 {
-    Mix_PlayChannel(-1, Sounds[name], 0);
+    if (delay)
+    {
+        if (!Mix_Playing(channel))
+        {
+            Mix_PlayChannel(channel, Sounds[name], 0);
+        }
+    }
+    else
+    {
+        Mix_PlayChannel(channel, Sounds[name], 0);
+    }
+}
+
+void ResourceManager::StopSound(int channel)
+{
+    Mix_HaltChannel(channel);
+}
+
+void ResourceManager::FreeSounds()
+{
+    for (auto it = Sounds.begin(); it != Sounds.end(); it++)
+    {
+        Mix_FreeChunk(it->second);
+        it->second = nullptr;
+    }
 }
 
 

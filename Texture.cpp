@@ -49,17 +49,17 @@ std::vector<glm::vec4> Texture2D::GetUVs(int w, int h)
     std::vector<glm::vec4> uvs;
     int rows = Width/ w;
     int columns = Height / h;
-
+    //Half-pixel correction
+    float offsetx = 0.5f / Width;
+    float offsety = 0.5f / Height;
     for(int c = 0; c < columns; c ++)
     {
         for(int i = 0; i < rows; i ++)
         {
-            //The 0.5 is to prevent pixel bleeding. I don't entirely understand it honestly.
-            float offset = 0.5;
-            uvs.emplace_back(glm::vec4(float(((i) * w + offset))/Width,
-                                  float(((1 + i) * w - offset))/Width,
-                                  float(((c) * h + offset))/Height,
-                                  float(((1 + c) * h - offset))/Height));
+            uvs.emplace_back(glm::vec4(float(i * w + offsetx) / Width,
+                float(i * w + w - offsetx) / Width,
+                float(c * h + offsety) / Height,
+                float(c * h + h - offsety) / Height));
         }
     }
     return uvs;
@@ -68,36 +68,27 @@ std::vector<glm::vec4> Texture2D::GetUVs(int w, int h)
 std::vector<glm::vec4> Texture2D::GetUVs(int startX, int startY, int w, int h, int rows, int columns, int count /* = 0 */)
 {
     std::vector<glm::vec4> uvs;
-	int number = 0;
-    for(int c = 0; c < columns; c ++)
+    int number = 0;
+    //Half-pixel correction
+    float offsetx = 0.5f / Width;
+    float offsety = 0.5f / Height;
+    for (int c = 0; c < columns; c++)
     {
-        for(int i = 0; i < rows; i ++)
+        for (int i = 0; i < rows; i++)
         {
-            //The 0.5 is to prevent pixel bleeding. I don't entirely understand it honestly.
-			//This is called half pixel correction, and might only work when the width and height are powers of 2.
-			//look into more later
-			float offset = 0.5;
-            uvs.emplace_back(glm::vec4((float((((i) * w + offset))) + startX)/Width,
-                                  float(((((1 + i) * w - offset))) + startX)/Width,
-                                  float(((((c) * h + offset))) + startY)/Height,
-                                  float(((((1 + c) * h - offset))) + startY)/Height));
-			if (count > 0)
-			{
-				number++;
-				if (number == count)
-				{
-					break;
-				}
-			}
+            uvs.emplace_back(glm::vec4(float(i * w + offsetx + startX) / Width,
+                float(i * w + w - offsetx + startX) / Width,
+                float(c * h + offsety + startY) / Height,
+                float(c * h + h - offsety + startY) / Height));
+            if (count > 0)
+            {
+                number++;
+                if (number == count)
+                {
+                    break;
+                }
+            }
         }
     }
     return uvs;
 }
-
-//For padding
-/*
-            uvs.emplace_back(glm::vec4((float((((i) * w + offset + (1 * i)))) + startX)/Width,
-                                  float(((((1 + i) * w - offset + (1 * i)))) + startX)/Width,
-                                  float(((((c) * h + offset))) + startY)/Height,
-                                  float(((((1 + c) * h - offset))) + startY)/Height));
-*/

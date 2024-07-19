@@ -78,6 +78,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			}
 			else if (focusedUnit && !focusedUnit->hasMoved)
 			{
+				ResourceManager::PlaySound("select1");
 				previousPosition = position;
 				selectedUnit = focusedUnit;
 				selectedUnit->SetFocus();
@@ -111,6 +112,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				}
 				position = previousPosition;
 				camera.SetMove(position);
+				ResourceManager::PlaySound("cancel", -1, true);
 			}
 		}
 
@@ -344,8 +346,20 @@ void Cursor::Move(int x, int y, bool held)
 	if (move)
 	{
 		position = moveTo;
-		CheckBounds();
+		CheckBounds(); 
+		if (position == moveTo)
+		{
+			if (held)
+			{
+				ResourceManager::StopSound(-1);
+				ResourceManager::PlaySound("cursorMove");
+			}
+			else
+			{
+				ResourceManager::PlaySound("cursorMove");
+			}
 
+		}
 		if (!selectedUnit)
 		{
 			if (auto tile = TileManager::tileManager.getTile(position.x, position.y))

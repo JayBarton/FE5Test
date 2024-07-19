@@ -46,7 +46,10 @@ public:
     static Texture2D GetTexture(std::string name);
 
     static Mix_Chunk* LoadSound(const GLchar* file, std::string name);
-    static void PlaySound(std::string name);
+    static void PlaySound(std::string name, int channel = -1, bool delay = false);
+    static void StopSound(int channel);
+
+    static void FreeSounds();
 
     // Properly de-allocates all loaded resources
     static void      Clear();

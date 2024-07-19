@@ -65,6 +65,8 @@ struct InfoDisplays
 	bool statDelay = false;
 
 	bool capturing = false;
+
+	bool playTurnChange = false;
 	
 	float levelUpNoteTime = 1.0f;
 

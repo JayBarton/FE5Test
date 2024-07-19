@@ -82,6 +82,14 @@ void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
 {
     if (movementComponent.moving)
     {
+        if (getMovementType() == FOOT)
+        {
+            ResourceManager::PlaySound("footMove", 1, true);
+        }
+        else
+        {
+            ResourceManager::PlaySound("horseMove", 1, true);
+        }
         movementComponent.Update(deltaTime, inputManager);
     }
 }
@@ -1440,6 +1448,7 @@ void MovementComponent::getNewDirection(int facing)
     {
         owner->SetPosition(path[current]);
         moving = false;
+        ResourceManager::StopSound(-1);
     }
     else
     {

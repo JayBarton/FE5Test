@@ -497,6 +497,17 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Portraits.png", "Portraits");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/EndingBackground.png", "EndingBG");
 
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cursormove.wav", "cursorMove");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/heldCursorMove.wav", "heldCursorMove");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/select1.wav", "select1");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/select2.wav", "select2");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/movementFoot.wav", "footMove");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/movementHorse.wav", "horseMove");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/minimapOpen.wav", "minimapOpen");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/minimapClose.wav", "minimapClose");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cancel.wav", "cancel");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/turnEnd.wav", "turnEnd");
+
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
 	Renderer = new SpriteRenderer(myShader);
@@ -600,6 +611,12 @@ int main(int argc, char** argv)
 		{
 			SuspendGame();
 		}
+		/*if (inputManager.isKeyPressed(SDLK_f))
+		{
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+
+			resizeWindow(1920, 1080);
+		}*/
 
 		IdleAnimation(deltaTime);
 		CarryIconAnimation();
@@ -747,14 +764,7 @@ int main(int argc, char** argv)
 	{
 		delete sceneManager.scenes[i];
 	}
-	/*for (int i = 0; i < soundEffects.size(); i++)
-	{
-		for (int c = 0; c < soundEffects[i].size(); c++)
-		{
-			Mix_FreeChunk(soundEffects[i][c]);
-			soundEffects[i][c] = nullptr;
-		}
-	}*/
+	ResourceManager::FreeSounds();
 	delete unitEvents;
 	delete turnEvents;
 	delete battleEvents;
@@ -806,6 +816,7 @@ void PlayerUpdate(GLfloat deltaTime)
 		if (inputManager.isKeyPressed(SDLK_m))
 		{
 			minimap.show = true;
+			ResourceManager::PlaySound("minimapOpen");
 		}
 		//Oh man I hate this
 		if (!camera.moving)
@@ -830,6 +841,7 @@ void PlayerUpdate(GLfloat deltaTime)
 			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
 			ResourceManager::GetShader("Nsprite").Use().SetFloat("subtractValue", 0);
 			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
+			ResourceManager::PlaySound("minimapClose");
 		}
 		else
 		{
@@ -985,8 +997,7 @@ void init()
 	resizeWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 //	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
-	glEnable(GL_MULTISAMPLE);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_MULTISAMPLE);	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void loadMap(std::string nextMap, UnitEvents* unitEvents)
