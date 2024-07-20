@@ -80,6 +80,9 @@ struct Mount
 struct MovementComponent
 {
 	class Sprite* owner = nullptr;
+	//Need this for the movement type
+	class Unit* unit = nullptr;
+	int movementType = 0;
 	glm::vec2 nextNode;
 	glm::vec2 direction;
 	glm::vec2 previousDirection;
@@ -87,10 +90,14 @@ struct MovementComponent
 	int current;
 	int end;
 	int facing;
+
+	int currentChannel = -1;
+
 	bool moving = false;
 	void startMovement(const std::vector<glm::ivec2>& path, int facing = -1);
 	void getNewDirection(int facing);
 	void Update(float deltaTime, InputManager& inputManager, float inputSpeed = 0);
+	void HandleMovementSound();
 };
 
 struct TalkData

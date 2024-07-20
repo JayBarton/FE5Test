@@ -463,6 +463,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 			missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
 			missedText.active = true;
 			missedText.scale = 0.5f;
+			ResourceManager::PlaySound("critHit");
 		}
 		dealtDamage *= critFactor;
 		dealtDamage -= foeDefense;
@@ -507,6 +508,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
 		missedText.active = true;
 		missedText.scale = 0.5f;
+		ResourceManager::PlaySound("miss");
 	}
 }
 

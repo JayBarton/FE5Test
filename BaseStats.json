@@ -111,6 +111,17 @@
       "WeaponProf": {
         "Sword": 1,
         "Lance": 1
+      },
+      "Mount": {
+        "Str": 1,
+        "Skl": 1,
+        "Spd": 2,
+        "Def": 1,
+        "Mov": 3,
+        "WeaponProf": {
+          "Lance": 4
+        },
+        "AnimID": 4
       }
     },
     {

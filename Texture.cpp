@@ -76,10 +76,12 @@ std::vector<glm::vec4> Texture2D::GetUVs(int startX, int startY, int w, int h, i
     {
         for (int i = 0; i < rows; i++)
         {
-            uvs.emplace_back(glm::vec4(float(i * w + offsetx + startX) / Width,
-                float(i * w + w - offsetx + startX) / Width,
-                float(c * h + offsety + startY) / Height,
-                float(c * h + h - offsety + startY) / Height));
+            float x = startX + i * w;
+            float y = startY + c * h;
+            uvs.emplace_back(glm::vec4(float(x + offsetx) / Width,
+                float(x + w - offsetx) / Width,
+                float(y + offsety ) / Height,
+                float(y + h - offsety) / Height));
             if (count > 0)
             {
                 number++;

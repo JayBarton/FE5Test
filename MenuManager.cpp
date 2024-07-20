@@ -30,19 +30,11 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (inputManager.isKeyPressed(SDLK_UP))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
@@ -53,6 +45,26 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 		CancelOption();
 		currentOption = 0;
 	}
+}
+
+void Menu::NextOption()
+{
+	currentOption++;
+	if (currentOption >= numberOfOptions)
+	{
+		currentOption = 0;
+	}
+	ResourceManager::PlaySound("optionSelect1");
+}
+
+void Menu::PreviousOption()
+{
+	currentOption--;
+	if (currentOption < 0)
+	{
+		currentOption = numberOfOptions - 1;
+	}
+	ResourceManager::PlaySound("optionSelect1");
 }
 
 void Menu::EndUnitMove()
@@ -252,6 +264,7 @@ void UnitOptionsMenu::SelectOption()
 	//Wait
 	default:
 		cursor->Wait();
+		ResourceManager::PlaySound("select2");
 		ClearMenu();
 		break;
 	}
@@ -351,9 +364,12 @@ void UnitOptionsMenu::Draw()
 		text->RenderText("Transfer", xText, yOffset, 1);
 		yOffset += 30;
 	}
-	commands += "Items\n";
-	text->RenderText("Items", xText, yOffset, 1);
-	yOffset += 30;
+	if (hasItems)
+	{
+		commands += "Items\n";
+		text->RenderText("Items", xText, yOffset, 1);
+		yOffset += 30;
+	}
 	if (canTrade)
 	{
 		text->RenderText("Trade", xText, yOffset, 1);
@@ -379,6 +395,7 @@ void UnitOptionsMenu::Draw()
 void UnitOptionsMenu::GetOptions()
 {
 	currentOption = 0;
+	hasItems = false;
 	canAttack = false;
 	canCapture = false;
 	canDismount = false;
@@ -456,7 +473,11 @@ void UnitOptionsMenu::GetOptions()
 			heldEnemy = true;
 		}
 	}
-	optionsVector.push_back(ITEMS);
+	if (playerUnit->inventory.size() > 0)
+	{
+		optionsVector.push_back(ITEMS);
+		hasItems = true;
+	}
 	cursor->GetAdjacentUnits(tradeUnits, talkUnits);
 	rescueUnits.clear();
 	transferUnits.clear();
@@ -464,6 +485,11 @@ void UnitOptionsMenu::GetOptions()
 	{
 		canTrade = true;
 		optionsVector.push_back(TRADE);
+		int start = 1;
+		if (hasItems)
+		{
+			start = 2;
+		}
 		transferUnits.reserve(tradeUnits.size());
 		if (!playerUnit->carriedUnit)
 		{
@@ -493,12 +519,12 @@ void UnitOptionsMenu::GetOptions()
 			if (rescueUnits.size() > 0)
 			{
 				canRescue = true;
-				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, RESCUE);
+				optionsVector.insert(optionsVector.begin() + optionsVector.size() - start, RESCUE);
 			}
 			if (transferUnits.size() > 0)
 			{
 				canTransfer = true;
-				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, TRANSFER);
+				optionsVector.insert(optionsVector.begin() + optionsVector.size() - start, TRANSFER);
 			}
 		}
 		else
@@ -520,7 +546,7 @@ void UnitOptionsMenu::GetOptions()
 			if (transferUnits.size() > 0)
 			{
 				canTransfer = true;
-				optionsVector.insert(optionsVector.begin() + optionsVector.size() - 2, TRANSFER);
+				optionsVector.insert(optionsVector.begin() + optionsVector.size() - start, TRANSFER);
 			}
 		}
 	}
@@ -1050,7 +1076,7 @@ void SelectEnemyMenu::SelectOption()
 	cursor->selectedUnit->equipWeapon(selectedWeapon);
 	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, attackDistance, enemyCanCounter, *camera, false, capturing);
 	cursor->MoveUnitToTile();
-
+	ResourceManager::PlaySound("select2");
 	ClearMenu();
 }
 
@@ -1064,19 +1090,11 @@ void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 	if (inputManager.isKeyPressed(SDLK_UP) || inputManager.isKeyPressed(SDLK_DOWN) || inputManager.isKeyPressed(SDLK_RIGHT) || inputManager.isKeyPressed(SDLK_LEFT))
 	{
@@ -1273,19 +1291,11 @@ void SelectTradeUnit::CheckInput(InputManager& inputManager, float deltaTime)
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 }
 
@@ -1377,19 +1387,11 @@ void SelectTalkMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 }
 
@@ -1578,6 +1580,7 @@ void TradeMenu::SelectOption()
 		GetOptions();
 		currentOption = 0;
 	}
+	ResourceManager::PlaySound("select2");
 }
 
 void TradeMenu::GetOptions()
@@ -1618,6 +1621,7 @@ void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = firstInv.size() - 1;
 		}
 		GetOptions();
+		ResourceManager::PlaySound("optionSelect2");
 	}
 	if (inputManager.isKeyPressed(SDLK_RIGHT) && firstInventory)
 	{
@@ -1628,6 +1632,7 @@ void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			currentOption = tradeUnit->inventory.size() - 1;
 		}
 		GetOptions();
+		ResourceManager::PlaySound("optionSelect2");
 	}
 }
 
@@ -2101,6 +2106,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					goal = 0;
 					start = 224;
 					yOffset = 224;
+					ResourceManager::PlaySound("pagechange");
 				}
 			}
 			else
@@ -2113,6 +2119,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					goal = 224;
 					start = 0;
 					yOffset = 0;
+					ResourceManager::PlaySound("pagechange");
 				}
 			}
 			if (inputManager.isKeyPressed(SDLK_LEFT))
@@ -2124,6 +2131,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				}
 				unit = (*unitList)[unitIndex];
 				battleStats = unit->CalculateBattleStats();
+				ResourceManager::PlaySound("optionSelect2");
 			}
 			else if (inputManager.isKeyPressed(SDLK_RIGHT))
 			{
@@ -2134,6 +2142,7 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				}
 				unit = (*unitList)[unitIndex];
 				battleStats = unit->CalculateBattleStats();
+				ResourceManager::PlaySound("optionSelect2");
 			}
 			else if (inputManager.isKeyPressed(SDLK_SPACE))
 			{
@@ -2171,38 +2180,22 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				if (inputManager.isKeyPressed(SDLK_UP))
 				{
-					currentOption--;
-					if (currentOption < 0)
-					{
-						currentOption = numberOfOptions - 1;
-					}
+					PreviousOption();
 				}
 				else if (inputManager.isKeyPressed(SDLK_DOWN))
 				{
-					currentOption++;
-					if (currentOption >= numberOfOptions)
-					{
-						currentOption = 0;
-					}
+					NextOption();
 				}
 			}
 			else
 			{
 				if (inputManager.isKeyPressed(SDLK_LEFT))
 				{
-					currentOption--;
-					if (currentOption < 0)
-					{
-						currentOption = numberOfOptions - 1;
-					}
+					PreviousOption();
 				}
 				else if (inputManager.isKeyPressed(SDLK_RIGHT))
 				{
-					currentOption++;
-					if (currentOption >= numberOfOptions)
-					{
-						currentOption = 0;
-					}
+					NextOption();
 				}
 			}
 			if (inputManager.isKeyPressed(SDLK_z))
@@ -2372,19 +2365,11 @@ void SelectRescueUnit::CheckInput(InputManager& inputManager, float deltaTime)
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 }
 
@@ -2423,19 +2408,11 @@ void DropMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 }
 
@@ -2528,19 +2505,11 @@ void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 	Menu::CheckInput(inputManager, deltaTime);
 	if (inputManager.isKeyPressed(SDLK_LEFT))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 }
 
@@ -2867,11 +2836,12 @@ void UnitListMenu::Draw()
 
 void UnitListMenu::SelectOption()
 {
+	ResourceManager::PlaySound("select2");
 	if (!sortMode)
 	{
 		cursor->position = unitData[currentOption].first->sprite.getPosition();
 		cursor->focusedUnit = unitData[currentOption].first;
-		ResourceManager::PlaySound("select2");
+		
 		CloseAndSaveView();
 	}
 	else
@@ -2894,30 +2864,14 @@ void UnitListMenu::SelectOption()
 
 void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (inputManager.isKeyPressed(SDLK_UP))
-	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			sortMode = true;
-			//Set to sort mode
-		}
-	}
-	else if (inputManager.isKeyPressed(SDLK_DOWN))
-	{
-		currentOption++;
-		if (sortMode)
-		{
-			sortMode = false;
-		}
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = numberOfOptions;
-		}
-	}
 	if (sortMode)
 	{
-		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			sortMode = false;
+			ResourceManager::PlaySound("cancel");
+		}
+		else if (inputManager.isKeyPressed(SDLK_RIGHT))
 		{
 			if (currentPage < numberOfPages)
 			{
@@ -2930,6 +2884,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						currentPage++;
 					}
 					sortType++;
+					ResourceManager::PlaySound("optionSelect2");
 				}
 			}
 		}
@@ -2945,6 +2900,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						currentPage--;
 						sortIndicator = pageSortOptions[currentPage] - 1;
 						sortType--;
+						ResourceManager::PlaySound("optionSelect2");
 					}
 					else
 					{
@@ -2954,6 +2910,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				else
 				{
 					sortType--;
+					ResourceManager::PlaySound("optionSelect2");
 				}
 			}
 			std::cout << sortType << std::endl;
@@ -2961,7 +2918,30 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 	else
 	{
-		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			currentOption--;
+			if (currentOption < 0)
+			{
+				currentOption = 0;
+				sortMode = true;
+				//Set to sort mode
+			}
+			ResourceManager::PlaySound("optionSelect1");
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			currentOption++;
+			if (currentOption > numberOfOptions - 1)
+			{
+				currentOption = numberOfOptions - 1;
+			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect1");
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_RIGHT))
 		{
 			if (currentPage < numberOfPages - 1)
 			{
@@ -2973,6 +2953,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					currentPage = numberOfPages - 1;
 				}
 				sortIndicator = 0;
+				ResourceManager::PlaySound("optionSelect2");
 			}
 		}
 		else if (inputManager.isKeyPressed(SDLK_LEFT))
@@ -2987,19 +2968,22 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				sortType -= sortIndicator;
 				sortType -= pageSortOptions[currentPage];
 				sortIndicator = 0;
+				ResourceManager::PlaySound("optionSelect2");
+
 			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_SPACE))
+		{
+			MenuManager::menuManager.AddUnitStatMenu(unitData[currentOption].first);
 		}
 	}
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_SPACE))
-	{
-		MenuManager::menuManager.AddUnitStatMenu(unitData[currentOption].first);
-	}
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{
+		ResourceManager::PlaySound("cancel");
 		CloseAndSaveView();
 	}
 }
@@ -3368,6 +3352,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		else
 		{
+			ResourceManager::PlaySound("optionSelect1");
 			indicatorY -= indicatorIncrement;
 			if (indicatorY < 40)
 			{
@@ -3386,6 +3371,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		else
 		{
+			ResourceManager::PlaySound("optionSelect1");
 			indicatorY += indicatorIncrement;
 			if (indicatorY > 160)
 			{
@@ -3395,8 +3381,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			}
 		}
 	}
-
-	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
 	{
 		switch (currentOption)
 		{
@@ -3406,12 +3391,24 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				Settings::settings.mapAnimations = 2;
 			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 1:
-			Settings::settings.showTerrain = false;
+			if (Settings::settings.showTerrain)
+			{
+				Settings::settings.showTerrain = false;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 2:
-			Settings::settings.autoCursor = false;
+			if (Settings::settings.autoCursor)
+			{
+				Settings::settings.autoCursor = false;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 3:
 			Settings::settings.textSpeed++;
@@ -3419,12 +3416,24 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				Settings::settings.textSpeed = 2;
 			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 4:
-			Settings::settings.unitSpeed = 5;
+			if (Settings::settings.unitSpeed < 5)
+			{
+				Settings::settings.unitSpeed = 5;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 5:
-			Settings::settings.sterero = false;
+			if (Settings::settings.sterero)
+			{
+				Settings::settings.sterero = false;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		}
 	}
@@ -3438,12 +3447,24 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				Settings::settings.mapAnimations = 0;
 			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 1:
-			Settings::settings.showTerrain = true;
+			if (!Settings::settings.showTerrain)
+			{
+				Settings::settings.showTerrain = true;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 2:
-			Settings::settings.autoCursor = true;
+			if (!Settings::settings.autoCursor)
+			{
+				Settings::settings.autoCursor = true;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 3:
 			Settings::settings.textSpeed--;
@@ -3451,12 +3472,24 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				Settings::settings.textSpeed = 0;
 			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 4:
-			Settings::settings.unitSpeed = 2.5f;
+			if (Settings::settings.unitSpeed > 2.5f)
+			{
+				Settings::settings.unitSpeed = 2.5f;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		case 5:
-			Settings::settings.sterero = true;
+			if (!Settings::settings.sterero)
+			{
+				Settings::settings.sterero = true;
+				ResourceManager::PlaySound("optionSelect2");
+			}
 			break;
 		}
 	}
@@ -3849,19 +3882,11 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			if (inputManager.isKeyPressed(SDLK_UP))
 			{
-				currentOption--;
-				if (currentOption < 0)
-				{
-					currentOption = numberOfOptions - 1;
-				}
+				PreviousOption();
 			}
 			else if (inputManager.isKeyPressed(SDLK_DOWN))
 			{
-				currentOption++;
-				if (currentOption >= numberOfOptions)
-				{
-					currentOption = 0;
-				}
+				NextOption();
 			}
 		}
 		else if(state == GREETING)
@@ -4101,19 +4126,11 @@ void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (inputManager.isKeyPressed(SDLK_UP))
 	{
-		currentOption--;
-		if (currentOption < 0)
-		{
-			currentOption = numberOfOptions - 1;
-		}
+		PreviousOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_DOWN))
 	{
-		currentOption++;
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
+		NextOption();
 	}
 	else if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
@@ -4238,7 +4255,6 @@ UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	}
 	if (!playerUnit->isMounted() || playerUnit->mount->remainingMoves == 0)
 	{
-		playerUnit->hasMoved = true;
 		doneHere = true;
 	}
 }
@@ -4438,19 +4454,11 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		if (inputManager.isKeyPressed(SDLK_LEFT))
 		{
-			currentOption--;
-			if (currentOption < 0)
-			{
-				currentOption = numberOfOptions - 1;
-			}
+			NextOption();
 		}
 		if (inputManager.isKeyPressed(SDLK_RIGHT))
 		{
-			currentOption++;
-			if (currentOption >= numberOfOptions)
-			{
-				currentOption = 0;
-			}
+			NextOption();
 		}
 		else if (inputManager.isKeyPressed(SDLK_RETURN))
 		{

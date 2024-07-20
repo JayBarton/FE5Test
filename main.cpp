@@ -508,6 +508,16 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cancel.wav", "cancel");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/turnEnd.wav", "turnEnd");
 
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/optionSelect1.wav", "optionSelect1");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/optionSelect2.wav", "optionSelect2");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/fadeout.wav", "fadeout");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/pagechange.wav", "pagechange");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/hit.wav", "hit");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/deathHit.wav", "deathHit");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/critHit.wav", "critHit");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/speech.wav", "speech");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/miss.wav", "miss");
+
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
 	Renderer = new SpriteRenderer(myShader);

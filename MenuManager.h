@@ -20,6 +20,8 @@ struct Menu
 	virtual void CancelOption(int num = 1);
 	virtual void GetOptions() {};
 	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
+	void NextOption();
+	void PreviousOption();
 	void EndUnitMove();
 	void ClearMenu();
 
@@ -73,6 +75,7 @@ struct UnitOptionsMenu : public Menu
 
 	std::vector<glm::ivec2> dropPositions;
 
+	bool hasItems = false;
 	bool canAttack = false;
 	bool canDismount = false;
 	bool canMount = false;

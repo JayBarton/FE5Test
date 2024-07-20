@@ -364,15 +364,13 @@ void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
 				}
 				frame = 0;
 				frameDirection = 1;
+				ResourceManager::StopSound(-1);
 			}
-			//	else if (nextChar == '\n')
-			//{
-
-			//	}
 			else
 			{
 				currentObject->displayedText += currentObject->text[currentObject->index];
 				currentObject->index++;
+				ResourceManager::PlaySound("speech");
 			}
 
 		}

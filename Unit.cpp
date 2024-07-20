@@ -35,6 +35,7 @@ void Unit::init(std::mt19937* gen, std::uniform_int_distribution<int>* distribut
     this->distribution = distribution;
     sprite.setSize(glm::vec2(16));
     movementComponent.owner = &this->sprite;
+    movementComponent.unit = this;
 }
 
 void Unit::placeUnit(int x, int y)
@@ -82,14 +83,6 @@ void Unit::UpdateMovement(float deltaTime, InputManager& inputManager)
 {
     if (movementComponent.moving)
     {
-        if (getMovementType() == FOOT)
-        {
-            ResourceManager::PlaySound("footMove", 1, true);
-        }
-        else
-        {
-            ResourceManager::PlaySound("horseMove", 1, true);
-        }
         movementComponent.Update(deltaTime, inputManager);
     }
 }
@@ -149,6 +142,10 @@ void Unit::Draw(SBatch* Batch, glm::vec2 position, bool drawAnyway)
 
 bool Unit::Dying(float deltaTime)
 {
+    if (sprite.alpha == 1)
+    {
+        ResourceManager::PlaySound("fadeout");
+    }
     sprite.alpha -= deltaTime * 1;
     
     if (sprite.alpha <= 0)
@@ -165,6 +162,11 @@ void Unit::TakeDamage(int damage)
     if (currentHP < 0)
     {
         currentHP = 0;
+        ResourceManager::PlaySound("deathHit", -1, true);
+    }
+    else
+    {
+        ResourceManager::PlaySound("hit", -1, true);
     }
     tookHit = true;
     hitA = 0.0f;
@@ -1448,7 +1450,7 @@ void MovementComponent::getNewDirection(int facing)
     {
         owner->SetPosition(path[current]);
         moving = false;
-        ResourceManager::StopSound(-1);
+        ResourceManager::StopSound(currentChannel);
     }
     else
     {
@@ -1531,6 +1533,7 @@ void MovementComponent::getNewDirection(int facing)
 
 void MovementComponent::Update(float deltaTime, InputManager& inputManager, float inputSpeed)
 {
+    HandleMovementSound();
     float speed = Settings::settings.unitSpeed;
 
     if (inputSpeed > 0)
@@ -1569,6 +1572,35 @@ void MovementComponent::Update(float deltaTime, InputManager& inputManager, floa
         else
         {
             owner->SetPosition(newPosition);
+        }
+    }
+}
+
+void MovementComponent::HandleMovementSound()
+{
+    int mType = movementType;
+    if (unit)
+    {
+        mType = unit->getMovementType();
+    }
+    if (currentChannel == -1)
+    {
+      //  currentChannel = PlaySound();
+        if (mType == Unit::FOOT)
+        {
+            currentChannel = ResourceManager::PlaySound("footMove");
+        }
+        else
+        {
+            currentChannel = ResourceManager::PlaySound("horseMove");
+        }
+    }
+    else
+    {
+       // if current channel is not playing, set currentChannel back to -1 
+        if (!ResourceManager::IsPlayingChannel(currentChannel))
+        {
+            currentChannel = -1;
         }
     }
 }

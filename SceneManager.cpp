@@ -345,6 +345,10 @@ void Scene::AddNewSceneUnit(SceneAction* currentAction)
 			newUnit->sprite.focusedFacing = animData.facing;
 			newUnit->sprite.setSize(animData.size);
 			newUnit->sprite.drawOffset = animData.offset;
+			if (unit.find("Mount") != unit.end())
+			{
+				newUnit->movementComponent.movementType = Unit::HORSE;
+			}
 		}
 	}
 	movementDelay = action->nextMoveDelay;
