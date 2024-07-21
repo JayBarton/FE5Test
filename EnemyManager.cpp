@@ -759,7 +759,7 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                     //Next want to check how much damage this enemy can do to the other unit
                     //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
                     BattleStats tempStats;
-                    int maxDamage = 0;
+                    int maxDamage = -1;
                     int rangeToUse = 0;
 
                     for (int c = 0; c < enemy->weapons.size(); c++)
@@ -776,6 +776,10 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                                 int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
 
                                 int damage = tempStats.attackDamage - otherDefense;
+                                if (damage < 0)
+                                {
+                                    damage = 0;
+                                }
                                 if (damage > maxDamage)
                                 {
                                     maxDamage = damage;
@@ -823,6 +827,10 @@ void EnemyManager::GetPriority(Unit* enemy, std::unordered_map<glm::vec2, pathCe
                                 int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
 
                                 int damage = tempStats.attackDamage - otherDefense;
+                                if (damage < 0)
+                                {
+                                    damage = 0;
+                                }
                                 if (damage > maxDamage)
                                 {
                                     //prioritize sure kills

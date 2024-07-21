@@ -349,7 +349,7 @@ void Cursor::Move(int x, int y, bool held)
 		CheckBounds(); 
 		if (position == moveTo)
 		{
-			if (held)
+		/*	if (held)
 			{
 				ResourceManager::StopSound(-1);
 				ResourceManager::PlaySound("cursorMove");
@@ -357,7 +357,8 @@ void Cursor::Move(int x, int y, bool held)
 			else
 			{
 				ResourceManager::PlaySound("cursorMove");
-			}
+			}*/
+			ResourceManager::PlaySound("cursorMove", 1);
 
 		}
 		if (!selectedUnit)

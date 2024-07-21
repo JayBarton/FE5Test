@@ -41,7 +41,7 @@ struct InfoDisplays
 	float experienceTime = 0.0025f;
 	float experienceDisplayTime = 1.0f;
 	float healAnimationTime = 1.0f;
-	float healDisplayTime = 0.035f;
+	float healDisplayTime = 0.026f;
 	float healDelayTime = 0.5f;
 	float turnDisplayTime = 1.0f;
 	float statDisplayTime = 0.5f;
@@ -68,7 +68,7 @@ struct InfoDisplays
 
 	bool playTurnChange = false;
 	
-	float levelUpNoteTime = 1.0f;
+	float levelUpNoteTime = 1.4f;
 
 	int itemToUse;
 	int displayedHP;

@@ -62,6 +62,7 @@ void InfoDisplays::OnUnitLevel(Unit* unit)
 	preLevelStats = new StatGrowths{ focusedUnit->maxHP, focusedUnit->strength, focusedUnit->magic,
 		focusedUnit->skill, focusedUnit->speed, focusedUnit->luck,focusedUnit->defense,focusedUnit->build,focusedUnit->move };
 	state = LEVEL_UP_NOTE;
+	ResourceManager::PlaySound("levelUp");
 }
 
 void InfoDisplays::StartUse(Unit* unit, int index, Camera* camera)
@@ -216,6 +217,7 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		{
 			displayTimer = 0.0f;
 			state = LEVEL_UP;
+			ResourceManager::PlaySound("pointUp");
 		}
 		break;
 	case LEVEL_UP:
@@ -228,6 +230,7 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 			{
 				healDelay = false;
 				displayTimer = 0.0f;
+				ResourceManager::PlaySound("heal");
 			}
 		}
 		else if (displayTimer > healAnimationTime)
@@ -295,6 +298,7 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 			{
 				displayTimer = 0;
 				statDelay = false;
+				ResourceManager::PlaySound("pointUp");
 			}
 		}
 		else
@@ -407,6 +411,7 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 				displayedHP = healedHP;
 				finishedHealing = true;
 			}
+			ResourceManager::PlaySound("healthbar", 1);
 			displayTimer = 0;
 		}
 	}

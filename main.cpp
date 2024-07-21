@@ -517,6 +517,12 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/critHit.wav", "critHit");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/speech.wav", "speech");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/miss.wav", "miss");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/heal.wav", "heal");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/healthbar.wav", "healthbar");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/pointUp.wav", "pointUp");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/getItem.wav", "getItem");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/levelUp.wav", "levelUp");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");

@@ -157,19 +157,25 @@ bool Unit::Dying(float deltaTime)
 
 void Unit::TakeDamage(int damage)
 {
-    currentHP -= damage;
-
-    if (currentHP < 0)
+    if (damage <= 0)
     {
-        currentHP = 0;
-        ResourceManager::PlaySound("deathHit", -1, true);
+        ResourceManager::PlaySound("nodamage");
     }
     else
     {
-        ResourceManager::PlaySound("hit", -1, true);
+        currentHP -= damage;
+        if (currentHP < 0)
+        {
+            currentHP = 0;
+            ResourceManager::PlaySound("deathHit");
+        }
+        else
+        {
+            ResourceManager::PlaySound("hit", -1, true);
+        }
+        tookHit = true;
+        hitA = 0.0f;
     }
-    tookHit = true;
-    hitA = 0.0f;
 }
 
 void Unit::LevelUp()
