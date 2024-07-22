@@ -525,8 +525,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/levelUp.wav", "levelUp");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.ogg", "PlayerTurn");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.ogg", "EnemyTurn");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.wav", "PlayerTurn");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.wav", "EnemyTurn");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
