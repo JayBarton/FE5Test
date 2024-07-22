@@ -378,8 +378,7 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 		}
 		else
 		{
-			ResourceManager::PlayMusic("EnemyTurn");
-
+			ResourceManager::PlayMusic("EnemyTurnStart", "EnemyTurnLoop");
 		}
 	}
 }

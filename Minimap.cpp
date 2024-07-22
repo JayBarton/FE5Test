@@ -7,17 +7,51 @@
 
 void Minimap::Update(InputManager& inputManager, float deltaTime, Camera& camera)
 {
-	CheckInput(inputManager, deltaTime, camera);
-
-	flashEffect += 1.5f * deltaTime;
-	if (flashEffect >= 0.7f)
+	if (opening)
 	{
-		flashEffect = 0.0f;
+		openDelay += deltaTime ;
+		subtractValue += deltaTime * 264;
+		volumeModifier -= deltaTime * 2;
+		if (openDelay >= 0.25f)
+		{
+			openDelay = 0.0f;
+			opening = false;
+			subtractValue = subtractValueMax;
+			volumeModifier = 0.5f;
+		}
+		Mix_VolumeMusic(128 * volumeModifier);
 	}
-	fadeAlpha += 0.5f * deltaTime;
-	if (fadeAlpha >= 0.5f)
+	else if (closing)
 	{
-		fadeAlpha = 0.5f;
+		openDelay += deltaTime;
+		subtractValue -= deltaTime * 264;
+		volumeModifier += deltaTime * 2;
+		if (openDelay >= 0.25f)
+		{
+			openDelay = 0.0f;
+			show = false;
+			closing = false;
+			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("Nsprite").Use().SetFloat("subtractValue", 0);
+			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
+			volumeModifier = 1;
+		}
+		Mix_VolumeMusic(128 * volumeModifier);
+	}
+	else
+	{
+		CheckInput(inputManager, deltaTime, camera);
+
+		flashEffect += 1.5f * deltaTime;
+		if (flashEffect >= 0.7f)
+		{
+			flashEffect = 0.0f;
+		}
+		fadeAlpha += 0.5f * deltaTime;
+		if (fadeAlpha >= 0.5f)
+		{
+			fadeAlpha = 0.5f;
+		}
 	}
 }
 
@@ -135,9 +169,23 @@ void Minimap::Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit
 		}
 		else
 		{
-			ResourceManager::GetShader("instance").SetFloat("subtractValue", 66, true);
-			ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 66, true);
-			ResourceManager::GetShader("sprite").SetFloat("subtractValue", 66, true);
+			ResourceManager::GetShader("instance").SetFloat("subtractValue", subtractValue, true);
+			ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", subtractValue, true);
+			ResourceManager::GetShader("sprite").SetFloat("subtractValue", subtractValue, true);
 		}
 	}
+}
+
+void Minimap::Open()
+{
+	show = true;
+	subtractValue = 0.0f;
+	opening = true;
+	ResourceManager::PlaySound("minimapOpen");
+}
+
+void Minimap::Close()
+{
+	closing = true;
+	ResourceManager::PlaySound("minimapClose");
 }

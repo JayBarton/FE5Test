@@ -14,12 +14,23 @@ struct Minimap
 	void CheckInput(InputManager& inputManager, float deltaTime, Camera& camera);
 	void Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit*>& enemyUnits, Camera& camera, int shapeVAO, class SpriteRenderer* Renderer);
 
+	void Open();
+	void Close();
+
 	bool show = false;
 	bool held = false;
+	bool opening = false;
+	bool closing = false;
 
 	float flashEffect;
 
 	float fadeAlpha = 0.0f;
+
+	float openDelay = 0.0f;
+	float subtractValue = 0.0f;
+	float subtractValueMax = 66.0f;
+
+	float volumeModifier = 1.0f;
 
 	std::vector<glm::vec4> cursorUvs;
 

@@ -25,6 +25,7 @@ std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
 std::map<std::string, Mix_Chunk*>   ResourceManager::Sounds;
 std::map<std::string, Mix_Music*>   ResourceManager::Music;
+std::string   ResourceManager::nextSong;
 
 Shader ResourceManager::LoadShader(const GLchar *vShaderFile, const GLchar *fShaderFile, const GLchar *gShaderFile, std::string name)
 {
@@ -110,6 +111,19 @@ Mix_Music* ResourceManager::LoadMusic(const GLchar* file, std::string name)
 void ResourceManager::PlayMusic(std::string name, int loop)
 {
     Mix_PlayMusic(Music[name], loop);
+}
+
+void ResourceManager::PlayMusic(std::string name, std::string next)
+{
+    Mix_PlayMusic(Music[name], 1);
+    nextSong = next;
+    Mix_HookMusicFinished(PlayNextSong);
+}
+
+void ResourceManager::PlayNextSong()
+{
+    Mix_PlayMusic(Music[nextSong], -1);
+    Mix_HookMusicFinished(nullptr);
 }
 
 void ResourceManager::Clear()

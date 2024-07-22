@@ -239,6 +239,7 @@ struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
+		Mix_HookMusicFinished(nullptr);
 		Mix_FadeOutMusic(500.0f);
 		if (ID == 0)
 		{
@@ -526,7 +527,20 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
 
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.wav", "PlayerTurn");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.wav", "EnemyTurn");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.wav", "EnemyTurnStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.2.wav", "EnemyTurnLoop");
+
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.1.wav", "TurnEndSceneStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.2.wav", "TurnEndSceneLoop");
+
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.1.wav", "RaydrickStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.2.wav", "RaydrickLoop");
+
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.1.wav", "WinningStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.2.wav", "WinningLoop");
+	
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.1.wav", "LosingStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.2.wav", "LosingLoop");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -837,8 +851,7 @@ void PlayerUpdate(GLfloat deltaTime)
 	{
 		if (inputManager.isKeyPressed(SDLK_m))
 		{
-			minimap.show = true;
-			ResourceManager::PlaySound("minimapOpen");
+			minimap.Open();
 		}
 		//Oh man I hate this
 		if (!camera.moving)
@@ -858,12 +871,8 @@ void PlayerUpdate(GLfloat deltaTime)
 	{
 		if (inputManager.isKeyPressed(SDLK_m) || inputManager.isKeyPressed(SDLK_z))
 		{
-			minimap.show = false;
+			minimap.Close();
 			cursor.position = camera.getPosition();
-			ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", 0);
-			ResourceManager::GetShader("Nsprite").Use().SetFloat("subtractValue", 0);
-			ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", 0);
-			ResourceManager::PlaySound("minimapClose");
 		}
 		else
 		{
