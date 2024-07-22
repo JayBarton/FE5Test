@@ -370,6 +370,18 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 			}
 		}
 	}
+	if (state == NONE)
+	{
+		if (turn == 0)
+		{
+			ResourceManager::PlayMusic("PlayerTurn");
+		}
+		else
+		{
+			ResourceManager::PlayMusic("EnemyTurn");
+
+		}
+	}
 }
 
 void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)

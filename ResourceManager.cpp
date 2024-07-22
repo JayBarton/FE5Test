@@ -24,6 +24,7 @@
 std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
 std::map<std::string, Mix_Chunk*>   ResourceManager::Sounds;
+std::map<std::string, Mix_Music*>   ResourceManager::Music;
 
 Shader ResourceManager::LoadShader(const GLchar *vShaderFile, const GLchar *fShaderFile, const GLchar *gShaderFile, std::string name)
 {
@@ -92,15 +93,24 @@ bool ResourceManager::IsPlayingChannel(int channel)
     return Mix_Playing(channel);
 }
 
-void ResourceManager::FreeSounds()
+Mix_Music* ResourceManager::LoadMusic(const GLchar* file, std::string name)
 {
-    for (auto it = Sounds.begin(); it != Sounds.end(); it++)
+    Mix_Music* music = Mix_LoadMUS(file);
+    if (music == nullptr)
     {
-        Mix_FreeChunk(it->second);
-        it->second = nullptr;
+        printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
     }
+    else
+    {
+        Music[name] = music;
+    }
+    return music;
 }
 
+void ResourceManager::PlayMusic(std::string name, int loop)
+{
+    Mix_PlayMusic(Music[name], loop);
+}
 
 void ResourceManager::Clear()
 {
@@ -117,6 +127,12 @@ void ResourceManager::Clear()
     for(auto iter : Sounds)
     {
         Mix_FreeChunk(iter.second);
+        iter.second = nullptr;
+    }
+
+    for (auto iter : Music)
+    {
+        Mix_FreeMusic(iter.second);
         iter.second = nullptr;
     }
 }

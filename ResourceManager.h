@@ -35,6 +35,7 @@ public:
     static std::map<std::string, Shader>    Shaders;
     static std::map<std::string, Texture2D> Textures;
     static std::map<std::string, Mix_Chunk*> Sounds;
+    static std::map<std::string, Mix_Music*> Music;
     // Loads (and generates) a shader program from file loading vertex, fragment (and geometry) shader's source code. If gShaderFile is not nullptr, it also loads a geometry shader
     static Shader   LoadShader(const GLchar *vShaderFile, const GLchar *fShaderFile, const GLchar *gShaderFile, std::string name);
     // Retrieves a stored sader
@@ -50,7 +51,9 @@ public:
     static void StopSound(int channel);
     static bool IsPlayingChannel(int channel);
 
-    static void FreeSounds();
+    static Mix_Music* LoadMusic(const GLchar* file, std::string name);
+    static void PlayMusic(std::string name, int loop = -1);
+
 
     // Properly de-allocates all loaded resources
     static void      Clear();

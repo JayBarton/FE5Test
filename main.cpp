@@ -239,6 +239,7 @@ struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
+		Mix_FadeOutMusic(500.0f);
 		if (ID == 0)
 		{
 			cursor.focusedUnit = nullptr;
@@ -524,6 +525,9 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/levelUp.wav", "levelUp");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
 
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.ogg", "PlayerTurn");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.ogg", "EnemyTurn");
+
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
 	Renderer = new SpriteRenderer(myShader);
@@ -570,6 +574,8 @@ int main(int argc, char** argv)
 	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;
 
+	ResourceManager::PlayMusic("PlayerTurn");
+		
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
@@ -780,7 +786,7 @@ int main(int argc, char** argv)
 	{
 		delete sceneManager.scenes[i];
 	}
-	ResourceManager::FreeSounds();
+	ResourceManager::Clear();
 	delete unitEvents;
 	delete turnEvents;
 	delete battleEvents;
