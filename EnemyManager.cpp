@@ -535,6 +535,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
         int cannotCounterBonus = 50;
 
         Target finalTarget;
+        finalTarget.priority = -1;
         for (int i = 0; i < otherUnits.size(); i++)
         {
             Target currentTarget;
@@ -545,7 +546,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             //Next want to check how much damage this enemy can do to the other unit
             //If the enemy is already trying to target an enemy that cannot counter, only want to consider using weapons of the same range
             BattleStats tempStats;
-            int maxDamage = 0;
+            int maxDamage = -1;
 
             float attackDistance = abs(enemy->sprite.getPosition().x - otherUnit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - otherUnit->sprite.getPosition().y);
             attackDistance /= TileManager::TILE_SIZE;
@@ -570,6 +571,10 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
                     enemy->CalculateMagicDefense(weapon, tempStats, attackDistance);
                     int otherDefense = tempStats.attackType == 0 ? otherUnit->getDefense() : otherUnit->getMagic();
                     int damage = tempStats.attackDamage - otherDefense;
+                    if (damage < 0)
+                    {
+                        damage = 0;
+                    }
                     if (damage > maxDamage)
                     {
                         //prioritize sure kills
@@ -616,7 +621,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
         }
 
         //In range of units but cannot reach any of them, stay where you are
-        if (finalTarget.priority == 0)
+        if (finalTarget.priority == -1)
         {
             DoNothing(enemy, position);
         }

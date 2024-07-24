@@ -4285,6 +4285,7 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 				auto playerUnit = cursor->selectedUnit;
 				//Need to call the death message
 				movingUnit->isDead = true;
+				MenuManager::menuManager.unitDiedSubject.notify(movingUnit);
 				if (playerUnit->isMounted() && playerUnit->mount->remainingMoves > 0)
 				{
 					cursor->GetRemainingMove();

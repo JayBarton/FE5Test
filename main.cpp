@@ -305,7 +305,6 @@ struct DeathEvent : public Observer<Unit*>
 			playerManager.units.erase(it);
 			delete deadUnit;
 		}
-		//For use in the future
 		else if (deadUnit->team == 1)
 		{
 			auto it = std::find(enemyManager.units.begin(), enemyManager.units.end(), deadUnit);
@@ -314,6 +313,14 @@ struct DeathEvent : public Observer<Unit*>
 			if (currentTurn == 1)
 			{
 				enemyManager.currentEnemy--;
+			}
+			else
+			{
+				if (enemyManager.units.size() < playerManager.units.size())
+				{
+					//play one song
+					ResourceManager::PlayMusic("WinningStart", "WinningLoop");
+				}
 			}
 			delete deadUnit;
 		}
@@ -393,6 +400,33 @@ struct SuspendEvent : public Observer<int>
 		else
 		{
 			endingGame = true;
+		}
+	}
+};
+
+struct ChangeMusicEvent : public Observer<>
+{
+	virtual void onNotify()
+	{
+		if (currentTurn == 0)
+		{
+			if (enemyManager.units.size() < playerManager.units.size())
+			{
+				ResourceManager::PlayMusic("WinningStart", "WinningLoop");
+			}
+			else if (playerManager.units.size() < 2)
+			{
+				//play another
+				ResourceManager::PlayMusic("LosingStart", "LosingLoop");
+			}
+			else
+			{
+				ResourceManager::PlayMusic("PlayerTurn");
+			}
+		}
+		else
+		{
+			ResourceManager::PlayMusic("EnemyTurnStart", "EnemyTurnLoop");
 		}
 	}
 };
@@ -530,8 +564,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.wav", "EnemyTurnStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.2.wav", "EnemyTurnLoop");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.1.wav", "TurnEndSceneStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.2.wav", "TurnEndSceneLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.1.wav", "HeroesEnterStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.2.wav", "HeroesEnterLoop");
 
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.1.wav", "RaydrickStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.2.wav", "RaydrickLoop");
@@ -541,6 +575,9 @@ int main(int argc, char** argv)
 	
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.1.wav", "LosingStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.2.wav", "LosingLoop");
+
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.1.wav", "TurnEndSceneStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.2.wav", "TurnEndSceneLoop");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -567,12 +604,14 @@ int main(int argc, char** argv)
 	ItemEvents* itemEvents = new ItemEvents();
 	EndingEvents* endingEvents = new EndingEvents();
 	SuspendEvent* suspendEvents = new SuspendEvent();
+	ChangeMusicEvent* changeMusicEvents = new ChangeMusicEvent();
 
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.subject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
 	displays.init(&textManager);
 	displays.subject.addObserver(postBattleEvents);
+	displays.endTurn.addObserver(changeMusicEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
@@ -584,12 +623,12 @@ int main(int argc, char** argv)
 	MenuManager::menuManager.subject.addObserver(turnEvents);
 	MenuManager::menuManager.endingSubject.addObserver(endingEvents);
 	MenuManager::menuManager.suspendSubject.addObserver(suspendEvents);
+	MenuManager::menuManager.unitDiedSubject.addObserver(deathEvents);
 	enemyManager.subject.addObserver(turnEvents);
 	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;
 
-	ResourceManager::PlayMusic("PlayerTurn");
-		
+
 	while (isRunning)
 	{
 		GLfloat timeValue = SDL_GetTicks() / 1000.0f;
@@ -809,6 +848,7 @@ int main(int argc, char** argv)
 	delete itemEvents;
 	delete endingEvents;
 	delete suspendEvents;
+	delete changeMusicEvents;
 //	unit.subject.observers.clear();
 
 	MenuManager::menuManager.ClearMenu();
@@ -869,7 +909,7 @@ void PlayerUpdate(GLfloat deltaTime)
 	}
 	else
 	{
-		if (inputManager.isKeyPressed(SDLK_m) || inputManager.isKeyPressed(SDLK_z))
+		if (!minimap.held && inputManager.isKeyPressed(SDLK_m) || inputManager.isKeyPressed(SDLK_z))
 		{
 			minimap.Close();
 			cursor.position = camera.getPosition();
@@ -1160,6 +1200,18 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 						map >> unitID >> nextDelay;
 						currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
 					}
+					else if (actionType == START_MUSIC)
+					{
+						int musicID;
+						map >> musicID;
+						currentObject->actions[c] = new StartMusic(actionType, musicID);
+					}
+					else if (actionType == STOP_MUSIC)
+					{
+						float delay;
+						map >> delay;
+						currentObject->actions[c] = new StopMusic(actionType, delay);
+					}
 				}
 				int activationType = 0;
 				map >> activationType;
@@ -1189,7 +1241,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				}
 				else if (activationType == 3)
 				{
-					intro = i;
+				//	intro = i;
 					currentObject->activation = new IntroActivation(currentObject, activationType);
 				}
 				else if (activationType == 4)
@@ -1274,7 +1326,13 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	if (intro >= 0)
 	{
-	//	sceneManager.scenes[intro]->init();
+		sceneManager.scenes[intro]->init();
+		displays.ChangeTurn(currentTurn);
+	}
+	else
+	{
+		ResourceManager::PlayMusic("PlayerTurn");
+
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;
@@ -2120,6 +2178,18 @@ void loadSuspendedGame()
 							map >> unitID >> nextDelay;
 							currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
 						}
+						else if (actionType == START_MUSIC)
+						{
+							int musicID;
+							map >> musicID;
+							currentObject->actions[c] = new StartMusic(actionType, musicID);
+						}
+						else if (actionType == STOP_MUSIC)
+						{
+							float delay;
+							map >> delay;
+							currentObject->actions[c] = new StopMusic(actionType, delay);
+						}
 					}
 					int activationType = 0;
 					map >> activationType;
@@ -2262,6 +2332,8 @@ void loadSuspendedGame()
 	}
 
 	map.close();
+
+	ResourceManager::PlayMusic("PlayerTurn");
 
 	levelWidth = xTiles * TileManager::TILE_SIZE;
 	levelHeight = yTiles * TileManager::TILE_SIZE;

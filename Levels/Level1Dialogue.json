@@ -223,7 +223,7 @@
     },
     {
       "ID": 10,
-      "Start_Portraits": [ 5 ],
+      "Start_Portraits": [ 4 ],
       "dialogue": [
         {
           "speaker": -1,

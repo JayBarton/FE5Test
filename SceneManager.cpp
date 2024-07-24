@@ -64,7 +64,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 		case CAMERA_MOVE:
 			if (camera.moving)
 			{
-				camera.MoveTo(deltaTime, 1.0f);
+				camera.MoveTo(deltaTime, 2.0f);
 			}
 			else
 			{
@@ -274,6 +274,32 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				actionIndex++;
 				break;
 			}
+			case START_MUSIC:
+			{
+				auto action = static_cast<StartMusic*>(currentAction);
+				int musicID = action->ID;
+				if (musicID == 2)
+				{
+					ResourceManager::PlayMusic("TurnEndSceneStart", "TurnEndSceneLoop");
+				}
+				else if (musicID == 3)
+				{
+					ResourceManager::PlayMusic("RaydrickStart", "RaydrickLoop");
+				}
+				else if (musicID == 4)
+				{
+					ResourceManager::PlayMusic("HeroesEnterStart", "HeroesEnterLoop");
+				}
+				actionIndex++;
+				playingMusic = true;
+				break;
+			}
+			case STOP_MUSIC:
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(500.0f);
+				actionIndex++;
+				playingMusic = false;
+				break;
 			}
 		}
 	}
@@ -282,6 +308,11 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 		delayTimer += deltaTime;
 		if (delayTimer >= currentDelay)
 		{
+			if (playingMusic)
+			{
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(500.0f);
+			}
 			for (int i = 0; i < introUnits.size(); i++)
 			{
 				delete introUnits[i];

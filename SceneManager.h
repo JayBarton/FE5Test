@@ -27,6 +27,7 @@ struct Scene
 
 	bool playingScene = false;
 	bool repeat = false;
+	bool playingMusic = false;
 	int actionIndex = 0;
 	int ID = 0;
 	std::vector<SceneAction*> actions;

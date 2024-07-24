@@ -513,6 +513,7 @@ struct MenuManager
 	Subject<int> subject;
 	Subject<> endingSubject;
 	Subject<int> suspendSubject;
+	Subject<Unit*> unitDiedSubject;
 
 	std::unordered_map<int, std::string> profcienciesMap;
 

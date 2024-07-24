@@ -9,6 +9,8 @@ const static int ITEM_ACTION = 4;
 const static int NEW_SCENE_UNIT_ACTION = 5;
 const static int SCENE_UNIT_MOVE_ACTION = 6;
 const static int SCENE_UNIT_REMOVE_ACTION = 7;
+const static int START_MUSIC = 8;
+const static int STOP_MUSIC = 9;
 
 struct SceneAction
 {
@@ -95,4 +97,17 @@ struct ItemAction : public SceneAction
 	ItemAction(int type, int ID) : SceneAction(type, nextActionDelay), ID(ID)
 	{}
 	int ID;
+};
+
+struct StartMusic : public SceneAction
+{
+	StartMusic(int type, int ID) : SceneAction(type, nextActionDelay), ID(ID)
+	{}
+	int ID;
+};
+
+struct StopMusic : public SceneAction
+{
+	StopMusic(int type, int nextActionDelay) : SceneAction(type, nextActionDelay)
+	{}
 };

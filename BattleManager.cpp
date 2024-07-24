@@ -259,7 +259,6 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				auto distance = glm::length(actingUnit->sprite.getPosition() - startPosition);
 				if (distance > 8)
 				{
-					std::cout << actingUnit->sprite.getPosition().x << std::endl;
 					actingUnit->sprite.SetPosition(startPosition + movementDirection * 8.0f);
 					if (!moveBack)
 					{

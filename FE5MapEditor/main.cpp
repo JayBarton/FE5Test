@@ -786,6 +786,18 @@ bool loadMap()
                         currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
 
                     }
+                    else if (actionType == START_MUSIC)
+                    {
+                        int musicID;
+                        map >> musicID;
+                        currentObject->actions[c] = new StartMusic(actionType, musicID);
+                    }
+                    else if (actionType == STOP_MUSIC)
+                    {
+                        int delay;
+                        map >> delay;
+                        currentObject->actions[c] = new StopMusic(actionType, delay);
+                    }
                 }
                 int activationType = 0;
                 map >> activationType;
@@ -993,6 +1005,16 @@ void saveMap()
             {
                 auto action = static_cast<SceneUnitRemove*>(currentAction);
                 scenes += intToString(action->unitID) + " " + floatToString(action->nextActionDelay) + " ";
+            }
+            else if (currentAction->type == START_MUSIC)
+            {
+                auto action = static_cast<StartMusic*>(currentAction);
+                scenes += intToString(action->ID) + " ";
+            }
+            else if (currentAction->type == STOP_MUSIC)
+            {
+                auto action = static_cast<StopMusic*>(currentAction);
+                scenes += intToString(action->nextActionDelay) + " ";
             }
         }
         scenes += intToString(currentObject->activation->type) + " ";

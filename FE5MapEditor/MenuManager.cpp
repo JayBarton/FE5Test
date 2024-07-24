@@ -158,6 +158,12 @@ void MenuManager::SelectOptionMenu(int action, std::vector<SceneAction*>& sceneA
 	case SCENE_UNIT_REMOVE_ACTION:
 		newMenu = new RemoveSceneUnitActionMenu(text, camera, shapeVAO, sceneActions);
 		break;
+	case START_MUSIC:
+		newMenu = new StartMusicActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
+	case STOP_MUSIC:
+		newMenu = new StopMusicActionMenu(text, camera, shapeVAO, sceneActions);
+		break;
 	}
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
@@ -1123,7 +1129,7 @@ SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVA
 	Menu(Text, camera, shapeVAO), sceneObject(sceneObject), sceneActions(sceneObject.actions)
 {
 	numberOfOptions = sceneActions.size() + 1;
-	actionNames.resize(8);
+	actionNames.resize(10);
 	actionNames[CAMERA_ACTION] = "Camera Action";
 	actionNames[NEW_UNIT_ACTION] = "New Unit Action";
 	actionNames[MOVE_UNIT_ACTION] = "Move Unit Action";
@@ -1132,6 +1138,8 @@ SceneActionMenu::SceneActionMenu(TextRenderer* Text, Camera* camera, int shapeVA
 	actionNames[NEW_SCENE_UNIT_ACTION] = "New Scene Unit Action";
 	actionNames[SCENE_UNIT_MOVE_ACTION] = "Scene Unit Move Action";
 	actionNames[SCENE_UNIT_REMOVE_ACTION] = "Scene Unit Remove Action";
+	actionNames[START_MUSIC] = "Start Music";
+	actionNames[STOP_MUSIC] = "Stop Music";
 }
 
 void SceneActionMenu::Draw()
@@ -1219,6 +1227,17 @@ void SceneActionMenu::Draw()
 		{
 			auto action = static_cast<SceneUnitRemove*>(currentAction);
 			text->RenderText("Unit to remove: " + intToString(action->unitID) + " Delay: " + floatToString(action->nextActionDelay), 100, 100 + (i * 32) - yOffset, 1);
+		}
+		else if (currentAction->type == START_MUSIC)
+		{
+			auto action = static_cast<StartMusic*>(currentAction);
+
+			text->RenderText("Start Music: " + intToString(action->ID), 100, 100 + (i * 32) - yOffset, 1);
+		}
+		else if (currentAction->type == STOP_MUSIC)
+		{
+			auto action = static_cast<StopMusic*>(currentAction);
+			text->RenderText("Stop Music, delay " + floatToString(action->nextActionDelay), 100, 100 + (i * 32) - yOffset, 1);
 		}
 	}
 
@@ -1410,7 +1429,7 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		selectedAction++;
 		
-		if (selectedAction > SCENE_UNIT_REMOVE_ACTION)
+		if (selectedAction > STOP_MUSIC)
 		{
 			selectedAction = 0;
 		}
@@ -1420,7 +1439,7 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		selectedAction--;
 		if (selectedAction < 0)
 		{
-			selectedAction = SCENE_UNIT_REMOVE_ACTION;
+			selectedAction = STOP_MUSIC;
 		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_DELETE))
@@ -1453,6 +1472,20 @@ void SceneActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_i))
+	{
+		if (swapAction >= 0)
+		{
+			int direction = 1;
+			if (swapAction < currentOption)
+			{
+				direction = 0;
+			}
+			sceneActions.insert(sceneActions.begin() + currentOption, sceneActions[swapAction]);
+			sceneActions.erase(sceneActions.begin() + swapAction + direction);
+			swapAction = -1;
+		}
 	}
 	if (inputManager.isKeyPressed(SDLK_z))
 	{
@@ -2686,6 +2719,48 @@ void SceneUnitMoveActionMenu::CheckInput(InputManager& inputManager, float delta
 	}
 }
 
+StartMusicActionMenu::StartMusicActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+}
+
+void StartMusicActionMenu::Draw()
+{
+	text->RenderText("Music: " + intToString(musicID), 100, 100, 1);
+}
+
+void StartMusicActionMenu::SelectOption()
+{
+	StartMusic* move = new StartMusic(START_MUSIC, musicID);
+	sceneActions.push_back(move);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
+}
+
+void StartMusicActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		musicID++;
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		musicID--;
+		if (musicID < 0)
+		{
+			musicID = 0;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+}
+
 RequireUnitsMenu::RequireUnitsMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<std::pair<int, int>>& requiredUnits) 
 	: Menu(Text, camera, shapeVAO), requiredUnits(requiredUnits)
 {
@@ -2778,5 +2853,59 @@ void RequireUnitsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			currentPair = std::pair<int, int>(0, 0);
 		}
+	}
+}
+
+StopMusicActionMenu::StopMusicActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions)
+	: Menu(Text, camera, shapeVAO), sceneActions(sceneActions)
+{
+}
+
+void StopMusicActionMenu::Draw()
+{
+	text->RenderText("Delay: " + floatToString(nextDelay), 600, 350, 1);
+	text->RenderText("Increment: " + floatToString(delayIncrement), 600, 450, 1);
+}
+
+void StopMusicActionMenu::SelectOption()
+{
+	StopMusic* move = new StopMusic(STOP_MUSIC, nextDelay);
+	sceneActions.push_back(move);
+	MenuManager::menuManager.menus[MenuManager::menuManager.menus.size() - 2]->numberOfOptions++;
+	CancelOption();
+}
+
+void StopMusicActionMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (inputManager.isKeyPressed(SDLK_LEFT))
+	{
+		nextDelay -= delayIncrement;
+	}
+	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	{
+		nextDelay += delayIncrement;
+	}
+	else if (inputManager.isKeyPressed(SDLK_d))
+	{
+		if (delayIncrement == 0.1f)
+		{
+			delayIncrement = 1;
+		}
+		else if (delayIncrement == 1)
+		{
+			delayIncrement = 0.01f;
+		}
+		else
+		{
+			delayIncrement = 0.1f;
+		}
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
 	}
 }
