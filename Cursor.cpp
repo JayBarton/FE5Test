@@ -246,17 +246,17 @@ void Cursor::GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>
 		//Since you can possibly talk to a unit on any team, need this to be separate
 		PushTalkUnit(talkUnits, unit);
 	}
+	if (Unit* unit = TileManager::tileManager.getUnit(right.x, right.y))
+	{
+		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
+	}
 	if (Unit* unit = TileManager::tileManager.getUnit(down.x, down.y))
 	{
 		PushTradeUnit(tradeUnits, unit);
 		PushTalkUnit(talkUnits, unit);
 	}
 	if (Unit* unit = TileManager::tileManager.getUnit(left.x, left.y))
-	{
-		PushTradeUnit(tradeUnits, unit);
-		PushTalkUnit(talkUnits, unit);
-	}
-	if (Unit* unit = TileManager::tileManager.getUnit(right.x, right.y))
 	{
 		PushTradeUnit(tradeUnits, unit);
 		PushTalkUnit(talkUnits, unit);

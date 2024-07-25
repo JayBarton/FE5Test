@@ -407,6 +407,8 @@ struct FullInventoryMenu : public Menu
 
 	SpriteRenderer* renderer;
 	std::vector<glm::vec4> itemIconUVs;
+	std::vector<glm::vec4> proficiencyIconUVs;
+
 };
 
 enum VendorState

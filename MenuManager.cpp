@@ -1473,7 +1473,7 @@ void TradeMenu::Draw()
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
 	{
 		text->RenderText(firstUnit->inventory[i]->name, 125, 267 + i * 42, 1);
-		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 30, 1, 14);
+		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 42, 1, 14);
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
 
@@ -1590,7 +1590,7 @@ void TradeMenu::GetOptions()
 		numberOfOptions = cursor->selectedUnit->inventory.size();
 		if (moving && !moveFromFirst)
 		{
-			if (numberOfOptions < 8)
+			if (numberOfOptions < 7)
 			{
 				numberOfOptions++;
 			}
@@ -1601,7 +1601,7 @@ void TradeMenu::GetOptions()
 		numberOfOptions = tradeUnit->inventory.size();
 		if (moving && moveFromFirst)
 		{
-			if (numberOfOptions < 8)
+			if (numberOfOptions < 7)
 			{
 				numberOfOptions++;
 			}
@@ -3304,7 +3304,20 @@ void OptionsMenu::Draw()
 	RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1, !Settings::settings.sterero);
 
 	text->RenderText("Music", optionNameX, 501 - (yOffset), 1);
+	RenderText("On", selectionXStart, 501 - (yOffset), 1, Settings::settings.music);
+	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 501 - (yOffset), 1, !Settings::settings.music);
+
+
 	text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
+	RenderText("4", selectionXStart, 565 - (yOffset), 1, Settings::settings.volume == 4);
+	xOffset = 0;
+	xOffset += selectionXStart + text->GetTextWidth("4", 1) + 50;
+	RenderText("3", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 3);
+	xOffset += text->GetTextWidth("3", 1) + 50;
+	RenderText("2", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 2);
+	xOffset += text->GetTextWidth("2", 1) + 50;
+	RenderText("Off", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 1);
+
 	text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
 	text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
 
@@ -3435,6 +3448,20 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				ResourceManager::PlaySound("optionSelect2");
 			}
 			break;
+		case 6:
+			if (Settings::settings.music)
+			{
+				Settings::settings.music = false;
+				ResourceManager::PlaySound("optionSelect2");
+			}
+			break;
+		case 7:
+			if (Settings::settings.volume > 1)
+			{
+				Settings::settings.volume--;
+				ResourceManager::PlaySound("optionSelect2");
+			}
+			break;
 		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_LEFT))
@@ -3491,6 +3518,20 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				ResourceManager::PlaySound("optionSelect2");
 			}
 			break;
+		case 6:
+			if (!Settings::settings.music)
+			{
+				Settings::settings.music = true;
+				ResourceManager::PlaySound("optionSelect2");
+			}
+			break;
+		case 7:
+			if (Settings::settings.volume < 4)
+			{
+				Settings::settings.volume++;
+				ResourceManager::PlaySound("optionSelect2");
+			}
+			break;
 		}
 	}
 	int rate = 960;
@@ -3520,6 +3561,26 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{
 		ClearMenu();
+		if (Settings::settings.music)
+		{
+			if (!Mix_PlayingMusic())
+			{
+				ResourceManager::PlayMusic("PlayerTurn"); //This needs to do something to determine the correct music
+			}
+		}
+		else
+		{
+			Mix_HookMusicFinished(nullptr);
+			Mix_FadeOutMusic(500.0f);
+		}
+		if (Settings::settings.volume > 1)
+		{
+			Mix_Volume(-1, 128 - 48 * (4 - Settings::settings.volume));
+		}
+		else
+		{
+			Mix_Volume(-1, 0);
+		}
 	}
 }
 
@@ -3949,6 +4010,7 @@ FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 	selectedStats = cursor->selectedUnit->CalculateBattleStats(cursor->selectedUnit->inventory[currentOption]->ID);
 	renderer = Renderer;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
+	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 }
 
 void FullInventoryMenu::Draw()
@@ -4051,9 +4113,15 @@ void FullInventoryMenu::Draw()
 		auto weaponData = ItemManager::itemManager.weaponData[focusedItem.ID];
 
 		int xStatName = 525;
-		int xStatValue = 660;
+		int xStatValue = 600;
+	
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+		renderer->setUVs(proficiencyIconUVs[weaponData.type]);
+		renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, cursor->dimensions);
+
 		text->RenderText("Type", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
 		yPosition += offSet;
 		text->RenderText("Atk", xStatName, yPosition, 1);
 		text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
@@ -4105,6 +4173,13 @@ void FullInventoryMenu::Draw()
 	}
 
 	text->RenderText("Too many items.\nPick an item to\nsend to Supply", 425, 32, 1);
+
+	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+	auto portraitUVs = portraitTexture.GetUVs(48, 64);
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	renderer->DrawSprite(portraitTexture, glm::vec2(40, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 }
 
 void FullInventoryMenu::SelectOption()

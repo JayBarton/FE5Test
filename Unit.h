@@ -241,7 +241,7 @@ struct Unit
 
 	float hitA = 0.0f;
 
-	const static int INVENTORY_SLOTS = 8;
+	const static int INVENTORY_SLOTS = 7;
 	std::vector<class Item*> inventory;
 	std::vector<class Item*> weapons;
 

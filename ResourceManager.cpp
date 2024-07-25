@@ -20,6 +20,9 @@
 #include <SDL.h>
 #include <SDL_Image.h>
 
+//Need this for music. I think the music playing should be handled by a separate class ultimately
+#include "Settings.h"
+
 // Instantiate static variables
 std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
@@ -110,14 +113,20 @@ Mix_Music* ResourceManager::LoadMusic(const GLchar* file, std::string name)
 
 void ResourceManager::PlayMusic(std::string name, int loop)
 {
-    Mix_PlayMusic(Music[name], loop);
+    if (Settings::settings.music)
+    {
+        Mix_PlayMusic(Music[name], loop);
+    }
 }
 
 void ResourceManager::PlayMusic(std::string name, std::string next)
 {
-    Mix_PlayMusic(Music[name], 1);
-    nextSong = next;
-    Mix_HookMusicFinished(PlayNextSong);
+    if (Settings::settings.music)
+    {
+        Mix_PlayMusic(Music[name], 1);
+        nextSong = next;
+        Mix_HookMusicFinished(PlayNextSong);
+    }
 }
 
 void ResourceManager::PlayNextSong()

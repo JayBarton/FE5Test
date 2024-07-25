@@ -10,6 +10,7 @@
 #include <SDL.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include "Settings.h"
 
 using json = nlohmann::json;
 
@@ -115,6 +116,8 @@ void InfoDisplays::GetItem(int itemID)
 {
 	itemToUse = itemID;
 	state = GOT_ITEM;
+	ResourceManager::PlaySound("getItem");
+	Mix_VolumeMusic(128 * 0.5f);
 }
 
 //Call this from StartUse
@@ -266,6 +269,7 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 	case GOT_ITEM:
 		if (displayTimer > textDisplayTime)
 		{
+			Mix_VolumeMusic(128);
 			displayTimer = 0.0f;
 			state = NONE;
 		}

@@ -76,7 +76,7 @@ struct InfoDisplays
 	int healedHP;
 	int turn;
 
-	float textDisplayTime = 1.0f;
+	float textDisplayTime = 1.8f;
 
 	//I seriously need to fix this stuff, just getting repetitive
 	TextObjectManager* textManager;

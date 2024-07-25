@@ -103,7 +103,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				//Going to in future want the item action to have a property to specify a specific unit
 				//Currently, whoever began the scene will get the item, but I can imagine scenarios in which a scene has many actions that result
 				//In some other unit getting the item.
-				if (initiator->inventory.size() < 8)
+				if (initiator->inventory.size() < 7)
 				{
 					initiator->addItem(action->ID);
 				}
