@@ -30,6 +30,8 @@ struct BattleManager
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays, class InputManager& inputManager);
 
+	void MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+
 	void CheckAccost();
 
 	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
@@ -44,7 +46,7 @@ struct BattleManager
 
 	void CaptureUnit();
 
-	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor);
+	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
@@ -83,13 +85,23 @@ struct BattleManager
 	//Not crazy about this either, just seems the easiest way to handle drawing at 12:06 am
 	bool drawInfo = true;
 
+	//Battle scene variables
+	bool battleScene = false;
+	glm::vec2 leftPosition;
+	glm::vec2 rightPosition;
+	Unit* leftUnit = nullptr;
+	Unit* rightUnit = nullptr;
+	glm::vec2* actingPosition = nullptr;
+
+	//end battle scene variables
+
 	float delayTimer = 0.0f;
 	float delay = 0.75f;
 
 	std::vector<Attack> battleQueue;
 	std::vector<Attack> accostQueue;
 
-	Subject<Unit*, Unit*> subject;
+	Subject<Unit*, Unit*> endAttackSubject;
 	Subject<Unit*> unitDiedSubject;
 
 	MissText missedText;

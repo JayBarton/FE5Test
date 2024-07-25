@@ -78,6 +78,10 @@
     <IncludePath>E:\GnuWin32\include\freetype2;E:\GnuWin32\include;E:\glm;E:\glew\glew-1.13.0\include;E:\mingw_dev_lib\include\SDL2;E:\JSON\include\single_include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\GnuWin32\lib;E:\VSGameDev\glew-2.1.0\lib\Release\Win32;E:\VSGameDev\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>E:\GnuWin32\include\freetype2;E:\GnuWin32\include;E:\glm;E:\glew\glew-1.13.0\include;E:\mingw_dev_lib\include\SDL2;E:\JSON\include\single_include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\GnuWin32\lib;E:\VSGameDev\glew-2.1.0\lib\Release\Win32;E:\VSGameDev\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -105,6 +109,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;SDL2_ttf.lib;glew32.lib;freetype.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

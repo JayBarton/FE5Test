@@ -532,6 +532,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/gameovertext.png", "GameOver2");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Portraits.png", "Portraits");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/EndingBackground.png", "EndingBG");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleBackground.png", "BattleBG");
 
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cursormove.wav", "cursorMove");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/heldCursorMove.wav", "heldCursorMove");
@@ -607,7 +608,7 @@ int main(int argc, char** argv)
 	ChangeMusicEvent* changeMusicEvents = new ChangeMusicEvent();
 
 	ItemManager::itemManager.subject.addObserver(itemEvents);
-	battleManager.subject.addObserver(battleEvents);
+	battleManager.endAttackSubject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
 	displays.init(&textManager);
 	displays.subject.addObserver(postBattleEvents);
@@ -1571,6 +1572,14 @@ void Draw()
 			textManager.Draw(Text, Renderer, &camera);
 		}
 	}
+	else if (battleManager.battleActive && battleManager.battleScene)
+	{
+		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch);
+		if (displays.state != NONE)
+		{
+			displays.Draw(&camera, Text, shapeVAO, Renderer);
+		}
+	}
 	else
 	{
 		if (MenuManager::menuManager.menus.size() > 0)
@@ -1585,7 +1594,6 @@ void Draw()
 			ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 			TileManager::tileManager.showTiles(Renderer, camera);
 			DrawUnitRanges();
-			//need another bloody fade from the suspend menu good LORD
 			textManager.DrawLayer1Fade(&camera, shapeVAO);
 			//for intro
 	//		if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
@@ -1620,7 +1628,7 @@ void Draw()
 			}
 			else if (battleManager.battleActive)
 			{
-				battleManager.Draw(Text, camera, Renderer, &cursor);
+				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch);
 			}
 			else
 			{

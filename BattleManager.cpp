@@ -16,6 +16,8 @@
 #include "InfoDisplays.h"
 #include "InputManager.h"
 
+#include "SBatch.h"
+
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
@@ -124,42 +126,66 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		}
 
 		camera.SetCenter(defender->sprite.getPosition());
-		//U G H
-		if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
+		if (battleScene)
 		{
-			attacker->sprite.facing = 3;
-			attacker->sprite.currentFrame = 15;
-			attacker->sprite.startingFrame = 15;
-			defender->sprite.facing = 1;
-			defender->sprite.currentFrame = 7;
-			defender->sprite.startingFrame = 7;
-		}
-		else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
-		{
-			attacker->sprite.facing = 1;
-			attacker->sprite.currentFrame = 7;
-			attacker->sprite.startingFrame = 7;
-			defender->sprite.facing = 3;
-			defender->sprite.currentFrame = 15;
-			defender->sprite.startingFrame = 15;
-		}
-		else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
-		{
-			attacker->sprite.facing = 2;
-			attacker->sprite.currentFrame = 11;
-			attacker->sprite.startingFrame = 11;
-			defender->sprite.facing = 0;
-			defender->sprite.currentFrame = 3;
-			defender->sprite.startingFrame = 3;
+			leftPosition = glm::vec2(56, 84);
+			rightPosition = glm::vec2(200, 84);
+			if (attacker->team == 0)
+			{
+				leftUnit = defender;
+				rightUnit = attacker;
+			}
+			else
+			{
+				leftUnit = attacker;
+				rightUnit = defender;
+			}
+			leftUnit->sprite.facing = 2;
+			leftUnit->sprite.currentFrame = 11;
+			leftUnit->sprite.startingFrame = 11;
+			rightUnit->sprite.facing = 0;
+			rightUnit->sprite.currentFrame = 3;
+			rightUnit->sprite.startingFrame = 3;
 		}
 		else
 		{
-			attacker->sprite.facing = 0;
-			attacker->sprite.currentFrame = 3;
-			attacker->sprite.startingFrame = 3;
-			defender->sprite.facing = 2;
-			defender->sprite.currentFrame = 11;
-			defender->sprite.startingFrame = 11;
+			//U G H
+			if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
+			{
+				attacker->sprite.facing = 3;
+				attacker->sprite.currentFrame = 15;
+				attacker->sprite.startingFrame = 15;
+				defender->sprite.facing = 1;
+				defender->sprite.currentFrame = 7;
+				defender->sprite.startingFrame = 7;
+			}
+			else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
+			{
+				attacker->sprite.facing = 1;
+				attacker->sprite.currentFrame = 7;
+				attacker->sprite.startingFrame = 7;
+				defender->sprite.facing = 3;
+				defender->sprite.currentFrame = 15;
+				defender->sprite.startingFrame = 15;
+			}
+			else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
+			{
+				attacker->sprite.facing = 2;
+				attacker->sprite.currentFrame = 11;
+				attacker->sprite.startingFrame = 11;
+				defender->sprite.facing = 0;
+				defender->sprite.currentFrame = 3;
+				defender->sprite.startingFrame = 3;
+			}
+			else
+			{
+				attacker->sprite.facing = 0;
+				attacker->sprite.currentFrame = 3;
+				attacker->sprite.startingFrame = 3;
+				defender->sprite.facing = 2;
+				defender->sprite.currentFrame = 11;
+				defender->sprite.startingFrame = 11;
+			}
 		}
 		attacker->sprite.moveAnimate = true;
 		defender->sprite.moveAnimate = true;
@@ -190,168 +216,317 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				missedText.active = false;
 			}
 		}
-		if (unitDied)
+		if (battleScene)
 		{
-			if (displays.state == NONE)
+			if (unitDied)
 			{
-				if (deadUnit->Dying(deltaTime))
+				if (displays.state == NONE)
 				{
-					deadUnit->isDead = true;
-					if (deadUnit->carriedUnit)
+					if (deadUnit->Dying(deltaTime))
 					{
-						unitToDrop = deadUnit->carriedUnit;
-						unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
-					}
-					auto deadPosition = deadUnit->sprite.getPosition();
-					TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
-					EndAttack();
+						deadUnit->isDead = true;
+						if (deadUnit->carriedUnit)
+						{
+							unitToDrop = deadUnit->carriedUnit;
+							unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+						}
+						auto deadPosition = deadUnit->sprite.getPosition();
+						TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
+						EndAttack();
 
-					unitDied = false;
-				}
-			}
-		}
-		else if (unitCaptured)
-		{
-			//capture animation. Needs to play after the experience display if the player captures. 
-			// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
-			if (deadUnit->carriedUnit)
-			{
-				unitToDrop = deadUnit->carriedUnit;
-				unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
-			}
-			TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
-			attacker->carryUnit(deadUnit);
-			//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
-			//This seems bogus to me but it's how it works there so it's how it works here.
-			if (attacker->team != 0)
-			{
-				for (int i = 0; i < deadUnit->inventory.size(); i++)
-				{
-					if (attacker->inventory.size() <= 8)
-					{
-						attacker->inventory.push_back(deadUnit->inventory[i]);
-						deadUnit->inventory.erase(deadUnit->inventory.begin());
-						i--;
-					}
-				}
-			}
-			EndAttack();
-			deadUnit = nullptr;
-			unitCaptured = false;
-		}
-		else if (captureAnimation)
-		{
-			defender->movementComponent.Update(deltaTime, inputManager);
-			if (!defender->movementComponent.moving)
-			{
-				defender->hide = true;
-				displays.subject.notify(0);
-				captureAnimation = false;
-			}
-		}
-		else
-		{
-			if (actingUnit)
-			{
-				auto adaga = actingUnit->sprite.getPosition();
-				auto newPosition = actingUnit->sprite.getPosition() + movementDirection * 2.5f;
-				actingUnit->sprite.SetPosition(newPosition);
-				auto distance = glm::length(actingUnit->sprite.getPosition() - startPosition);
-				if (distance > 8)
-				{
-					actingUnit->sprite.SetPosition(startPosition + movementDirection * 8.0f);
-					if (!moveBack)
-					{
-						auto attack = battleQueue[0];
-						battleQueue.erase(battleQueue.begin());
-						if (attack.firstAttacker)
-						{
-							PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
-						}
-						else
-						{
-							PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
-						}
-						startPosition = actingUnit->sprite.getPosition();
-						moveBack = true;
-						movementDirection *= -1;
-					}
-					else
-					{
-						actingUnit = nullptr;
-						moveBack = false;
+						unitDied = false;
 					}
 				}
 			}
 			else
 			{
-				actionTimer += deltaTime;
-				if (actionTimer >= actionDelay)
+				if (actingUnit)
 				{
-					actionTimer = 0;
-
-					if (battleQueue.size() > 0)
+					auto newPosition = *actingPosition + movementDirection * 2.5f;
+					*actingPosition = newPosition;
+					auto distance = glm::length(*actingPosition - startPosition);
+					if (distance > 144)
 					{
-						auto attack = battleQueue[0];
-						if (attack.firstAttacker)
+						*actingPosition = startPosition + movementDirection * 144.0f;
+						if (!moveBack)
 						{
-							actingUnit = attacker;
-
-							//PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
-						}
-						else
-						{
-							actingUnit = defender;
-							///PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
-						}
-						if (actingUnit->sprite.facing == 0)
-						{
-							movementDirection = glm::ivec2(-1, 0);
-						}
-						else if (actingUnit->sprite.facing == 1)
-						{
-							movementDirection = glm::ivec2(0, -1);
-						}
-						else if (actingUnit->sprite.facing == 2)
-						{
-							movementDirection = glm::ivec2(1, 0);
-						}
-						else
-						{
-							movementDirection = glm::ivec2(0, 1);
-						}
-						startPosition = actingUnit->sprite.getPosition();
-					}
-					else if (deadUnit)
-					{
-						if (capturing)
-						{
-							unitCaptured = true;
-							drawInfo = false;
-						}
-						else
-						{
-							unitDied = true;
-							drawInfo = false;
-							if (deadUnit->deathMessage != "")
+							auto attack = battleQueue[0];
+							battleQueue.erase(battleQueue.begin());
+							Unit* otherUnit = nullptr;
+							if (attack.firstAttacker)
 							{
-								displays.PlayerUnitDied(deadUnit);
+								PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+							}
+							else
+							{
+								PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+							}
+							startPosition = *actingPosition;
+							moveBack = true;
+							movementDirection *= -1;
+							if (movementDirection.x > 0)
+							{
+								actingUnit->sprite.facing = 2;
+								actingUnit->sprite.currentFrame = 11;
+								actingUnit->sprite.startingFrame = 11;
+							}
+							else
+							{
+								actingUnit->sprite.facing = 0;
+								actingUnit->sprite.currentFrame = 3;
+								actingUnit->sprite.startingFrame = 3;
+							}
+						}
+						else
+						{
+							if (actingUnit == leftUnit)
+							{
+								actingUnit->sprite.facing = 2;
+								actingUnit->sprite.currentFrame = 11;
+								actingUnit->sprite.startingFrame = 11;
+							}
+							else
+							{
+								actingUnit->sprite.facing = 0;
+								actingUnit->sprite.currentFrame = 3;
+								actingUnit->sprite.startingFrame = 3;
+							}
+							actingUnit = nullptr;
+							moveBack = false;
+						}
+					}
+				}
+				else
+				{
+					actionTimer += deltaTime;
+					if (actionTimer >= actionDelay)
+					{
+						actionTimer = 0;
+
+						if (battleQueue.size() > 0)
+						{
+							auto attack = battleQueue[0];
+							if (attack.firstAttacker)
+							{
+								actingUnit = attacker;
+							}
+							else
+							{
+								actingUnit = defender;
+							}
+							if (actingUnit == leftUnit)
+							{
+								movementDirection = glm::ivec2(1, 0);
+								actingPosition = &leftPosition;
+							}
+							else
+							{
+								movementDirection = glm::ivec2(-1, 0);
+								actingPosition = &rightPosition;
+							}
+							startPosition = *actingPosition;
+						}
+						else if (deadUnit)
+						{
+							if (capturing)
+							{
+								unitCaptured = true;
+								drawInfo = false;
+							}
+							else
+							{
+								unitDied = true;
+								drawInfo = false;
+								if (deadUnit->deathMessage != "")
+								{
+									displays.PlayerUnitDied(deadUnit);
+								}
+							}
+						}
+						else
+						{
+							//if either unit has accost and accost has not fired
+							//reset battle queue
+							if (!accostFired)
+							{
+								CheckAccost();
+							}
+							//We are in an accost round, and it should only fire once(I think)
+							else
+							{
+								EndAttack();
 							}
 						}
 					}
+				}
+			}
+		}
+		else
+		{
+			MapUpdate(displays, deltaTime, inputManager, distribution, gen);
+		}
+	}
+}
+
+void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
+{
+	if (unitDied)
+	{
+		if (displays.state == NONE)
+		{
+			if (deadUnit->Dying(deltaTime))
+			{
+				deadUnit->isDead = true;
+				if (deadUnit->carriedUnit)
+				{
+					unitToDrop = deadUnit->carriedUnit;
+					unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+				}
+				auto deadPosition = deadUnit->sprite.getPosition();
+				TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
+				EndAttack();
+
+				unitDied = false;
+			}
+		}
+	}
+	else if (unitCaptured)
+	{
+		//capture animation. Needs to play after the experience display if the player captures. 
+		// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
+		if (deadUnit->carriedUnit)
+		{
+			unitToDrop = deadUnit->carriedUnit;
+			unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+		}
+		TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+		attacker->carryUnit(deadUnit);
+		//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
+		//This seems bogus to me but it's how it works there so it's how it works here.
+		if (attacker->team != 0)
+		{
+			for (int i = 0; i < deadUnit->inventory.size(); i++)
+			{
+				if (attacker->inventory.size() <= 8)
+				{
+					attacker->inventory.push_back(deadUnit->inventory[i]);
+					deadUnit->inventory.erase(deadUnit->inventory.begin());
+					i--;
+				}
+			}
+		}
+		EndAttack();
+		deadUnit = nullptr;
+		unitCaptured = false;
+	}
+	else if (captureAnimation)
+	{
+		defender->movementComponent.Update(deltaTime, inputManager);
+		if (!defender->movementComponent.moving)
+		{
+			defender->hide = true;
+			displays.subject.notify(0);
+			captureAnimation = false;
+		}
+	}
+	else
+	{
+		if (actingUnit)
+		{
+			auto newPosition = actingUnit->sprite.getPosition() + movementDirection * 2.5f;
+			actingUnit->sprite.SetPosition(newPosition);
+			auto distance = glm::length(actingUnit->sprite.getPosition() - startPosition);
+			if (distance > 8)
+			{
+				actingUnit->sprite.SetPosition(startPosition + movementDirection * 8.0f);
+				if (!moveBack)
+				{
+					auto attack = battleQueue[0];
+					battleQueue.erase(battleQueue.begin());
+					if (attack.firstAttacker)
+					{
+						PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+					}
 					else
 					{
-						//if either unit has accost and accost has not fired
-						//reset battle queue
-						if (!accostFired)
+						PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+					}
+					startPosition = actingUnit->sprite.getPosition();
+					moveBack = true;
+					movementDirection *= -1;
+				}
+				else
+				{
+					actingUnit = nullptr;
+					moveBack = false;
+				}
+			}
+		}
+		else
+		{
+			actionTimer += deltaTime;
+			if (actionTimer >= actionDelay)
+			{
+				actionTimer = 0;
+
+				if (battleQueue.size() > 0)
+				{
+					auto attack = battleQueue[0];
+					if (attack.firstAttacker)
+					{
+						actingUnit = attacker;
+					}
+					else
+					{
+						actingUnit = defender;
+					}
+					if (actingUnit->sprite.facing == 0)
+					{
+						movementDirection = glm::ivec2(-1, 0);
+					}
+					else if (actingUnit->sprite.facing == 1)
+					{
+						movementDirection = glm::ivec2(0, -1);
+					}
+					else if (actingUnit->sprite.facing == 2)
+					{
+						movementDirection = glm::ivec2(1, 0);
+					}
+					else
+					{
+						movementDirection = glm::ivec2(0, 1);
+					}
+					startPosition = actingUnit->sprite.getPosition();
+				}
+				else if (deadUnit)
+				{
+					if (capturing)
+					{
+						unitCaptured = true;
+						drawInfo = false;
+					}
+					else
+					{
+						unitDied = true;
+						drawInfo = false;
+						if (deadUnit->deathMessage != "")
 						{
-							CheckAccost();
+							displays.PlayerUnitDied(deadUnit);
 						}
-						//We are in an accost round, and it should only fire once(I think)
-						else
-						{
-							EndAttack();
-						}
+					}
+				}
+				else
+				{
+					//if either unit has accost and accost has not fired
+					//reset battle queue
+					if (!accostFired)
+					{
+						CheckAccost();
+					}
+					//We are in an accost round, and it should only fire once(I think)
+					else
+					{
+						EndAttack();
 					}
 				}
 			}
@@ -459,7 +634,6 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		if (critFactor > 1)
 		{
 			missedText.message = "CRITICAL!";
-			missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
 			missedText.active = true;
 			missedText.scale = 0.5f;
 			ResourceManager::PlaySound("critHit");
@@ -504,10 +678,25 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 			thisUnit->GetEquippedItem()->remainingUses--;
 		}
 		missedText.message = "Miss!";
-		missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
 		missedText.active = true;
 		missedText.scale = 0.5f;
 		ResourceManager::PlaySound("miss");
+	}
+	if (battleScene)
+	{
+		if (actingUnit == leftUnit)
+		{
+			missedText.position = rightPosition + glm::vec2(0.0f, 8.0f);
+
+		}
+		else
+		{
+			missedText.position = leftPosition + glm::vec2(0.0f, 8.0f);
+		}
+	}
+	else
+	{
+		missedText.position = otherUnit->sprite.getPosition() + glm::vec2(0.0f, 8.0f);
 	}
 }
 
@@ -517,7 +706,7 @@ void BattleManager::EndAttack()
 	{
 		attacker->carryingMalus = 1;
 	}
-	subject.notify(attacker, defender);
+	endAttackSubject.notify(attacker, defender);
 }
 
 void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera& camera)
@@ -577,7 +766,7 @@ void BattleManager::CaptureUnit()
 	DropHeldUnit();
 }
 
-void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor)
+void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch)
 {
 	if (aiDelay)
 	{
@@ -585,6 +774,59 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
 
 		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	}
+	if (battleScene)
+	{
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Renderer->setUVs();
+		Texture2D displayTexture = ResourceManager::GetTexture("BattleBG");
+		Renderer->DrawSprite(displayTexture, glm::vec2(0, 16), 0.0f, glm::vec2(256, 111), glm::vec4(1, 1, 1, 1));
+
+		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Batch->begin();
+		std::vector<Sprite> carrySprites;
+		leftUnit->Draw(Batch, leftPosition);
+		rightUnit->Draw(Batch, rightPosition);
+		Batch->end();
+		Batch->renderBatch();
+
+		int yOffset = 375;
+		glm::vec2 leftDraw;
+		glm::vec2 rightDraw;
+
+		leftDraw = glm::vec2(200, yOffset);
+		rightDraw = glm::vec2(512, yOffset);
+
+		text->RenderText(rightUnit->name, rightDraw.x, rightDraw.y, 1);
+		rightDraw.y += 22.0f;
+
+		auto rightWeapon = rightUnit->GetEquippedItem();
+		if (rightWeapon)
+		{
+			text->RenderText(rightWeapon->name, rightDraw.x, rightDraw.y, 1);
+		}
+
+		text->RenderText("HP", rightDraw.x, 474, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+		rightDraw.x += 25;
+		text->RenderText(intToString(rightUnit->currentHP) + "/" + intToString(rightUnit->maxHP), rightDraw.x, 474, 1);
+
+		text->RenderText(leftUnit->name, leftDraw.x, leftDraw.y, 1);
+		leftDraw.y += 22.0f;
+		auto leftWeapon = leftUnit->GetEquippedItem();
+		if (leftWeapon)
+		{
+			text->RenderText(leftWeapon->name, leftDraw.x, leftDraw.y, 1);
+		}
+
+		text->RenderText("HP", leftDraw.x, 474, 1, glm::vec3(0.1f, 0.11f, 0.22f));
+		leftDraw.x += 25;
+		text->RenderText(intToString(leftUnit->currentHP) + "/" + intToString(leftUnit->maxHP), leftDraw.x, 474, 1);
+
+		if (missedText.active)
+		{
+			glm::vec2 drawPosition = glm::vec2(missedText.position.x/256.0f * 800, missedText.position.y/ 224.0f * 600);
+			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
+		}
 	}
 	else if (drawInfo)
 	{
@@ -602,16 +844,13 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			defenderDraw = glm::vec2(200, yOffset);
 			attackerDraw = glm::vec2(500, yOffset);
 		}
-		glm::vec2 drawPosition = glm::vec2(attacker->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
-		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+
 		text->RenderText(attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
 		attackerDraw.y += 22.0f;
 		text->RenderText("HP", attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
 		attackerDraw.x += 25;
 		text->RenderText(intToString(attacker->currentHP) + "/" + intToString(attacker->maxHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
 
-		drawPosition = glm::vec2(defender->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
-		drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
 		text->RenderText(defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
 		defenderDraw.y += 22.0f;
 		text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
