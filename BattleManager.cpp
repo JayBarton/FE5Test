@@ -21,6 +21,8 @@
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
+	//check if battle scene should be playing, if so set to true
+	battleScene = true;
 	this->aiDelay = aiDelay;
 	this->capturing = capturing;
 	battleActive = true;
@@ -127,68 +129,61 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 
 		camera.SetCenter(defender->sprite.getPosition());
 		if (battleScene)
-		{
-			leftPosition = glm::vec2(56, 84);
-			rightPosition = glm::vec2(200, 84);
-			if (attacker->team == 0)
-			{
-				leftUnit = defender;
-				rightUnit = attacker;
-			}
-			else
-			{
-				leftUnit = attacker;
-				rightUnit = defender;
-			}
-			leftUnit->sprite.facing = 2;
-			leftUnit->sprite.currentFrame = 11;
-			leftUnit->sprite.startingFrame = 11;
-			rightUnit->sprite.facing = 0;
-			rightUnit->sprite.currentFrame = 3;
-			rightUnit->sprite.startingFrame = 3;
+		{	
+			transitionX = -286.0f;
+			ResourceManager::GetShader("sprite").Use().SetVector2f("cameraPosition", (camera.position - glm::vec2(camera.halfWidth, camera.halfHeight)));
+			ResourceManager::GetShader("sprite").SetFloat("maskX", transitionX);
+			ResourceManager::GetShader("sprite").SetInteger("battleScreen", 1);
+			transitionIn = true;
+			fadeAlpha = 0.2f;
+			GetFacing();
 		}
 		else
 		{
-			//U G H
-			if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
-			{
-				attacker->sprite.facing = 3;
-				attacker->sprite.currentFrame = 15;
-				attacker->sprite.startingFrame = 15;
-				defender->sprite.facing = 1;
-				defender->sprite.currentFrame = 7;
-				defender->sprite.startingFrame = 7;
-			}
-			else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
-			{
-				attacker->sprite.facing = 1;
-				attacker->sprite.currentFrame = 7;
-				attacker->sprite.startingFrame = 7;
-				defender->sprite.facing = 3;
-				defender->sprite.currentFrame = 15;
-				defender->sprite.startingFrame = 15;
-			}
-			else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
-			{
-				attacker->sprite.facing = 2;
-				attacker->sprite.currentFrame = 11;
-				attacker->sprite.startingFrame = 11;
-				defender->sprite.facing = 0;
-				defender->sprite.currentFrame = 3;
-				defender->sprite.startingFrame = 3;
-			}
-			else
-			{
-				attacker->sprite.facing = 0;
-				attacker->sprite.currentFrame = 3;
-				attacker->sprite.startingFrame = 3;
-				defender->sprite.facing = 2;
-				defender->sprite.currentFrame = 11;
-				defender->sprite.startingFrame = 11;
-			}
+			GetFacing();
+			attacker->sprite.moveAnimate = true;
+			defender->sprite.moveAnimate = true;
 		}
-		attacker->sprite.moveAnimate = true;
-		defender->sprite.moveAnimate = true;
+	}
+}
+
+void BattleManager::GetFacing()
+{
+	if (attacker->sprite.getPosition().y < defender->sprite.getPosition().y)
+	{
+		attacker->sprite.facing = 3;
+		attacker->sprite.currentFrame = 15;
+		attacker->sprite.startingFrame = 15;
+		defender->sprite.facing = 1;
+		defender->sprite.currentFrame = 7;
+		defender->sprite.startingFrame = 7;
+	}
+	else if (attacker->sprite.getPosition().y > defender->sprite.getPosition().y)
+	{
+		attacker->sprite.facing = 1;
+		attacker->sprite.currentFrame = 7;
+		attacker->sprite.startingFrame = 7;
+		defender->sprite.facing = 3;
+		defender->sprite.currentFrame = 15;
+		defender->sprite.startingFrame = 15;
+	}
+	else if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
+	{
+		attacker->sprite.facing = 2;
+		attacker->sprite.currentFrame = 11;
+		attacker->sprite.startingFrame = 11;
+		defender->sprite.facing = 0;
+		defender->sprite.currentFrame = 3;
+		defender->sprite.startingFrame = 3;
+	}
+	else
+	{
+		attacker->sprite.facing = 0;
+		attacker->sprite.currentFrame = 3;
+		attacker->sprite.startingFrame = 3;
+		defender->sprite.facing = 2;
+		defender->sprite.currentFrame = 11;
+		defender->sprite.startingFrame = 11;
 	}
 }
  
@@ -218,7 +213,71 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 		}
 		if (battleScene)
 		{
-			if (unitDied)
+			if (transitionIn)
+			{
+				fadeTimer += deltaTime;
+				transitionX += deltaTime * 286;
+				fadeAlpha += deltaTime * 0.8f;
+				if (fadeTimer >= fadeOutDelay)
+				{
+					fadeAlpha = 1.0f;
+					transitionX = 0;
+					fadeTimer = 0;
+					transitionIn = false;
+					ResourceManager::GetShader("sprite").SetInteger("battleScreen", 0, true);
+
+					leftPosition = glm::vec2(56, 84);
+					rightPosition = glm::vec2(200, 84);
+					if (attacker->team == 0)
+					{
+						leftUnit = defender;
+						rightUnit = attacker;
+					}
+					else
+					{
+						leftUnit = attacker;
+						rightUnit = defender;
+					}
+					leftUnit->sprite.facing = 2;
+					leftUnit->sprite.currentFrame = 11;
+					leftUnit->sprite.startingFrame = 11;
+					rightUnit->sprite.facing = 0;
+					rightUnit->sprite.currentFrame = 3;
+					rightUnit->sprite.startingFrame = 3;
+					attacker->sprite.moveAnimate = true;
+					defender->sprite.moveAnimate = true;
+
+					fadeInBattle = true;
+				}
+			}
+			else if (fadeInBattle)
+			{
+				fadeTimer += deltaTime;
+				fadeAlpha -= deltaTime;
+				if (fadeTimer >= fadeOutDelay)
+				{
+					fadeTimer = 0;
+					fadeAlpha = 0;
+					fadeInBattle = false;
+				}
+			}
+			else if (fadeOutBattle)
+			{
+
+				fadeTimer += deltaTime;
+				fadeAlpha += deltaTime;
+				if (fadeTimer >= fadeOutDelay)
+				{
+					fadeTimer = 0;
+					fadeAlpha = 1;
+					fadeOutBattle = false;
+					battleScene = false;
+					fadeBackMap = true;
+					GetFacing();
+
+				}
+			}
+			else if (unitDied)
 			{
 				if (displays.state == NONE)
 				{
@@ -237,6 +296,35 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 						unitDied = false;
 					}
 				}
+			}
+			else if (unitCaptured)
+			{
+				//capture animation. Needs to play after the experience display if the player captures. 
+				// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
+				if (deadUnit->carriedUnit)
+				{
+					unitToDrop = deadUnit->carriedUnit;
+					unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+				}
+				TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+				attacker->carryUnit(deadUnit);
+				//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
+				//This seems bogus to me but it's how it works there so it's how it works here.
+				if (attacker->team != 0)
+				{
+					for (int i = 0; i < deadUnit->inventory.size(); i++)
+					{
+						if (attacker->inventory.size() <= 8)
+						{
+							attacker->inventory.push_back(deadUnit->inventory[i]);
+							deadUnit->inventory.erase(deadUnit->inventory.begin());
+							i--;
+						}
+					}
+				}
+				EndAttack();
+				deadUnit = nullptr;
+				unitCaptured = false;
 			}
 			else
 			{
@@ -363,7 +451,22 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 		}
 		else
 		{
-			MapUpdate(displays, deltaTime, inputManager, distribution, gen);
+			if (fadeBackMap)
+			{
+				fadeTimer += deltaTime;
+				fadeAlpha -= deltaTime;
+				if (fadeTimer >= fadeOutDelay)
+				{
+					fadeTimer = 0;
+					fadeAlpha = 0;
+					fadeBackMap = false;
+					displays.endBattle.notify(0);
+				}
+			}
+			else
+			{
+				MapUpdate(displays, deltaTime, inputManager, distribution, gen);
+			}
 		}
 	}
 }
@@ -425,7 +528,7 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 		if (!defender->movementComponent.moving)
 		{
 			defender->hide = true;
-			displays.subject.notify(0);
+			displays.endBattle.notify(0);
 			captureAnimation = false;
 		}
 	}
@@ -775,7 +878,15 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 
 		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	}
-	if (battleScene)
+	if (transitionIn || fadeBackMap)
+	{
+		ResourceManager::GetShader("sprite").Use().SetFloat("maskX", transitionX);
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Renderer->setUVs();
+		Texture2D displayTexture = ResourceManager::GetTexture("BattleFadeIn");
+		Renderer->DrawSprite(displayTexture, glm::vec2(transitionX, 0), 0.0f, glm::vec2(286, 224), glm::vec4(1, 1, 1, fadeAlpha));
+	}
+	else if (battleScene)
 	{
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		Renderer->setUVs();
@@ -827,6 +938,11 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			glm::vec2 drawPosition = glm::vec2(missedText.position.x/256.0f * 800, missedText.position.y/ 224.0f * 600);
 			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
 		}
+
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Renderer->setUVs();
+		displayTexture = ResourceManager::GetTexture("BattleFadeIn");
+		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(286, 224), glm::vec4(1, 1, 1, fadeAlpha));
 	}
 	else if (drawInfo)
 	{

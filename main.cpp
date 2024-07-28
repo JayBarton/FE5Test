@@ -335,10 +335,17 @@ struct PostBattleEvents : public Observer<int>
 		{
 			//Battle ended
 		case 0:
-			battleManager.EndBattle(&cursor, &enemyManager, camera);
-			//Real brute force here
-			battleManager.defender->sprite.moveAnimate = false;
-			battleManager.defender->sprite.currentFrame = idleFrame;
+			if (battleManager.battleScene)
+			{
+				battleManager.fadeOutBattle = true;
+			}
+			else
+			{
+				battleManager.EndBattle(&cursor, &enemyManager, camera);
+				//Real brute force here
+				battleManager.defender->sprite.moveAnimate = false;
+				battleManager.defender->sprite.currentFrame = idleFrame;
+			}
 			break;
 			//Player used an item
 		case 1:
@@ -506,7 +513,10 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
 
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("sprite").Use().SetInteger("palette", 1);
+	ResourceManager::GetShader("sprite").SetInteger("palette", 1);
+	ResourceManager::GetShader("sprite").SetInteger("BattleFadeIn", 2);
+	ResourceManager::GetShader("sprite").SetVector2f("screenResolution", glm::vec2(286, 224));
+	ResourceManager::GetShader("sprite").SetInteger("battleScreen", 0);
 	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
 
 	ResourceManager::GetShader("Nsprite").Use().SetInteger("image", 0);
@@ -533,6 +543,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Portraits.png", "Portraits");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/EndingBackground.png", "EndingBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleBackground.png", "BattleBG");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleFadeIn.png", "BattleFadeIn");
 
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cursormove.wav", "cursorMove");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/heldCursorMove.wav", "heldCursorMove");
@@ -611,7 +622,7 @@ int main(int argc, char** argv)
 	battleManager.endAttackSubject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
 	displays.init(&textManager);
-	displays.subject.addObserver(postBattleEvents);
+	displays.endBattle.addObserver(postBattleEvents);
 	displays.endTurn.addObserver(changeMusicEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
@@ -1572,10 +1583,15 @@ void Draw()
 			textManager.Draw(Text, Renderer, &camera);
 		}
 	}
-	else if (battleManager.battleActive && battleManager.battleScene)
+	else if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
 	{
 		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch);
-		if (displays.state != NONE)
+		if (textManager.active)
+		{
+			textManager.Draw(Text, Renderer, &camera);
+			textManager.DrawFade(&camera, shapeVAO);
+		}
+		else if (displays.state != NONE)
 		{
 			displays.Draw(&camera, Text, shapeVAO, Renderer);
 		}

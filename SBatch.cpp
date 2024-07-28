@@ -142,6 +142,10 @@ void SBatch::renderBatch()
         Texture2D texture2 = ResourceManager::GetTexture("palette");
         glActiveTexture(GL_TEXTURE1);
         texture2.Bind();
+
+        texture2 = ResourceManager::GetTexture("BattleFadeIn");
+        glActiveTexture(GL_TEXTURE2);
+        texture2.Bind();
         //pass uniform offset here
         glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderBatches[i].numberOfVerticies);
     }

@@ -28,6 +28,8 @@ struct BattleManager
 {
 	void SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiAttack = false, bool capturing = false);
 
+	void GetFacing();
+
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays, class InputManager& inputManager);
 
 	void MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
@@ -85,13 +87,22 @@ struct BattleManager
 	//Not crazy about this either, just seems the easiest way to handle drawing at 12:06 am
 	bool drawInfo = true;
 
+	//god there's so many fucking bools here dude
 	//Battle scene variables
-	bool battleScene = false;
+	bool battleScene = true;
+	bool transitionIn = false;
+	bool fadeInBattle = false;
+	bool fadeOutBattle = false;
+	bool fadeBackMap = false;
 	glm::vec2 leftPosition;
 	glm::vec2 rightPosition;
 	Unit* leftUnit = nullptr;
 	Unit* rightUnit = nullptr;
 	glm::vec2* actingPosition = nullptr;
+	float fadeOutDelay = 1.0f;
+	float fadeTimer = 0.0f;
+	float transitionX = -286.0f;
+	float fadeAlpha = 0.0f;
 
 	//end battle scene variables
 

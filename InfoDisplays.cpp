@@ -28,14 +28,14 @@ void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 	{
 		focusedUnit = nullptr;
 		state = NONE;
-		subject.notify(0);
+		endBattle.notify(0);
 	}
 	//Need to handle if the player unit was captured
 	else if (unit->carryingUnit)
 	{
 		focusedUnit = nullptr;
 		state = NONE;
-		subject.notify(4);
+		endBattle.notify(4);
 	}
 	else
 	{
@@ -314,7 +314,7 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 			if (displayTimer >= statViewTime)
 			{
 				//Only play units can use stat boosting items...For now.
-				subject.notify(1);
+				endBattle.notify(1);
 				state = NONE;
 			}
 		}
@@ -396,16 +396,16 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 				//I don't know about this gravy...
 				if (focusedUnit->team == 0)
 				{
-					subject.notify(1);
+					endBattle.notify(1);
 				}
 				else
 				{
-					subject.notify(2);
+					endBattle.notify(2);
 				}
 			}
 			else
 			{
-				subject.notify(3);
+				endBattle.notify(3);
 			}
 		}
 	}
@@ -435,12 +435,12 @@ void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 		state = NONE;
 		if (capturing)
 		{
-			subject.notify(4);
+			endBattle.notify(4);
 			capturing = false;
 		}
 		else
 		{
-			subject.notify(0);
+			endBattle.notify(0);
 		}
 	}
 }
@@ -460,12 +460,12 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 				state = NONE;
 				if (capturing)
 				{
-					subject.notify(4);
+					endBattle.notify(4);
 					capturing = false;
 				}
 				else
 				{
-					subject.notify(0);
+					endBattle.notify(0);
 				}
 			}
 		}

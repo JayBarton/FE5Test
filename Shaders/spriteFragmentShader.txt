@@ -4,6 +4,7 @@ out vec4 color;
 
 uniform sampler2D image;
 uniform sampler2D palette;
+uniform sampler2D BattleFadeIn;
 
 in vec4 c;
 in float uc;
@@ -11,11 +12,20 @@ in float hf;
 flat in int pr;
 uniform float subtractValue;
 
+in vec3 FragPos;  
+
+uniform vec2 screenResolution;
+uniform vec2 cameraPosition;
+uniform float maskX;
+
+uniform bool battleScreen;
+
 void main()
 {    
     vec4 sample = c * texture(image, TextureCoordinates);
 	vec2 index = vec2(sample.r, pr/4.0);
 	vec4 indexedColor = texture(palette, index);
+	vec4 FadeIn = texture(BattleFadeIn, vec2(0, 1));
 	indexedColor.a = sample.a;
 	float grey = 0.21 * indexedColor.r + 0.71 * indexedColor.g + 0.07 * indexedColor.b;
 	indexedColor = mix(indexedColor, vec4(1, 1, 1, indexedColor.a), hf);
@@ -24,5 +34,21 @@ void main()
 	{
 		color -= vec4(vec3(subtractValue/255.0f), 0);
 	}
-//	color = sample;
+	
+	//Handle the battle screen transition
+	if(battleScreen)
+	{	
+		vec2 maskPosition = vec2(maskX, 0);
+		vec2 screenCoords = (FragPos.xy - cameraPosition) / screenResolution;
+		screenCoords -= maskPosition / screenResolution;
+
+		if(screenCoords.x <= 1)
+		{
+			vec4 fadeMask = texture(BattleFadeIn, screenCoords);
+			if (fadeMask.a > 0.0) 
+			{
+				color.a = 0.0; // Set alpha to 0 if the mask is not transparent
+			}
+		}
+	}
 }  

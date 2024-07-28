@@ -29,7 +29,7 @@ class EnemyManager;
 struct InfoDisplays
 {
 	DisplayState state = NONE;
-	Subject<int> subject;
+	Subject<int> endBattle;
 	Subject<> endTurn;
 	Unit* focusedUnit = nullptr;
 	//Ugh. Figure out how to gain access to this better later
