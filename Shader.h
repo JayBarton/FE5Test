@@ -19,7 +19,6 @@
 #include <glm.hpp>
 #include <gtc/type_ptr.hpp>
 
-
 // General purpsoe shader object. Compiles from file, generates
 // compile/link-time error messages and hosts several utility
 // functions for easy management.

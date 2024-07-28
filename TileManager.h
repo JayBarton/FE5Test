@@ -7,8 +7,6 @@
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
 #include "SpriteBatch.h"
-#include <GL/glew.h>
-
 
 #include <vector>
 class Camera;

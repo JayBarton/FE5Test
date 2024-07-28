@@ -17,7 +17,6 @@
 
 #include <map>
 
-#include <GL/glew.h>
 #include <glm.hpp>
 
 #include "Texture.h"

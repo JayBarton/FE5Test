@@ -13,7 +13,6 @@
 #ifndef SPRITERENDERER_H
 #define SPRITERENDERER_H
 
-#include <GL/glew.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtx/rotate_vector.hpp>

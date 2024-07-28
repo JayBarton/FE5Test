@@ -1,7 +1,6 @@
 #ifndef SPRITEBATCH_H
 #define SPRITEBATCH_H
 
-#include <GL/glew.h>
 #include <glm.hpp>
 #include <vector>
 #include "Shader.h"

@@ -192,7 +192,6 @@ struct GameOverMode
 
 	void DrawBG(SpriteRenderer* renderer, Camera& camera)
 	{
-		auto fuck = ResourceManager::GetShader("Nsprite");
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", fadeInAlpha);
 		Renderer->setUVs();
@@ -572,7 +571,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/levelUp.wav", "levelUp");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.wav", "PlayerTurn");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.ogg", "PlayerTurn");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.wav", "EnemyTurnStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.2.wav", "EnemyTurnLoop");
 
@@ -1344,7 +1343,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	else
 	{
 		ResourceManager::PlayMusic("PlayerTurn");
-
+		//Mix_PauseAudio(1);
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;

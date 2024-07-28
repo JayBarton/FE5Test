@@ -16,12 +16,9 @@
 #include <map>
 #include <string>
 
-#include <GL/glew.h>
-
 #include "Texture.h"
 #include "Shader.h"
 #include <SDL_mixer.h>
-
 
 // A static singleton ResourceManager class that hosts several
 // functions to load Textures and Shaders. Each loaded texture
