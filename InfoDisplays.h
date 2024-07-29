@@ -12,7 +12,11 @@ enum DisplayState
 	NONE,
 	ADD_EXPERIENCE,
 	LEVEL_UP_NOTE,
-	LEVEL_UP,
+	MAP_LEVEL_UP,
+	BATTLE_LEVEL_UP,
+	BATTLE_FADE_THING,
+	BATTLE_LEVEL_DELAY,
+	LEVEL_UP_BLOCK,
 	HEALING_ANIMATION,
 	HEALING_BAR,
 	ENEMY_USE,
@@ -68,6 +72,8 @@ struct InfoDisplays
 	bool capturing = false;
 
 	bool playTurnChange = false;
+
+	bool battleDisplay = false;
 	
 	float levelUpNoteTime = 1.4f;
 
@@ -78,13 +84,16 @@ struct InfoDisplays
 
 	float textDisplayTime = 1.8f;
 
+	float levelUpBlockAlpha = 0.0f;
+	glm::vec2 levelUpPosition;
+
 	//I seriously need to fix this stuff, just getting repetitive
 	TextObjectManager* textManager;
 	TextObject testText;
 
 	void init(TextObjectManager* textManager);
 
-	void AddExperience(Unit* unit, Unit* foe);
+	void AddExperience(Unit* unit, Unit* foe, glm::vec2 levelUpPosition);
 	void StartUse(Unit* unit, int index, Camera* camera);
 	void StartUnitStatBoost(Unit* unit, Camera* camera);
 	void EnemyUse(Unit* enemy, int index);
@@ -103,6 +112,7 @@ struct InfoDisplays
 	void TurnChangeUpdate(InputManager& inputManager, float deltaTime);
 	void UpdateHealthBarDisplay(float deltaTime);
 	void UpdateLevelUpDisplay(float deltaTime);
+	void ClearLevelUpDisplay();
 	void UpdateExperienceDisplay(float deltaTime);
 	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO, struct SpriteRenderer* renderer);
 
@@ -111,6 +121,9 @@ struct InfoDisplays
 	void DrawHealAnimation(Camera* camera, int shapeVAO);
 
 	void DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text);
+	void DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 
-	void DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text);
+	void DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
+	void DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text);
+	void DrawBattleExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 };

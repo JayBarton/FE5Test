@@ -17,12 +17,20 @@
 #include "InputManager.h"
 
 #include "SBatch.h"
+#include "Settings.h"
 
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
 	//check if battle scene should be playing, if so set to true
-	battleScene = true;
+	if (Settings::settings.mapAnimations == 0 || Settings::settings.mapAnimations == 2 && (attacker->battleAnimations || defender->battleAnimations))
+	{
+		battleScene = true;
+	}
+	else
+	{
+		battleScene = false;
+	}
 	this->aiDelay = aiDelay;
 	this->capturing = capturing;
 	battleActive = true;
@@ -290,7 +298,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					battleScene = false;
 					fadeBackMap = true;
 					GetFacing();
-
+					displays.ClearLevelUpDisplay();
 				}
 			}
 			else if (unitDied)
@@ -886,7 +894,7 @@ void BattleManager::CaptureUnit()
 	DropHeldUnit();
 }
 
-void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch)
+void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, InfoDisplays& displays, int shapeVAO)
 {
 	if (aiDelay)
 	{
@@ -955,7 +963,10 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			glm::vec2 drawPosition = glm::vec2(missedText.position.x/256.0f * 800, missedText.position.y/ 224.0f * 600);
 			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
 		}
-
+		if (displays.state != NONE)
+		{
+			displays.Draw(&camera, text, shapeVAO, Renderer);
+		}
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		Renderer->setUVs();
 		displayTexture = ResourceManager::GetTexture("BattleFadeIn");

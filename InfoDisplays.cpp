@@ -11,6 +11,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "Settings.h"
+#include "UnitResources.h"
 
 using json = nlohmann::json;
 
@@ -22,7 +23,7 @@ void InfoDisplays::init(TextObjectManager* textManager)
 	this->textManager = textManager;
 }
 
-void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
+void InfoDisplays::AddExperience(Unit* unit, Unit* foe, glm::vec2 levelUpPosition)
 {
 	if (unit->isDead)
 	{
@@ -54,6 +55,16 @@ void InfoDisplays::AddExperience(Unit* unit, Unit* foe)
 			finalExperience -= 100;
 		}
 		state = ADD_EXPERIENCE;
+		if (Settings::settings.mapAnimations == 0 || Settings::settings.mapAnimations == 2 && unit->battleAnimations)
+		{
+			this->levelUpPosition = levelUpPosition - glm::vec2(0, 16);
+			battleDisplay = true;
+		}
+		else
+		{
+			this->levelUpPosition = focusedUnit->sprite.getPosition();
+			battleDisplay = false;
+		}
 	}
 }
 
@@ -219,12 +230,38 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		if (displayTimer > levelUpNoteTime)
 		{
 			displayTimer = 0.0f;
-			state = LEVEL_UP;
-			ResourceManager::PlaySound("pointUp");
+			if (battleDisplay)
+			{
+				state = BATTLE_FADE_THING;
+			}
+			else
+			{
+				state = MAP_LEVEL_UP;
+				ResourceManager::PlaySound("pointUp");
+			}
 		}
 		break;
-	case LEVEL_UP:
+	case MAP_LEVEL_UP:
+	case BATTLE_LEVEL_UP:
 		UpdateLevelUpDisplay(deltaTime);
+		break;
+	case BATTLE_FADE_THING:
+		levelUpBlockAlpha += deltaTime;
+		if (levelUpBlockAlpha >= 1)
+		{
+			levelUpBlockAlpha = 1;
+			state = LEVEL_UP_BLOCK;
+			displayTimer = 0;
+		}
+		break;
+	case LEVEL_UP_BLOCK:
+		levelUpBlockAlpha -= deltaTime;
+		if (levelUpBlockAlpha <= 0)
+		{
+			levelUpBlockAlpha = 0;
+			state = BATTLE_LEVEL_UP;
+			displayTimer = 0;
+		}
 		break;
 	case HEALING_ANIMATION:
 		if (healDelay)
@@ -430,9 +467,14 @@ void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 	if (displayTimer > 2.0f)
 	{
 		displayTimer = 0;
-		delete preLevelStats;
-		focusedUnit = nullptr;
-		state = NONE;
+		if (battleDisplay)
+		{
+			state = BATTLE_LEVEL_DELAY;
+		}
+		else
+		{
+			ClearLevelUpDisplay();
+		}
 		if (capturing)
 		{
 			endBattle.notify(4);
@@ -443,6 +485,13 @@ void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 			endBattle.notify(0);
 		}
 	}
+}
+
+void InfoDisplays::ClearLevelUpDisplay()
+{
+	delete preLevelStats;
+	focusedUnit = nullptr;
+	state = NONE;
 }
 
 void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
@@ -495,19 +544,48 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	case NONE:
 		break;
 	case ADD_EXPERIENCE:
-		DrawExperienceDisplay(camera, shapeVAO, Text);
+		DrawExperienceDisplay(camera, shapeVAO, Text, renderer);
 		break;
 	case LEVEL_UP_NOTE:
 	{
-		focusedUnit->sprite.getPosition();
-		glm::vec2 drawPosition = focusedUnit->sprite.getPosition();
-		drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		glm::vec2 drawPosition = levelUpPosition;
+		if (battleDisplay)
+		{
+			drawPosition = glm::vec2(drawPosition.x / 256.0f * 800, drawPosition.y / 224.0f * 600);
+			DrawBattleExperience(camera, shapeVAO, Text, renderer);
+		}
+		else
+		{
+			drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+		}
 		Text->RenderText("LEVEL UP", drawPosition.x, drawPosition.y, 0.85f, glm::vec3(0.95f, 0.95f, 0.0f));
 		break;
 	}
-	case LEVEL_UP:
+	case MAP_LEVEL_UP:
 		DrawLevelUpDisplay(camera, shapeVAO, Text);
 		break;
+	case BATTLE_LEVEL_UP:
+	case BATTLE_LEVEL_DELAY:
+	case LEVEL_UP_BLOCK:
+		DrawBattleLevelUpDisplay(camera, shapeVAO, Text, renderer);
+		break;
+	case BATTLE_FADE_THING:
+	{
+		DrawBattleExperience(camera, shapeVAO, Text, renderer);
+		ResourceManager::GetShader("shape").Use().SetFloat("alpha", levelUpBlockAlpha);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0, 127, 0.0f));
+
+		model = glm::scale(model, glm::vec3(256, 80, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+		break;
+	}
 	case HEALING_ANIMATION:
 		DrawHealAnimation(camera, shapeVAO);
 		break;
@@ -756,14 +834,153 @@ void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer
 	}
 }
 
-void InfoDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text)
+void InfoDisplays::DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
+{
+	auto unit = focusedUnit;
+
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	Texture2D texture = ResourceManager::GetTexture("BattleLevelBackground");
+	renderer->setUVs();
+	renderer->DrawSprite(texture, glm::vec2(9, 129), 0, glm::vec2(238, 78));
+
+	texture = ResourceManager::GetTexture("Portraits");
+	auto portraitUVs = texture.GetUVs(48, 64);
+	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	renderer->DrawSprite(texture, glm::vec2(16, 136), 0, glm::vec2(48, 64), glm::vec4(1), true);
+
+	Text->RenderText(unit->name, 275, 375, 1);
+	Text->RenderText("LV", 500, 377, 1);
+	Text->RenderTextRight(intToString(unit->level), 550, 375, 1, 14);
+
+	int xString1 = 225;
+	int xString2 = 500;
+	int y = 450;
+	int x1 = 400;
+	int x2 = 675;
+	Text->RenderText("MHP", xString1, y, 1);
+	y += 21;
+	Text->RenderText("STR", xString1, y, 1);
+	y += 21;
+	Text->RenderText("MAG", xString1, y, 1);
+	y += 21;
+	Text->RenderText("SKL", xString1, y, 1);
+	y = 450;
+	Text->RenderText("SPD", xString2, y, 1);
+	y += 21;
+	Text->RenderText("LCK", xString2, y, 1);
+	y += 21;
+	Text->RenderText("DEF", xString2, y, 1);
+	y += 21;
+	Text->RenderText("BLD", xString2, y , 1);
+	y = 450;
+	Text->RenderTextRight(intToString(preLevelStats->maxHP), x1, y, 1, 14);
+	if (unit->maxHP > preLevelStats->maxHP)
+	{
+	//	Text->RenderText(intToString(1), x - 65, y - 30, 1);
+	}
+	y += 21;
+	Text->RenderTextRight(intToString(preLevelStats->strength), x1, y, 1, 14);
+	if (unit->strength > preLevelStats->strength)
+	{
+	//	Text->RenderText(intToString(1), x - 65, y - 5, 1);
+	}
+	y += 21;
+	Text->RenderTextRight(intToString(preLevelStats->magic), x1, y, 1, 14);
+	if (unit->magic > preLevelStats->magic)
+	{
+	//	Text->RenderText(intToString(1), x - 65, y + 20, 1);
+	}
+	y += 21;
+	Text->RenderTextRight(intToString(preLevelStats->skill), x1, y, 1, 14);
+	if (unit->skill > preLevelStats->skill)
+	{
+//		Text->RenderText(intToString(1), x - 65, y + 45, 1);
+	}
+	y = 450;
+	Text->RenderTextRight(intToString(preLevelStats->speed), x2, y, 1, 14);
+	if (unit->speed > preLevelStats->speed)
+	{
+	//	Text->RenderText(intToString(1), x + 55, y - 30, 1);
+	}
+	y += 21;
+	Text->RenderTextRight(intToString(preLevelStats->luck), x2, y, 1, 14);
+	if (unit->luck > preLevelStats->luck)
+	{
+	//	Text->RenderText(intToString(1), x + 55, y - 5, 1);
+	}
+	y += 21;
+	Text->RenderTextRight(intToString(preLevelStats->defense), x2, y, 1, 14);
+	if (unit->defense > preLevelStats->defense)
+	{
+	//	Text->RenderText(intToString(1), x + 55, y + 20, 1);
+	}
+	y += 21;
+	Text->RenderTextRight(intToString(preLevelStats->build), x2, y, 1, 14);
+	if (unit->build > preLevelStats->build)
+	{
+	//	Text->RenderText(intToString(1), x + 55, y + 45, 1);
+	}
+
+	ResourceManager::GetShader("shape").Use().SetFloat("alpha", levelUpBlockAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 127, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 80, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
+void InfoDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
+{
+	if (battleDisplay)
+	{
+		DrawBattleExperience(camera, shapeVAO, Text, renderer);
+	}
+	else
+	{
+		DrawMapExperience(camera, shapeVAO, Text);
+	}
+}
+
+void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(80, 98, 0.0f));
+	model = glm::translate(model, glm::vec3(40, 96, 0.0f));
 
-	model = glm::scale(model, glm::vec3(1 * displayedExperience, 5, 0.0f));
+	model = glm::scale(model, glm::vec3(160, 26, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(71, 106, 0.0f));
+
+	model = glm::scale(model, glm::vec3(102, 6, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(71, 106, 0.0f));
+
+	model = glm::scale(model, glm::vec3(1 * displayedExperience, 6, 0.0f));
 
 	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
 
@@ -772,6 +989,59 @@ void InfoDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRende
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	Text->RenderText("EXP", 215, 260, 1);
-	Text->RenderText(intToString(displayedExperience), 565, 260, 1);
+	Text->RenderText("EXP", 150, 278, 1);
+	Text->RenderTextRight(intToString(displayedExperience), 550, 281, 1, 14);
+}
+
+void InfoDisplays::DrawBattleExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
+{
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	Texture2D texture = ResourceManager::GetTexture("BattleExperienceBackground");
+	renderer->setUVs();
+	renderer->DrawSprite(texture, glm::vec2(5, 140), 0, glm::vec2(246, 32));
+	
+	/*/ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(5, 140, 0.0f));
+
+	model = glm::scale(model, glm::vec3(246, 32, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);*/
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(72, 154, 0.0f));
+
+	model = glm::scale(model, glm::vec3(159, 5, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(72, 154, 0.0f));
+
+	model = glm::scale(model, glm::vec3(1 * displayedExperience, 5, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.7f, 1.0f, 1.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	Text->RenderText("EXP", 75, 407, 1);
+	Text->RenderTextRight(intToString(displayedExperience), 175, 409, 1, 14);
 }

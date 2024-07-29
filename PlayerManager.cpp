@@ -51,8 +51,9 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	}
 	//units[0]->defense = 100;
 //	units[0]->build = 2;
-//	units[2]->currentHP = 1;
-
+	units[4]->experience = 99;
+	units[4]->battleAnimations = true;
+	units[4]->currentHP = 1;
 }
 
 Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)

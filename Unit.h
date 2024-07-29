@@ -239,6 +239,8 @@ struct Unit
 	bool tookHit = false;
 	bool hitRecover = false;
 
+	bool battleAnimations = false;
+
 	float hitA = 0.0f;
 
 	const static int INVENTORY_SLOTS = 7;

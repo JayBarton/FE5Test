@@ -280,11 +280,11 @@ struct BattleEvents : public Observer<Unit*, Unit*>
 	{
 		if (currentTurn == 0)
 		{
-			displays.AddExperience(attacker, defender);
+			displays.AddExperience(attacker, defender, battleManager.rightPosition);
 		}
 		else
 		{
-			displays.AddExperience(defender, attacker);
+			displays.AddExperience(defender, attacker, battleManager.rightPosition);
 		}
 	}
 };
@@ -528,10 +528,6 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", glm::vec4(1));
 
-//	ResourceManager::LoadShader("Shaders/spriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
-
-//	ResourceManager::LoadShader("Shaders/postVertexShader.txt", "Shaders/postFragmentShader.txt", nullptr, "postprocessing");
-
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Tiles.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
@@ -545,6 +541,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/EndingBackground.png", "EndingBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleBackground.png", "BattleBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleFadeIn.png", "BattleFadeIn");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
 
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cursormove.wav", "cursorMove");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/heldCursorMove.wav", "heldCursorMove");
@@ -556,7 +554,6 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/minimapClose.wav", "minimapClose");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cancel.wav", "cancel");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/turnEnd.wav", "turnEnd");
-
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/optionSelect1.wav", "optionSelect1");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/optionSelect2.wav", "optionSelect2");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/fadeout.wav", "fadeout");
@@ -576,25 +573,20 @@ int main(int argc, char** argv)
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.ogg", "PlayerTurn");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.ogg", "EnemyTurnStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.2.ogg", "EnemyTurnLoop");
-
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.1.ogg", "HeroesEnterStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.2.ogg", "HeroesEnterLoop");
-
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.1.ogg", "RaydrickStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.2.ogg", "RaydrickLoop");
-
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.1.ogg", "WinningStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.2.ogg", "WinningLoop");
-	
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.1.ogg", "LosingStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.2.ogg", "LosingLoop");
-
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.1.ogg", "TurnEndSceneStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.2.ogg", "TurnEndSceneLoop");
-
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/PlayerAttackStart.ogg", "PlayerAttackStart");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/PlayerAttackLoop.ogg", "PlayerAttackLoop");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/EnemyAttack.ogg", "EnemyAttack");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/LevelUpTheme.ogg", "LevelUpTheme");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -755,7 +747,7 @@ int main(int argc, char** argv)
 		{
 			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 		}
-		else if(sceneManager.PlayingScene())
+		else if (sceneManager.PlayingScene())
 		{
 			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 			auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
@@ -766,7 +758,12 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			if (displays.state != NONE)
+			if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
+			{
+				battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
+				displays.Update(deltaTime, inputManager);
+			}
+			else if (displays.state != NONE)
 			{
 				if (camera.moving)
 				{
@@ -1589,15 +1586,11 @@ void Draw()
 	}
 	else if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
 	{
-		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch);
+		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO);
 		if (textManager.active)
 		{
 			textManager.Draw(Text, Renderer, &camera);
 			textManager.DrawFade(&camera, shapeVAO);
-		}
-		else if (displays.state != NONE)
-		{
-			displays.Draw(&camera, Text, shapeVAO, Renderer);
 		}
 	}
 	else
@@ -1648,7 +1641,7 @@ void Draw()
 			}
 			else if (battleManager.battleActive)
 			{
-				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch);
+				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO);
 			}
 			else
 			{

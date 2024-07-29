@@ -48,7 +48,7 @@ struct BattleManager
 
 	void CaptureUnit();
 
-	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch);
+	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, InfoDisplays& displays, int shapeVAO);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
