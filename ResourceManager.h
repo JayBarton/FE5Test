@@ -51,8 +51,11 @@ public:
     static Mix_Music* LoadMusic(const GLchar* file, std::string name);
     static void PlayMusic(std::string name, int loop = -1);
     static void PlayMusic(std::string name, std::string next);
-
     static void PlayNextSong();
+
+    static void FadeOutPause(int ms);
+    static void PauseMusic();
+    static void ResumeMusic(int);
 
     // Properly de-allocates all loaded resources
     static void      Clear();
@@ -66,6 +69,10 @@ private:
     static Texture2D loadTextureFromFile2(const GLchar *file);
 
     static std::string nextSong;
+    static std::string currentSong;
+    static std::string pausedSong;
+    static std::string pausedNextSong;
+    static double pausedTime;
 };
 
 #endif // RESOURCEMANAGER_H

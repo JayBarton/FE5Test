@@ -29,6 +29,10 @@ std::map<std::string, Shader>       ResourceManager::Shaders;
 std::map<std::string, Mix_Chunk*>   ResourceManager::Sounds;
 std::map<std::string, Mix_Music*>   ResourceManager::Music;
 std::string   ResourceManager::nextSong;
+std::string   ResourceManager::currentSong;
+std::string   ResourceManager::pausedSong;
+std::string   ResourceManager::pausedNextSong;
+double   ResourceManager::pausedTime;
 
 Shader ResourceManager::LoadShader(const GLchar *vShaderFile, const GLchar *fShaderFile, const GLchar *gShaderFile, std::string name)
 {
@@ -116,6 +120,7 @@ void ResourceManager::PlayMusic(std::string name, int loop)
     if (Settings::settings.music)
     {
         Mix_PlayMusic(Music[name], loop);
+        currentSong = name;
     }
 }
 
@@ -124,6 +129,7 @@ void ResourceManager::PlayMusic(std::string name, std::string next)
     if (Settings::settings.music)
     {
         Mix_PlayMusic(Music[name], 1);
+        currentSong = name;
         nextSong = next;
         Mix_HookMusicFinished(PlayNextSong);
     }
@@ -132,7 +138,43 @@ void ResourceManager::PlayMusic(std::string name, std::string next)
 void ResourceManager::PlayNextSong()
 {
     Mix_PlayMusic(Music[nextSong], -1);
+    currentSong = nextSong;
+    nextSong = "";
     Mix_HookMusicFinished(nullptr);
+}
+
+void ResourceManager::FadeOutPause(int ms)
+{
+    Mix_HookMusicFinished(PauseMusic);
+    Mix_FadeOutMusic(ms);
+}
+
+void ResourceManager::PauseMusic()
+{
+    pausedSong = currentSong;
+    pausedNextSong = nextSong;
+    pausedTime = Mix_GetMusicPosition(Music[currentSong]);
+}
+
+void ResourceManager::ResumeMusic(int ms)
+{
+    if (Settings::settings.music)
+    {
+        if (pausedNextSong != "")
+        {
+            nextSong = pausedNextSong;
+            pausedNextSong = "";
+            Mix_FadeInMusicPos(Music[pausedSong], 1, ms, pausedTime);
+            Mix_HookMusicFinished(PlayNextSong);
+        }
+        else
+        {
+            Mix_FadeInMusicPos(Music[pausedSong], -1, ms, pausedTime);
+            Mix_HookMusicFinished(nullptr);
+        }
+        currentSong = pausedSong;
+    }
+    pausedSong = "";
 }
 
 void ResourceManager::Clear()

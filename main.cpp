@@ -337,6 +337,8 @@ struct PostBattleEvents : public Observer<int>
 			if (battleManager.battleScene)
 			{
 				battleManager.fadeOutBattle = true;
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(500.0f);
 			}
 			else
 			{
@@ -572,23 +574,27 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
 
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.ogg", "PlayerTurn");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.wav", "EnemyTurnStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.2.wav", "EnemyTurnLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.ogg", "EnemyTurnStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.2.ogg", "EnemyTurnLoop");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.1.wav", "HeroesEnterStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.2.wav", "HeroesEnterLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.1.ogg", "HeroesEnterStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map3.2.ogg", "HeroesEnterLoop");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.1.wav", "RaydrickStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.2.wav", "RaydrickLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.1.ogg", "RaydrickStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map4.2.ogg", "RaydrickLoop");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.1.wav", "WinningStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.2.wav", "WinningLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.1.ogg", "WinningStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map5.2.ogg", "WinningLoop");
 	
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.1.wav", "LosingStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.2.wav", "LosingLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.1.ogg", "LosingStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map6.2.ogg", "LosingLoop");
 
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.1.wav", "TurnEndSceneStart");
-	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.2.wav", "TurnEndSceneLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.1.ogg", "TurnEndSceneStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map7.2.ogg", "TurnEndSceneLoop");
+
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/PlayerAttackStart.ogg", "PlayerAttackStart");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/PlayerAttackLoop.ogg", "PlayerAttackLoop");
+	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/EnemyAttack.ogg", "EnemyAttack");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -1343,7 +1349,6 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	else
 	{
 		ResourceManager::PlayMusic("PlayerTurn");
-		//Mix_PauseAudio(1);
 	}
 	/*Scene* intro = new Scene();
 	intro->ID = 10;

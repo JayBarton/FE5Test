@@ -137,6 +137,10 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			transitionIn = true;
 			fadeAlpha = 0.2f;
 			GetFacing();
+			if (!aiDelay)
+			{
+				ResourceManager::FadeOutPause(500);
+			}
 		}
 		else
 		{
@@ -196,6 +200,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 		{
 			delayTimer = 0.0f;
 			aiDelay = false;
+			if (battleScene)
+			{
+				ResourceManager::FadeOutPause(500);
+			}
 		}
 	}
 	else if (battleActive)
@@ -248,6 +256,14 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					defender->sprite.moveAnimate = true;
 
 					fadeInBattle = true;
+					if (attacker->team == 0)
+					{
+						ResourceManager::PlayMusic("PlayerAttackStart", "PlayerAttackLoop");
+					}
+					else
+					{
+						ResourceManager::PlayMusic("EnemyAttack");
+					}
 				}
 			}
 			else if (fadeInBattle)
@@ -847,6 +863,7 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 		unitDiedSubject.notify(deadUnit);
 		deadUnit = nullptr;
 	}
+	ResourceManager::ResumeMusic(1000);
 }
 
 void BattleManager::DropHeldUnit()
