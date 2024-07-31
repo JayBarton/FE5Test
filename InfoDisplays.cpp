@@ -75,6 +75,10 @@ void InfoDisplays::OnUnitLevel(Unit* unit)
 		focusedUnit->skill, focusedUnit->speed, focusedUnit->luck,focusedUnit->defense,focusedUnit->build,focusedUnit->move };
 	state = LEVEL_UP_NOTE;
 	ResourceManager::PlaySound("levelUp");
+	if (!battleDisplay)
+	{
+		Mix_VolumeMusic(128 * 0.5f);
+	}
 }
 
 void InfoDisplays::StartUse(Unit* unit, int index, Camera* camera)
@@ -232,12 +236,14 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 			displayTimer = 0.0f;
 			if (battleDisplay)
 			{
+				Mix_FadeInMusic(ResourceManager::Music["LevelUpTheme"], -1, 500);
 				state = BATTLE_FADE_THING;
 			}
 			else
 			{
 				state = MAP_LEVEL_UP;
 				ResourceManager::PlaySound("pointUp");
+				Mix_VolumeMusic(128);
 			}
 		}
 		break;
@@ -531,6 +537,12 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 			if (displayedExperience == finalExperience)
 			{
 				displayingExperience = true;
+				//Gotta do a double check on this to make sure the music stops properly
+				if (battleDisplay && focusedUnit->experience + gainedExperience >= 100)
+				{
+					Mix_HookMusicFinished(nullptr);
+					Mix_FadeOutMusic(500);
+				}
 			}
 			displayTimer = 0;
 		}
@@ -1001,20 +1013,6 @@ void InfoDisplays::DrawBattleExperience(Camera* camera, int shapeVAO, TextRender
 	Texture2D texture = ResourceManager::GetTexture("BattleExperienceBackground");
 	renderer->setUVs();
 	renderer->DrawSprite(texture, glm::vec2(5, 140), 0, glm::vec2(246, 32));
-	
-	/*/ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(5, 140, 0.0f));
-
-	model = glm::scale(model, glm::vec3(246, 32, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);*/
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);

@@ -338,7 +338,7 @@ struct PostBattleEvents : public Observer<int>
 			{
 				battleManager.fadeOutBattle = true;
 				Mix_HookMusicFinished(nullptr);
-				Mix_FadeOutMusic(500.0f);
+				Mix_FadeOutMusic(1000.0f);
 			}
 			else
 			{
@@ -569,6 +569,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/getItem.wav", "getItem");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/levelUp.wav", "levelUp");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/nodamage.wav", "nodamage");
+	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/battleTransition.wav", "battleTransition");
 
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map1.ogg", "PlayerTurn");
 	ResourceManager::LoadMusic("E:/Damon/dev stuff/FE5Test/Sounds/Map2.1.ogg", "EnemyTurnStart");
@@ -760,7 +761,11 @@ int main(int argc, char** argv)
 		{
 			if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
 			{
-				battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
+				if (!displays.displayingExperience) //This check is to help with an issue with displaying experience in cases where the unit does not level up
+					//It does not help very much.
+				{
+					battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
+				}
 				displays.Update(deltaTime, inputManager);
 			}
 			else if (displays.state != NONE)

@@ -43,6 +43,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		unitCaptured = true;
 		deadUnit = defender;
 		drawInfo = false;
+		battleScene = false;
 	}
 	else
 	{
@@ -138,6 +139,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		camera.SetCenter(defender->sprite.getPosition());
 		if (battleScene)
 		{	
+			ResourceManager::PlaySound("battleTransition");
+
 			transitionX = -286.0f;
 			ResourceManager::GetShader("sprite").Use().SetVector2f("cameraPosition", (camera.position - glm::vec2(camera.halfWidth, camera.halfHeight)));
 			ResourceManager::GetShader("sprite").SetFloat("maskX", transitionX);
@@ -152,6 +155,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		}
 		else
 		{
+			ResourceManager::PlaySound("select2");
+
 			GetFacing();
 			attacker->sprite.moveAnimate = true;
 			defender->sprite.moveAnimate = true;
@@ -287,7 +292,6 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			}
 			else if (fadeOutBattle)
 			{
-
 				fadeTimer += deltaTime;
 				fadeAlpha += deltaTime;
 				if (fadeTimer >= fadeOutDelay)
@@ -297,58 +301,42 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					fadeOutBattle = false;
 					battleScene = false;
 					fadeBackMap = true;
+					if (unitCaptured)
+					{
+						//The things we do for love. Want to fade out the enemy on capture, but still play the capture animation, so they need to be visible again
+						deadUnit->sprite.alpha = 1;
+					}
 					GetFacing();
 					displays.ClearLevelUpDisplay();
 				}
 			}
-			else if (unitDied)
+			else if (unitDied || unitCaptured)
 			{
 				if (displays.state == NONE)
 				{
 					if (deadUnit->Dying(deltaTime))
 					{
-						deadUnit->isDead = true;
-						if (deadUnit->carriedUnit)
+						if (unitDied)
 						{
-							unitToDrop = deadUnit->carriedUnit;
-							unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
-						}
-						auto deadPosition = deadUnit->sprite.getPosition();
-						TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
-						EndAttack();
+							deadUnit->isDead = true;
+							if (deadUnit->carriedUnit)
+							{
+								unitToDrop = deadUnit->carriedUnit;
+								unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+							}
+							auto deadPosition = deadUnit->sprite.getPosition();
+							TileManager::tileManager.removeUnit(deadPosition.x, deadPosition.y);
+							EndAttack();
 
-						unitDied = false;
-					}
-				}
-			}
-			else if (unitCaptured)
-			{
-				//capture animation. Needs to play after the experience display if the player captures. 
-				// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
-				if (deadUnit->carriedUnit)
-				{
-					unitToDrop = deadUnit->carriedUnit;
-					unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
-				}
-				TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
-				attacker->carryUnit(deadUnit);
-				//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
-				//This seems bogus to me but it's how it works there so it's how it works here.
-				if (attacker->team != 0)
-				{
-					for (int i = 0; i < deadUnit->inventory.size(); i++)
-					{
-						if (attacker->inventory.size() <= 8)
+							unitDied = false;
+						}
+						else
 						{
-							attacker->inventory.push_back(deadUnit->inventory[i]);
-							deadUnit->inventory.erase(deadUnit->inventory.begin());
-							i--;
+							EndAttack();
+
 						}
 					}
 				}
-				EndAttack();
-				deadUnit = nullptr;
-				unitCaptured = false;
 			}
 			else
 			{
@@ -484,12 +472,49 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					fadeTimer = 0;
 					fadeAlpha = 0;
 					fadeBackMap = false;
-					displays.endBattle.notify(0);
+					if (unitCaptured)
+					{
+						PrepareCapture();
+						deadUnit = nullptr;
+						unitCaptured = false;
+						CaptureUnit();
+					}
+					else
+					{
+						displays.endBattle.notify(0);
+					}
 				}
 			}
 			else
 			{
 				MapUpdate(displays, deltaTime, inputManager, distribution, gen);
+			}
+		}
+	}
+}
+
+void BattleManager::PrepareCapture()
+{
+	//capture animation. Needs to play after the experience display if the player captures. 
+	// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
+	if (deadUnit->carriedUnit)
+	{
+		unitToDrop = deadUnit->carriedUnit;
+		unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
+	}
+	TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
+	attacker->carryUnit(deadUnit);
+	//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
+	//This seems bogus to me but it's how it works there so it's how it works here.
+	if (attacker->team != 0)
+	{
+		for (int i = 0; i < deadUnit->inventory.size(); i++)
+		{
+			if (attacker->inventory.size() <= 8)
+			{
+				attacker->inventory.push_back(deadUnit->inventory[i]);
+				deadUnit->inventory.erase(deadUnit->inventory.begin());
+				i--;
 			}
 		}
 	}
@@ -519,29 +544,7 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 	}
 	else if (unitCaptured)
 	{
-		//capture animation. Needs to play after the experience display if the player captures. 
-		// Not actually sure how this should work when capturing an enemy without a weapon, hard to test 
-		if (deadUnit->carriedUnit)
-		{
-			unitToDrop = deadUnit->carriedUnit;
-			unitToDrop->sprite.SetPosition(deadUnit->sprite.getPosition());
-		}
-		TileManager::tileManager.removeUnit(deadUnit->sprite.getPosition().x, deadUnit->sprite.getPosition().y);
-		attacker->carryUnit(deadUnit);
-		//In FE5 if a player unit is captured by the enemy, the enemy instantly takes their inventory.
-		//This seems bogus to me but it's how it works there so it's how it works here.
-		if (attacker->team != 0)
-		{
-			for (int i = 0; i < deadUnit->inventory.size(); i++)
-			{
-				if (attacker->inventory.size() <= 8)
-				{
-					attacker->inventory.push_back(deadUnit->inventory[i]);
-					deadUnit->inventory.erase(deadUnit->inventory.begin());
-					i--;
-				}
-			}
-		}
+		PrepareCapture();
 		EndAttack();
 		deadUnit = nullptr;
 		unitCaptured = false;
@@ -736,7 +739,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= accuracy)
+	if (roll <= 100)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		int critFactor = 1;

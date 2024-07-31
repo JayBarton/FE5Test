@@ -261,6 +261,12 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.endingSubject.notify();
 		ClearMenu();
 		break;
+	case ANIMATION:
+	{
+		Menu* newMenu = new AnimationOptionsMenu(cursor, text, camera, shapeVAO, MenuManager::menuManager.renderer);
+		MenuManager::menuManager.menus.push_back(newMenu);
+		break;
+	}
 	//Wait
 	default:
 		cursor->Wait();
@@ -285,7 +291,7 @@ void UnitOptionsMenu::CancelOption(int num)
 
 void UnitOptionsMenu::Draw()
 {
-	int xText = 600;
+	int xText = 625;
 	int xIndicator = 176;
 	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
@@ -294,7 +300,6 @@ void UnitOptionsMenu::Draw()
 		xText = 72;
 		xIndicator = 8;
 	}
-	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
@@ -385,6 +390,11 @@ void UnitOptionsMenu::Draw()
 	{
 		commands += "Mount\n";
 		text->RenderText("Mount", xText, yOffset, 1);
+		yOffset += 30;
+	}
+	if (Settings::settings.mapAnimations == 2)
+	{
+		text->RenderText("Animation", xText, yOffset, 1);
 		yOffset += 30;
 	}
 	commands += "Wait";
@@ -573,6 +583,12 @@ void UnitOptionsMenu::GetOptions()
 			}
 		}
 	}
+
+	if (Settings::settings.mapAnimations == 2)
+	{
+		optionsVector.push_back(ANIMATION);
+	}
+
 	optionsVector.push_back(WAIT);
 	numberOfOptions = optionsVector.size();
 }
@@ -632,19 +648,6 @@ ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Cam
 
 void ItemOptionsMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(24, 82 + 16 * currentOption, 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
 	DrawItemWindow(inventory, unit);
@@ -660,6 +663,19 @@ void ItemOptionsMenu::Draw()
 
 void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit)
 {
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(24, 82 + 16 * currentOption, 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 	//Duplicated this down in ItemUseMenu's Draw.
 	glm::vec3 color = glm::vec3(1);
 	glm::vec3 grey = glm::vec3(0.64f);
@@ -773,11 +789,12 @@ void ItemOptionsMenu::GetBattleStats()
 }
 
 ItemUseMenu::ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, Item* selectedItem, int index, SpriteRenderer* Renderer)
-	: ItemOptionsMenu(Cursor, Text, Camera, shapeVAO, Renderer)
+	: Menu(Cursor, Text, Camera, shapeVAO)
 {
 	inventoryIndex = index;
 	item = selectedItem;
 	GetOptions();
+	previous = static_cast<ItemOptionsMenu*>(MenuManager::menuManager.GetCurrent());
 }
 
 void ItemUseMenu::Draw()
@@ -798,8 +815,7 @@ void ItemUseMenu::Draw()
 
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
-
-	DrawItemWindow(inventory, unit);
+	previous->DrawItemWindow(inventory, unit);
 	int yOffset = 225;
 	if (canUse)
 	{
@@ -818,8 +834,6 @@ void ItemUseMenu::Draw()
 		color = grey;
 	}
 	text->RenderText("Drop", 525, yOffset, 1, color);
-
-	DrawPortrait(unit);
 }
 
 void ItemUseMenu::SelectOption()
@@ -837,14 +851,11 @@ void ItemUseMenu::SelectOption()
 		MenuManager::menuManager.PreviousMenu();
 		//swap equipment
 		break;
-	case DROP: //This is actually supposed to be opening another menu
+	case DROP:
 		if (item->canDrop)
 		{
-			cursor->selectedUnit->dropItem(inventoryIndex);
-			//Going back to the main selection menu is how FE5 does it, not sure if I want to keep that.
-			MenuManager::menuManager.PreviousMenu();
-			MenuManager::menuManager.PreviousMenu();
-			MenuManager::menuManager.menus.back()->GetOptions();
+			Menu* newMenu = new DropConfirmMenu(cursor, text, camera, shapeVAO, inventoryIndex, MenuManager::menuManager.renderer);
+			MenuManager::menuManager.menus.push_back(newMenu);
 		}
 		else
 		{
@@ -884,6 +895,124 @@ void ItemUseMenu::GetOptions()
 		}
 	}
 	optionsVector.push_back(DROP);
+	numberOfOptions = optionsVector.size();
+}
+
+DropConfirmMenu::DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int index, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, camera, shapeVAO)
+{
+	inventoryIndex = index;
+	GetOptions();
+	currentOption = 1;
+	previous = static_cast<ItemUseMenu*>(MenuManager::menuManager.GetCurrent());
+}
+
+void DropConfirmMenu::Draw()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(160, 124 + (16 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Yes", 550, 332, 1);
+	text->RenderText("No", 550, 374, 1);
+
+	previous->Draw();
+}
+
+void DropConfirmMenu::SelectOption()
+{
+	if (currentOption == 0)
+	{
+		cursor->selectedUnit->dropItem(inventoryIndex);
+	}
+	//Going back to the main selection menu is how FE5 does it, not sure if I want to keep that.
+	CancelOption();
+	MenuManager::menuManager.menus.back()->GetOptions();
+}
+
+void DropConfirmMenu::CancelOption(int num)
+{
+	Menu::CancelOption(3);
+}
+
+void DropConfirmMenu::GetOptions()
+{
+	optionsVector.resize(2);
+	numberOfOptions = optionsVector.size();
+}
+
+AnimationOptionsMenu::AnimationOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, camera, shapeVAO)
+{
+	previous = static_cast<UnitOptionsMenu*>(MenuManager::menuManager.GetCurrent());
+	GetOptions();
+	yPosition = 130 + previous->optionsVector.size() * 30;
+	yIndicator = 44 + previous->optionsVector.size() * 12;
+}
+
+void AnimationOptionsMenu::Draw()
+{
+	previous->Draw();
+
+	int xText = 625;
+	int xIndicator = 176;
+	int yOffset = yPosition;
+	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
+	if (fixedPosition.x >= camera->screenWidth * 0.5f)
+	{
+		xText = 72;
+		xIndicator = 8;
+	}
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(xIndicator, yIndicator + (12 * currentOption), 0.0f));
+
+	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	text->RenderText("Normal", xText, yOffset, 1);
+	text->RenderText("Map", xText, yOffset + 42, 1);
+}
+
+void AnimationOptionsMenu::SelectOption()
+{
+	if (currentOption == 0)
+	{
+		cursor->selectedUnit->battleAnimations = true;
+	}
+	else
+	{
+		cursor->selectedUnit->battleAnimations = false;
+	}
+	CancelOption();
+}
+
+void AnimationOptionsMenu::GetOptions()
+{
+	optionsVector.resize(2);
+	currentOption = 1;
+	if (cursor->selectedUnit->battleAnimations)
+	{
+		currentOption = 0;
+	}
 	numberOfOptions = optionsVector.size();
 }
 
@@ -1076,7 +1205,6 @@ void SelectEnemyMenu::SelectOption()
 	cursor->selectedUnit->equipWeapon(selectedWeapon);
 	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, attackDistance, enemyCanCounter, *camera, false, capturing);
 	cursor->MoveUnitToTile();
-	ResourceManager::PlaySound("select2");
 	ClearMenu();
 }
 
@@ -3576,6 +3704,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		if (Settings::settings.volume > 1)
 		{
 			Mix_Volume(-1, 128 - 48 * (4 - Settings::settings.volume));
+			ResourceManager::PlaySound("cancel");
 		}
 		else
 		{
@@ -4296,6 +4425,24 @@ void MenuManager::ClearMenu()
 	{
 		PreviousMenu();
 	}
+}
+
+Menu* MenuManager::GetCurrent()
+{
+	if (menus.size() >= 1)
+	{
+		return menus.back();
+	}
+	return nullptr;
+}
+
+Menu* MenuManager::GetPrevious()
+{
+	if (menus.size() >= 2)
+	{
+		return menus[menus.size() - 2];
+	}
+	return nullptr;
 }
 
 UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition) :

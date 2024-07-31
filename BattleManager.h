@@ -32,6 +32,8 @@ struct BattleManager
 
 	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays, class InputManager& inputManager);
 
+	void PrepareCapture();
+
 	void MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void CheckAccost();

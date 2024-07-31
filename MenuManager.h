@@ -65,6 +65,7 @@ struct UnitOptionsMenu : public Menu
 	const static int VISIT = 12;
 	const static int VENDOR = 13;
 	const static int SEIZE = 14;
+	const static int ANIMATION = 15;
 
 	std::vector<Unit*> unitsInRange;
 	std::vector<Unit*> unitsInCaptureRange;
@@ -121,7 +122,7 @@ struct ItemOptionsMenu : public Menu
 	std::vector<glm::vec4> proficiencyIconUVs;
 };
 
-struct ItemUseMenu : public ItemOptionsMenu
+struct ItemUseMenu : public Menu
 {
 	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Item* selectedItem, int inventoryIndex, SpriteRenderer* Renderer);
 	virtual void Draw() override;
@@ -138,8 +139,39 @@ struct ItemUseMenu : public ItemOptionsMenu
 	int inventoryIndex;
 	Item* item = nullptr;
 	std::vector<glm::vec4> itemIconUVs;
+
+	ItemOptionsMenu* previous;
+
 	bool canUse = false;
 	bool canEquip = false;
+};
+
+struct DropConfirmMenu : public Menu
+{
+	DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int index, SpriteRenderer* Renderer);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CancelOption(int num = 1) override;
+
+	virtual void  GetOptions() override;
+
+	int inventoryIndex;
+	Item* item = nullptr;
+
+	ItemUseMenu* previous;
+};
+
+struct AnimationOptionsMenu : public Menu
+{
+	AnimationOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+//	virtual void CancelOption(int num = 1) override;
+
+	virtual void  GetOptions() override;
+	UnitOptionsMenu* previous;
+	int yPosition;
+	int yIndicator;
 };
 
 struct SelectWeaponMenu : public ItemOptionsMenu
@@ -490,13 +522,14 @@ struct MenuManager
 		BattleManager* battleManager, class PlayerManager* playerManager, class EnemyManager* enemyManager);
 
 	void AddMenu(int menuID);
-
 	void AddUnitStatMenu(Unit* unit);
-
 	void AddFullInventoryMenu(int itemID);
 
 	void PreviousMenu();
 	void ClearMenu();
+
+	Menu* GetCurrent();
+	Menu* GetPrevious();
 
 	std::vector<Menu*> menus;
 

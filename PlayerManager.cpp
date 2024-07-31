@@ -54,6 +54,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 	units[4]->experience = 99;
 	units[4]->battleAnimations = true;
 	units[4]->currentHP = 1;
+	units[1]->move = 20;
 }
 
 Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
@@ -155,6 +156,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 				newUnit->sprite.setSize(animData.size);
 				newUnit->sprite.drawOffset = animData.offset;
 			}
+			newUnit->battleAnimations = true;
 			newUnit->portraitID = ID;
 			newUnit->placeUnit(position.x, position.y);
 			return newUnit;
