@@ -417,7 +417,7 @@ struct OptionsMenu : public Menu
 	int bottom = 501;
 	int distance = 64;
 
-	int indicatorY = 40;
+	int indicatorY = 39;
 	int indicatorIncrement = 24;
 	float yOffset = 0;
 	float goal;
@@ -528,6 +528,9 @@ struct MenuManager
 	void PreviousMenu();
 	void ClearMenu();
 
+	void AnimateArrow(float deltaTime);
+	void DrawArrow(glm::ivec2 position, bool down = true);
+
 	Menu* GetCurrent();
 	Menu* GetPrevious();
 
@@ -544,6 +547,10 @@ struct MenuManager
 	std::vector<glm::vec4> proficiencyIconUVs;
 	std::vector<glm::vec4> itemIconUVs;
 	std::vector<glm::vec4> skillIconUVs;
+	std::vector<glm::vec4> optionIconUVs;
+	std::vector<glm::vec4> arrowAnimUVs;
+
+	Sprite arrowSprite;
 
 	Subject<int> subject;
 	Subject<> endingSubject;

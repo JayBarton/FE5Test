@@ -23,7 +23,7 @@ SpriteRenderer::~SpriteRenderer()
     glDeleteVertexArrays(1, &this->quadVAO);
 }
 
-void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color, bool flip)
+void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float rotate, glm::vec2 size, const glm::vec4 &color, bool flipX, bool flipY)
 {
 	// Prepare transformations
 	this->shader.Use();
@@ -34,9 +34,13 @@ void SpriteRenderer::DrawSprite(Texture2D &texture, glm::vec2 position, float ro
 	model = glm::translate(model, glm::vec3(position, 0.0f));  // First translate (transformations are: scale happens first, then rotation and then finall translation happens; reversed order)
 
 	model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f)); // Move origin of rotation to center of quad
-    if (flip)
+    if (flipX)
     {
         model = glm::scale(model, glm::vec3(-1.0f, 1.0f, 1.0f));
+    }
+    if (flipY)
+    {
+        model = glm::scale(model, glm::vec3(1.0f, -1.0f, 1.0f));
     }
     model = glm::rotate(model, rotate, glm::vec3(0.0f, 0.0f, 1.0f)); // Then rotate
 	model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f)); // Move origin back

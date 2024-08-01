@@ -3399,12 +3399,23 @@ void OptionsMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	Texture2D optionIcons = ResourceManager::GetTexture("UIItems");
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	auto optionIconUVs = MenuManager::menuManager.optionIconUVs;
+	glm::vec2 iconSize = glm::vec2(16);
+	for (int i = 0; i < 10; i++)
+	{
+		MenuManager::menuManager.renderer->setUVs(optionIconUVs[i]);
+		int adjustedOffset = (yOffset / 600.0f) * 224.0f;
+		MenuManager::menuManager.renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
+	}
+
 	//I have no idea why FE5 has this black line being drawn here. It is drawn over the option sprites but under the text.
 	//I don't think it looks as good as drawing over both but it is replicated here.
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(5, 191, 0.0f));
 	model = glm::scale(model, glm::vec3(256, 1, 0.0f));
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+	ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -3420,6 +3431,17 @@ void OptionsMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+	ResourceManager::GetShader("Nsprite").Use();
+
+	if (yOffset < 256)
+	{
+		MenuManager::menuManager.DrawArrow(glm::ivec2(120, 186));
+	}
+	if (yOffset > 0)
+	{
+		MenuManager::menuManager.DrawArrow(glm::ivec2(120, 32), false);
+	}
 
 	int optionNameX = 125;
 	int selectionXStart = 400;
@@ -3488,27 +3510,8 @@ void OptionsMenu::Draw()
 
 	Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
 	ResourceManager::GetShader("Nsprite").Use();
-	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.renderer->setUVs();
 	MenuManager::menuManager.renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
-
-/*	
-
-	//Drawing this again so it is drawn over the text; this is temporary, I'll find a better way of handling this later
-	/*model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.3f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);*/
-
-	//text->RenderText("Configuration", 159, 26, 1);
-
 }
 
 void OptionsMenu::SelectOption()
@@ -3517,6 +3520,7 @@ void OptionsMenu::SelectOption()
 
 void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+	MenuManager::menuManager.AnimateArrow(deltaTime);
 	if (inputManager.isKeyPressed(SDLK_UP))
 	{
 		currentOption--;
@@ -3528,9 +3532,9 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			ResourceManager::PlaySound("optionSelect1");
 			indicatorY -= indicatorIncrement;
-			if (indicatorY < 40)
+			if (indicatorY < 39)
 			{
-				indicatorY = 40;
+				indicatorY = 39;
 				up = true;
 				goal = yOffset - 64;
 			}
@@ -3547,9 +3551,9 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			ResourceManager::PlaySound("optionSelect1");
 			indicatorY += indicatorIncrement;
-			if (indicatorY > 160)
+			if (indicatorY > 159)
 			{
-				indicatorY = 160;
+				indicatorY = 159;
 				down = true;
 				goal = yOffset + 64;
 			}
@@ -4375,109 +4379,6 @@ void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-MenuManager MenuManager::menuManager;
-void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO,
-	SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager, EnemyManager* enemyManager)
-{
-	renderer = Renderer;
-	cursor = Cursor;
-	text = Text;
-	camera = Camera;
-	this->battleManager = battleManager;
-	this->shapeVAO = shapeVAO;
-	this->playerManager = playerManager;
-	this->enemyManager = enemyManager;
-
-	profcienciesMap[0] = "-";
-	profcienciesMap[1] = "E";
-	profcienciesMap[2] = "D";
-	profcienciesMap[3] = "C";
-	profcienciesMap[4] = "B";
-	profcienciesMap[5] = "A";
-
-	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
-	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 19);
-	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
-}
-
-void MenuManager::AddMenu(int ID)
-{
-	//I don't know if this ID system will stick around
-	if (ID == 0)
-	{
-		Menu* newMenu = new UnitOptionsMenu(cursor, text, camera, shapeVAO);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 1)
-	{
-		Menu* newMenu = new ItemOptionsMenu(cursor, text, camera, shapeVAO, renderer);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 2)
-	{
-		auto currentOption = menus.back()->currentOption;
-		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, cursor->selectedUnit->inventory[currentOption], currentOption, renderer);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 3)
-	{
-		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
-		menus.push_back(newMenu);
-	}
-	else if (ID == 4)
-	{
-		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO);
-		menus.push_back(newMenu);
-	}
-}
-
-void MenuManager::AddUnitStatMenu(Unit* unit)
-{
-	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, unit, renderer);
-	menus.push_back(newMenu);
-}
-
-void MenuManager::AddFullInventoryMenu(int itemID)
-{
-	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID, renderer);
-	MenuManager::menuManager.menus.push_back(newMenu);
-}
-
-void MenuManager::PreviousMenu()
-{
-	Menu* p = menus.back();
-	menus.pop_back();
-	delete p;
-}
-
-void MenuManager::ClearMenu()
-{
-	mustWait = false;
-	mountActionTaken = false;
-	while (menus.size() > 0)
-	{
-		PreviousMenu();
-	}
-}
-
-Menu* MenuManager::GetCurrent()
-{
-	if (menus.size() >= 1)
-	{
-		return menus.back();
-	}
-	return nullptr;
-}
-
-Menu* MenuManager::GetPrevious()
-{
-	if (menus.size() >= 2)
-	{
-		return menus[menus.size() - 2];
-	}
-	return nullptr;
-}
-
 UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition) :
 	Menu(Cursor, Text, camera, shapeVAO), movingUnit(movingUnit), receivingUnit(receivingUnit), operation(operation), dropPosition(dropPosition)
 {
@@ -4725,4 +4626,123 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			CancelOption();
 		}
 	}
+}
+
+MenuManager MenuManager::menuManager;
+void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO,
+	SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager, EnemyManager* enemyManager)
+{
+	renderer = Renderer;
+	cursor = Cursor;
+	text = Text;
+	camera = Camera;
+	this->battleManager = battleManager;
+	this->shapeVAO = shapeVAO;
+	this->playerManager = playerManager;
+	this->enemyManager = enemyManager;
+
+	profcienciesMap[0] = "-";
+	profcienciesMap[1] = "E";
+	profcienciesMap[2] = "D";
+	profcienciesMap[3] = "C";
+	profcienciesMap[4] = "B";
+	profcienciesMap[5] = "A";
+
+	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
+	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 19);
+	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
+	optionIconUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 0, 16, 16, 4, 3, 10);
+	arrowAnimUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 48, 7, 6, 6, 1);
+	arrowSprite.setSize(glm::vec2(7, 6));
+	arrowSprite.uv = &arrowAnimUVs;
+}
+
+void MenuManager::AddMenu(int ID)
+{
+	//I don't know if this ID system will stick around
+	if (ID == 0)
+	{
+		Menu* newMenu = new UnitOptionsMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 1)
+	{
+		Menu* newMenu = new ItemOptionsMenu(cursor, text, camera, shapeVAO, renderer);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 2)
+	{
+		auto currentOption = menus.back()->currentOption;
+		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, cursor->selectedUnit->inventory[currentOption], currentOption, renderer);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 3)
+	{
+		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
+	else if (ID == 4)
+	{
+		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO);
+		menus.push_back(newMenu);
+	}
+}
+
+void MenuManager::AddUnitStatMenu(Unit* unit)
+{
+	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, unit, renderer);
+	menus.push_back(newMenu);
+}
+
+void MenuManager::AddFullInventoryMenu(int itemID)
+{
+	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID, renderer);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::PreviousMenu()
+{
+	Menu* p = menus.back();
+	menus.pop_back();
+	delete p;
+}
+
+void MenuManager::ClearMenu()
+{
+	mustWait = false;
+	mountActionTaken = false;
+	while (menus.size() > 0)
+	{
+		PreviousMenu();
+	}
+}
+
+void MenuManager::AnimateArrow(float deltaTime)
+{
+	arrowSprite.playAnimation(deltaTime, 6, false);
+}
+
+void MenuManager::DrawArrow(glm::ivec2 position, bool down)
+{
+	renderer->setUVs(arrowSprite.getUV());
+	Texture2D texture = ResourceManager::GetTexture("UIItems");
+	renderer->DrawSprite(texture, position, 0, arrowSprite.getSize(), glm::vec4(1), false, !down);
+}
+
+Menu* MenuManager::GetCurrent()
+{
+	if (menus.size() >= 1)
+	{
+		return menus.back();
+	}
+	return nullptr;
+}
+
+Menu* MenuManager::GetPrevious()
+{
+	if (menus.size() >= 2)
+	{
+		return menus[menus.size() - 2];
+	}
+	return nullptr;
 }
