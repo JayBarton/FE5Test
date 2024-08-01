@@ -1,0 +1,56 @@
+#version 330 core
+
+in vec2 TextureCoordinates;
+
+uniform sampler2D image;
+
+uniform vec2 u_dimensions;
+uniform vec2 u_border;
+uniform vec4 spriteColor;
+uniform vec4 bounds;
+
+
+float map(float val, float oMin, float oMax, float nMin, float nMax) {
+    return (val - oMin) / (oMax - oMin) * (nMax - nMin) + nMin;
+}
+float mapInside(float val, float min, float innerStart, float innerSize, float uDimensions, float uBorder) {
+	float scale = uBorder / uDimensions;
+	if(fract(val * scale) < uBorder)
+	{
+		return fract(min*scale);
+	}
+	if(fract(val*scale) > innerStart + innerSize)
+	{
+		return fract(min*scale);
+	}
+    return mod((val - min) * scale, innerSize) + innerStart; 
+}
+float processAxis(float val, float uBorder, float uDimensions) {
+    if (val < uDimensions) {   // check if in near border
+        return map(val, 0.0, uDimensions, 0.0, uBorder);
+    }
+    float farEdge = 1.0 - uDimensions;
+    if (val >= farEdge) {  // check if in far border
+        return map(val, farEdge, 1.0, 1.0 - uBorder, 1.0);
+    }
+    // must be in inside section of sprite
+    return mapInside(val, uDimensions, uBorder, 1.0 - uBorder - uBorder, uDimensions, uBorder);
+} 
+
+vec2 subspriteMap(vec2 inner) 
+{
+    return mix(vec2(bounds.x, bounds.z), vec2(bounds.y, bounds.w), inner.xy);
+}
+
+void main(void) 
+{
+    vec2 newUV = vec2(
+        processAxis(TextureCoordinates.x, u_border.x, u_dimensions.x),
+        processAxis(TextureCoordinates.y, u_border.y, u_dimensions.y)
+    );
+	
+	 newUV = subspriteMap(newUV);
+
+	gl_FragColor = vec4(spriteColor) * texture2D(image, newUV);
+
+}

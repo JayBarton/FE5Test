@@ -901,10 +901,10 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 {
 	if (aiDelay)
 	{
-		Renderer->setUVs(cursor->uvs[1]);
-		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+		Renderer->setUVs(cursor->uvs[2]);
+		Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 
-		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition(), 0.0f, cursor->dimensions, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		Renderer->DrawSprite(displayTexture, defender->sprite.getPosition() - glm::vec2(3), 0.0f, cursor->dimensions, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	}
 	if (transitionIn || fadeBackMap)
 	{

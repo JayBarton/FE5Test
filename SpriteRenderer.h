@@ -33,10 +33,11 @@ public:
 
 	void DrawSprite();
     void setUVs(const glm::vec4 &uv = glm::vec4(0, 1, 0, 1));
-private:
-    GLuint VBO;
+
     // Render state
     Shader shader;
+private:
+    GLuint VBO;
     GLuint quadVAO;
     // Initializes and configures the quad's buffer and vertex attributes
     void initRenderData();

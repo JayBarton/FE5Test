@@ -5,7 +5,7 @@
 struct Cursor
 {
 	glm::vec2 position;
-	glm::vec2 dimensions = glm::vec2(TileManager::TILE_SIZE, TileManager::TILE_SIZE);
+	glm::vec2 dimensions = glm::vec2(21, 21);
 	std::vector<glm::vec4> uvs;
 
 	//Both of these are used to draw the movement and attack range of a unit
@@ -20,6 +20,10 @@ struct Cursor
 	std::vector<glm::ivec2> drawnPath;
 
 	glm::vec2 previousPosition;
+
+	int currentFrame = 0;
+
+	float frameTimer = 0.0f;
 
 	float movementDelay = 0.0f;
 	float normalDelay = 0.05f;

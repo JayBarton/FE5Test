@@ -119,6 +119,16 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
 	}
+	frameTimer += deltaTime;
+	if (frameTimer >= 0.25f)
+	{
+		frameTimer = 0.0f;
+		currentFrame++;
+		if (currentFrame > 1)
+		{
+			currentFrame = 0;
+		}
+	}
 }
 
 void Cursor::ClearTiles()

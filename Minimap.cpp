@@ -53,6 +53,17 @@ void Minimap::Update(InputManager& inputManager, float deltaTime, Camera& camera
 		{
 			fadeAlpha = 0.5f;
 		}
+
+		frameTimer += deltaTime;
+		if (frameTimer >= 0.25f)
+		{
+			frameTimer = 0.0f;
+			currentFrame++;
+			if (currentFrame > 1)
+			{
+				currentFrame = 0;
+			}
+		}
 	}
 }
 
@@ -153,8 +164,8 @@ void Minimap::Draw(const std::vector<Unit*>& playerUnits, const std::vector<Unit
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0);
 
-		Renderer->setUVs(cursorUvs[0]);
-		Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+		Renderer->setUVs(cursorUvs[currentFrame]);
+		Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 		auto cameraPosition = camera.getPosition();
 		cameraPosition -= glm::vec2(128, 112);
 		cameraPosition /= 4;

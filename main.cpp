@@ -75,7 +75,7 @@ void SuspendGame();
 const static int TILE_SIZE = 16;
 
 SDL_Window *window;
-SpriteRenderer *Renderer;
+SpriteRenderer* Renderer;
 
 GLuint shapeVAO;
 
@@ -506,6 +506,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/instanceFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 	ResourceManager::LoadShader("Shaders/shapeInstanceVertexShader.txt", "Shaders/shapeInstanceFragmentShader.txt", nullptr, "shapeInstance");
+	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
@@ -528,8 +529,12 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", glm::vec4(1));
 
+	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getCameraMatrix());
+
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Tiles.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIItems.png", "UIItems");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png", "palette");
@@ -543,6 +548,12 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleFadeIn.png", "BattleFadeIn");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/OptionsScreenBackground.png", "OptionsScreenBackground");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIStuff.png", "UIStuff");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test.png", "test");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test2.png", "test2");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test3.png", "test3");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test4.png", "test4");
 
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/cursormove.wav", "cursorMove");
 	ResourceManager::LoadSound("E:/Damon/dev stuff/FE5Test/Sounds/heldCursorMove.wav", "heldCursorMove");
@@ -595,8 +606,8 @@ int main(int argc, char** argv)
 
 	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
 
-	cursor.uvs = ResourceManager::GetTexture("cursor").GetUVs(0, 0, TILE_SIZE, TILE_SIZE, 2, 1, 2);
-	minimap.cursorUvs = ResourceManager::GetTexture("cursor").GetUVs(32, 0, 70, 62, 2, 1, 2);
+	cursor.uvs = ResourceManager::GetTexture("UIItems").GetUVs(208, 0, 21, 21, 2, 2, 3);
+	minimap.cursorUvs = ResourceManager::GetTexture("UIItems").GetUVs(64, 0, 70, 62, 2, 1, 2);
 	//cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
 	UnitResources::LoadUVs();
@@ -1655,9 +1666,9 @@ void Draw()
 				{
 					if (currentTurn == 0 && !cursor.movingUnit)
 					{
-						Renderer->setUVs(cursor.uvs[1]);
-						Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-						Renderer->DrawSprite(displayTexture, cursor.position, 0.0f, cursor.dimensions);
+						Renderer->setUVs(cursor.uvs[cursor.currentFrame]);
+						Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
+						Renderer->DrawSprite(displayTexture, cursor.position - glm::vec2(3), 0.0f, cursor.dimensions);
 					}
 				}
 			}
@@ -1805,14 +1816,43 @@ void DrawText()
 		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
 		if (Settings::settings.showTerrain)
 		{
-			auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 
 			//Going to need to look into a better way of handling UI placement at some point
 			int xStart = SCREEN_WIDTH;
+			int xWindow = 188;
 			if (fixedPosition.x >= camera.screenWidth * 0.5f)
 			{
 				xStart = 178;
+				xWindow = 4;
 			}
+
+		/*	Texture2D test = ResourceManager::GetTexture("test2");
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getOrthoMatrix());
+			Renderer->setUVs();
+			Renderer->DrawSprite(test, glm::vec2(xWindow, 4), 0, glm::vec2(66, 34));*/
+			Renderer->shader = ResourceManager::GetShader("slice");
+
+			ResourceManager::GetShader("slice").Use();
+			ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
+
+			auto texture = ResourceManager::GetTexture("UIStuff");
+
+			glm::vec4 uvs = texture.GetUVs(32, 32)[2];
+			glm::vec2 size = glm::vec2(66, 34);
+			float borderSize = 10.0f;
+			ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+			ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
+
+			ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+
+			Renderer->setUVs();
+			Renderer->DrawSprite(texture, glm::vec2(xWindow, 4), 0.0f, size);
+
+			Renderer->shader = ResourceManager::GetShader("Nsprite");
+
+			auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
+
 			Text->RenderText(tile.name, xStart - 110, 20, 1);
 			Text->RenderText("DEF", xStart - 120, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
 			Text->RenderText(intToString(tile.defense), xStart - 95, 50, 0.7f);

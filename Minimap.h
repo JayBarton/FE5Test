@@ -17,6 +17,8 @@ struct Minimap
 	void Open();
 	void Close();
 
+	int currentFrame = 0;
+
 	bool show = false;
 	bool held = false;
 	bool opening = false;
@@ -29,6 +31,8 @@ struct Minimap
 	float openDelay = 0.0f;
 	float subtractValue = 0.0f;
 	float subtractValueMax = 66.0f;
+
+	float frameTimer = 0.0f;
 
 	float volumeModifier = 1.0f;
 

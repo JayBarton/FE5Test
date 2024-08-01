@@ -696,7 +696,7 @@ void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit)
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(itemIconUVs[item->ID]);
-		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	DrawPortrait(unit);
@@ -745,7 +745,7 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 	auto texture = ResourceManager::GetTexture("icons");
 
 	renderer->setUVs(proficiencyIconUVs[weaponData.type]);
-	renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, cursor->dimensions);
+	renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, glm::vec2(16));
 }
 
 void ItemOptionsMenu::DrawPortrait(Unit* unit)
@@ -1054,7 +1054,7 @@ void SelectWeaponMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(itemIconUVs[inventory[i]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	DrawWeaponComparison(weapons);
@@ -1148,11 +1148,11 @@ void SelectEnemyMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	renderer->setUVs(cursor->uvs[2]);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 
 	text->RenderText(enemy->name, enemyStatsTextX, 100, 1);
@@ -1388,9 +1388,9 @@ void SelectTradeUnit::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
-	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+	renderer->setUVs(cursor->uvs[2]);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
+	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(tradeUnit->name, xText, textHeight, 1);
@@ -1463,10 +1463,10 @@ void SelectTalkMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	renderer->setUVs(cursor->uvs[2]);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(talkUnit->name, xText, textHeight, 1);
@@ -1606,7 +1606,7 @@ void TradeMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(itemIconUVs[firstUnit->inventory[i]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	for (int i = 0; i < tradeUnit->inventory.size(); i++)
@@ -1618,7 +1618,7 @@ void TradeMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
@@ -1845,6 +1845,7 @@ void UnitStatsViewMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
 	//page 1
 	if (firstPage || transition)
 	{
@@ -1875,7 +1876,7 @@ void UnitStatsViewMenu::Draw()
 			auto texture = ResourceManager::GetTexture("icons");
 
 			renderer->setUVs(itemIconUVs[item->ID]);
-			renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 -yOffset)), 0.0f, cursor->dimensions);
+			renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 -yOffset)), 0.0f, glm::vec2(16));
 		}
 		if (!examining)
 		{
@@ -1949,26 +1950,26 @@ void UnitStatsViewMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_SWORD]);
-		renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LANCE]);
-		renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_AXE]);
-		renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_BOW]);
-		renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_STAFF]);
-		renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, glm::vec2(16));
 
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_FIRE]);
-		renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_THUNDER]);
-		renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_WIND]);
-		renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LIGHT]);
-		renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, glm::vec2(16));
 		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_DARK]);
-		renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, glm::vec2(16));
 
 		if (examining)
 		{
@@ -1988,7 +1989,7 @@ void UnitStatsViewMenu::Draw()
 		for (int i = 0; i < unit->skills.size(); i++)
 		{
 			renderer->setUVs(skillIconUVs[unit->skills[i]]);
-			renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, cursor->dimensions);
+			renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, glm::vec2(16));
 		}
 
 		auto& profMap = MenuManager::menuManager.profcienciesMap;
@@ -2081,7 +2082,7 @@ void UnitStatsViewMenu::Draw()
 			glBindVertexArray(0);
 
 			renderer->setUVs(skillIconUVs[unit->skills[currentOption]]);
-			renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, cursor->dimensions);
+			renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, glm::vec2(16));
 
 			text->RenderText(skillInfo[unit->skills[currentOption]].name, 125, 332, 1);
 
@@ -2103,6 +2104,31 @@ void UnitStatsViewMenu::Draw()
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+
+	/*Texture2D test = ResourceManager::GetTexture("test");
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	renderer->setUVs();
+	renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 79));*/
+	renderer->shader = ResourceManager::GetShader("slice");
+
+	ResourceManager::GetShader("slice").Use();
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	auto texture = ResourceManager::GetTexture("UIStuff");
+
+	glm::vec4 uvs = texture.GetUVs(32, 32)[1];
+	glm::vec2 size = glm::vec2(256, 80);
+	float borderSize = 6.0f;
+	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+	ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
+	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+
+	renderer->setUVs();
+	renderer->DrawSprite(texture, glm::vec2(0, -1), 0.0f, size);
+
+	renderer->shader = ResourceManager::GetShader("Nsprite");
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
 	auto portraitUVs = portraitTexture.GetUVs(48, 64);
@@ -2165,7 +2191,7 @@ void UnitStatsViewMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(proficiencyIconUVs[unit->GetEquippedWeapon().type]);
-		renderer->DrawSprite(texture, glm::vec2(233, 59), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(233, 59), 0.0f, glm::vec2(16));
 	}
 	else
 	{
@@ -2452,10 +2478,10 @@ void SelectRescueUnit::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	renderer->setUVs(cursor->uvs[2]);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(rescueUnit->name, xText, textHeight, 1);
@@ -2511,10 +2537,10 @@ DropMenu::DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shape
 void DropMenu::Draw()
 {
 	auto targetPosition = positions[currentOption];
-	renderer->setUVs(cursor->uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	renderer->setUVs(cursor->uvs[2]);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition - glm::ivec2(3), 0.0f, cursor->dimensions);
 }
 
 void DropMenu::SelectOption()
@@ -2581,10 +2607,10 @@ void SelectTransferUnit::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[1]);
-	Texture2D displayTexture = ResourceManager::GetTexture("cursor");
+	renderer->setUVs(cursor->uvs[2]);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition, 0.0f, cursor->dimensions);
+	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(transferUnit->name, xText, textHeight, 1);
@@ -2874,7 +2900,7 @@ void UnitListMenu::Draw()
 		for (int i = 0; i < 10; i++)
 		{
 			Renderer->setUVs(proficiencyIconUVs[profOrder[i]]);
-			Renderer->DrawSprite(texture, glm::vec2(85 + 16 * i, 34), 0.0f, cursor->dimensions);
+			Renderer->DrawSprite(texture, glm::vec2(85 + 16 * i, 34), 0.0f, glm::vec2(16));
 		}
 
 		for (int i = 0; i < numberOfOptions; i++)
@@ -2935,7 +2961,7 @@ void UnitListMenu::Draw()
 			for (int c = 0; c < unit->skills.size(); c++)
 			{
 				Renderer->setUVs(skillIconUVs[unit->skills[c]]);
-				Renderer->DrawSprite(texture, glm::vec2(80 + 16 * c, 56 + 16 * i), 0.0f, cursor->dimensions);
+				Renderer->DrawSprite(texture, glm::vec2(80 + 16 * c, 56 + 16 * i), 0.0f, glm::vec2(16));
 			}
 		}
 		break;
@@ -2951,7 +2977,7 @@ void UnitListMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		Renderer->setUVs(proficiencyIconUVs[profOrder[sortType - 25]]);
-		Renderer->DrawSprite(texture, glm::vec2(148, 9), 0.0f, cursor->dimensions);
+		Renderer->DrawSprite(texture, glm::vec2(148, 9), 0.0f, glm::vec2(16));
 	}
 	else
 	{
@@ -3373,13 +3399,12 @@ void OptionsMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	//I have no idea why FE5 has this black line being drawn here. It is drawn over the option sprites but under the text.
+	//I don't think it looks as good as drawing over both but it is replicated here.
 	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.3f));
-
+	model = glm::translate(model, glm::vec3(5, 191, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 1, 0.0f));
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -3459,10 +3484,18 @@ void OptionsMenu::Draw()
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	glBindVertexArray(0); 
+
+	Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.renderer->setUVs();
+	MenuManager::menuManager.renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+
+/*	
 
 	//Drawing this again so it is drawn over the text; this is temporary, I'll find a better way of handling this later
-	model = glm::mat4();
+	/*model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 
 	model = glm::scale(model, glm::vec3(256, 32, 0.0f));
@@ -3472,9 +3505,9 @@ void OptionsMenu::Draw()
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 
-	text->RenderText("Configuration", 159, 26, 1);
+	//text->RenderText("Configuration", 159, 26, 1);
 
 }
 
@@ -3846,7 +3879,7 @@ void VendorMenu::Draw()
 			auto texture = ResourceManager::GetTexture("icons");
 
 			Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item.ID]);
-			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, cursor->dimensions);
+			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
 		}
 	}
 	else
@@ -3870,7 +3903,7 @@ void VendorMenu::Draw()
 			auto texture = ResourceManager::GetTexture("icons");
 
 			Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item->ID]);
-			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, cursor->dimensions);
+			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
 		}
 	}
 	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 40);
@@ -4216,7 +4249,7 @@ void FullInventoryMenu::Draw()
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(itemIconUVs[item->ID]);
-		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
 	}
 	auto item = ItemManager::itemManager.items[newItem];
 	text->RenderText(item.name, 175, 225 + (numberOfOptions - 1) * 42, 1, grey);
@@ -4226,7 +4259,7 @@ void FullInventoryMenu::Draw()
 	auto texture = ResourceManager::GetTexture("icons");
 
 	renderer->setUVs(itemIconUVs[item.ID]);
-	renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * (numberOfOptions - 1)), 0.0f, cursor->dimensions);
+	renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * (numberOfOptions - 1)), 0.0f, glm::vec2(16));
 	Item focusedItem = item;
 	if (currentOption < numberOfOptions - 1)
 	{
@@ -4248,7 +4281,7 @@ void FullInventoryMenu::Draw()
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 		renderer->setUVs(proficiencyIconUVs[weaponData.type]);
-		renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, cursor->dimensions);
+		renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, glm::vec2(16));
 
 		text->RenderText("Type", xStatName, yPosition, 1);
 		yPosition += offSet;
