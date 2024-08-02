@@ -289,113 +289,115 @@ void UnitOptionsMenu::CancelOption(int num)
 	}
 }
 
+void UnitOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
+}
+
 void UnitOptionsMenu::Draw()
 {
+	DrawMenu(true);
+}
+
+void UnitOptionsMenu::DrawMenu(bool animate)
+{
 	int xText = 625;
-	int xIndicator = 176;
+	int xIndicator = 184;
 	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 72;
+		xText = 75;
 		xIndicator = 8;
 	}
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 32 + (16 * currentOption)), animate);
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
 	//Just a little test with new line
 	std::string commands = "";
 	if (canSeize)
 	{
 		text->RenderText("Seize", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (canTalk)
 	{
 		text->RenderText("Talk", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (canAttack)
 	{
 		commands += "Attack\n";
 		text->RenderText("Attack", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (canVisit)
 	{
 		text->RenderText("Visit", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	else if (canBuy)
 	{
 		text->RenderText("Vendor", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (heldFriendly)
 	{
 		text->RenderText("Drop", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	else if (heldEnemy)
 	{
 		text->RenderText("Release", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	else
 	{
 		if (canCapture)
 		{
 			text->RenderText("Capture", xText, yOffset, 1);
-			yOffset += 30;
+			yOffset += 42;
 		}
 		if (canRescue)
 		{
 			text->RenderText("Rescue", xText, yOffset, 1);
-			yOffset += 30;
+			yOffset += 42;
 		}
 	}
 	if (canTransfer)
 	{
 		text->RenderText("Transfer", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (hasItems)
 	{
 		commands += "Items\n";
 		text->RenderText("Items", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (canTrade)
 	{
 		text->RenderText("Trade", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (canDismount)
 	{
 		commands += "Dismount\n";
 		text->RenderText("Dismount", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	else if (canMount)
 	{
 		commands += "Mount\n";
 		text->RenderText("Mount", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	if (Settings::settings.mapAnimations == 2)
 	{
 		text->RenderText("Animation", xText, yOffset, 1);
-		yOffset += 30;
+		yOffset += 42;
 	}
 	commands += "Wait";
 	text->RenderText("Wait", xText, yOffset, 1);
@@ -600,28 +602,19 @@ CantoOptionsMenu::CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* c
 
 void CantoOptionsMenu::Draw()
 {
-	int xText = 600;
-	int xIndicator = 176;
+	int xText = 625;
+	int xIndicator = 184;
 	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 72;
+		xText = 75;
 		xIndicator = 8;
 	}
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 32 + (16 * currentOption)));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
 	text->RenderText("Wait", xText, yOffset, 1);
 }
 
@@ -637,6 +630,12 @@ void CantoOptionsMenu::CancelOption(int num)
 	Menu::CancelOption();
 }
 
+void CantoOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
+}
+
 ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer) : 
 	Menu(Cursor, Text, Camera, shapeVAO)
 {
@@ -650,7 +649,7 @@ void ItemOptionsMenu::Draw()
 {
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
-	DrawItemWindow(inventory, unit);
+	DrawItemWindow(inventory, unit, true);
 	if (inventory[currentOption]->isWeapon)
 	{
 		DrawWeaponComparison(inventory);
@@ -661,21 +660,11 @@ void ItemOptionsMenu::Draw()
 	}
 }
 
-void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit)
+void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit, bool animate)
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(24, 82 + 16 * currentOption, 0.0f));
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(24, 82 + (16 * currentOption)), animate);
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
 	//Duplicated this down in ItemUseMenu's Draw.
 	glm::vec3 color = glm::vec3(1);
 	glm::vec3 grey = glm::vec3(0.64f);
@@ -772,7 +761,7 @@ void ItemOptionsMenu::GetOptions()
 void ItemOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	Menu::CheckInput(inputManager, deltaTime);
-
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 	if (inputManager.isKeyPressed(SDLK_UP) || inputManager.isKeyPressed(SDLK_DOWN))
 	{
 		GetBattleStats();
@@ -799,19 +788,13 @@ ItemUseMenu::ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int
 
 void ItemUseMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(152, 86 + (16 * currentOption), 0.0f));
+	DrawMenu(true);
+}
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+void ItemUseMenu::DrawMenu(bool animate)
+{
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(152, 81 + (16 * currentOption)), animate);
 
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
@@ -821,7 +804,7 @@ void ItemUseMenu::Draw()
 	{
 		text->RenderText("Use", 525, yOffset, 1);
 		yOffset += 42;
-	}	
+	}
 	if (canEquip)
 	{
 		text->RenderText("Equip", 525, yOffset, 1);
@@ -876,6 +859,7 @@ void ItemUseMenu::CancelOption(int num)
 void ItemUseMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	Menu::CheckInput(inputManager, deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
 void ItemUseMenu::GetOptions()
@@ -909,24 +893,13 @@ DropConfirmMenu::DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* cam
 
 void DropConfirmMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(160, 124 + (16 * currentOption), 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(160, 121 + (16 * currentOption)));
 
 	text->RenderText("Yes", 550, 332, 1);
 	text->RenderText("No", 550, 374, 1);
 
-	previous->Draw();
+	previous->DrawMenu();
 }
 
 void DropConfirmMenu::SelectOption()
@@ -945,6 +918,12 @@ void DropConfirmMenu::CancelOption(int num)
 	Menu::CancelOption(3);
 }
 
+void DropConfirmMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
+}
+
 void DropConfirmMenu::GetOptions()
 {
 	optionsVector.resize(2);
@@ -956,37 +935,26 @@ AnimationOptionsMenu::AnimationOptionsMenu(Cursor* Cursor, TextRenderer* Text, C
 {
 	previous = static_cast<UnitOptionsMenu*>(MenuManager::menuManager.GetCurrent());
 	GetOptions();
-	yPosition = 130 + previous->optionsVector.size() * 30;
-	yIndicator = 44 + previous->optionsVector.size() * 12;
+	yPosition = 130 + previous->optionsVector.size() * 42;
+	yIndicator = 44 + previous->optionsVector.size() * 16;
 }
 
 void AnimationOptionsMenu::Draw()
 {
-	previous->Draw();
+	previous->DrawMenu();
 
 	int xText = 625;
-	int xIndicator = 176;
+	int xIndicator = 184;
 	int yOffset = yPosition;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 72;
+		xText = 75;
 		xIndicator = 8;
 	}
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, yIndicator + (12 * currentOption), 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, yIndicator + (16 * currentOption)));
 
 	text->RenderText("Normal", xText, yOffset, 1);
 	text->RenderText("Map", xText, yOffset + 42, 1);
@@ -1003,6 +971,12 @@ void AnimationOptionsMenu::SelectOption()
 		cursor->selectedUnit->battleAnimations = false;
 	}
 	CancelOption();
+}
+
+void AnimationOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
 void AnimationOptionsMenu::GetOptions()
@@ -1029,19 +1003,8 @@ void SelectWeaponMenu::Draw()
 {
 	auto inventory = weapons;
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(24, 82 + 16 * currentOption, 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::ivec2(24, 81 + 16 * currentOption));
 
 	Unit* unit = cursor->selectedUnit;
 	for (int i = 0; i < inventory.size(); i++)
@@ -1049,8 +1012,6 @@ void SelectWeaponMenu::Draw()
 		int yPosition = 225 + i * 42;
 		text->RenderText(inventory[i]->name, 175, yPosition, 1);
 		text->RenderTextRight(intToString(inventory[i]->remainingUses), 375, yPosition, 1, 14);
-		ResourceManager::GetShader("Nsprite").Use();
-		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(itemIconUVs[inventory[i]->ID]);
@@ -1091,7 +1052,7 @@ void SelectWeaponMenu::GetOptions()
 void SelectWeaponMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	Menu::CheckInput(inputManager, deltaTime);
-
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 	if (inputManager.isKeyPressed(SDLK_UP) || inputManager.isKeyPressed(SDLK_DOWN))
 	{
 		GetBattleStats();
@@ -1552,51 +1513,36 @@ void TradeMenu::Draw()
 	int x = 0;
 	if (firstInventory)
 	{
-		x = 8;
+		x = 7;
 	}
 	else
 	{
-		x = 136;
+		x = 135;
 	}
-	model = glm::translate(model, glm::vec3(x, 98 + 16 * currentOption, 0.0f));
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(x, 97 + (16 * currentOption)));
 
 	if (moving)
 	{
-		model = glm::mat4();
 		if (moveFromFirst)
 		{
-			x = 8;
+			x = 7;
 		}
 		else
 		{
-			x = 136;
+			x = 135;
 		}
-		model = glm::translate(model, glm::vec3(x, 98 + 16 * itemToMove, 0.0f));
 
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		MenuManager::menuManager.DrawIndicator(glm::vec2(x, 97 + (16 * itemToMove)), false);
 	}
+
 	auto firstUnit = cursor->selectedUnit;
 	text->RenderText(firstUnit->name, 25, 32, 1);
 	text->RenderText(firstUnit->unitClass, 25, 75, 1);
 	text->RenderText(tradeUnit->name, 425, 32, 1);
 	text->RenderText(tradeUnit->unitClass, 425, 75, 1);
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("Nsprite").Use();
 
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
 	{
@@ -1762,6 +1708,7 @@ void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		GetOptions();
 		ResourceManager::PlaySound("optionSelect2");
 	}
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
 void TradeMenu::CancelOption(int num)
@@ -1880,6 +1827,10 @@ void UnitStatsViewMenu::Draw()
 		}
 		if (!examining)
 		{
+			if (!transition)
+			{
+				MenuManager::menuManager.DrawArrow(glm::ivec2(124, 217));
+			}
 			//Going to need an indication of what stats are affected by modifiers
 			text->RenderText("Combat Stats", 54, 190 - adjustedOffset, 1);
 			text->RenderText("STR", 48, 220 - adjustedOffset, 0.8f);
@@ -1899,18 +1850,7 @@ void UnitStatsViewMenu::Draw()
 		}
 		else
 		{
-			ResourceManager::GetShader("shape").Use();
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(104, 95 + (16 * currentOption), 0.0f));
-
-			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(103, 97 + 16 * currentOption));
 			int yPosition = 220;
 
 			if (inventory[currentOption]->isWeapon)
@@ -1986,10 +1926,23 @@ void UnitStatsViewMenu::Draw()
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			glBindVertexArray(0);
 		}
+		else
+		{
+			if (!transition)
+			{
+				MenuManager::menuManager.DrawArrow(glm::ivec2(124, 80), false);
+			}
+		}
 		for (int i = 0; i < unit->skills.size(); i++)
 		{
 			renderer->setUVs(skillIconUVs[unit->skills[i]]);
 			renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, glm::vec2(16));
+		}
+		if (examining && !transition)
+		{
+			ResourceManager::GetShader("Nsprite").Use();
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(121, 188 + 16 * currentOption), true, 1.5708f);
+			//There's an outline I need to be drawing here too. Don't know how to animate it...
 		}
 
 		auto& profMap = MenuManager::menuManager.profcienciesMap;
@@ -2212,6 +2165,8 @@ void UnitStatsViewMenu::SelectOption()
 
 void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+	MenuManager::menuManager.AnimateArrow(deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 	if (transition)
 	{
 		int rate = 960;
@@ -2375,35 +2330,24 @@ ExtraMenu::ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int sha
 
 void ExtraMenu::Draw()
 {
-	int xText = 600;
-	int xIndicator = 176;
-	int yOffset = 100;
+	int xText = 625;
+	int xIndicator = 184;
+	int yOffset = 117;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 72;
+		xText = 75;
 		xIndicator = 8;
 	}
-	//ResourceManager::GetShader("shape").Use().SetMatrix4("projection", glm::ortho(0.0f, 800.0f, 600.0f, 0.0f));
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 32 + (12 * currentOption), 0.0f));
 
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 41 + (16 * currentOption)));
 	
-	text->RenderText("Unit", xText, 100, 1);
-	text->RenderText("Status", xText, 130, 1);
-	text->RenderText("Options", xText, 160, 1);
-	text->RenderText("Suspend", xText, 190, 1);
-	text->RenderText("End", xText, 220, 1);
+	text->RenderText("Unit", xText, 117, 1);
+	text->RenderText("Status", xText, 160, 1);
+	text->RenderText("Options", xText, 203, 1);
+	text->RenderText("Suspend", xText, 246, 1);
+	text->RenderText("End", xText, 289, 1);
 }
 
 void ExtraMenu::SelectOption()
@@ -2439,6 +2383,12 @@ void ExtraMenu::SelectOption()
 		ClearMenu();
 		break;
 	}
+}
+
+void ExtraMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	Menu::CheckInput(inputManager, deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
 SelectRescueUnit::SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) 
@@ -2684,6 +2634,10 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 		SortView();
 	}
 
+	currentPage = MenuManager::menuManager.unitViewPage;
+	sortIndicator = MenuManager::menuManager.unitViewIndicator;
+	currentSort = MenuManager::menuManager.unitViewCurrentSort;
+
 	pageSortOptions.resize(6);
 	pageSortOptions[GENERAL] = 6;
 	pageSortOptions[EQUIPMENT] = 5;
@@ -2718,7 +2672,6 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	sortNames[22] = "Status";
 	sortNames[23] = "Trvlr";
 	sortNames[24] = "Name";
-
 	//Weapon Profs will actually be represented by images
 	sortNames[25] = "Sword";
 	sortNames[26] = "Axe";
@@ -2730,9 +2683,49 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 	sortNames[32] = "Wind";
 	sortNames[33] = "Light";
 	sortNames[34] = "Dark";
-
 	sortNames[35] = "Name";
 	sortNames[36] = "Skills";
+
+	sortIndicatorLocations.resize(37);
+
+	//+25 for the height of the upside down arrows
+	sortIndicatorLocations[0] = glm::ivec2(36, 28);
+	sortIndicatorLocations[1] = glm::ivec2(105, 28);
+	sortIndicatorLocations[2] = glm::ivec2(156, 28);
+	sortIndicatorLocations[3] = glm::ivec2(180, 28);
+	sortIndicatorLocations[4] = glm::ivec2(205, 28);
+	sortIndicatorLocations[5] = glm::ivec2(233, 28);
+	sortIndicatorLocations[6] = glm::ivec2(36, 28);
+	sortIndicatorLocations[7] = glm::ivec2(108, 28);
+	sortIndicatorLocations[8] = glm::ivec2(164, 28);
+	sortIndicatorLocations[9] = glm::ivec2(193, 28);
+	sortIndicatorLocations[10] = glm::ivec2(224, 28);
+	sortIndicatorLocations[11] = glm::ivec2(36, 28);
+	sortIndicatorLocations[12] = glm::ivec2(88, 28);
+	sortIndicatorLocations[13] = glm::ivec2(108, 28);
+	sortIndicatorLocations[14] = glm::ivec2(136, 28);
+	sortIndicatorLocations[15] = glm::ivec2(156, 28);
+	sortIndicatorLocations[16] = glm::ivec2(180, 28);
+	sortIndicatorLocations[17] = glm::ivec2(204, 28);
+	sortIndicatorLocations[18] = glm::ivec2(228, 28);
+	sortIndicatorLocations[19] = glm::ivec2(36, 28);
+	sortIndicatorLocations[20] = glm::ivec2(92, 28);
+	sortIndicatorLocations[21] = glm::ivec2(116, 28);
+	sortIndicatorLocations[22] = glm::ivec2(156, 28);
+	sortIndicatorLocations[23] = glm::ivec2(208, 28);
+	sortIndicatorLocations[24] = glm::ivec2(36, 28);
+	sortIndicatorLocations[25] = glm::ivec2(89, 28);
+	sortIndicatorLocations[26] = glm::ivec2(105, 28);
+	sortIndicatorLocations[27] = glm::ivec2(121, 28);
+	sortIndicatorLocations[28] = glm::ivec2(137, 28);
+	sortIndicatorLocations[29] = glm::ivec2(153, 28);
+	sortIndicatorLocations[30] = glm::ivec2(169, 28);
+	sortIndicatorLocations[31] = glm::ivec2(185, 28);
+	sortIndicatorLocations[32] = glm::ivec2(201, 28);
+	sortIndicatorLocations[33] = glm::ivec2(217, 28);
+	sortIndicatorLocations[34] = glm::ivec2(233, 28);
+	sortIndicatorLocations[35] = glm::ivec2(36, 28);
+	sortIndicatorLocations[36] = glm::ivec2(152, 28);
 
 	profOrder[0] = WeaponData::TYPE_SWORD;
 	profOrder[1] = WeaponData::TYPE_LANCE;
@@ -2765,25 +2758,22 @@ void UnitListMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+
 	model = glm::mat4();
 	if (!sortMode)
 	{
-		model = glm::translate(model, glm::vec3(0, 56 + (16 * currentOption), 0.0f));
+		MenuManager::menuManager.DrawIndicator(glm::vec2(-1, 56 + (16 * currentOption)));
 	}
 	else
 	{
-		//This sucks dude in FE5 it varies by page
-		model = glm::translate(model, glm::vec3(16 + (16 * sortIndicator), 40, 0.0f));
+		MenuManager::menuManager.DrawIndicator(glm::vec2(127, 8));
+
+		MenuManager::menuManager.DrawArrow(sortIndicatorLocations[currentSort]);
+		MenuManager::menuManager.DrawArrow(sortIndicatorLocations[currentSort] + glm::ivec2(0, 19), false);
+
 	}
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	MenuManager::menuManager.DrawArrowIndicator(glm::ivec2(168, 14));
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
@@ -2981,11 +2971,11 @@ void UnitListMenu::Draw()
 	}
 	else
 	{
-		text->RenderText(sortNames[sortType], 471, 29, 1); //sort type
+		text->RenderText(sortNames[sortType], 450, 32, 1); //sort type
 	}
-	text->RenderText(intToString(currentPage + 1) , 700, 29, 1);
-	text->RenderText("/", 711, 29, 1);
-	text->RenderText(intToString(numberOfPages), 723, 29, 1);
+	text->RenderText(intToString(currentPage + 1) , 675, 37, 1);
+	text->RenderText("/", 686, 37, 1);
+	text->RenderText(intToString(numberOfPages), 698, 37, 1);
 }
 
 void UnitListMenu::SelectOption()
@@ -3003,6 +2993,7 @@ void UnitListMenu::SelectOption()
 		//Mysteriously, sorting by name in FE5 actually sorts by the default unit order
 		if (sortIndicator == 0)
 		{
+			sortType = 0;
 			for (int i = 0; i < unitData.size(); i++)
 			{
 				auto unit = MenuManager::menuManager.playerManager->units[i];
@@ -3011,6 +3002,7 @@ void UnitListMenu::SelectOption()
 		}
 		else
 		{
+			sortType = currentSort;
 			SortView();
 		}
 	}
@@ -3018,6 +3010,9 @@ void UnitListMenu::SelectOption()
 
 void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
+	MenuManager::menuManager.AnimateArrow(deltaTime);
+	MenuManager::menuManager.AnimateArrowIndicator(deltaTime);
 	if (sortMode)
 	{
 		if (inputManager.isKeyPressed(SDLK_DOWN))
@@ -3029,7 +3024,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			if (currentPage < numberOfPages)
 			{
-				if (sortType < 36)
+				if (currentSort < 36)
 				{
 					sortIndicator++;
 					if (sortIndicator > pageSortOptions[currentPage] - 1)
@@ -3037,7 +3032,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						sortIndicator = 0;
 						currentPage++;
 					}
-					sortType++;
+					currentSort++;
 					ResourceManager::PlaySound("optionSelect2");
 				}
 			}
@@ -3053,7 +3048,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					{
 						currentPage--;
 						sortIndicator = pageSortOptions[currentPage] - 1;
-						sortType--;
+						currentSort--;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					else
@@ -3063,11 +3058,11 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				}
 				else
 				{
-					sortType--;
+					currentSort--;
 					ResourceManager::PlaySound("optionSelect2");
 				}
 			}
-			std::cout << sortType << std::endl;
+			std::cout << currentSort << std::endl;
 		}
 	}
 	else
@@ -3099,8 +3094,8 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			if (currentPage < numberOfPages - 1)
 			{
-				sortType -= sortIndicator;
-				sortType += pageSortOptions[currentPage];
+				currentSort -= sortIndicator;
+				currentSort += pageSortOptions[currentPage];
 				currentPage++;
 				if (currentPage >= numberOfPages - 1)
 				{
@@ -3119,8 +3114,8 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			}
 			else
 			{
-				sortType -= sortIndicator;
-				sortType -= pageSortOptions[currentPage];
+				currentSort -= sortIndicator;
+				currentSort -= pageSortOptions[currentPage];
 				sortIndicator = 0;
 				ResourceManager::PlaySound("optionSelect2");
 
@@ -3152,6 +3147,9 @@ void UnitListMenu::CloseAndSaveView()
 	{
 		MenuManager::menuManager.unitViewSortType = 0;
 	}
+	MenuManager::menuManager.unitViewPage = currentPage;
+	MenuManager::menuManager.unitViewIndicator = sortIndicator;
+	MenuManager::menuManager.unitViewCurrentSort = currentSort;
 	ClearMenu();
 }
 
@@ -3328,16 +3326,8 @@ void StatusMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 200 + (16 * currentOption), 0.0f));
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(0, 200 + 16 * currentOption), false);
 
 	text->RenderText("Objective", 25, 96, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 	text->RenderText("Captures/Wins", 25, 182, 1, glm::vec3(0.69f, 0.62f, 0.49f));
@@ -3421,18 +3411,8 @@ void OptionsMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(8, indicatorY, 0.0f));
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
 	ResourceManager::GetShader("Nsprite").Use();
+	MenuManager::menuManager.DrawIndicator(glm::vec2(8, indicatorY), false);
 
 	if (yOffset < 256)
 	{
@@ -3521,6 +3501,7 @@ void OptionsMenu::SelectOption()
 void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	MenuManager::menuManager.AnimateArrow(deltaTime);
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 	if (inputManager.isKeyPressed(SDLK_UP))
 	{
 		currentOption--;
@@ -3777,6 +3758,7 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough cash, stranger.<2", 14 });
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough space, stranger.<2", 14 });
 	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "You've got nothing to sell, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not interested, stranger.<2", 14 });
 
 	testText.position = glm::vec2(275.0f, 48.0f);
 	testText.portraitPosition = glm::vec2(16, 16);
@@ -3837,33 +3819,34 @@ void VendorMenu::Draw()
 	model = glm::mat4();
 	if (!textManager.active && !delay)
 	{
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		switch (state)
 		{
 		case GREETING:
-			model = glm::translate(model, glm::vec3(144 + (46 * !buying), 50, 0.0f));
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(143 + 49 * !buying, 50));
 			text->RenderText("Buy", 500, 133, 1);
 			text->RenderText("Sell", 646, 133, 1);
 			break;
 		case BUYING:
-			model = glm::translate(model, glm::vec3(88, 92 + 16 * currentOption, 0.0f));
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption));
 			break;
 		case SELLING:
-			model = glm::translate(model, glm::vec3(88, 92 + 16 * currentOption, 0.0f));
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption));
 			break;
 		case CONFIRMING:
-			model = glm::translate(model, glm::vec3(144 + (46 * !confirm), 50, 0.0f));
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(143 + (49 * !confirm), 50));
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption), false);
 			text->RenderText("Yes", 500, 133, 1);
 			text->RenderText("No", 646, 133, 1);
 			break;
 		}
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+	}
+	else
+	{
+		if (state == CONFIRMING)
+		{
+			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption), false);
+		}
 	}
 
 	int xPos = 375;
@@ -4007,9 +3990,16 @@ void VendorMenu::SelectOption()
 		break;
 	}
 	case SELLING:
-		textManager.init(5);
-		state = CONFIRMING;
-		confirm = true;
+		if (buyer->inventory[currentOption]->value == 0)
+		{
+			textManager.init(11);
+		}
+		else
+		{
+			textManager.init(5);
+			state = CONFIRMING;
+			confirm = true;
+		}
 		break;
 	case CONFIRMING:
 		if (confirm)
@@ -4075,6 +4065,7 @@ void VendorMenu::ActivateText()
 
 void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 	if (textManager.active)
 	{
 		textManager.Update(deltaTime, inputManager);
@@ -4222,24 +4213,14 @@ void FullInventoryMenu::Draw()
 	glBindVertexArray(0);
 
 	//Selection
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(24, 82 + (16 * currentOption), 0.0f));
-
-	model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	MenuManager::menuManager.DrawIndicator(glm::vec2(24, 81 + (16 * currentOption)));
 
 	//Duplicated this down in ItemUseMenu's Draw.
 	Unit* unit = cursor->selectedUnit;
 	auto inventory = unit->inventory;
 	glm::vec3 color = glm::vec3(1);
 	glm::vec3 grey = glm::vec3(0.64f);
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
 	for (int i = 0; i < numberOfOptions - 1; i++)
 	{
@@ -4377,6 +4358,7 @@ void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	{
 		SelectOption();
 	}
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
 UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition) :
@@ -4526,7 +4508,6 @@ void SuspendMenu::Draw()
 {
 	if (suspended)
 	{
-
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 		glm::mat4 model = glm::mat4();
@@ -4559,17 +4540,8 @@ void SuspendMenu::Draw()
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
-		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(88 + 32 * currentOption, 132, 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		MenuManager::menuManager.DrawIndicator(glm::vec2(87 + 32 * currentOption, 129));
 
 		text->RenderText("Suspend the game?", 275, 310, 1);
 		text->RenderText("Yes", 325, 353, 1);
@@ -4625,6 +4597,7 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			CancelOption();
 		}
+		MenuManager::menuManager.AnimateIndicator(deltaTime);
 	}
 }
 
@@ -4653,6 +4626,9 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
 	optionIconUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 0, 16, 16, 4, 3, 10);
 	arrowAnimUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 48, 7, 6, 6, 1);
+	indicatorUV = ResourceManager::GetTexture("UIItems").GetUVs(32, 32, 16, 16, 1, 1);
+	arrowUV = ResourceManager::GetTexture("UIItems").GetUVs(48, 32, 8, 8, 1, 1);
+
 	arrowSprite.setSize(glm::vec2(7, 6));
 	arrowSprite.uv = &arrowAnimUVs;
 }
@@ -4727,6 +4703,47 @@ void MenuManager::DrawArrow(glm::ivec2 position, bool down)
 	renderer->setUVs(arrowSprite.getUV());
 	Texture2D texture = ResourceManager::GetTexture("UIItems");
 	renderer->DrawSprite(texture, position, 0, arrowSprite.getSize(), glm::vec4(1), false, !down);
+}
+
+void MenuManager::AnimateIndicator(float deltaTime)
+{
+	indicatorDrawX = glm::mix(0, 4, pow(sin(indicatorT), 2));
+	indicatorT += 6.5f * deltaTime;
+	indicatorT = fmod(indicatorT, glm::pi<float>());
+}
+
+void MenuManager::DrawIndicator(glm::ivec2 position, bool animated, float rot)
+{
+	renderer->setUVs(indicatorUV[0]);
+	Texture2D texture = ResourceManager::GetTexture("UIItems");
+	if (animated)
+	{
+		if (rot > 0)
+		{
+			position.y -= indicatorDrawX; //Not very robust but I only need this in one place
+		}
+		else
+		{
+			position.x -= indicatorDrawX;
+		}
+	}
+	renderer->DrawSprite(texture, position, rot, glm::vec2(16));
+}
+
+void MenuManager::AnimateArrowIndicator(float deltaTime)
+{
+	indicatorArrowDrawX = glm::mix(0, 4, pow(sin(indicatorArrowT), 2));
+	indicatorArrowT += 5.5f * deltaTime;
+	indicatorArrowT = fmod(indicatorArrowT, glm::pi<float>());
+}
+
+void MenuManager::DrawArrowIndicator(glm::ivec2 position)
+{
+	renderer->setUVs(arrowUV[0]);
+	Texture2D texture = ResourceManager::GetTexture("UIItems");
+	position.y -= indicatorArrowDrawX; 
+
+	renderer->DrawSprite(texture, position, 0, glm::vec2(8));
 }
 
 Menu* MenuManager::GetCurrent()

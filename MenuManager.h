@@ -45,9 +45,10 @@ struct UnitOptionsMenu : public Menu
 {
 	UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
 	virtual void Draw() override;
+	void DrawMenu(bool animate = false);
 	virtual void SelectOption() override;
 	virtual void CancelOption(int num = 1) override;
-
+	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
 	virtual void GetOptions() override;
 
 	const static int ITEMS = 0;
@@ -99,13 +100,14 @@ struct CantoOptionsMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption(int num = 1) override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 };
 
 struct ItemOptionsMenu : public Menu
 {
 	ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
-	void DrawItemWindow(std::vector<Item*>& inventory, Unit* unit);
+	void DrawItemWindow(std::vector<Item*>& inventory, Unit* unit, bool animate = false);
 	void DrawWeaponComparison(std::vector<Item*>& inventory);
 	void DrawPortrait(Unit* unit);
 	virtual void SelectOption() override;
@@ -126,6 +128,7 @@ struct ItemUseMenu : public Menu
 {
 	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Item* selectedItem, int inventoryIndex, SpriteRenderer* Renderer);
 	virtual void Draw() override;
+	void DrawMenu(bool animate = false);
 	virtual void SelectOption() override;
 	virtual void CancelOption(int num = 1) override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -152,6 +155,7 @@ struct DropConfirmMenu : public Menu
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption(int num = 1) override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	virtual void  GetOptions() override;
 
@@ -166,7 +170,7 @@ struct AnimationOptionsMenu : public Menu
 	AnimationOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
-//	virtual void CancelOption(int num = 1) override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	virtual void  GetOptions() override;
 	UnitOptionsMenu* previous;
@@ -362,6 +366,7 @@ struct ExtraMenu : public Menu
 	ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 };
 
 struct UnitListMenu : public Menu
@@ -385,10 +390,12 @@ struct UnitListMenu : public Menu
 	int currentPage = 0;
 	int numberOfPages = 6;
 	int sortType = 0;
+	int currentSort = 0;
 	int sortIndicator = 0;
 	bool sortMode = false;
 	std::vector<int> pageSortOptions;
 	std::vector<std::string> sortNames;
+	std::vector<glm::ivec2> sortIndicatorLocations;
 	std::vector <std::pair<Unit*, BattleStats>> unitData;
 
 	SpriteRenderer* Renderer;
@@ -531,6 +538,12 @@ struct MenuManager
 	void AnimateArrow(float deltaTime);
 	void DrawArrow(glm::ivec2 position, bool down = true);
 
+	void AnimateIndicator(float deltaTime);
+	void DrawIndicator(glm::ivec2 position, bool animated = true, float rot = 0);
+
+	void AnimateArrowIndicator(float deltaTime);
+	void DrawArrowIndicator(glm::ivec2 position);
+
 	Menu* GetCurrent();
 	Menu* GetPrevious();
 
@@ -549,6 +562,16 @@ struct MenuManager
 	std::vector<glm::vec4> skillIconUVs;
 	std::vector<glm::vec4> optionIconUVs;
 	std::vector<glm::vec4> arrowAnimUVs;
+	std::vector<glm::vec4> indicatorUV;
+	std::vector<glm::vec4> arrowUV;
+
+	glm::vec2 indicatorPosition;
+	float indicatorDrawX;
+	float indicatorT;
+
+	glm::vec2 indicatorArrowPosition;
+	float indicatorArrowDrawX;
+	float indicatorArrowT;
 
 	Sprite arrowSprite;
 
@@ -566,6 +589,9 @@ struct MenuManager
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 
 	int unitViewSortType;
+	int unitViewPage;
+	int unitViewIndicator;
+	int unitViewCurrentSort;
 
 	static MenuManager menuManager;
 };
