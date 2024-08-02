@@ -549,6 +549,9 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/OptionsScreenBackground.png", "OptionsScreenBackground");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UnitViewBG.png", "UnitViewBG");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/TradeMenuBG.png", "TradeMenuBG");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/StatusMenuBG.png", "StatusMenuBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIStuff.png", "UIStuff");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test2.png", "test2");

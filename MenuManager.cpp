@@ -1509,7 +1509,11 @@ void TradeMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	model = glm::mat4();
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	Texture2D texture = ResourceManager::GetTexture("TradeMenuBG");
+	renderer->setUVs();
+	renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+
 	int x = 0;
 	if (firstInventory)
 	{
@@ -2760,10 +2764,15 @@ void UnitListMenu::Draw()
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
+	Texture2D texture = ResourceManager::GetTexture("UnitViewBG");
+
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+
 	model = glm::mat4();
 	if (!sortMode)
 	{
-		MenuManager::menuManager.DrawIndicator(glm::vec2(-1, 56 + (16 * currentOption)));
+		MenuManager::menuManager.DrawIndicator(glm::vec2(-1, 57 + (16 * currentOption)));
 	}
 	else
 	{
@@ -2885,7 +2894,7 @@ void UnitListMenu::Draw()
 		pageName = "Weapon Ranks";
 
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		auto texture = ResourceManager::GetTexture("icons");
+		texture = ResourceManager::GetTexture("icons");
 
 		for (int i = 0; i < 10; i++)
 		{
@@ -2940,7 +2949,7 @@ void UnitListMenu::Draw()
 	{
 		pageName = "Skills";
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		auto texture = ResourceManager::GetTexture("icons");
+		texture = ResourceManager::GetTexture("icons");
 		for (int i = 0; i < numberOfOptions; i++)
 		{
 			auto unit = unitData[i].first;
@@ -2964,7 +2973,7 @@ void UnitListMenu::Draw()
 	if (sortType >= 25 && sortType <= 34)
 	{
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		auto texture = ResourceManager::GetTexture("icons");
+		texture = ResourceManager::GetTexture("icons");
 
 		Renderer->setUVs(proficiencyIconUVs[profOrder[sortType - 25]]);
 		Renderer->DrawSprite(texture, glm::vec2(148, 9), 0.0f, glm::vec2(16));
@@ -3327,18 +3336,15 @@ void StatusMenu::Draw()
 	glBindVertexArray(0);
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	MenuManager::menuManager.DrawIndicator(glm::vec2(0, 200 + 16 * currentOption), false);
 
-	text->RenderText("Objective", 25, 96, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText("Captures/Wins", 25, 182, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText("Turn", 150, 225, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText("Funds", 425, 225, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+	Texture2D texture = ResourceManager::GetTexture("StatusMenuBG");
+	MenuManager::menuManager.renderer->setUVs();
+	MenuManager::menuManager.renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+
+	MenuManager::menuManager.DrawIndicator(glm::vec2(7, 137 + 16 * currentOption));
 
 	text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 0, 26, 1, 744); //Chapter Tile Goes here
-	text->RenderTextCenter("Sieze the manor's gate", 171, 91, 1, 40); //Objective goes here
-
-	text->RenderText("Combatants", 100, 310, 1);
-	text->RenderText("Commander", 400, 310, 1);
+	text->RenderText("Sieze the manor's gate", 175, 91, 1); //Objective goes here
 
 	text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 100, 375, 1);
 	text->RenderText("-----", 100, 431, 1);
@@ -3350,7 +3356,6 @@ void StatusMenu::Draw()
 	text->RenderText("/", 500, 530, 1);
 	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
 	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 14);
-
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
@@ -3364,6 +3369,24 @@ void StatusMenu::Draw()
 
 void StatusMenu::SelectOption()
 {
+}
+
+void StatusMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	MenuManager::menuManager.AnimateIndicator(deltaTime);
+	if (inputManager.isKeyPressed(SDLK_UP))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	{
+		NextOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		ResourceManager::PlaySound("cancel");
+		ClearMenu();
+	}
 }
 
 OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
@@ -4581,6 +4604,7 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 	else
 	{
+		MenuManager::menuManager.AnimateIndicator(deltaTime);
 		if (inputManager.isKeyPressed(SDLK_LEFT))
 		{
 			NextOption();
@@ -4595,9 +4619,9 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		else if (inputManager.isKeyPressed(SDLK_z))
 		{
-			CancelOption();
+			ResourceManager::PlaySound("cancel");
+			ClearMenu();
 		}
-		MenuManager::menuManager.AnimateIndicator(deltaTime);
 	}
 }
 

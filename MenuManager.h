@@ -409,6 +409,7 @@ struct StatusMenu : public Menu
 	StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
+	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 };
 
 struct OptionsMenu : public Menu
