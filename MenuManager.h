@@ -13,7 +13,7 @@ class BattleManager;
 struct Menu
 {
 	Menu() {}
-	Menu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	Menu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual ~Menu() {}
 	virtual void Draw() = 0;
 	virtual void SelectOption() = 0;
@@ -23,11 +23,13 @@ struct Menu
 	void NextOption();
 	void PreviousOption();
 	void EndUnitMove();
+	void DrawBox(glm::ivec2 position, int width, int height);
 	void ClearMenu();
 
 	Cursor* cursor = nullptr;
 	TextRenderer* text = nullptr;
 	Camera* camera = nullptr;
+	SpriteRenderer* Renderer = nullptr;
 
 	int shapeVAO; //Not sure I need this long term, as I will eventually replace shape drawing with sprites
 
@@ -38,12 +40,11 @@ struct Menu
 	//If this menu covers the whole screen
 	//Used in the main draw call, if it is true, we don't need to draw anything else but the menu
 	bool fullScreen = false;
-
 };
 
 struct UnitOptionsMenu : public Menu
 {
-	UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	void DrawMenu(bool animate = false);
 	virtual void SelectOption() override;
@@ -96,7 +97,7 @@ struct UnitOptionsMenu : public Menu
 
 struct CantoOptionsMenu : public Menu
 {
-	CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption(int num = 1) override;
@@ -119,14 +120,13 @@ struct ItemOptionsMenu : public Menu
 	BattleStats currentStats;
 	BattleStats selectedStats;
 
-	SpriteRenderer* renderer;
 	std::vector<glm::vec4> itemIconUVs;
 	std::vector<glm::vec4> proficiencyIconUVs;
 };
 
 struct ItemUseMenu : public Menu
 {
-	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Item* selectedItem, int inventoryIndex, SpriteRenderer* Renderer);
+	ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Item* selectedItem, int inventoryIndex);
 	virtual void Draw() override;
 	void DrawMenu(bool animate = false);
 	virtual void SelectOption() override;
@@ -151,7 +151,7 @@ struct ItemUseMenu : public Menu
 
 struct DropConfirmMenu : public Menu
 {
-	DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int index, SpriteRenderer* Renderer);
+	DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, int index);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CancelOption(int num = 1) override;
@@ -180,7 +180,7 @@ struct AnimationOptionsMenu : public Menu
 
 struct SelectWeaponMenu : public ItemOptionsMenu
 {
-	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, SpriteRenderer* Renderer, bool capturing = false);
+	SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, bool capturing = false);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
@@ -207,7 +207,7 @@ struct DisplayedBattleStats
 
 struct SelectEnemyMenu : public Menu
 {
-	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, int selectedWeapon, bool capturing = false);
+	SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units, int selectedWeapon, bool capturing = false);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void GetOptions() override;
@@ -224,14 +224,13 @@ struct SelectEnemyMenu : public Menu
 	int selectedWeapon;
 	int attackDistance;
 	std::vector<Unit*> unitsToAttack;
-	SpriteRenderer* renderer = nullptr;
 	bool enemyCanCounter = false;
 	bool capturing = false;
 };
 
 struct SelectTradeUnit : public Menu
 {
-	SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+	SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -239,12 +238,11 @@ struct SelectTradeUnit : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<Unit*> tradeUnits;
-	SpriteRenderer* renderer;
 };
 
 struct SelectTalkMenu : public Menu
 {
-	SelectTalkMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+	SelectTalkMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -252,12 +250,11 @@ struct SelectTalkMenu : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<Unit*> talkUnits;
-	SpriteRenderer* renderer;
 };
 
 struct SelectRescueUnit : public Menu
 {
-	SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+	SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -265,12 +262,11 @@ struct SelectRescueUnit : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<Unit*> rescueUnits;
-	SpriteRenderer* renderer;
 };
 
 struct SelectTransferUnit : public Menu
 {
-	SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer);
+	SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -278,12 +274,11 @@ struct SelectTransferUnit : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<Unit*> transferUnits;
-	SpriteRenderer* renderer;
 };
 
 struct DropMenu : public Menu
 {
-	DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<glm::ivec2>& positions, SpriteRenderer* Renderer);
+	DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<glm::ivec2>& positions);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -291,12 +286,11 @@ struct DropMenu : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	std::vector<glm::ivec2>& positions;
-	SpriteRenderer* renderer;
 };
 
 struct TradeMenu : public Menu
 {
-	TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer);
+	TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit);
 
 	virtual void Draw() override;
 	virtual void SelectOption() override;
@@ -310,7 +304,6 @@ struct TradeMenu : public Menu
 	bool moving = false;
 	bool firstInventory = true;
 	bool moveFromFirst = true;
-	SpriteRenderer* renderer;
 	std::vector<glm::vec4> itemIconUVs;
 };
 
@@ -322,7 +315,7 @@ struct SkillInfo
 
 struct UnitStatsViewMenu : public Menu
 {
-	UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer);
+	UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -330,7 +323,6 @@ struct UnitStatsViewMenu : public Menu
 
 	Unit* unit;
 	BattleStats battleStats;
-	SpriteRenderer* renderer;
 
 	//Need these for swapping the view between units
 	int unitIndex = 0;
@@ -363,7 +355,7 @@ struct ExtraMenu : public Menu
 	const static int OPTIONS = 2;
 	const static int SUSPEND = 3;
 	const static int END = 4;
-	ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -398,7 +390,6 @@ struct UnitListMenu : public Menu
 	std::vector<glm::ivec2> sortIndicatorLocations;
 	std::vector <std::pair<Unit*, BattleStats>> unitData;
 
-	SpriteRenderer* Renderer;
 	std::vector<glm::vec4> proficiencyIconUVs;
 	std::vector<glm::vec4> skillIconUVs;
 	int profOrder[10];
@@ -406,7 +397,7 @@ struct UnitListMenu : public Menu
 
 struct StatusMenu : public Menu
 {
-	StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -414,7 +405,7 @@ struct StatusMenu : public Menu
 
 struct OptionsMenu : public Menu
 {
-	OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO);
+	OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -435,7 +426,7 @@ struct OptionsMenu : public Menu
 
 struct FullInventoryMenu : public Menu
 {
-	FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem, SpriteRenderer* renderer);
+	FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, int newItem);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -445,10 +436,8 @@ struct FullInventoryMenu : public Menu
 	BattleStats currentStats;
 	BattleStats selectedStats;
 
-	SpriteRenderer* renderer;
 	std::vector<glm::vec4> itemIconUVs;
 	std::vector<glm::vec4> proficiencyIconUVs;
-
 };
 
 enum VendorState
@@ -462,7 +451,7 @@ enum VendorState
 
 struct VendorMenu : public Menu
 {
-	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, class Vendor* vendor, SpriteRenderer* Renderer);
+	VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* buyer, class Vendor* vendor);
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	void ActivateText();
@@ -482,8 +471,6 @@ struct VendorMenu : public Menu
 
 	float delayTime = 0.15f;
 	float delayTimer = 0.0f;
-
-	SpriteRenderer* Renderer;
 };
 
 //Not actually a menu, makes unit rescue/release/etc animations easier
@@ -494,7 +481,7 @@ struct UnitMovement :public Menu
 	const static int DROP = 2;
 	const static int RELEASE = 3;
 
-	UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition = glm::ivec2(0));
+	UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition = glm::ivec2(0));
 	virtual void Draw() override;
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
@@ -521,7 +508,6 @@ struct SuspendMenu : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	bool suspended = false;
-	SpriteRenderer* Renderer;
 };
 
 struct MenuManager

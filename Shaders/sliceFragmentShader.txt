@@ -49,7 +49,8 @@ void main(void)
         processAxis(TextureCoordinates.y, u_border.y, u_dimensions.y)
     );
 	
-	 newUV = subspriteMap(newUV);
+	//messing up on resize, just using a single image texture for now
+//	 newUV = subspriteMap(newUV);
 
 	gl_FragColor = vec4(spriteColor) * texture2D(image, newUV);
 

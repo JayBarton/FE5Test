@@ -21,7 +21,8 @@
 #include <sstream>
 #include <algorithm> 
 
-Menu::Menu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : cursor(Cursor), text(Text), camera(Camera), shapeVAO(shapeVAO)
+Menu::Menu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer)
+	: cursor(Cursor), text(Text), camera(Camera), shapeVAO(shapeVAO), Renderer(Renderer)
 {
 	ResourceManager::PlaySound("select2");
 }
@@ -90,12 +91,35 @@ void Menu::CancelOption(int num)
 	ResourceManager::PlaySound("cancel"); 
 }
 
+void Menu::DrawBox(glm::ivec2 position, int width, int height)
+{
+	Renderer->shader = ResourceManager::GetShader("slice");
+
+	ResourceManager::GetShader("slice").Use();
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	auto texture = ResourceManager::GetTexture("ResizeBox");
+
+	glm::vec4 uvs = texture.GetUVs(32, 32)[0];
+	glm::vec2 size = glm::vec2(width, height);
+	float borderSize = 10.0f;
+	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+	ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
+	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(position.x, position.y), 0.0f, size);
+
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
+}
+
 void Menu::ClearMenu()
 {
 	MenuManager::menuManager.ClearMenu();
 }
 
-UnitOptionsMenu::UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO) : Menu(Cursor, Text, Camera, shapeVAO)
+UnitOptionsMenu::UnitOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, Camera, shapeVAO, Renderer)
 {
 	GetOptions();
 }
@@ -143,7 +167,7 @@ void UnitOptionsMenu::SelectOption()
 				}
 			}
 		}
-		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack, MenuManager::menuManager.renderer);
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, Renderer, validWeapons, unitsToAttack);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -169,13 +193,13 @@ void UnitOptionsMenu::SelectOption()
 		{
 			unitsToAttack[i] = unitsInCaptureRange;
 		}
-		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, validWeapons, unitsToAttack, MenuManager::menuManager.renderer, true);
+		Menu* newMenu = new SelectWeaponMenu(cursor, text, camera, shapeVAO, Renderer, validWeapons, unitsToAttack, true);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case DROP:
 	{
-		Menu* newMenu = new DropMenu(cursor, text, camera, shapeVAO, dropPositions, MenuManager::menuManager.renderer);
+		Menu* newMenu = new DropMenu(cursor, text, camera, shapeVAO, Renderer, dropPositions);
 		MenuManager::menuManager.menus.push_back(newMenu);
 	}
 		break;
@@ -185,25 +209,25 @@ void UnitOptionsMenu::SelectOption()
 		auto releasedEnemy = playerUnit->carriedUnit;
 		heldEnemy = false;
 
-		Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, releasedEnemy, nullptr, 3, playerUnit->sprite.getPosition() + glm::vec2(0, 16));
+		Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, Renderer, releasedEnemy, nullptr, 3, playerUnit->sprite.getPosition() + glm::vec2(0, 16));
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case RESCUE:
 	{
-		Menu* newMenu = new SelectRescueUnit(cursor, text, camera, shapeVAO, rescueUnits, MenuManager::menuManager.renderer);
+		Menu* newMenu = new SelectRescueUnit(cursor, text, camera, shapeVAO, Renderer, rescueUnits);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case TRANSFER:
 	{
-		Menu* newMenu = new SelectTransferUnit(cursor, text, camera, shapeVAO, transferUnits, MenuManager::menuManager.renderer);
+		Menu* newMenu = new SelectTransferUnit(cursor, text, camera, shapeVAO, Renderer, transferUnits);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case TRADE:
 	{
-		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, tradeUnits, MenuManager::menuManager.renderer);
+		Menu* newMenu = new SelectTradeUnit(cursor, text, camera, shapeVAO, Renderer, tradeUnits);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -229,7 +253,7 @@ void UnitOptionsMenu::SelectOption()
 	}
 	case TALK:
 	{
-		Menu* newMenu = new SelectTalkMenu(cursor, text, camera, shapeVAO, talkUnits, MenuManager::menuManager.renderer);
+		Menu* newMenu = new SelectTalkMenu(cursor, text, camera, shapeVAO, Renderer, talkUnits);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -252,7 +276,7 @@ void UnitOptionsMenu::SelectOption()
 	{
 		auto position = playerUnit->sprite.getPosition();
 		auto vendor = TileManager::tileManager.getVendor(position.x, position.y);
-		Menu* newMenu = new VendorMenu(cursor, text, camera, shapeVAO, playerUnit, vendor, MenuManager::menuManager.renderer);
+		Menu* newMenu = new VendorMenu(cursor, text, camera, shapeVAO, Renderer, playerUnit, vendor);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -263,7 +287,7 @@ void UnitOptionsMenu::SelectOption()
 		break;
 	case ANIMATION:
 	{
-		Menu* newMenu = new AnimationOptionsMenu(cursor, text, camera, shapeVAO, MenuManager::menuManager.renderer);
+		Menu* newMenu = new AnimationOptionsMenu(cursor, text, camera, shapeVAO, Renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -304,7 +328,7 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 {
 	int xText = 625;
 	int xIndicator = 184;
-	int yOffset = 100;
+	int yOffset = 160;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
@@ -312,8 +336,10 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 		xIndicator = 8;
 	}
 
+	DrawBox(glm::ivec2(xIndicator, 48), 66, 18 + numberOfOptions * 16);
+
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 32 + (16 * currentOption)), animate);
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 57 + (16 * currentOption)), animate);
 
 	//Just a little test with new line
 	std::string commands = "";
@@ -595,7 +621,8 @@ void UnitOptionsMenu::GetOptions()
 	numberOfOptions = optionsVector.size();
 }
 
-CantoOptionsMenu::CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+CantoOptionsMenu::CantoOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer) 
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 1;
 }
@@ -604,7 +631,7 @@ void CantoOptionsMenu::Draw()
 {
 	int xText = 625;
 	int xIndicator = 184;
-	int yOffset = 100;
+	int yOffset = 160;
 	glm::vec2 fixedPosition = camera->worldToScreen(cursor->position);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
@@ -613,7 +640,7 @@ void CantoOptionsMenu::Draw()
 	}
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 32 + (16 * currentOption)));
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 57 + (16 * currentOption)));
 
 	text->RenderText("Wait", xText, yOffset, 1);
 }
@@ -637,10 +664,9 @@ void CantoOptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 }
 
 ItemOptionsMenu::ItemOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer) : 
-	Menu(Cursor, Text, Camera, shapeVAO)
+	Menu(Cursor, Text, Camera, shapeVAO, Renderer)
 {
 	GetOptions();
-	renderer = Renderer;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 }
@@ -662,6 +688,7 @@ void ItemOptionsMenu::Draw()
 
 void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit, bool animate)
 {
+	DrawBox(glm::vec2(24, 72), 122, 18 + numberOfOptions * 16);
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(24, 82 + (16 * currentOption)), animate);
 
@@ -684,8 +711,8 @@ void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit, 
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(itemIconUVs[item->ID]);
-		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
+		Renderer->setUVs(itemIconUVs[item->ID]);
+		Renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	DrawPortrait(unit);
@@ -693,6 +720,8 @@ void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit, 
 
 void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 {
+	DrawBox(glm::vec2(152, 72), 98, 130);
+
 	int offSet = 42;
 	int yPosition = 225;
 	auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
@@ -733,8 +762,8 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	auto texture = ResourceManager::GetTexture("icons");
 
-	renderer->setUVs(proficiencyIconUVs[weaponData.type]);
-	renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, glm::vec2(16));
+	Renderer->setUVs(proficiencyIconUVs[weaponData.type]);
+	Renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, glm::vec2(16));
 }
 
 void ItemOptionsMenu::DrawPortrait(Unit* unit)
@@ -743,8 +772,8 @@ void ItemOptionsMenu::DrawPortrait(Unit* unit)
 	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
-	renderer->DrawSprite(portraitTexture, glm::vec2(40, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
+	Renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	Renderer->DrawSprite(portraitTexture, glm::vec2(40, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 }
 
 void ItemOptionsMenu::SelectOption()
@@ -777,8 +806,8 @@ void ItemOptionsMenu::GetBattleStats()
 	selectedStats = unit->CalculateBattleStats(inventory[currentOption]->ID);
 }
 
-ItemUseMenu::ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, Item* selectedItem, int index, SpriteRenderer* Renderer)
-	: Menu(Cursor, Text, Camera, shapeVAO)
+ItemUseMenu::ItemUseMenu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, SpriteRenderer* Renderer, Item* selectedItem, int index)
+	: Menu(Cursor, Text, Camera, shapeVAO, Renderer)
 {
 	inventoryIndex = index;
 	item = selectedItem;
@@ -793,6 +822,9 @@ void ItemUseMenu::Draw()
 
 void ItemUseMenu::DrawMenu(bool animate)
 {
+
+	DrawBox(glm::vec2(152, 72), 50, 18 + numberOfOptions * 16);
+
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(152, 81 + (16 * currentOption)), animate);
 
@@ -837,7 +869,7 @@ void ItemUseMenu::SelectOption()
 	case DROP:
 		if (item->canDrop)
 		{
-			Menu* newMenu = new DropConfirmMenu(cursor, text, camera, shapeVAO, inventoryIndex, MenuManager::menuManager.renderer);
+			Menu* newMenu = new DropConfirmMenu(cursor, text, camera, shapeVAO, Renderer, inventoryIndex);
 			MenuManager::menuManager.menus.push_back(newMenu);
 		}
 		else
@@ -882,8 +914,8 @@ void ItemUseMenu::GetOptions()
 	numberOfOptions = optionsVector.size();
 }
 
-DropConfirmMenu::DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int index, SpriteRenderer* Renderer)
-	: Menu(Cursor, Text, camera, shapeVAO)
+DropConfirmMenu::DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, int index)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	inventoryIndex = index;
 	GetOptions();
@@ -893,6 +925,9 @@ DropConfirmMenu::DropConfirmMenu(Cursor* Cursor, TextRenderer* Text, Camera* cam
 
 void DropConfirmMenu::Draw()
 {
+
+	DrawBox(glm::vec2(160, 112), 50, 18 + numberOfOptions * 16);
+
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(160, 121 + (16 * currentOption)));
 
@@ -931,12 +966,12 @@ void DropConfirmMenu::GetOptions()
 }
 
 AnimationOptionsMenu::AnimationOptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
-	: Menu(Cursor, Text, camera, shapeVAO)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	previous = static_cast<UnitOptionsMenu*>(MenuManager::menuManager.GetCurrent());
 	GetOptions();
-	yPosition = 130 + previous->optionsVector.size() * 42;
-	yIndicator = 44 + previous->optionsVector.size() * 16;
+	yPosition = 202 + previous->optionsVector.size() * 42;
+	yIndicator = 73 + previous->optionsVector.size() * 16;
 }
 
 void AnimationOptionsMenu::Draw()
@@ -952,6 +987,8 @@ void AnimationOptionsMenu::Draw()
 		xText = 75;
 		xIndicator = 8;
 	}
+
+	DrawBox(glm::vec2(xIndicator, yIndicator - 9), 50, 50);
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, yIndicator + (16 * currentOption)));
@@ -990,7 +1027,7 @@ void AnimationOptionsMenu::GetOptions()
 	numberOfOptions = optionsVector.size();
 }
 
-SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, SpriteRenderer* Renderer, bool capturing)
+SelectWeaponMenu::SelectWeaponMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Item*>& validWeapons, std::vector<std::vector<Unit*>>& units, bool capturing)
 	: ItemOptionsMenu(Cursor, Text, camera, shapeVAO, Renderer), capturing(capturing)
 {
 	weapons = validWeapons;
@@ -1003,6 +1040,8 @@ void SelectWeaponMenu::Draw()
 {
 	auto inventory = weapons;
 
+	DrawBox(glm::vec2(24, 72), 122, 18 + numberOfOptions * 16);
+
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::ivec2(24, 81 + 16 * currentOption));
 
@@ -1014,8 +1053,8 @@ void SelectWeaponMenu::Draw()
 		text->RenderTextRight(intToString(inventory[i]->remainingUses), 375, yPosition, 1, 14);
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(itemIconUVs[inventory[i]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
+		Renderer->setUVs(itemIconUVs[inventory[i]->ID]);
+		Renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	DrawWeaponComparison(weapons);
@@ -1040,7 +1079,7 @@ void SelectWeaponMenu::SelectOption()
 	{
 		std::cout << enemyUnits[i]->name << std::endl;
 	}
-	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, enemyUnits, MenuManager::menuManager.renderer, selectedWeapon, capturing);
+	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, Renderer, enemyUnits, selectedWeapon, capturing);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -1067,10 +1106,9 @@ void SelectWeaponMenu::GetBattleStats()
 	selectedStats = unit->CalculateBattleStats(weapons[currentOption]->ID);
 }
 
-SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer, int selectedWeapon, bool capturing) :
-	Menu(Cursor, Text, camera, shapeVAO), selectedWeapon(selectedWeapon), capturing(capturing)
+SelectEnemyMenu::SelectEnemyMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units, int selectedWeapon, bool capturing) :
+	Menu(Cursor, Text, camera, shapeVAO, Renderer), selectedWeapon(selectedWeapon), capturing(capturing)
 {
-	renderer = Renderer;
 	unitsToAttack = units;
 	if (capturing)
 	{
@@ -1088,7 +1126,6 @@ void SelectEnemyMenu::Draw()
 	int enemyStatsTextX = 536;
 	int statsDisplay = 169;
 
-	int yOffset = 100;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
@@ -1109,11 +1146,11 @@ void SelectEnemyMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[2]);
+	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
+	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 
 	text->RenderText(enemy->name, enemyStatsTextX, 100, 1);
@@ -1301,9 +1338,9 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 	}
 }
 
-SelectTradeUnit::SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+SelectTradeUnit::SelectTradeUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	renderer = Renderer;
 	tradeUnits = units;
 	GetOptions();
 }
@@ -1349,9 +1386,9 @@ void SelectTradeUnit::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[2]);
+	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
-	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
+	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(tradeUnit->name, xText, textHeight, 1);
@@ -1366,7 +1403,7 @@ void SelectTradeUnit::Draw()
 
 void SelectTradeUnit::SelectOption()
 {
-	Menu* newMenu = new TradeMenu(cursor, text, camera, shapeVAO, tradeUnits[currentOption], MenuManager::menuManager.renderer);
+	Menu* newMenu = new TradeMenu(cursor, text, camera, shapeVAO, Renderer, tradeUnits[currentOption]);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -1388,9 +1425,9 @@ void SelectTradeUnit::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-SelectTalkMenu::SelectTalkMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO)
+SelectTalkMenu::SelectTalkMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	renderer = Renderer;
 	talkUnits = units;
 	GetOptions();
 }
@@ -1424,10 +1461,10 @@ void SelectTalkMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[2]);
+	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
+	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(talkUnit->name, xText, textHeight, 1);
@@ -1484,10 +1521,9 @@ void SelectTalkMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer) 
-	: Menu(Cursor, Text, camera, shapeVAO)
+TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	renderer = Renderer;
 	tradeUnit = unit;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 	GetOptions();
@@ -1511,8 +1547,8 @@ void TradeMenu::Draw()
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	Texture2D texture = ResourceManager::GetTexture("TradeMenuBG");
-	renderer->setUVs();
-	renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 
 	int x = 0;
 	if (firstInventory)
@@ -1555,8 +1591,8 @@ void TradeMenu::Draw()
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(itemIconUVs[firstUnit->inventory[i]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, glm::vec2(16));
+		Renderer->setUVs(itemIconUVs[firstUnit->inventory[i]->ID]);
+		Renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	for (int i = 0; i < tradeUnit->inventory.size(); i++)
@@ -1567,19 +1603,19 @@ void TradeMenu::Draw()
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, glm::vec2(16));
+		Renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
+		Renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, glm::vec2(16));
 	}
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
 	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	renderer->setUVs(UnitResources::portraitUVs[firstUnit->portraitID][0]);
-	renderer->DrawSprite(portraitTexture, glm::vec2(72, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
+	Renderer->setUVs(UnitResources::portraitUVs[firstUnit->portraitID][0]);
+	Renderer->DrawSprite(portraitTexture, glm::vec2(72, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 
-	renderer->setUVs(UnitResources::portraitUVs[tradeUnit->portraitID][0]);
-	renderer->DrawSprite(portraitTexture, glm::vec2(200, 8), 0, glm::vec2(48, 64));
+	Renderer->setUVs(UnitResources::portraitUVs[tradeUnit->portraitID][0]);
+	Renderer->DrawSprite(portraitTexture, glm::vec2(200, 8), 0, glm::vec2(48, 64));
 }
 
 void TradeMenu::SelectOption()
@@ -1741,11 +1777,10 @@ void TradeMenu::CancelOption(int num)
 	}
 }
 
-UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* unit, SpriteRenderer* Renderer) :
-	Menu(Cursor, Text, camera, shapeVAO)
+UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit) :
+	Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	this->unit = unit;
-	renderer = Renderer;
 	battleStats = unit->CalculateBattleStats();
 	fullScreen = true;
 	if (unit->team == 0)
@@ -1826,8 +1861,8 @@ void UnitStatsViewMenu::Draw()
 			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 			auto texture = ResourceManager::GetTexture("icons");
 
-			renderer->setUVs(itemIconUVs[item->ID]);
-			renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 -yOffset)), 0.0f, glm::vec2(16));
+			Renderer->setUVs(itemIconUVs[item->ID]);
+			Renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 -yOffset)), 0.0f, glm::vec2(16));
 		}
 		if (!examining)
 		{
@@ -1893,27 +1928,27 @@ void UnitStatsViewMenu::Draw()
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_SWORD]);
-		renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LANCE]);
-		renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_AXE]);
-		renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_BOW]);
-		renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_STAFF]);
-		renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_SWORD]);
+		Renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LANCE]);
+		Renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_AXE]);
+		Renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_BOW]);
+		Renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_STAFF]);
+		Renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, glm::vec2(16));
 
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_FIRE]);
-		renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_THUNDER]);
-		renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_WIND]);
-		renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LIGHT]);
-		renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, glm::vec2(16));
-		renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_DARK]);
-		renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_FIRE]);
+		Renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_THUNDER]);
+		Renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_WIND]);
+		Renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LIGHT]);
+		Renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_DARK]);
+		Renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, glm::vec2(16));
 
 		if (examining)
 		{
@@ -1939,8 +1974,8 @@ void UnitStatsViewMenu::Draw()
 		}
 		for (int i = 0; i < unit->skills.size(); i++)
 		{
-			renderer->setUVs(skillIconUVs[unit->skills[i]]);
-			renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, glm::vec2(16));
+			Renderer->setUVs(skillIconUVs[unit->skills[i]]);
+			Renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, glm::vec2(16));
 		}
 		if (examining && !transition)
 		{
@@ -2003,8 +2038,8 @@ void UnitStatsViewMenu::Draw()
 			Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
 
 			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			renderer->setUVs(carryUVs[unit->carriedUnit->team]);
-			renderer->DrawSprite(carryTexture, glm::vec2(39, 159 + yOffset), 0, glm::vec2(8));
+			Renderer->setUVs(carryUVs[unit->carriedUnit->team]);
+			Renderer->DrawSprite(carryTexture, glm::vec2(39, 159 + yOffset), 0, glm::vec2(8));
 
 			text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
 			text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
@@ -2038,8 +2073,8 @@ void UnitStatsViewMenu::Draw()
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			glBindVertexArray(0);
 
-			renderer->setUVs(skillIconUVs[unit->skills[currentOption]]);
-			renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, glm::vec2(16));
+			Renderer->setUVs(skillIconUVs[unit->skills[currentOption]]);
+			Renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, glm::vec2(16));
 
 			text->RenderText(skillInfo[unit->skills[currentOption]].name, 125, 332, 1);
 
@@ -2066,9 +2101,9 @@ void UnitStatsViewMenu::Draw()
 	/*Texture2D test = ResourceManager::GetTexture("test");
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	renderer->setUVs();
-	renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 79));*/
-	renderer->shader = ResourceManager::GetShader("slice");
+	Renderer->setUVs();
+	Renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 79));*/
+	Renderer->shader = ResourceManager::GetShader("slice");
 
 	ResourceManager::GetShader("slice").Use();
 	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
@@ -2082,24 +2117,24 @@ void UnitStatsViewMenu::Draw()
 	ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
 	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
 
-	renderer->setUVs();
-	renderer->DrawSprite(texture, glm::vec2(0, -1), 0.0f, size);
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, -1), 0.0f, size);
 
-	renderer->shader = ResourceManager::GetShader("Nsprite");
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
 	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
-	renderer->DrawSprite(portraitTexture, glm::vec2(96, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
+	Renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	Renderer->DrawSprite(portraitTexture, glm::vec2(96, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 
 	if (unit->carryingUnit)
 	{
 		Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
 
-		renderer->setUVs(carryUVs[unit->team]);
-		renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
+		Renderer->setUVs(carryUVs[unit->team]);
+		Renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
 	}
 	else
 	{
@@ -2147,8 +2182,8 @@ void UnitStatsViewMenu::Draw()
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(proficiencyIconUVs[unit->GetEquippedWeapon().type]);
-		renderer->DrawSprite(texture, glm::vec2(233, 59), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[unit->GetEquippedWeapon().type]);
+		Renderer->DrawSprite(texture, glm::vec2(233, 59), 0.0f, glm::vec2(16));
 	}
 	else
 	{
@@ -2327,7 +2362,8 @@ void UnitStatsViewMenu::CancelOption(int num)
 	Menu::CancelOption();
 }
 
-ExtraMenu::ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+ExtraMenu::ExtraMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 5;
 }
@@ -2343,6 +2379,8 @@ void ExtraMenu::Draw()
 		xText = 75;
 		xIndicator = 8;
 	}
+
+	DrawBox(glm::ivec2(xIndicator, 32), 58, 18 + numberOfOptions * 16);
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 41 + (16 * currentOption)));
@@ -2360,25 +2398,25 @@ void ExtraMenu::SelectOption()
 	{
 	case UNIT:
 	{
-		Menu* newMenu = new UnitListMenu(cursor, text, camera, shapeVAO, MenuManager::menuManager.renderer);
+		Menu* newMenu = new UnitListMenu(cursor, text, camera, shapeVAO, Renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case STATUS:
 	{
-		Menu* newMenu = new StatusMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new StatusMenu(cursor, text, camera, shapeVAO, Renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case OPTIONS:
 	{
-		Menu* newMenu = new OptionsMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new OptionsMenu(cursor, text, camera, shapeVAO, Renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
 	case SUSPEND:
 	{
-		Menu* newMenu = new SuspendMenu(cursor, text, camera, shapeVAO, MenuManager::menuManager.renderer);
+		Menu* newMenu = new SuspendMenu(cursor, text, camera, shapeVAO, Renderer);
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
@@ -2395,10 +2433,9 @@ void ExtraMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
-SelectRescueUnit::SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer) 
-	: Menu(Cursor, Text, camera, shapeVAO)
+SelectRescueUnit::SelectRescueUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	renderer = Renderer;
 	rescueUnits = units;
 	GetOptions();
 }
@@ -2432,10 +2469,10 @@ void SelectRescueUnit::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[2]);
+	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
+	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(rescueUnit->name, xText, textHeight, 1);
@@ -2457,7 +2494,7 @@ void SelectRescueUnit::SelectOption()
 	auto rescuedUnit = rescueUnits[currentOption];
 	auto playerUnit = cursor->selectedUnit;
 	TileManager::tileManager.removeUnit(rescuedUnit->sprite.getPosition().x, rescuedUnit->sprite.getPosition().y);
-	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, rescuedUnit, playerUnit, 0);
+	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, Renderer, rescuedUnit, playerUnit, 0);
 	MenuManager::menuManager.menus.push_back(newMenu);
 	//playerUnit->carryUnit(rescuedUnit);
 	//rescuedUnit->hasMoved = false;
@@ -2481,20 +2518,19 @@ void SelectRescueUnit::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-DropMenu::DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<glm::ivec2>& positions, SpriteRenderer* Renderer) : 
-	Menu(Cursor, Text, camera, shapeVAO), positions(positions)
+DropMenu::DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<glm::ivec2>& positionsr) :
+	Menu(Cursor, Text, camera, shapeVAO, Renderer), positions(positions)
 {
-	renderer = Renderer;
 	GetOptions();
 }
 
 void DropMenu::Draw()
 {
 	auto targetPosition = positions[currentOption];
-	renderer->setUVs(cursor->uvs[2]);
+	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition - glm::ivec2(3), 0.0f, cursor->dimensions);
+	Renderer->DrawSprite(displayTexture, targetPosition - glm::ivec2(3), 0.0f, cursor->dimensions);
 }
 
 void DropMenu::SelectOption()
@@ -2502,7 +2538,7 @@ void DropMenu::SelectOption()
 	auto playerUnit = cursor->selectedUnit;
 	auto heldUnit = playerUnit->carriedUnit;
 
-	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, heldUnit, nullptr, 2, positions[currentOption]);
+	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, Renderer, heldUnit, nullptr, 2, positions[currentOption]);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -2524,10 +2560,9 @@ void DropMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-SelectTransferUnit::SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<Unit*>& units, SpriteRenderer* Renderer)
-	: Menu(Cursor, Text, camera, shapeVAO)
+SelectTransferUnit::SelectTransferUnit(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<Unit*>& units)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	renderer = Renderer;
 	transferUnits = units;
 	GetOptions();
 }
@@ -2561,10 +2596,10 @@ void SelectTransferUnit::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	renderer->setUVs(cursor->uvs[2]);
+	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
-	renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
+	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
 	int textHeight = 100;
 	text->RenderText(transferUnit->name, xText, textHeight, 1);
@@ -2599,7 +2634,7 @@ void SelectTransferUnit::SelectOption()
 		receivingUnit = playerUnit;
 		transferUnit->releaseUnit();
 	}
-	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, transferedUnit, receivingUnit, 1);
+	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, Renderer, transferedUnit, receivingUnit, 1);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 
@@ -2622,7 +2657,7 @@ void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 }
 
 UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer) : 
-	Menu(Cursor, Text, camera, shapeVAO), Renderer(Renderer)
+	Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = MenuManager::menuManager.playerManager->units.size();
 	fullScreen = true;
@@ -3313,7 +3348,8 @@ void UnitListMenu::SortView()
 	}
 }
 
-StatusMenu::StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+StatusMenu::StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 2;
 	fullScreen = true;
@@ -3338,8 +3374,8 @@ void StatusMenu::Draw()
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
 	Texture2D texture = ResourceManager::GetTexture("StatusMenuBG");
-	MenuManager::menuManager.renderer->setUVs();
-	MenuManager::menuManager.renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 
 	MenuManager::menuManager.DrawIndicator(glm::vec2(7, 137 + 16 * currentOption));
 
@@ -3389,7 +3425,8 @@ void StatusMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO) : Menu(Cursor, Text, camera, shapeVAO)
+OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 9;
 	fullScreen = true;
@@ -3418,9 +3455,9 @@ void OptionsMenu::Draw()
 	glm::vec2 iconSize = glm::vec2(16);
 	for (int i = 0; i < 10; i++)
 	{
-		MenuManager::menuManager.renderer->setUVs(optionIconUVs[i]);
+		Renderer->setUVs(optionIconUVs[i]);
 		int adjustedOffset = (yOffset / 600.0f) * 224.0f;
-		MenuManager::menuManager.renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
+		Renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
 	}
 
 	//I have no idea why FE5 has this black line being drawn here. It is drawn over the option sprites but under the text.
@@ -3513,8 +3550,8 @@ void OptionsMenu::Draw()
 
 	Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
 	ResourceManager::GetShader("Nsprite").Use();
-	MenuManager::menuManager.renderer->setUVs();
-	MenuManager::menuManager.renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+	Renderer->setUVs();
+	Renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 }
 
 void OptionsMenu::SelectOption()
@@ -3762,8 +3799,8 @@ void OptionsMenu::RenderText(std::string toWrite, float x, float y, float scale,
 	text->RenderText(toWrite, x, y, 1, color);
 }
 
-VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* buyer, Vendor* vendor, SpriteRenderer* Renderer) :
-	Menu(Cursor, Text, camera, shapeVAO), buyer(buyer), vendor(vendor), Renderer(Renderer)
+VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* buyer, Vendor* vendor) :
+	Menu(Cursor, Text, camera, shapeVAO, Renderer), buyer(buyer), vendor(vendor)
 {
 	fullScreen = true;
 	numberOfOptions = vendor->items.size();
@@ -4182,13 +4219,12 @@ void VendorMenu::CancelOption(int num)
 	ActivateText();
 }
 
-FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, int newItem, SpriteRenderer* Renderer) :
-	Menu(Cursor, Text, camera, shapeVAO), newItem(newItem)
+FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, int newItem) :
+	Menu(Cursor, Text, camera, shapeVAO, Renderer), newItem(newItem)
 {
 	numberOfOptions = cursor->selectedUnit->inventory.size() + 1;
 	currentStats = cursor->selectedUnit->CalculateBattleStats();
 	selectedStats = cursor->selectedUnit->CalculateBattleStats(cursor->selectedUnit->inventory[currentOption]->ID);
-	renderer = Renderer;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 }
@@ -4256,8 +4292,8 @@ void FullInventoryMenu::Draw()
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
 
-		renderer->setUVs(itemIconUVs[item->ID]);
-		renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
+		Renderer->setUVs(itemIconUVs[item->ID]);
+		Renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * i), 0.0f, glm::vec2(16));
 	}
 	auto item = ItemManager::itemManager.items[newItem];
 	text->RenderText(item.name, 175, 225 + (numberOfOptions - 1) * 42, 1, grey);
@@ -4266,8 +4302,8 @@ void FullInventoryMenu::Draw()
 	ResourceManager::GetShader("Nsprite").Use();
 	auto texture = ResourceManager::GetTexture("icons");
 
-	renderer->setUVs(itemIconUVs[item.ID]);
-	renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * (numberOfOptions - 1)), 0.0f, glm::vec2(16));
+	Renderer->setUVs(itemIconUVs[item.ID]);
+	Renderer->DrawSprite(texture, glm::vec2(40, 82 + 16 * (numberOfOptions - 1)), 0.0f, glm::vec2(16));
 	Item focusedItem = item;
 	if (currentOption < numberOfOptions - 1)
 	{
@@ -4288,8 +4324,8 @@ void FullInventoryMenu::Draw()
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
-		renderer->setUVs(proficiencyIconUVs[weaponData.type]);
-		renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, glm::vec2(16));
+		Renderer->setUVs(proficiencyIconUVs[weaponData.type]);
+		Renderer->DrawSprite(texture, glm::vec2(193, 83), 0.0f, glm::vec2(16));
 
 		text->RenderText("Type", xStatName, yPosition, 1);
 		yPosition += offSet;
@@ -4348,8 +4384,8 @@ void FullInventoryMenu::Draw()
 	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
-	renderer->DrawSprite(portraitTexture, glm::vec2(40, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
+	Renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
+	Renderer->DrawSprite(portraitTexture, glm::vec2(40, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 }
 
 void FullInventoryMenu::SelectOption()
@@ -4384,8 +4420,8 @@ void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
 }
 
-UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition) :
-	Menu(Cursor, Text, camera, shapeVAO), movingUnit(movingUnit), receivingUnit(receivingUnit), operation(operation), dropPosition(dropPosition)
+UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* movingUnit, Unit* receivingUnit, int operation, glm::ivec2 dropPosition) :
+	Menu(Cursor, Text, camera, shapeVAO, Renderer), movingUnit(movingUnit), receivingUnit(receivingUnit), operation(operation), dropPosition(dropPosition)
 {
 	movingUnit->hasMoved = false;
 	if (movingUnit->carryingUnit)
@@ -4520,7 +4556,8 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-SuspendMenu::SuspendMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer) : Menu(Cursor, Text, camera, shapeVAO), Renderer(Renderer)
+SuspendMenu::SuspendMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer) 
+	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 2;
 	currentOption = 1;
@@ -4545,6 +4582,8 @@ void SuspendMenu::Draw()
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
+		DrawBox(glm::ivec2(72, 104), 106, 82);
+
 		text->RenderText("So may resume\nthis chapter\nfrom the main\nmenu", 275, 310, 1);
 	}
 	else
@@ -4562,6 +4601,8 @@ void SuspendMenu::Draw()
 		glBindVertexArray(shapeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+
+		DrawBox(glm::ivec2(72, 104), 109, 50);
 
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		MenuManager::menuManager.DrawIndicator(glm::vec2(87 + 32 * currentOption, 129));
@@ -4662,7 +4703,7 @@ void MenuManager::AddMenu(int ID)
 	//I don't know if this ID system will stick around
 	if (ID == 0)
 	{
-		Menu* newMenu = new UnitOptionsMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new UnitOptionsMenu(cursor, text, camera, shapeVAO, renderer);
 		menus.push_back(newMenu);
 	}
 	else if (ID == 1)
@@ -4673,30 +4714,30 @@ void MenuManager::AddMenu(int ID)
 	else if (ID == 2)
 	{
 		auto currentOption = menus.back()->currentOption;
-		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, cursor->selectedUnit->inventory[currentOption], currentOption, renderer);
+		Menu* newMenu = new ItemUseMenu(cursor, text, camera, shapeVAO, renderer, cursor->selectedUnit->inventory[currentOption], currentOption);
 		menus.push_back(newMenu);
 	}
 	else if (ID == 3)
 	{
-		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new ExtraMenu(cursor, text, camera, shapeVAO, renderer);
 		menus.push_back(newMenu);
 	}
 	else if (ID == 4)
 	{
-		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO);
+		Menu* newMenu = new CantoOptionsMenu(cursor, text, camera, shapeVAO, renderer);
 		menus.push_back(newMenu);
 	}
 }
 
 void MenuManager::AddUnitStatMenu(Unit* unit)
 {
-	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, unit, renderer);
+	Menu* newMenu = new UnitStatsViewMenu(cursor, text, camera, shapeVAO, renderer, unit);
 	menus.push_back(newMenu);
 }
 
 void MenuManager::AddFullInventoryMenu(int itemID)
 {
-	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, itemID, renderer);
+	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, renderer, itemID);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 

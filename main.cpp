@@ -109,6 +109,9 @@ std::unordered_map<int, Unit*> sceneUnits;
 std::vector<VisitObject> visitObjects;
 std::vector<Vendor> vendors;
 
+glm::vec4 terrainStatusUVs;
+std::vector<glm::vec4> nameBoxUVs;
+
 glm::ivec2 seizePoint;
 int endingID = -1;
 bool endingGame = false;
@@ -530,10 +533,9 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", glm::vec4(1));
 
 	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
 
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Tiles.png", "tiles");
-	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/cursor.png", "cursor");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIItems.png", "UIItems");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/movesprites.png", "movesprites");
@@ -553,6 +555,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/TradeMenuBG.png", "TradeMenuBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/StatusMenuBG.png", "StatusMenuBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIStuff.png", "UIStuff");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/ResizeBox.png", "ResizeBox");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test2.png", "test2");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test3.png", "test3");
@@ -611,6 +614,8 @@ int main(int argc, char** argv)
 
 	cursor.uvs = ResourceManager::GetTexture("UIItems").GetUVs(208, 0, 21, 21, 2, 2, 3);
 	minimap.cursorUvs = ResourceManager::GetTexture("UIItems").GetUVs(64, 0, 70, 62, 2, 1, 2);
+	terrainStatusUVs = ResourceManager::GetTexture("UIItems").GetUVs(132, 64, 66, 34, 1, 1)[0];
+	nameBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 64, 66, 32, 2, 1);
 	//cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
 	UnitResources::LoadUVs();
@@ -1669,9 +1674,10 @@ void Draw()
 				{
 					if (currentTurn == 0 && !cursor.movingUnit)
 					{
+						ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
 						Renderer->setUVs(cursor.uvs[cursor.currentFrame]);
 						Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
-						Renderer->DrawSprite(displayTexture, cursor.position - glm::vec2(3), 0.0f, cursor.dimensions);
+						Renderer->DrawSprite(displayTexture, cursor.position - glm::vec2(2, 3), 0.0f, cursor.dimensions);
 					}
 				}
 			}
@@ -1813,7 +1819,6 @@ void DrawUnitRanges()
 
 void DrawText()
 {
-
 	if (!cursor.fastCursor && cursor.selectedUnit == nullptr && MenuManager::menuManager.menus.size() == 0)
 	{
 		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
@@ -1829,30 +1834,12 @@ void DrawText()
 				xWindow = 4;
 			}
 
-		/*	Texture2D test = ResourceManager::GetTexture("test2");
+			Texture2D terrainBox = ResourceManager::GetTexture("UIItems");
 			ResourceManager::GetShader("Nsprite").Use();
 			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getOrthoMatrix());
-			Renderer->setUVs();
-			Renderer->DrawSprite(test, glm::vec2(xWindow, 4), 0, glm::vec2(66, 34));*/
-			Renderer->shader = ResourceManager::GetShader("slice");
+			Renderer->setUVs(terrainStatusUVs);
+			Renderer->DrawSprite(terrainBox, glm::vec2(xWindow, 4), 0, glm::vec2(66, 34));
 
-			ResourceManager::GetShader("slice").Use();
-			ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
-
-			auto texture = ResourceManager::GetTexture("UIStuff");
-
-			glm::vec4 uvs = texture.GetUVs(32, 32)[2];
-			glm::vec2 size = glm::vec2(66, 34);
-			float borderSize = 10.0f;
-			ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
-			ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
-
-			ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
-
-			Renderer->setUVs();
-			Renderer->DrawSprite(texture, glm::vec2(xWindow, 4), 0.0f, size);
-
-			Renderer->shader = ResourceManager::GetShader("Nsprite");
 
 			auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 
@@ -1864,18 +1851,38 @@ void DrawText()
 		}
 		if (auto unit = cursor.focusedUnit)
 		{
-			int yOffset = 24;
+			Texture2D test = ResourceManager::GetTexture("UIItems");
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
+			Renderer->setUVs(nameBoxUVs[unit->team]);
+			int yOffset = 42;
+			int textOffset = 6;
+			bool below = false;
 			if (fixedPosition.y < 80) //Just hard setting a distance of 5 tiles from the top. Find a less silly way of doing this
 			{
-				yOffset = -24;
+				yOffset = -26;
+				textOffset = 10;
+				below = true;
 			}
-			glm::vec2 drawPosition = glm::vec2(unit->sprite.getPosition()) - glm::vec2(8.0f, yOffset);
-			drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
-			Text->RenderText(unit->name, drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
-			drawPosition.y += 22.0f;
-			Text->RenderText("HP", drawPosition.x, drawPosition.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-			drawPosition.x += 25;
-			Text->RenderText(intToString(unit->currentHP) + "/" + intToString(unit->maxHP), drawPosition.x, drawPosition.y, 1, glm::vec3(0.0f));
+
+			glm::vec3 hpTextColor;
+			if (unit->team == 0)
+			{
+				hpTextColor = glm::vec3(0.1f, 0.11f, 0.22f);
+			}
+			else
+			{
+				hpTextColor = glm::vec3(0.19f, 0.06f, 0.06f);
+			}
+
+			glm::vec2 drawPosition = glm::vec2(unit->sprite.getPosition()) - glm::vec2(21.0f, yOffset);
+			Renderer->DrawSprite(test, drawPosition, 0, glm::vec2(66, 32), glm::vec4(1), false, below);
+			glm::vec2 textPosition = camera.worldToRealScreen(drawPosition + glm::vec2(5, textOffset), SCREEN_WIDTH, SCREEN_HEIGHT);
+			Text->RenderText(unit->name, textPosition.x, textPosition.y, 1, glm::vec3(0.0f));
+			textPosition.y += 34;
+			Text->RenderText("HP", textPosition.x, textPosition.y, 1, hpTextColor);
+			textPosition.x += 50;
+			Text->RenderText(intToString(unit->currentHP) + "/" + intToString(unit->maxHP), textPosition.x, textPosition.y, 1, glm::vec3(0.0f));
 		}
 	}
 }
