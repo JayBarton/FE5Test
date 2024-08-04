@@ -1902,6 +1902,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (str > 0)
 	{
 		size = glm::vec2(4 * str - 1, 7);
+		size.x = std::min(int(size.x), 28);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
@@ -1912,6 +1913,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (mag > 0)
 	{
 		size = glm::vec2(4 * mag - 1, 7);
+		size.x = std::min(int(size.x), 78);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
@@ -1922,6 +1924,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (skl > 0)
 	{
 		size = glm::vec2(4 * skl - 1, 7);
+		size.x = std::min(int(size.x), 78);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
@@ -1932,6 +1935,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (spd > 0)
 	{
 		size = glm::vec2(4 * spd - 1, 7);
+		size.x = std::min(int(size.x), 78);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
@@ -1942,6 +1946,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (lck > 0)
 	{
 		size = glm::vec2(4 * lck - 1, 7);
+		size.x = std::min(int(size.x), 78);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
@@ -1952,6 +1957,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (def > 0)
 	{
 		size = glm::vec2(4 * def - 1, 7);
+		size.x = std::min(int(size.x), 78);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
@@ -1962,6 +1968,7 @@ void UnitStatsViewMenu::DrawPage1()
 	if (bld > 0)
 	{
 		size = glm::vec2(4 * bld - 1, 7);
+		size.x = std::min(int(size.x), 78);
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
 		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
