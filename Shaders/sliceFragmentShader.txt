@@ -50,7 +50,7 @@ void main(void)
     );
 	
 	//messing up on resize, just using a single image texture for now
-//	 newUV = subspriteMap(newUV);
+	 newUV = subspriteMap(newUV);
 
 	gl_FragColor = vec4(spriteColor) * texture2D(image, newUV);
 

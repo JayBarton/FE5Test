@@ -1835,254 +1835,354 @@ void UnitStatsViewMenu::Draw()
 	//page 1
 	if (firstPage || transition)
 	{
-		float adjustedOffset = ((224 - yOffset) / 224.0f) * 600;
-		text->RenderText("Inventory", 500, 180 - adjustedOffset, 1);
-
-		auto inventory = unit->inventory;
-		glm::vec3 color = glm::vec3(1);
-		glm::vec3 grey = glm::vec3(0.64f);
-		for (int i = 0; i < inventory.size(); i++)
-		{
-			color = glm::vec3(1);
-			int yPosition = (270 + i * 42) - adjustedOffset;
-			auto item = inventory[i];
-			if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
-			{
-				color = grey;
-			}
-			text->RenderText(item->name, 425, yPosition, 1, color);
-			text->RenderTextRight(intToString(item->remainingUses) + "/", 625, yPosition, 1, 14, color);
-			text->RenderTextRight(intToString(item->maxUses), 700, yPosition, 1, 14, color);
-			if (i == unit->equippedWeapon)
-			{
-				text->RenderText("E", 750, yPosition, 1);
-			}
-			ResourceManager::GetShader("Nsprite").Use();
-			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-			auto texture = ResourceManager::GetTexture("icons");
-
-			Renderer->setUVs(itemIconUVs[item->ID]);
-			Renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 -yOffset)), 0.0f, glm::vec2(16));
-		}
-		if (!examining)
-		{
-			if (!transition)
-			{
-				MenuManager::menuManager.DrawArrow(glm::ivec2(124, 217));
-			}
-			//Going to need an indication of what stats are affected by modifiers
-			text->RenderText("Combat Stats", 54, 190 - adjustedOffset, 1);
-			text->RenderText("STR", 48, 220 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getStrength()), 148, 220 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("MAG", 48, 252 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getMagic()), 148, 252 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("SKL", 48, 284 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getSkill()), 148, 284 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("SPD", 48, 316 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getSpeed()), 148, 316 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("LCK", 48, 348 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getLuck()), 148, 348 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("DEF", 48, 380 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getDefense()), 148, 380 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-			text->RenderText("CON", 48, 412 - adjustedOffset, 0.8f);
-			text->RenderTextRight(intToString(unit->getBuild()), 148, 412 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-		}
-		else
-		{
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(103, 97 + 16 * currentOption));
-			int yPosition = 220;
-
-			if (inventory[currentOption]->isWeapon)
-			{
-				int offSet = 30;
-				auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
-
-				int xStatName = 100;
-				int xStatValue = 200;
-				text->RenderText("Type", xStatName, yPosition - adjustedOffset, 1);
-				text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition - adjustedOffset, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Hit", xStatName, yPosition - adjustedOffset, 1);
-				text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition - adjustedOffset, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Might", xStatName, yPosition - adjustedOffset, 1);
-				text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition - adjustedOffset, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Crit", xStatName, yPosition - adjustedOffset, 1);
-				text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition - adjustedOffset, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Range", xStatName, yPosition - adjustedOffset, 1);
-				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition - adjustedOffset, 1, 14);
-				yPosition += offSet;
-				text->RenderText("Weight", xStatName, yPosition - adjustedOffset, 1);
-				text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition - adjustedOffset, 1, 14);
-				yPosition += offSet;
-			}
-			text->RenderText(inventory[currentOption]->description, 50, yPosition - adjustedOffset, 1);
-		}
-
+		DrawPage1();
 	}
 	if(!firstPage || transition)
 	{
+		DrawPage2();
+	}
+
+	DrawUpperSection(model);
+}
+
+void UnitStatsViewMenu::DrawPage1()
+{
+	float adjustedOffset = ((224 - yOffset) / 224.0f) * 600;
+	text->RenderText("Inventory", 500, 180 - adjustedOffset, 1);
+
+	auto inventory = unit->inventory;
+	glm::vec3 color = glm::vec3(1);
+	glm::vec3 grey = glm::vec3(0.64f);
+	for (int i = 0; i < inventory.size(); i++)
+	{
+		color = glm::vec3(1);
+		int yPosition = (270 + i * 42) - adjustedOffset;
+		auto item = inventory[i];
+		if (item->isWeapon && !unit->canUse(unit->GetWeaponData(item)))
+		{
+			color = grey;
+		}
+		text->RenderText(item->name, 425, yPosition, 1, color);
+		text->RenderTextRight(intToString(item->remainingUses) + "/", 625, yPosition, 1, 14, color);
+		text->RenderTextRight(intToString(item->maxUses), 700, yPosition, 1, 14, color);
+		if (i == unit->equippedWeapon)
+		{
+			text->RenderText("E", 750, yPosition, 1);
+		}
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_SWORD]);
-		Renderer->DrawSprite(texture, glm::vec2(129, 106 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LANCE]);
-		Renderer->DrawSprite(texture, glm::vec2(129, 122 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_AXE]);
-		Renderer->DrawSprite(texture, glm::vec2(129, 138 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_BOW]);
-		Renderer->DrawSprite(texture, glm::vec2(129, 154 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_STAFF]);
-		Renderer->DrawSprite(texture, glm::vec2(129, 170 + yOffset), 0.0f, glm::vec2(16));
+		Renderer->setUVs(itemIconUVs[item->ID]);
+		Renderer->DrawSprite(texture, glm::vec2(120, (95 + 16 * i) - (224 - yOffset)), 0.0f, glm::vec2(16));
+	}
 
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_FIRE]);
-		Renderer->DrawSprite(texture, glm::vec2(193, 106 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_THUNDER]);
-		Renderer->DrawSprite(texture, glm::vec2(193, 122 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_WIND]);
-		Renderer->DrawSprite(texture, glm::vec2(193, 138 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_LIGHT]);
-		Renderer->DrawSprite(texture, glm::vec2(193, 154 + yOffset), 0.0f, glm::vec2(16));
-		Renderer->setUVs(proficiencyIconUVs[WeaponData::TYPE_DARK]);
-		Renderer->DrawSprite(texture, glm::vec2(193, 170 + yOffset), 0.0f, glm::vec2(16));
+	int str = unit->getStrength();
+	int mag = unit->getMagic();
+	int skl = unit->getSkill();
+	int spd = unit->getSpeed();
+	int lck = unit->getLuck();
+	int def = unit->getDefense();
+	int bld = unit->getBuild();
 
-		if (examining)
+	Renderer->shader = ResourceManager::GetShader("slice");
+
+	ResourceManager::GetShader("slice").Use();
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	auto texture = ResourceManager::GetTexture("UIItems");
+
+	//TODO don't want to be loading these every time need to save em somewhere
+	glm::vec4 uvs = texture.GetUVs(0, 54, 7, 7, 1, 1)[0];
+	glm::vec2 size;
+	float borderSize = 1.0f;
+	Renderer->setUVs();
+	int x = 26;
+	int y = 103;
+	if (str > 0)
+	{
+		size = glm::vec2(4 * str - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+	y += 16;
+
+	if (mag > 0)
+	{
+		size = glm::vec2(4 * mag - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+	y += 16;
+
+	if (skl > 0)
+	{
+		size = glm::vec2(4 * skl - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+	y += 16;
+
+	if (spd > 0)
+	{
+		size = glm::vec2(4 * spd - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+	y += 16;
+
+	if (lck > 0)
+	{
+		size = glm::vec2(4 * lck - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+	y += 16;
+
+	if (def > 0)
+	{
+		size = glm::vec2(4 * def - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+	y += 16;
+
+	if (bld > 0)
+	{
+		size = glm::vec2(4 * bld - 1, 7);
+		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 7.0f, borderSize / 7.0f);
+		ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+		Renderer->DrawSprite(texture, glm::vec2(x, y - (224 - yOffset)), 0.0f, size);
+	}
+
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
+
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	texture = ResourceManager::GetTexture("page1lower");
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, 79 - (224 - yOffset)), 0, glm::vec2(256, 145));
+
+	x = 200;
+	//Going to need an indication of what stats are affected by modifiers
+	text->RenderTextRight(intToString(str), x, 270 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(mag), x, 313 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(skl), x, 356 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(spd), x, 399 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(lck), x, 441 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(def), x, 484 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(bld), x, 527 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	if (!examining)
+	{
+		if (!transition)
 		{
-			ResourceManager::GetShader("shape").Use();
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(120 + 16 * currentOption, 200, 0.0f));
-
-			model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
+			MenuManager::menuManager.DrawArrow(glm::ivec2(124, 217));
 		}
-		else
+	}
+	else
+	{
+		MenuManager::menuManager.DrawIndicator(glm::ivec2(103, 97 + 16 * currentOption));
+		int yPosition = 220;
+
+		if (inventory[currentOption]->isWeapon)
 		{
-			if (!transition)
+			int offSet = 30;
+			auto weaponData = ItemManager::itemManager.weaponData[inventory[currentOption]->ID];
+
+			int xStatName = 100;
+			int xStatValue = 200;
+			text->RenderText("Type", xStatName, yPosition - adjustedOffset, 1);
+			text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition - adjustedOffset, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Hit", xStatName, yPosition - adjustedOffset, 1);
+			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition - adjustedOffset, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Might", xStatName, yPosition - adjustedOffset, 1);
+			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition - adjustedOffset, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Crit", xStatName, yPosition - adjustedOffset, 1);
+			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition - adjustedOffset, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Range", xStatName, yPosition - adjustedOffset, 1);
+			text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition - adjustedOffset, 1, 14);
+			yPosition += offSet;
+			text->RenderText("Weight", xStatName, yPosition - adjustedOffset, 1);
+			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition - adjustedOffset, 1, 14);
+			yPosition += offSet;
+		}
+		text->RenderText(inventory[currentOption]->description, 50, yPosition - adjustedOffset, 1);
+	}
+}
+
+void UnitStatsViewMenu::DrawPage2()
+{
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	auto texture = ResourceManager::GetTexture("page2lower");
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, 79 + yOffset), 0, glm::vec2(256, 145));
+
+	if (examining)
+	{
+		ResourceManager::GetShader("shape").Use();
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(120 + 16 * currentOption, 200, 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+	else
+	{
+		if (!transition)
+		{
+			MenuManager::menuManager.DrawArrow(glm::ivec2(124, 80), false);
+		}
+	}
+	texture = ResourceManager::GetTexture("icons");
+	for (int i = 0; i < unit->skills.size(); i++)
+	{
+		Renderer->setUVs(skillIconUVs[unit->skills[i]]);
+		Renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, glm::vec2(16));
+	}
+	if (examining && !transition)
+	{
+		ResourceManager::GetShader("Nsprite").Use();
+		MenuManager::menuManager.DrawIndicator(glm::ivec2(121, 188 + 16 * currentOption), true, 1.5708f);
+		//There's an outline I need to be drawing here too. Don't know how to animate it...
+	}
+
+	auto& profMap = MenuManager::menuManager.profcienciesMap;
+
+	int adjustedOffset = (yOffset / 224.0f) * 600;
+	if (unit->mount)
+	{
+		if (unit->mount->mounted)
+		{
+			if (unit->weaponProficiencies[WeaponData::TYPE_SWORD] > 0)
 			{
-				MenuManager::menuManager.DrawArrow(glm::ivec2(124, 80), false);
+				text->RenderText("-" + profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1, glm::vec3(0.64f));
 			}
-		}
-		for (int i = 0; i < unit->skills.size(); i++)
-		{
-			Renderer->setUVs(skillIconUVs[unit->skills[i]]);
-			Renderer->DrawSprite(texture, glm::vec2(120 + 16 * i, 200 + yOffset), 0.0f, glm::vec2(16));
-		}
-		if (examining && !transition)
-		{
-			ResourceManager::GetShader("Nsprite").Use();
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(121, 188 + 16 * currentOption), true, 1.5708f);
-			//There's an outline I need to be drawing here too. Don't know how to animate it...
-		}
-
-		auto& profMap = MenuManager::menuManager.profcienciesMap;
-
-		int adjustedOffset = (yOffset / 224.0f) * 600;
-		if (unit->mount)
-		{
-			if (unit->mount->mounted)
-			{
-				if (unit->weaponProficiencies[WeaponData::TYPE_SWORD] > 0)
-				{
-					text->RenderText("-" + profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1, glm::vec3(0.64f));
-				}
-				text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
-				text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
-			}
-			else
-			{
-				text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1);
-
-				text->RenderText("-" + profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1, glm::vec3(0.64f));
-				text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
-			}
+			text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
+			text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
 		}
 		else
 		{
 			text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1);
-			text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
-			text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
-		}
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_BOW]], 500, 417 + adjustedOffset, 1);
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_STAFF]], 500, 459 + adjustedOffset, 1);
 
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_FIRE]], 700, 291 + adjustedOffset, 1);
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_THUNDER]], 700, 333 + adjustedOffset, 1);
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_WIND]], 700, 375 + adjustedOffset, 1);
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LIGHT]], 700, 417 + adjustedOffset, 1);
-		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_DARK]], 700, 459 + adjustedOffset, 1);
-
-		text->RenderText("Personal Data", 37, 246 + adjustedOffset, 1);
-		text->RenderText("Leader", 25, 291 + adjustedOffset, 1);
-		text->RenderText("Lead*", 25, 334 + adjustedOffset, 1);
-		text->RenderText("Move*", 25, 377 + adjustedOffset, 1);
-		text->RenderText("Trvlr.", 25, 420 + adjustedOffset, 1);
-		text->RenderText("Move", 25, 463 + adjustedOffset, 1);
-		text->RenderText("Fatg.", 25, 506 + adjustedOffset, 1);
-		text->RenderText("Status", 25, 549 + adjustedOffset, 1);
-
-		//Leader
-		text->RenderText("Leif", 150, 291 + adjustedOffset, 1);
-
-		if (unit->carriedUnit)
-		{
-			Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
-
-			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			Renderer->setUVs(carryUVs[unit->carriedUnit->team]);
-			Renderer->DrawSprite(carryTexture, glm::vec2(39, 159 + yOffset), 0, glm::vec2(8));
-
-			text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
-			text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
-		}
-		else
-		{
-			text->RenderText("----", 153, 420 + adjustedOffset, 1);
-		}
-
-		text->RenderText(intToString(unit->getMove()), 200, 466 + adjustedOffset, 1);
-		//Fatigue
-		text->RenderText(intToString(0), 200, 508 + adjustedOffset, 1);
-		//Status
-		text->RenderText("----", 153, 549 + adjustedOffset, 1);
-
-		text->RenderText("Weapon Ranks", 434, 246 + adjustedOffset, 1);
-
-		text->RenderText("Skills", 434, 503 + adjustedOffset, 1);
-		ResourceManager::GetShader("shape").Use();
-		if (examining)
-		{
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(16, 112, 0.0f));
-
-			model = glm::scale(model, glm::vec3(96, 104, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.19f, 0.18f, 0.16f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
-
-			Renderer->setUVs(skillIconUVs[unit->skills[currentOption]]);
-			Renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, glm::vec2(16));
-
-			text->RenderText(skillInfo[unit->skills[currentOption]].name, 125, 332, 1);
-
-			text->RenderText(skillInfo[unit->skills[currentOption]].description, 75, 393, 1);
-
-			text->RenderText("Personal Skill", 75, 525, 1, glm::vec3(0.8f, 1.0f, 0.8f));
+			text->RenderText("-" + profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1, glm::vec3(0.64f));
+			text->RenderText(profMap[unit->mount->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
 		}
 	}
+	else
+	{
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_SWORD]], 500, 291 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LANCE]], 500, 333 + adjustedOffset, 1);
+		text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_AXE]], 500, 375 + adjustedOffset, 1);
+	}
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_BOW]], 500, 417 + adjustedOffset, 1);
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_STAFF]], 500, 459 + adjustedOffset, 1);
+
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_FIRE]], 700, 291 + adjustedOffset, 1);
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_THUNDER]], 700, 333 + adjustedOffset, 1);
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_WIND]], 700, 375 + adjustedOffset, 1);
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_LIGHT]], 700, 417 + adjustedOffset, 1);
+	text->RenderText(profMap[unit->weaponProficiencies[WeaponData::TYPE_DARK]], 700, 459 + adjustedOffset, 1);
+
+	text->RenderText("Leader", 25, 291 + adjustedOffset, 1);
+	text->RenderText("Lead*", 25, 334 + adjustedOffset, 1);
+	text->RenderText("Move*", 25, 377 + adjustedOffset, 1);
+	text->RenderText("Trvlr.", 25, 420 + adjustedOffset, 1);
+	text->RenderText("Move", 25, 463 + adjustedOffset, 1);
+	text->RenderText("Fatg.", 25, 506 + adjustedOffset, 1);
+	text->RenderText("Status", 25, 549 + adjustedOffset, 1);
+
+	//Leader
+	text->RenderText("Leif", 150, 291 + adjustedOffset, 1);
+
+	if (unit->carriedUnit)
+	{
+		Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
+
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		Renderer->setUVs(carryUVs[unit->carriedUnit->team]);
+		Renderer->DrawSprite(carryTexture, glm::vec2(39, 159 + yOffset), 0, glm::vec2(8));
+
+		text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
+		text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
+	}
+	else
+	{
+		text->RenderText("----", 153, 420 + adjustedOffset, 1);
+	}
+
+	text->RenderText(intToString(unit->getMove()), 200, 466 + adjustedOffset, 1);
+	//Fatigue
+	text->RenderText(intToString(0), 200, 508 + adjustedOffset, 1);
+	//Status
+	text->RenderText("----", 153, 549 + adjustedOffset, 1);
+
+	ResourceManager::GetShader("shape").Use();
+	if (examining)
+	{
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(16, 112, 0.0f));
+
+		model = glm::scale(model, glm::vec3(96, 104, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.19f, 0.18f, 0.16f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		Renderer->setUVs(skillIconUVs[unit->skills[currentOption]]);
+		Renderer->DrawSprite(texture, glm::vec2(24, 122), 0.0f, glm::vec2(16));
+
+		text->RenderText(skillInfo[unit->skills[currentOption]].name, 125, 332, 1);
+
+		text->RenderText(skillInfo[unit->skills[currentOption]].description, 75, 393, 1);
+
+		text->RenderText("Personal Skill", 75, 525, 1, glm::vec3(0.8f, 1.0f, 0.8f));
+	}
+}
+
+void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
+{
+	Renderer->shader = ResourceManager::GetShader("slice");
+
+	ResourceManager::GetShader("slice").Use();
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	auto texture = ResourceManager::GetTexture("UIStuff");
+
+	glm::vec4 uvs = texture.GetUVs(32, 32)[1];
+	glm::vec2 size = glm::vec2(256, 448);
+	float borderSize = 6.0f;
+	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+	ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
+	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0, 0 - (224 - yOffset)), 0.0f, size);
 
 	ResourceManager::GetShader("shape").Use();
 	model = glm::mat4();
@@ -2097,27 +2197,19 @@ void UnitStatsViewMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-
-	/*Texture2D test = ResourceManager::GetTexture("test");
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+	texture = ResourceManager::GetTexture("unitViewUpper");
 	Renderer->setUVs();
-	Renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 79));*/
+	Renderer->DrawSprite(texture, glm::vec2(152, 31), 0, glm::vec2(104, 40));
+
 	Renderer->shader = ResourceManager::GetShader("slice");
-
-	ResourceManager::GetShader("slice").Use();
-	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
-
-	auto texture = ResourceManager::GetTexture("UIStuff");
-
-	glm::vec4 uvs = texture.GetUVs(32, 32)[1];
-	glm::vec2 size = glm::vec2(256, 80);
-	float borderSize = 6.0f;
-	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+	texture = ResourceManager::GetTexture("UIStuff");
+	size = glm::vec2(256, 80);
+	ResourceManager::GetShader("slice").Use().SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
 	ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
 	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
-
-	Renderer->setUVs();
 	Renderer->DrawSprite(texture, glm::vec2(0, -1), 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
@@ -2162,22 +2254,19 @@ void UnitStatsViewMenu::Draw()
 	text->RenderTextRight(intToString(unit->experience), 200, 120, 1, 14);
 	text->RenderTextRight(intToString(unit->maxHP), 200, 163, 1, 14);
 
-	text->RenderText("ATK", 500, 64, 1);
-	text->RenderText("HIT", 500, 96, 1);
-	text->RenderText("RNG", 500, 128, 1);
-
+	int leftX = 575;
 	if (unit->equippedWeapon >= 0)
 	{
-		text->RenderTextRight(intToString(battleStats.attackDamage), 542, 64, 1, 14);
-		text->RenderTextRight(intToString(battleStats.hitAccuracy), 542, 96, 1, 14);
+		text->RenderTextRight(intToString(battleStats.attackDamage), leftX, 77, 1, 14);
+		text->RenderTextRight(intToString(battleStats.hitAccuracy), leftX, 120, 1, 14);
 		auto weapon = unit->GetEquippedWeapon();
 		if (weapon.maxRange == weapon.minRange)
 		{
-			text->RenderTextRight(intToString(weapon.maxRange), 542, 128, 1, 14);
+			text->RenderTextRight(intToString(weapon.maxRange), leftX, 163, 1, 14);
 		}
 		else
 		{
-			text->RenderTextRight(intToString(weapon.minRange) + " ~ " + intToString(weapon.maxRange), 542, 128, 1, 30);
+			text->RenderTextRight(intToString(weapon.minRange) + " ~ " + intToString(weapon.maxRange), leftX, 163, 1, 30);
 		}
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
@@ -2187,15 +2276,14 @@ void UnitStatsViewMenu::Draw()
 	}
 	else
 	{
-		text->RenderText("--", 542, 64, 1);
-		text->RenderText("--", 542, 96, 1);
-		text->RenderText("--", 542, 128, 1);
+		text->RenderText("--", leftX, 77, 1);
+		text->RenderText("--", leftX, 120, 1);
+		text->RenderText("--", leftX, 163, 1);
 
 	}
-	text->RenderText("CRT", 600, 64, 1);
-	text->RenderTextRight(intToString(battleStats.hitCrit), 642, 64, 1, 14);
-	text->RenderText("AVO", 600, 96, 1);
-	text->RenderTextRight(intToString(battleStats.hitAvoid), 642, 96, 1, 14);
+	int rightX = 725;
+	text->RenderTextRight(intToString(battleStats.hitCrit), rightX, 77, 1, 14);
+	text->RenderTextRight(intToString(battleStats.hitAvoid), rightX, 120, 1, 14);
 }
 
 void UnitStatsViewMenu::SelectOption()

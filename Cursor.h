@@ -20,6 +20,12 @@ struct Cursor
 	std::vector<glm::ivec2> drawnPath;
 
 	glm::vec2 previousPosition;
+	glm::vec2 movePosition;
+	glm::vec2 moveDirection;
+
+	float settleTimer = 0.0f;
+	float moveDelay = 0.0666f;
+	float delayTime;
 
 	int currentFrame = 0;
 
@@ -28,13 +34,18 @@ struct Cursor
 	float movementDelay = 0.0f;
 	float normalDelay = 0.05f;
 	float fastDelay = 0.025f;
-	float firstDelay = 0.2f;
+	float firstDelay = 0.15f;
+
+	float cursorSpeed;
 
 	bool firstMove = true; //Not sure how to handle this. I want a slightly longer delay the first time the player moves, unless they are moving fast
 	bool fastCursor = false;
 	bool movingUnit = false;
 	//For Canto users
 	bool remainingMove = false; 
+
+	bool moving = false;
+	bool settled = false;
 
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;

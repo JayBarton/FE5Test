@@ -317,6 +317,9 @@ struct UnitStatsViewMenu : public Menu
 {
 	UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit);
 	virtual void Draw() override;
+	void DrawUpperSection(glm::mat4& model);
+	void DrawPage2();
+	void DrawPage1();
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 	virtual void CancelOption(int num = 1) override;

@@ -466,15 +466,6 @@ int main(int argc, char** argv)
 	FPSLimiter fpsLimiter;
 	fpsLimiter.setMaxFPS(69990.0f);
 
-	const float MS_PER_SECOND = 1000;
-	const float DESIRED_FPS = 60;
-	const float DESIRED_FRAMETIME = MS_PER_SECOND / DESIRED_FPS;
-	const float MAXIMUM_DELTA_TIME = 1.0f;
-
-	const int MAXIMUM_STEPS = 6;
-
-	float previousTicks = SDL_GetTicks();
-
 	GLfloat verticies[] =
 	{
 		0.0f, 1.0f, // Left
@@ -556,6 +547,10 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/StatusMenuBG.png", "StatusMenuBG");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIStuff.png", "UIStuff");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/ResizeBox.png", "ResizeBox");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/page1lower.png", "page1lower");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/page2lower.png", "page2lower");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/unitViewUpper.png", "unitViewUpper");
+
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test2.png", "test2");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test3.png", "test3");
@@ -668,12 +663,6 @@ int main(int argc, char** argv)
 		lastFrame = currentFrame;
 
 		fpsLimiter.beginFrame();
-
-		float newTicks = SDL_GetTicks();
-		float frameTime = newTicks - previousTicks;
-		previousTicks = newTicks;
-
-		float totalDeltaTime = frameTime / DESIRED_FRAMETIME; //Consider deleting all of this.
 
 		inputManager.update(deltaTime);
 		//Handle events on queue
@@ -1849,7 +1838,8 @@ void DrawText()
 			Text->RenderText("AVO", xStart - 85, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
 			Text->RenderText(intToString(tile.avoid) + "%", xStart - 60, 50, 0.7f);
 		}
-		if (auto unit = cursor.focusedUnit)
+		auto unit = cursor.focusedUnit;
+		if (unit && cursor.settled)
 		{
 			Texture2D test = ResourceManager::GetTexture("UIItems");
 			ResourceManager::GetShader("Nsprite").Use();

@@ -10,6 +10,27 @@
 //Cursor should have a reference to menumanager
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
+	/*if (moving)
+	{
+		position += cursorSpeed * moveDirection;
+		glm::vec2 diff = ((position - movePosition) * moveDirection);
+		if (diff.x > 0 || diff.y > 0)
+		{
+			position = movePosition;
+			if (!selectedUnit)
+			{
+				if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
+				{
+					focusedUnit = tile->occupiedBy;
+				}
+				else
+				{
+					focusedUnit = nullptr;
+				}
+			}
+			moving = false;
+		}
+	}*/
 	if (movingUnit)
 	{
 		selectedUnit->UpdateMovement(deltaTime, inputManager);
@@ -118,6 +139,16 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
+
+		if (!settled)
+		{
+			settleTimer += deltaTime;
+			if (settleTimer >= firstDelay)
+			{
+				settleTimer = 0.0f;
+				settled = true;
+			}
+		}
 	}
 	frameTimer += deltaTime;
 	if (frameTimer >= 0.25f)
@@ -151,6 +182,8 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 	if (inputManager.isKeyDown(SDLK_LSHIFT))
 	{
 		fastCursor = true;
+		settled = false;
+		settleTimer = 0.0f;
 	}
 	else if (inputManager.isKeyReleased(SDLK_LSHIFT))
 	{
@@ -205,10 +238,16 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 		if (fastCursor)
 		{
 			delayTime = fastDelay;
+			cursorSpeed = 16;
 		}
 		else if (firstMove)
 		{
 			delayTime = firstDelay;
+			cursorSpeed = 4.5f;
+		}
+		else
+		{
+			cursorSpeed = 13.5f;
 		}
 		if (movementDelay >= delayTime)
 		{
@@ -356,20 +395,17 @@ void Cursor::Move(int x, int y, bool held)
 	if (move)
 	{
 		position = moveTo;
+		movePosition = moveTo; //for when I figure this out
+
 		CheckBounds(); 
 		if (position == moveTo)
 		{
-		/*	if (held)
-			{
-				ResourceManager::StopSound(-1);
-				ResourceManager::PlaySound("cursorMove");
-			}
-			else
-			{
-				ResourceManager::PlaySound("cursorMove");
-			}*/
 			ResourceManager::PlaySound("cursorMove", 1);
-
+			moving = true;
+			moveDirection = glm::normalize(movePosition - position);
+			focusedUnit = nullptr;
+			settled = false;
+			settleTimer = 0.0f;
 		}
 		if (!selectedUnit)
 		{
