@@ -1,7 +1,7 @@
 :ID:name:maxUses:useID:isWeapon:canDrop:description:value
 0:0:Herb:3:0::1:Heals all HP:600
 1:1:Iron Sword:40:-1:1:1::2200
-2:2:Light Brand:60:0:1::Used to heal all all HP\nRanged, Luck+10:0
+2:2:Light Brand:60:0:1::Use to heal all HP\nRanged, Luck+10:0
 3:3:Iron Bow:40:-1:1:1:Effective against flying enemies:2200
 4:4:Short Bow:20:-1:1:1:Effective against flying enemies:800
 5:5:Iron Blade:30:-1:1:1::2000
