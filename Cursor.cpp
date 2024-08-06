@@ -7,14 +7,15 @@
 #include <iostream>
 #include <algorithm>
 
-//Cursor should have a reference to menumanager
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
-	/*if (moving)
+	//This check insures the cursor moves properly to it's target location
+	if (moving)
 	{
 		position += cursorSpeed * moveDirection;
 		glm::vec2 diff = ((position - movePosition) * moveDirection);
-		if (diff.x > 0 || diff.y > 0)
+		auto distance = glm::distance(position, movePosition);
+		if (distance == 0)
 		{
 			position = movePosition;
 			if (!selectedUnit)
@@ -30,8 +31,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 			}
 			moving = false;
 		}
-	}*/
-	if (movingUnit)
+	}
+	else if (movingUnit)
 	{
 		selectedUnit->UpdateMovement(deltaTime, inputManager);
 		if (!selectedUnit->movementComponent.moving)
@@ -179,9 +180,11 @@ void Cursor::ClearSelected()
 
 void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 {
+	cursorSpeed = 4;
 	if (inputManager.isKeyDown(SDLK_LSHIFT))
 	{
 		fastCursor = true;
+		cursorSpeed = 8;
 		settled = false;
 		settleTimer = 0.0f;
 	}
@@ -191,29 +194,32 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 	}
 	int xDirection = 0;
 	int yDirection = 0;
-	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	if (!fastCursor)
 	{
-		xDirection = 1;
-		firstMove = true;
-	}
-	if (inputManager.isKeyPressed(SDLK_LEFT))
-	{
-		xDirection = -1;
-		firstMove = true;
-	}
-	if (inputManager.isKeyPressed(SDLK_UP))
-	{
-		yDirection = -1;
-		firstMove = true;
-	}
-	if (inputManager.isKeyPressed(SDLK_DOWN))
-	{
-		yDirection = 1;
-		firstMove = true;
-	}
-	if (xDirection != 0 || yDirection != 0)
-	{
-		Move(xDirection, yDirection);
+		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		{
+			xDirection = 1;
+			firstMove = true;
+		}
+		if (inputManager.isKeyPressed(SDLK_LEFT))
+		{
+			xDirection = -1;
+			firstMove = true;
+		}
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			yDirection = -1;
+			firstMove = true;
+		}
+		if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			yDirection = 1;
+			firstMove = true;
+		}
+		if (xDirection != 0 || yDirection != 0)
+		{
+			Move(xDirection, yDirection);
+		}
 	}
 	if (inputManager.isKeyDown(SDLK_RIGHT))
 	{
@@ -234,20 +240,14 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 	if (xDirection != 0 || yDirection != 0)
 	{
 		movementDelay += deltaTime;
-		float delayTime = normalDelay;
+		float delayTime = 0;
 		if (fastCursor)
 		{
-			delayTime = fastDelay;
-			cursorSpeed = 16;
+			delayTime = 0;
 		}
 		else if (firstMove)
 		{
 			delayTime = firstDelay;
-			cursorSpeed = 4.5f;
-		}
-		else
-		{
-			cursorSpeed = 13.5f;
 		}
 		if (movementDelay >= delayTime)
 		{
@@ -263,128 +263,12 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
-void Cursor::GetUnitOptions()
-{
-	if (remainingMove)
-	{
-		MenuManager::menuManager.AddMenu(4);
-	}
-	else
-	{
-		MenuManager::menuManager.AddMenu(0);
-	}
-}
-
-void Cursor::GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>& talkUnits)
-{
-	tradeUnits.clear();
-	talkUnits.clear();
-	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
-
-	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
-	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
-	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
-	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
-	if (selectedUnit->carriedUnit)
-	{
-		tradeUnits.push_back(selectedUnit->carriedUnit);
-	}
-	if (Unit* unit = TileManager::tileManager.getUnit(up.x, up.y))
-	{
-		PushTradeUnit(tradeUnits, unit);
-		//Since you can possibly talk to a unit on any team, need this to be separate
-		PushTalkUnit(talkUnits, unit);
-	}
-	if (Unit* unit = TileManager::tileManager.getUnit(right.x, right.y))
-	{
-		PushTradeUnit(tradeUnits, unit);
-		PushTalkUnit(talkUnits, unit);
-	}
-	if (Unit* unit = TileManager::tileManager.getUnit(down.x, down.y))
-	{
-		PushTradeUnit(tradeUnits, unit);
-		PushTalkUnit(talkUnits, unit);
-	}
-	if (Unit* unit = TileManager::tileManager.getUnit(left.x, left.y))
-	{
-		PushTradeUnit(tradeUnits, unit);
-		PushTalkUnit(talkUnits, unit);
-	}
-}
-
-std::vector<glm::ivec2> Cursor::getDropPositions()
-{
-	std::vector < glm::ivec2 > dropPositions;
-	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
-
-	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
-	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
-	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
-	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
-	FindDropPosition(up, dropPositions);
-	FindDropPosition(right, dropPositions);
-	FindDropPosition(down, dropPositions);
-	FindDropPosition(left, dropPositions);
-
-	return dropPositions;
-}
-
-void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dropPositions)
-{
-	if (!TileManager::tileManager.outOfBounds(position.x, position.y) && 
-		!TileManager::tileManager.getUnit(position.x, position.y) && 
-		TileManager::tileManager.getTile(position.x, position.y)->properties.movementCost < 20)
-	{
-		dropPositions.push_back(position);
-	}
-}
-
-void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
-{
-	if (unit->team == 0)
-	{
-		units.push_back(unit);
-		if (unit->carriedUnit)
-		{
-			units.push_back(unit->carriedUnit);
-		}
-	}
-}
-void Cursor::PushTalkUnit(std::vector<Unit*>& units, Unit*& unit)
-{
-	for (int i = 0; i < selectedUnit->talkData.size(); i++)
-	{
-		if (unit->sceneID == selectedUnit->talkData[i].talkTarget)
-		{
-			units.push_back(unit);
-		}
-	}
-}
-void Cursor::CheckBounds()
-{
-	if (position.x < TileManager::TILE_SIZE)
-	{
-		position.x = TileManager::TILE_SIZE;
-	}
-	else if (position.x + TileManager::TILE_SIZE > TileManager::tileManager.levelWidth - TileManager::TILE_SIZE)
-	{
-		position.x = TileManager::tileManager.levelWidth - TileManager::TILE_SIZE * 2;
-	}
-	if (position.y < TileManager::TILE_SIZE)
-	{
-		position.y = TileManager::TILE_SIZE;
-	}
-	else if (position.y + TileManager::TILE_SIZE > TileManager::tileManager.levelHeight - TileManager::TILE_SIZE)
-	{
-		position.y = TileManager::tileManager.levelHeight - TileManager::TILE_SIZE * 2;
-	}
-}
-
 //Not happy with this, but it works for now
 void Cursor::Move(int x, int y, bool held)
 {
 	glm::vec2 moveTo = glm::ivec2(position) + glm::ivec2(x, y) * TileManager::TILE_SIZE;
 	bool move = true;
+	//This is to check if I want to stop movement for a moment when the cursor hits the edge of a unit's movement range
 	if (held && !fastCursor)
 	{
 		if (path.find(position) != path.end() && path.find(moveTo) == path.end())
@@ -394,32 +278,30 @@ void Cursor::Move(int x, int y, bool held)
 	}
 	if (move)
 	{
-		position = moveTo;
-		movePosition = moveTo; //for when I figure this out
-
-		CheckBounds(); 
-		if (position == moveTo)
+		if(CheckBounds(moveTo))
 		{
+			moveDirection = glm::vec2(x, y);
+			movePosition = moveTo;
+			//Want to move on this first frame
+			position += cursorSpeed * moveDirection;
+
 			ResourceManager::PlaySound("cursorMove", 1);
 			moving = true;
-			moveDirection = glm::normalize(movePosition - position);
 			focusedUnit = nullptr;
 			settled = false;
 			settleTimer = 0.0f;
 		}
-		if (!selectedUnit)
-		{
-			if (auto tile = TileManager::tileManager.getTile(position.x, position.y))
-			{
-				focusedUnit = tile->occupiedBy;
-			}
-			else
-			{
-				focusedUnit = nullptr;
-			}
-		}
 	}
 }
+
+bool Cursor::CheckBounds(glm::vec2 pos)
+{
+	return pos.x >= TileManager::TILE_SIZE &&
+		pos.x + TileManager::TILE_SIZE <= TileManager::tileManager.levelWidth - TileManager::TILE_SIZE &&
+		pos.y >= TileManager::TILE_SIZE &&
+		pos.y + TileManager::TILE_SIZE <= TileManager::tileManager.levelHeight - TileManager::TILE_SIZE;
+}
+
 //Being called erroneously in a few places
 void Cursor::Wait()
 {
@@ -494,4 +376,102 @@ void Cursor::SetFocus(Unit* unit)
 	}
 	position = toFocus->sprite.getPosition();
 	focusedUnit = toFocus;
+}
+
+void Cursor::GetUnitOptions()
+{
+	if (remainingMove)
+	{
+		MenuManager::menuManager.AddMenu(4);
+	}
+	else
+	{
+		MenuManager::menuManager.AddMenu(0);
+	}
+}
+
+void Cursor::GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>& talkUnits)
+{
+	tradeUnits.clear();
+	talkUnits.clear();
+	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
+
+	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
+	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
+	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
+	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
+	if (selectedUnit->carriedUnit)
+	{
+		tradeUnits.push_back(selectedUnit->carriedUnit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnit(up.x, up.y))
+	{
+		PushTradeUnit(tradeUnits, unit);
+		//Since you can possibly talk to a unit on any team, need this to be separate
+		PushTalkUnit(talkUnits, unit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnit(right.x, right.y))
+	{
+		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnit(down.x, down.y))
+	{
+		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
+	}
+	if (Unit* unit = TileManager::tileManager.getUnit(left.x, left.y))
+	{
+		PushTradeUnit(tradeUnits, unit);
+		PushTalkUnit(talkUnits, unit);
+	}
+}
+
+std::vector<glm::ivec2> Cursor::getDropPositions()
+{
+	std::vector < glm::ivec2 > dropPositions;
+	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
+
+	glm::ivec2 up = glm::ivec2(position.x, position.y - 1 * TileManager::TILE_SIZE);
+	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
+	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
+	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
+	FindDropPosition(up, dropPositions);
+	FindDropPosition(right, dropPositions);
+	FindDropPosition(down, dropPositions);
+	FindDropPosition(left, dropPositions);
+
+	return dropPositions;
+}
+
+void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dropPositions)
+{
+	if (!TileManager::tileManager.outOfBounds(position.x, position.y) &&
+		!TileManager::tileManager.getUnit(position.x, position.y) &&
+		TileManager::tileManager.getTile(position.x, position.y)->properties.movementCost < 20)
+	{
+		dropPositions.push_back(position);
+	}
+}
+
+void Cursor::PushTradeUnit(std::vector<Unit*>& units, Unit*& unit)
+{
+	if (unit->team == 0)
+	{
+		units.push_back(unit);
+		if (unit->carriedUnit)
+		{
+			units.push_back(unit->carriedUnit);
+		}
+	}
+}
+void Cursor::PushTalkUnit(std::vector<Unit*>& units, Unit*& unit)
+{
+	for (int i = 0; i < selectedUnit->talkData.size(); i++)
+	{
+		if (unit->sceneID == selectedUnit->talkData[i].talkTarget)
+		{
+			units.push_back(unit);
+		}
+	}
 }

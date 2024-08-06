@@ -34,7 +34,7 @@ struct Cursor
 	float movementDelay = 0.0f;
 	float normalDelay = 0.05f;
 	float fastDelay = 0.025f;
-	float firstDelay = 0.15f;
+	float firstDelay = 0.2f;
 
 	float cursorSpeed;
 
@@ -52,7 +52,7 @@ struct Cursor
 	
 	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera);
 	void MovementInput(InputManager& inputManager, float deltaTime);
-	void CheckBounds();
+	bool CheckBounds(glm::vec2 pos);
 	void Move(int x, int y, bool held = false);
 
 	void ClearTiles();
