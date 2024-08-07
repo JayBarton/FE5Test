@@ -26,7 +26,6 @@ void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Came
 	if (canShow && showPortrait)
 	{
 		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-		auto portraitUVs = portraitTexture.GetUVs(48, 64);
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		Renderer->setUVs(UnitResources::portraitUVs[portraitID][frame]);

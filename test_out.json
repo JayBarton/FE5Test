@@ -18,6 +18,16 @@
         true,
         true
     ],
+    "Settings": {
+        "Animations": 2,
+        "AutoCursor": true,
+        "Music": false,
+        "ShowTerrain": true,
+        "Sterero": true,
+        "TextSpeed": 1,
+        "UnitSpeed": 2.5,
+        "Volume": 4
+    },
     "enemy": [
         {
             "AI": {
@@ -660,6 +670,7 @@
     ],
     "player": [
         {
+            "BattleAnimation": false,
             "Carried": false,
             "Class": "Lord",
             "ClassID": 3,
@@ -707,6 +718,7 @@
             }
         },
         {
+            "BattleAnimation": true,
             "Carried": false,
             "Class": "Lance Knight",
             "ClassID": 13,
@@ -774,6 +786,7 @@
             }
         },
         {
+            "BattleAnimation": true,
             "Carried": false,
             "Class": "Sword Master",
             "ClassID": 5,
@@ -822,6 +835,7 @@
             }
         },
         {
+            "BattleAnimation": true,
             "Carried": false,
             "Class": "Axe Fighter",
             "ClassID": 6,
@@ -866,6 +880,7 @@
             }
         },
         {
+            "BattleAnimation": true,
             "Carried": false,
             "Class": "Axe Fighter",
             "ClassID": 6,

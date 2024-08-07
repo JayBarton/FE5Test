@@ -151,22 +151,6 @@ bool TileManager::setTiles(std::ifstream& tileMap, int width, int height)
 void TileManager::showTiles(SpriteRenderer * renderer, Camera& camera)
 {
     spriteBatch.renderBatch();
-  /*  for (int i = 0; i < totalTiles; i++)
-    {
-        glm::vec4 box = glm::vec4(glm::vec2(tiles[i].x, tiles[i].y), glm::vec2(TILE_SIZE, TILE_SIZE));
-        if(camera.onScreen(glm::vec2(box.x, box.y), glm::vec2(box.z, box.w)))
-        {
-            glm::mat4 model = glm::mat4();
-
-            model = glm::translate(model, glm::vec3(box.x, box.y, 0.0f));
-            model = glm::scale(model, glm::vec3(box.z, box.w, 0.0f));
-
-            renderer->setUVs(uvs[tiles[i].properties.theType]);
-            Texture2D displayTexture = ResourceManager::GetTexture("tiles");
-            renderer->DrawSprite( displayTexture, glm::vec2(box.x, box.y), 0.0f, glm::vec2(box.z, box.w));
-
-        }
-    }*/
 }
 
 //Using this to redraw tiles when their uvs change, as is the case with visit tiles

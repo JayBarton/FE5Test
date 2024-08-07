@@ -554,6 +554,9 @@ struct MenuManager
 	std::vector<glm::vec4> arrowAnimUVs;
 	std::vector<glm::vec4> indicatorUV;
 	std::vector<glm::vec4> arrowUV;
+	std::vector<glm::vec4> carryingIconsUVs;
+	std::vector<glm::vec4> boxesUVs;
+	glm::vec4 statBarUV;
 
 	glm::vec2 indicatorPosition;
 	float indicatorDrawX;

@@ -98,9 +98,9 @@ void Menu::DrawBox(glm::ivec2 position, int width, int height)
 	ResourceManager::GetShader("slice").Use();
 	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
 
-	auto texture = ResourceManager::GetTexture("ResizeBox");
+	auto texture = ResourceManager::GetTexture("UIStuff");
 
-	glm::vec4 uvs = texture.GetUVs(32, 32)[0];
+	glm::vec4 uvs = MenuManager::menuManager.boxesUVs[0];
 	glm::vec2 size = glm::vec2(width, height);
 	float borderSize = 10.0f;
 	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
@@ -769,7 +769,6 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 void ItemOptionsMenu::DrawPortrait(Unit* unit)
 {
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	Renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
@@ -1608,7 +1607,6 @@ void TradeMenu::Draw()
 	}
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	Renderer->setUVs(UnitResources::portraitUVs[firstUnit->portraitID][0]);
@@ -1804,8 +1802,7 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 	proficiencyIconUVs = MenuManager::menuManager.proficiencyIconUVs;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 	skillIconUVs = MenuManager::menuManager.skillIconUVs;
-	Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
-	carryUVs = carryTexture.GetUVs(8, 8);
+	carryUVs = MenuManager::menuManager.carryingIconsUVs;
 
 	skillInfo.resize(6);
 	skillInfo[0] = { "Prayer", "Dodge when low\non health" };
@@ -1893,7 +1890,7 @@ void UnitStatsViewMenu::DrawPage1()
 	auto texture = ResourceManager::GetTexture("UIItems");
 
 	//TODO don't want to be loading these every time need to save em somewhere
-	glm::vec4 uvs = texture.GetUVs(0, 54, 7, 7, 1, 1)[0];
+	glm::vec4 uvs = MenuManager::menuManager.statBarUV;
 	glm::vec2 size;
 	float borderSize = 1.0f;
 	Renderer->setUVs();
@@ -2022,7 +2019,7 @@ void UnitStatsViewMenu::DrawPage1()
 		ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto uiTexture = ResourceManager::GetTexture("UIStuff");
 
-		glm::vec4 uvs = uiTexture.GetUVs(32, 32)[2];
+		glm::vec4 uvs = MenuManager::menuManager.boxesUVs[2];
 		glm::vec2 size = glm::vec2(96, 144);
 		float borderSize = 6.0f;
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
@@ -2178,7 +2175,7 @@ void UnitStatsViewMenu::DrawPage2()
 
 	if (unit->carriedUnit)
 	{
-		Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
+		Texture2D carryTexture = ResourceManager::GetTexture("UIItems");
 
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		Renderer->setUVs(carryUVs[unit->carriedUnit->team]);
@@ -2219,7 +2216,7 @@ void UnitStatsViewMenu::DrawPage2()
 		ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto uiTexture = ResourceManager::GetTexture("UIStuff");
 
-		glm::vec4 uvs = uiTexture.GetUVs(32, 32)[2];
+		glm::vec4 uvs = MenuManager::menuManager.boxesUVs[2];
 		glm::vec2 size = glm::vec2(96, 104);
 		float borderSize = 6.0f;
 		ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
@@ -2247,7 +2244,7 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
 	auto texture = ResourceManager::GetTexture("UIStuff");
 
-	glm::vec4 uvs = texture.GetUVs(32, 32)[1];
+	glm::vec4 uvs = MenuManager::menuManager.boxesUVs[1];
 	glm::vec2 size = glm::vec2(256, 448);
 	float borderSize = 6.0f;
 	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
@@ -2287,7 +2284,6 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	Renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
@@ -2295,7 +2291,7 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 
 	if (unit->carryingUnit)
 	{
-		Texture2D carryTexture = ResourceManager::GetTexture("carryingIcons");
+		Texture2D carryTexture = ResourceManager::GetTexture("UIItems");
 
 		Renderer->setUVs(carryUVs[unit->team]);
 		Renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
@@ -4541,7 +4537,6 @@ void FullInventoryMenu::Draw()
 	text->RenderText("Too many items.\nPick an item to\nsend to Supply", 425, 32, 1);
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	Renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
@@ -4773,7 +4768,6 @@ void SuspendMenu::Draw()
 	}
 
 	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	auto portraitUVs = portraitTexture.GetUVs(48, 64);
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 	Renderer->setUVs(UnitResources::portraitUVs[20][0]);
@@ -4846,13 +4840,19 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	profcienciesMap[4] = "B";
 	profcienciesMap[5] = "A";
 
+	auto uiTexture = ResourceManager::GetTexture("UIItems");
 	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
 	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 19);
 	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
-	optionIconUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 0, 16, 16, 4, 3, 10);
-	arrowAnimUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 48, 7, 6, 6, 1);
-	indicatorUV = ResourceManager::GetTexture("UIItems").GetUVs(32, 32, 16, 16, 1, 1);
-	arrowUV = ResourceManager::GetTexture("UIItems").GetUVs(48, 32, 8, 8, 1, 1);
+	optionIconUVs = uiTexture.GetUVs(0, 0, 16, 16, 4, 3, 10);
+	arrowAnimUVs = uiTexture.GetUVs(0, 48, 7, 6, 6, 1);
+	indicatorUV = uiTexture.GetUVs(32, 32, 16, 16, 1, 1);
+	arrowUV = uiTexture.GetUVs(48, 32, 8, 8, 1, 1);
+	carryingIconsUVs = uiTexture.GetUVs(32, 54, 8, 8, 2, 1);
+	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
+
+	auto boxesTexture = ResourceManager::GetTexture("UIStuff");
+	boxesUVs = boxesTexture.GetUVs(32, 32);
 
 	arrowSprite.setSize(glm::vec2(7, 6));
 	arrowSprite.uv = &arrowAnimUVs;

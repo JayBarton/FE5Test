@@ -1704,12 +1704,10 @@ void DrawUnits()
 	{
 		for (int i = 0; i < carrySprites.size(); i++)
 		{
-			Texture2D texture = ResourceManager::GetTexture("carryingIcons");
-			auto uvs = texture.GetUVs(8, 8);
-		//	Renderer->setUVs();
+			Texture2D texture = ResourceManager::GetTexture("UIItems");
+			auto uvs = MenuManager::menuManager.carryingIconsUVs;
 			Renderer->setUVs(uvs[carrySprites[i].currentFrame]);
 			Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, carrySprites[i].getSize());
-		//	Renderer->DrawSprite(texture, carrySprites[i].getPosition(), 0, glm::vec2(64, 32));
 		}
 	}
 }
@@ -2016,14 +2014,26 @@ void SuspendGame()
 {
 	json j;
 	json map;
+	json settings;
 	map["Level"] = currentLevel;
 	map["CurrentRound"] = currentRound;
 	map["Funds"] = playerManager.funds;
+
+	settings["UnitSpeed"] = Settings::settings.unitSpeed;
+	settings["TextSpeed"] = Settings::settings.textSpeed;
+	settings["Volume"] = Settings::settings.volume;
+	settings["Animations"] = Settings::settings.mapAnimations;
+	settings["AutoCursor"] = Settings::settings.autoCursor;
+	settings["ShowTerrain"] = Settings::settings.showTerrain;
+	settings["Sterero"] = Settings::settings.sterero;
+	settings["Music"] = Settings::settings.music;
+
 	for (int i = 0; i < playerManager.units.size(); i++)
 	{
 		auto unit = playerManager.units[i];
 		json unitData = UnitToJson(playerManager.units[i]);
 		unitData["HasMoved"] = unit->hasMoved;
+		unitData["BattleAnimation"] = unit->battleAnimations;
 		j["player"].push_back(unitData);
 		if (unit->carriedUnit)
 		{
@@ -2049,6 +2059,7 @@ void SuspendGame()
 		j["enemy"].push_back(something);
 	}
 	j["Map"] = map;
+	j["Settings"] = settings;
 	j["Scenes"] = json::array();
 	for (int i = 0; i < sceneManager.scenes.size(); i++)
 	{
@@ -2081,6 +2092,16 @@ void loadSuspendedGame()
 	currentLevel = mapLevel["Level"];
 	playerManager.funds = mapLevel["Funds"];
 	std::ifstream map(levelDirectory + levelMap);
+
+	json settings = data["Settings"];
+	Settings::settings.unitSpeed = settings["UnitSpeed"];
+	Settings::settings.textSpeed = settings["TextSpeed"];
+	Settings::settings.volume = settings["Volume"];
+	Settings::settings.mapAnimations = settings["Animations"];
+	Settings::settings.autoCursor = settings["AutoCursor"];
+	Settings::settings.showTerrain = settings["ShowTerrain"];
+	Settings::settings.sterero = settings["Sterero"];
+	Settings::settings.music = settings["Music"];
 
 	int xTiles = 0;
 	int yTiles = 0;

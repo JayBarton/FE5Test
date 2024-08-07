@@ -178,6 +178,8 @@ void PlayerManager::Load(json saveData)
 	    
 		newUnit->hasMoved = unit["HasMoved"];
 
+		newUnit->battleAnimations = unit["BattleAnimation"];
+
 		newUnit->subject.addObserver(unitEvents);
 
 		newUnit->team = 0;

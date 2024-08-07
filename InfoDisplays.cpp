@@ -858,7 +858,6 @@ void InfoDisplays::DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRe
 	renderer->DrawSprite(texture, glm::vec2(9, 129), 0, glm::vec2(238, 78));
 
 	texture = ResourceManager::GetTexture("Portraits");
-	auto portraitUVs = texture.GetUVs(48, 64);
 	renderer->setUVs(UnitResources::portraitUVs[unit->portraitID][0]);
 	renderer->DrawSprite(texture, glm::vec2(16, 136), 0, glm::vec2(48, 64), glm::vec4(1), true);
 

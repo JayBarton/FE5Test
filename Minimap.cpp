@@ -4,7 +4,6 @@
 #include "TileManager.h"
 #include "InputManager.h"
 #include "SDL.h"
-#include "Settings.h"
 
 void Minimap::Update(InputManager& inputManager, float deltaTime, Camera& camera)
 {
