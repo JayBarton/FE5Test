@@ -4852,7 +4852,7 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
 
 	auto boxesTexture = ResourceManager::GetTexture("UIStuff");
-	boxesUVs = boxesTexture.GetUVs(32, 32);
+	boxesUVs = boxesTexture.GetUVs(0, 0, 32, 32, 3, 1);
 
 	arrowSprite.setSize(glm::vec2(7, 6));
 	arrowSprite.uv = &arrowAnimUVs;

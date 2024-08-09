@@ -16,6 +16,8 @@ struct TextObject
 	glm::vec2 position;
 	glm::vec2 displayedPosition;
 	glm::vec2 portraitPosition;
+	glm::vec4 boxPosition;
+	glm::vec4 boxDisplayPosition;
 	//The full text to be displayed
 	std::string text;
 	//The currently displayed text
@@ -27,6 +29,7 @@ struct TextObject
 	bool showPortrait = false;
 	bool fadeIn = false;
 	bool fadeOut = false;
+	bool boxIn = true; //idk man
 
 	TextObject();
 
@@ -81,6 +84,8 @@ struct TextObjectManager
 	float blackAlpha = 0.0f;
 	float layer1Alpha = 0.0f;
 	float layer1MaxAlpha = 0.35f;
+
+	float t;
 
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;

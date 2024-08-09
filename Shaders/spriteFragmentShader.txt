@@ -47,7 +47,7 @@ void main()
 			vec4 fadeMask = texture(BattleFadeIn, screenCoords);
 			if (fadeMask.a > 0.0) 
 			{
-				color.a = 0.0; // Set alpha to 0 if the mask is not transparent
+				discard;
 			}
 		}
 	}

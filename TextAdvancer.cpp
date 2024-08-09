@@ -21,16 +21,43 @@ TextObject::TextObject()
 
 void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow)
 {
-	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
-
 	if (canShow && showPortrait)
 	{
+
+		Renderer->shader = ResourceManager::GetShader("clip");
+
+		Texture2D dsagasdg = ResourceManager::GetTexture("TextBackground");
+		ResourceManager::GetShader("clip").Use();
+		ResourceManager::GetShader("clip").SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("clip").SetVector4f("bounds", 
+			glm::vec4(boxDisplayPosition.x + 1, boxDisplayPosition.y + 1,
+				boxDisplayPosition.x + 1 + boxDisplayPosition.z - 2, boxDisplayPosition.y + 1 + boxDisplayPosition.w - 2)); //clip area should be the border's position + 1 and the border's size -2
+		Renderer->setUVs();
+		Renderer->DrawSprite(dsagasdg, glm::vec2(boxPosition.x + 2, boxPosition.y + 2), 0, glm::vec2(236, 60));
+
+		Renderer->shader = ResourceManager::GetShader("sliceFull");
+
+		ResourceManager::GetShader("sliceFull").Use();
+		ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera->getOrthoMatrix());
+
+		auto texture = ResourceManager::GetTexture("TextBorder");
+		glm::vec2 size = glm::vec2(boxDisplayPosition.z, boxDisplayPosition.w);
+		float borderSize = 5.0f;
+		ResourceManager::GetShader("sliceFull").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("sliceFull").SetVector2f("u_border", borderSize / 24.0f, borderSize / 24.0f);
+
+		Renderer->setUVs();
+		Renderer->DrawSprite(texture, glm::vec2(boxDisplayPosition.x, boxDisplayPosition.y), 0.0f, size);
+
+		Renderer->shader = ResourceManager::GetShader("Nsprite");
+
 		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		Renderer->setUVs(UnitResources::portraitUVs[portraitID][frame]);
-		Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1, 1, 1, 1), fadeValue), mirrorPortrait);
+		Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), fadeValue), mirrorPortrait);
 	}
+	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
 }
 
 TextObjectManager::TextObjectManager()
@@ -74,6 +101,10 @@ void TextObjectManager::init(int line/* = 0 */)
 		state = READING_TEXT;
 		textObjects[focusedObject].fadeValue = 1.0f;
 	}
+	textObjects[0].boxDisplayPosition = glm::vec4(72, 48, 56, 24);
+	textObjects[0].boxPosition = glm::vec4(8, 8, 240, 64);
+	textObjects[1].boxDisplayPosition = glm::vec4(144, 160, 32, 24);
+	textObjects[1].boxPosition = glm::vec4(8, 160, 240, 64);
 }
 
 void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool finished)
@@ -142,27 +173,53 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 	case PORTRAIT_FADE_IN:
 	{
 		auto& currentObject = textObjects[focusedObject];
-		currentObject.fadeValue += deltaTime * 1.5f;
-		if (currentObject.fadeValue >= 1)
+		if (currentObject.boxIn)
 		{
-			currentObject.fadeValue = 1;
-			currentObject.fadeIn = false;
-			focusedObject++;
-			if (focusedObject >= textObjects.size())
+			t += deltaTime * 1.667;
+
+			if (focusedObject == 0)
 			{
-				focusedObject = textLines[currentLine].location;
-				state = READING_TEXT;
+				currentObject.boxDisplayPosition = glm::mix(currentObject.boxDisplayPosition, currentObject.boxPosition, t);
+				if (t >= 1)
+				{
+					currentObject.boxIn = false;
+					t = 0;
+				}
 			}
 			else
 			{
-				if (textObjects[focusedObject].portraitID >= 0)
+				currentObject.boxDisplayPosition = glm::mix(currentObject.boxDisplayPosition, currentObject.boxPosition, t);
+				if (t >= 1)
 				{
-					textObjects[focusedObject].showPortrait = true;
+					currentObject.boxIn = false;
+					t = 0;
 				}
-				else
+			}
+		}
+		else
+		{
+			currentObject.fadeValue += deltaTime * 1.5f;
+			if (currentObject.fadeValue >= 1)
+			{
+				currentObject.fadeValue = 1;
+				currentObject.fadeIn = false;
+				focusedObject++;
+				if (focusedObject >= textObjects.size())
 				{
 					focusedObject = textLines[currentLine].location;
 					state = READING_TEXT;
+				}
+				else
+				{
+					if (textObjects[focusedObject].portraitID >= 0)
+					{
+						textObjects[focusedObject].showPortrait = true;
+					}
+					else
+					{
+						focusedObject = textLines[currentLine].location;
+						state = READING_TEXT;
+					}
 				}
 			}
 		}

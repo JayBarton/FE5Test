@@ -501,6 +501,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
 	ResourceManager::LoadShader("Shaders/shapeInstanceVertexShader.txt", "Shaders/shapeInstanceFragmentShader.txt", nullptr, "shapeInstance");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
+	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFullFragmentShader.txt", nullptr, "sliceFull");
+	ResourceManager::LoadShader("Shaders/clipVertexShader.txt", "Shaders/clipFragmentShader.txt", nullptr, "clip");
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
@@ -526,6 +528,12 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
 
+	ResourceManager::GetShader("sliceFull").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera.getOrthoMatrix());
+
+	ResourceManager::GetShader("clip").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("clip").SetMatrix4("projection", camera.getOrthoMatrix());
+
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Tiles.png", "tiles");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/UIItems.png", "UIItems");
 	ResourceManager::LoadTexture2("E:/Damon/dev stuff/FE5Test/TestSprites/sprites.png", "sprites");
@@ -550,6 +558,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/page1lower.png", "page1lower");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/page2lower.png", "page2lower");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/unitViewUpper.png", "unitViewUpper");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/TextBackground.png", "TextBackground");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/TextBorder.png", "TextBorder");
 
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test2.png", "test2");
