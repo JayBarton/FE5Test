@@ -40,8 +40,8 @@ struct Scene
 
 	class VisitObject* visit = nullptr;
 
-	TextObject testText;
-	TextObject testText2;
+	//TextObject testText;
+	//TextObject testText2;
 	TextObjectManager* textManager;
 
 	//Hopefully here temporarily

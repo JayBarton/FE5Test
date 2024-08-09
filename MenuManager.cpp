@@ -3963,20 +3963,20 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 
 	textManager.textLines.clear();
 
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Got a selection of GOOD things on sale, stranger.<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya buyin'?<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "What are ya sellin'?<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Is that all stranger?<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Come back any time<3", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Ahhh, I'll buy it at a HIGH price.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Hehehe, thank you.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Good choice, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough cash, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not enough space, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "You've got nothing to sell, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 0, "Not interested, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Got a selection of GOOD things on sale, stranger.<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya buyin'?<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya sellin'?<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Is that all stranger?<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Come back any time<3", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Ahhh, I'll buy it at a HIGH price.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Hehehe, thank you.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Good choice, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not enough cash, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not enough space, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You've got nothing to sell, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not interested, stranger.<2", 14 });
 
-	testText.position = glm::vec2(275.0f, 48.0f);
+/*	testText.position = glm::vec2(275.0f, 48.0f);
 	testText.portraitPosition = glm::vec2(16, 16);
 	testText.mirrorPortrait = true;
 	testText.displayedPosition = testText.position;
@@ -3985,7 +3985,8 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	testText.showPortrait = true;
 
 	textManager.textObjects.clear();
-	textManager.textObjects.push_back(testText);
+	textManager.textObjects.push_back(testText);*/
+	textManager.textObjects[2].showPortrait = true;
 	textManager.init();
 	textManager.active = true;
 

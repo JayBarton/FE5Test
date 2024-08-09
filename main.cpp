@@ -865,7 +865,7 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
-		//std::cout << fps << std::endl;
+		std::cout << fps << std::endl;
 	}
 
 	delete Renderer;

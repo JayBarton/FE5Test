@@ -160,9 +160,9 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 void InfoDisplays::PlayerUnitDied(Unit* unit)
 {
 	textManager->textLines.clear();
-	textManager->textLines.push_back(SpeakerText{ nullptr, 0, unit->deathMessage, unit->portraitID });
-
-	testText.position = glm::vec2(62, 455);
+	textManager->textLines.push_back(SpeakerText{ nullptr, 1, unit->deathMessage, unit->portraitID });
+	textManager->textObjects[1].fadeIn = true;
+/*	testText.position = glm::vec2(62, 455);
 	testText.portraitPosition = glm::vec2(176, 96);
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
@@ -170,7 +170,7 @@ void InfoDisplays::PlayerUnitDied(Unit* unit)
 	testText.fadeIn = true;
 
 	textManager->textObjects.clear();
-	textManager->textObjects.push_back(testText);
+	textManager->textObjects.push_back(testText);*/
 	textManager->init();
 	textManager->active = true;
 	textManager->talkActivated = true;
@@ -197,8 +197,9 @@ void InfoDisplays::PlayerLost(int messageID)
 			}
 		}
 	}
+	textManager->textObjects[1].fadeIn = true;
 	//This is repeated from up above in player death, need to fix this shit
-	testText.position = glm::vec2(62, 455);
+/*	testText.position = glm::vec2(62, 455);
 	testText.portraitPosition = glm::vec2(176, 96);
 	testText.displayedPosition = testText.position;
 	testText.charsPerLine = 55;
@@ -206,7 +207,7 @@ void InfoDisplays::PlayerLost(int messageID)
 	testText.fadeIn = true;
 
 	textManager->textObjects.clear();
-	textManager->textObjects.push_back(testText);
+	textManager->textObjects.push_back(testText);*/
 	textManager->init();
 	textManager->active = true;
 	textManager->talkActivated = true;

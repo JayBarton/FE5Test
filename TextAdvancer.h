@@ -7,8 +7,8 @@ class TextRenderer;
 struct TextObject
 {
 	int index;
-	int nextIndex;
-	int charsPerLine;
+	int nextIndex = 55;
+	int charsPerLine = 55;
 
 	int portraitID = -1;
 	int frame = 0;

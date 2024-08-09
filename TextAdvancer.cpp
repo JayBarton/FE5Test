@@ -64,10 +64,35 @@ TextObjectManager::TextObjectManager()
 {
 	focusedObject = 0;
 	delay = normalDelay;
+	textObjects.resize(3);
+
+	textObjects[0].position = glm::vec2(62, 48);
+	textObjects[0].displayedPosition = textObjects[0].position;
+	textObjects[0].portraitPosition = glm::vec2(32, 96);
+	textObjects[0].mirrorPortrait = true;
+	textObjects[0].fadeIn = true;
+
+	textObjects[1].portraitPosition = glm::vec2(176, 96);
+	textObjects[1].position = glm::vec2(62, 455);
+	textObjects[1].displayedPosition = textObjects[1].position;
+	textObjects[1].mirrorPortrait = false;
+	textObjects[1].fadeIn = true;
+
+	textObjects[2].position = glm::vec2(275.0f, 48.0f);
+	textObjects[2].portraitPosition = glm::vec2(16, 16);
+	textObjects[2].mirrorPortrait = true;
+	textObjects[2].displayedPosition = textObjects[2].position;
+	//textObjects[2].showPortrait = true;
 }
 
 void TextObjectManager::init(int line/* = 0 */)
 {
+	for (int i = 0; i < textObjects.size(); i++)
+	{
+		//textObjects[i].text = "";
+		textObjects[i].displayedText = "";
+		textObjects[i].index = 0;
+	}
 	currentLine = line;
 	auto thisLine = textLines[currentLine];
 	focusedObject = thisLine.location;
@@ -103,8 +128,10 @@ void TextObjectManager::init(int line/* = 0 */)
 	}
 	textObjects[0].boxDisplayPosition = glm::vec4(72, 48, 56, 24);
 	textObjects[0].boxPosition = glm::vec4(8, 8, 240, 64);
+	textObjects[0].boxIn = true;
 	textObjects[1].boxDisplayPosition = glm::vec4(144, 160, 32, 24);
 	textObjects[1].boxPosition = glm::vec4(8, 160, 240, 64);
+	textObjects[1].boxIn = true;
 }
 
 void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool finished)
@@ -132,6 +159,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				active = false;
 				showAnyway = true;
 				textObjects[focusedObject].index = 0;
+				textObjects[focusedObject].showPortrait = false;
 			}
 			else
 			{

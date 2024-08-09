@@ -128,6 +128,7 @@ void ResourceManager::PlayMusic(std::string name, std::string next)
 {
     if (Settings::settings.music)
     {
+      //  Mix_HaltMusic(); //Fade out isn't working properly
         Mix_PlayMusic(Music[name], 1);
         currentSong = name;
         nextSong = next;

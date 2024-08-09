@@ -89,7 +89,7 @@ struct InfoDisplays
 
 	//I seriously need to fix this stuff, just getting repetitive
 	TextObjectManager* textManager;
-	TextObject testText;
+//	TextObject testText;
 
 	void init(TextObjectManager* textManager);
 

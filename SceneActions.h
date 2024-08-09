@@ -16,7 +16,7 @@ struct SceneAction
 {
 	int type;
 	//The delay between this action and the next action
-	float nextActionDelay;
+	float nextActionDelay = 0;
 	SceneAction(int type, float nextActionDelay = 0) : type(type), nextActionDelay(nextActionDelay)
 	{
 	}

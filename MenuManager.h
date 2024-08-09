@@ -465,7 +465,7 @@ struct VendorMenu : public Menu
 	Vendor* vendor;
 
 	TextObjectManager textManager;
-	TextObject testText;
+//	TextObject testText;
 
 	VendorState state;
 	bool buying = true;
