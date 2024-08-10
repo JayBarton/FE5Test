@@ -471,6 +471,8 @@ struct VendorMenu : public Menu
 	bool buying = true;
 	bool confirm = true;
 	bool delay = false;
+	//Need this to delay displaying item descriptions
+	bool shopDelay = false;
 
 	float delayTime = 0.15f;
 	float delayTimer = 0.0f;

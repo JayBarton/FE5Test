@@ -3967,7 +3967,7 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya buyin'?<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya sellin'?<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Is that all stranger?<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Come back any time<3", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Come back any time.<3", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Ahhh, I'll buy it at a HIGH price.<2", 14 });
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Hehehe, thank you.<2", 14 });
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Good choice, stranger.<2", 14 });
@@ -3976,17 +3976,6 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You've got nothing to sell, stranger.<2", 14 });
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not interested, stranger.<2", 14 });
 
-/*	testText.position = glm::vec2(275.0f, 48.0f);
-	testText.portraitPosition = glm::vec2(16, 16);
-	testText.mirrorPortrait = true;
-	testText.displayedPosition = testText.position;
-	testText.charsPerLine = 55;
-	testText.nextIndex = 55;
-	testText.showPortrait = true;
-
-	textManager.textObjects.clear();
-	textManager.textObjects.push_back(testText);*/
-	textManager.textObjects[2].showPortrait = true;
 	textManager.init();
 	textManager.active = true;
 
@@ -3995,48 +3984,19 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 
 void VendorMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	auto texture = ResourceManager::GetTexture("VendorBackground");
 
-	model = glm::scale(model, glm::vec3(256, 80, 0.0f));
+	Renderer->setUVs();
+	Renderer->DrawSprite(texture, glm::vec2(0), 0.0f, glm::vec2(256, 224));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.2f, 0.0f));
+	if (textManager.ShowText())
+	{
+		textManager.Draw(text, Renderer, camera);
+	}
 
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 80, 0.0f));
-
-	model = glm::scale(model, glm::vec3(80, 144, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.258f, 0.188f, 0.16f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(80, 80, 0.0f));
-
-	model = glm::scale(model, glm::vec3(176, 144, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.358f, 0.188f, 0.16f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
 	if (!textManager.active && !delay)
 	{
-		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		switch (state)
 		{
 		case GREETING:
@@ -4113,7 +4073,7 @@ void VendorMenu::Draw()
 	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 40);
 	text->RenderText("G", 175, 551, 1);
 
-	if (state == BUYING || state == SELLING)
+	if (!shopDelay && (state == BUYING || state == SELLING || state == CONFIRMING))
 	{
 		Item currentItem;
 		if (buying)
@@ -4156,11 +4116,6 @@ void VendorMenu::Draw()
 			text->RenderText(currentItem.description, 50, yPosition, 1);
 		}
 	}
-
-	if (textManager.ShowText())
-	{
-		textManager.Draw(text, Renderer, camera);
-	}
 }
 
 void VendorMenu::SelectOption()
@@ -4185,6 +4140,7 @@ void VendorMenu::SelectOption()
 				textManager.init(10);
 			}
 		}
+		shopDelay = true;
 		ActivateText();
 		break;
 	case BUYING:
@@ -4263,8 +4219,6 @@ void VendorMenu::SelectOption()
 			}
 			textManager.init(3);
 		}
-
-	//	confirming = false;
 		break;
 	}
 	if (state != GREETING)
@@ -4294,6 +4248,7 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			delayTimer = 0.0f;
 			delay = false;
+			shopDelay = false;
 		}
 	}
 	else if (state == LEAVING)
@@ -4359,7 +4314,7 @@ void VendorMenu::CancelOption(int num)
 	{
 		state = GREETING;
 		textManager.init(3);
-
+		currentOption = 0;
 	}
 	else if (state == CONFIRMING)
 	{

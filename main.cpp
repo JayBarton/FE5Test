@@ -464,7 +464,7 @@ int main(int argc, char** argv)
 
 	int fps = 0;
 	FPSLimiter fpsLimiter;
-	fpsLimiter.setMaxFPS(69990.0f);
+	fpsLimiter.setMaxFPS(60.0f);
 
 	GLfloat verticies[] =
 	{
@@ -560,6 +560,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/unitViewUpper.png", "unitViewUpper");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/TextBackground.png", "TextBackground");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/TextBorder.png", "TextBorder");
+	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/Backgrounds/VendorBackground.png", "VendorBackground");
 
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("E:/Damon/dev stuff/FE5Test/TestSprites/test2.png", "test2");
@@ -865,7 +866,7 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
-		std::cout << fps << std::endl;
+	//	std::cout << fps << std::endl;
 	}
 
 	delete Renderer;

@@ -203,12 +203,12 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 					int ID = text["ID"];
 					if (ID == action->ID)
 					{
-					/*	testText.portraitID = -1;
-						testText2.portraitID = -1;
+						textManager->textObjects[0].portraitID = -1;
+						textManager->textObjects[1].portraitID = -1;
 						if (text.find("Start_Portraits") != text.end())
 						{
-							testText2.portraitID = text["Start_Portraits"][0];
-						}*/
+							textManager->textObjects[1].portraitID = text["Start_Portraits"][0];
+						}
 						auto dialogues = text["dialogue"];
 						for (const auto& dialogue : dialogues)
 						{

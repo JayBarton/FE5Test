@@ -27,9 +27,11 @@ struct TextObject
 
 	bool mirrorPortrait = false;
 	bool showPortrait = false;
+	bool showBox = false;
 	bool fadeIn = false;
 	bool fadeOut = false;
 	bool boxIn = true; //idk man
+	bool active = false;
 
 	TextObject();
 
@@ -55,7 +57,8 @@ enum TextObjectState
 	PORTRAIT_FADE_OUT,
 	FADE_GAME_OUT,
 	FADE_BG_IN,
-	FADE_BG_OUT
+	FADE_BG_OUT,
+	FADE_BOX_OUT
 };
 
 struct TextObjectManager
@@ -66,6 +69,8 @@ struct TextObjectManager
 	bool showBG = false;
 	bool fadeIn = false;
 	bool finishing = false;
+
+	bool boxFadeOut = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -89,6 +94,8 @@ struct TextObjectManager
 
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;
+
+	std::vector<glm::vec4> boxStarts;
 
 	TextObjectState state;
 

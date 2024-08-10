@@ -21,41 +21,45 @@ TextObject::TextObject()
 
 void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow)
 {
-	if (canShow && showPortrait)
+	if (canShow)
 	{
+		if (showBox)
+		{
+			Renderer->shader = ResourceManager::GetShader("clip");
 
-		Renderer->shader = ResourceManager::GetShader("clip");
+			Texture2D dsagasdg = ResourceManager::GetTexture("TextBackground");
+			ResourceManager::GetShader("clip").Use();
+			ResourceManager::GetShader("clip").SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("clip").SetVector4f("bounds",
+				glm::vec4(boxDisplayPosition.x + 1, boxDisplayPosition.y + 1,
+					boxDisplayPosition.x + 1 + boxDisplayPosition.z - 2, boxDisplayPosition.y + 1 + boxDisplayPosition.w - 2)); //clip area should be the border's position + 1 and the border's size -2
+			Renderer->setUVs();
+			Renderer->DrawSprite(dsagasdg, glm::vec2(boxPosition.x + 2, boxPosition.y + 2), 0, glm::vec2(236, 60));
 
-		Texture2D dsagasdg = ResourceManager::GetTexture("TextBackground");
-		ResourceManager::GetShader("clip").Use();
-		ResourceManager::GetShader("clip").SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("clip").SetVector4f("bounds", 
-			glm::vec4(boxDisplayPosition.x + 1, boxDisplayPosition.y + 1,
-				boxDisplayPosition.x + 1 + boxDisplayPosition.z - 2, boxDisplayPosition.y + 1 + boxDisplayPosition.w - 2)); //clip area should be the border's position + 1 and the border's size -2
-		Renderer->setUVs();
-		Renderer->DrawSprite(dsagasdg, glm::vec2(boxPosition.x + 2, boxPosition.y + 2), 0, glm::vec2(236, 60));
+			Renderer->shader = ResourceManager::GetShader("sliceFull");
 
-		Renderer->shader = ResourceManager::GetShader("sliceFull");
+			ResourceManager::GetShader("sliceFull").Use();
+			ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera->getOrthoMatrix());
 
-		ResourceManager::GetShader("sliceFull").Use();
-		ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera->getOrthoMatrix());
+			auto texture = ResourceManager::GetTexture("TextBorder");
+			glm::vec2 size = glm::vec2(boxDisplayPosition.z, boxDisplayPosition.w);
+			float borderSize = 5.0f;
+			ResourceManager::GetShader("sliceFull").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+			ResourceManager::GetShader("sliceFull").SetVector2f("u_border", borderSize / 24.0f, borderSize / 24.0f);
 
-		auto texture = ResourceManager::GetTexture("TextBorder");
-		glm::vec2 size = glm::vec2(boxDisplayPosition.z, boxDisplayPosition.w);
-		float borderSize = 5.0f;
-		ResourceManager::GetShader("sliceFull").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
-		ResourceManager::GetShader("sliceFull").SetVector2f("u_border", borderSize / 24.0f, borderSize / 24.0f);
+			Renderer->setUVs();
+			Renderer->DrawSprite(texture, glm::vec2(boxDisplayPosition.x, boxDisplayPosition.y), 0.0f, size);
 
-		Renderer->setUVs();
-		Renderer->DrawSprite(texture, glm::vec2(boxDisplayPosition.x, boxDisplayPosition.y), 0.0f, size);
-
-		Renderer->shader = ResourceManager::GetShader("Nsprite");
-
-		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-		ResourceManager::GetShader("Nsprite").Use();
-		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-		Renderer->setUVs(UnitResources::portraitUVs[portraitID][frame]);
-		Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), fadeValue), mirrorPortrait);
+			Renderer->shader = ResourceManager::GetShader("Nsprite");
+		}
+		if (showPortrait)
+		{
+			Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+			Renderer->setUVs(UnitResources::portraitUVs[portraitID][frame]);
+			Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), fadeValue), mirrorPortrait);
+		}
 	}
 	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
 }
@@ -64,25 +68,35 @@ TextObjectManager::TextObjectManager()
 {
 	focusedObject = 0;
 	delay = normalDelay;
+	boxStarts.resize(3);
 	textObjects.resize(3);
+
+	boxStarts[0] = glm::vec4(72, 48, 56, 24);
+	boxStarts[1] = glm::vec4(144, 160, 32, 24);
 
 	textObjects[0].position = glm::vec2(62, 48);
 	textObjects[0].displayedPosition = textObjects[0].position;
 	textObjects[0].portraitPosition = glm::vec2(32, 96);
 	textObjects[0].mirrorPortrait = true;
 	textObjects[0].fadeIn = true;
+	textObjects[0].boxPosition = glm::vec4(8, 8, 240, 64);
 
 	textObjects[1].portraitPosition = glm::vec2(176, 96);
 	textObjects[1].position = glm::vec2(62, 455);
 	textObjects[1].displayedPosition = textObjects[1].position;
 	textObjects[1].mirrorPortrait = false;
 	textObjects[1].fadeIn = true;
+	textObjects[1].boxPosition = glm::vec4(8, 160, 240, 64);
 
 	textObjects[2].position = glm::vec2(275.0f, 48.0f);
 	textObjects[2].portraitPosition = glm::vec2(16, 16);
 	textObjects[2].mirrorPortrait = true;
+	textObjects[2].showPortrait = true;
+	textObjects[2].showBox = true;
 	textObjects[2].displayedPosition = textObjects[2].position;
-	//textObjects[2].showPortrait = true;
+	textObjects[2].boxPosition = glm::vec4(80, 8, 176, 64);
+	textObjects[2].boxDisplayPosition = textObjects[2].boxPosition;
+
 }
 
 void TextObjectManager::init(int line/* = 0 */)
@@ -97,6 +111,7 @@ void TextObjectManager::init(int line/* = 0 */)
 	auto thisLine = textLines[currentLine];
 	focusedObject = thisLine.location;
 	textObjects[focusedObject].text = thisLine.text;
+	textObjects[focusedObject].active = true;
 	//Proof of concept. Should be error checking here probably
 	if (thisLine.speaker)
 	{
@@ -126,11 +141,9 @@ void TextObjectManager::init(int line/* = 0 */)
 		state = READING_TEXT;
 		textObjects[focusedObject].fadeValue = 1.0f;
 	}
-	textObjects[0].boxDisplayPosition = glm::vec4(72, 48, 56, 24);
-	textObjects[0].boxPosition = glm::vec4(8, 8, 240, 64);
+	textObjects[0].boxDisplayPosition = boxStarts[0];
 	textObjects[0].boxIn = true;
-	textObjects[1].boxDisplayPosition = glm::vec4(144, 160, 32, 24);
-	textObjects[1].boxPosition = glm::vec4(8, 160, 240, 64);
+	textObjects[1].boxDisplayPosition = boxStarts[1];
 	textObjects[1].boxIn = true;
 }
 
@@ -139,6 +152,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 	switch (state)
 	{
 	case WAITING_ON_INPUT:
+		MenuManager::menuManager.AnimateArrow(deltaTime);
 		if (inputManager.isKeyPressed(SDLK_RETURN))
 		{
 			//Do something here
@@ -159,7 +173,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				active = false;
 				showAnyway = true;
 				textObjects[focusedObject].index = 0;
-				textObjects[focusedObject].showPortrait = false;
+				textObjects[focusedObject].active = false;
 			}
 			else
 			{
@@ -203,25 +217,13 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		auto& currentObject = textObjects[focusedObject];
 		if (currentObject.boxIn)
 		{
-			t += deltaTime * 1.667;
-
-			if (focusedObject == 0)
+			t += 0.1f;
+			currentObject.boxDisplayPosition = glm::mix(boxStarts[focusedObject], currentObject.boxPosition, std::min(1.0f, t));
+			if (t >= 2)
 			{
-				currentObject.boxDisplayPosition = glm::mix(currentObject.boxDisplayPosition, currentObject.boxPosition, t);
-				if (t >= 1)
-				{
-					currentObject.boxIn = false;
-					t = 0;
-				}
-			}
-			else
-			{
-				currentObject.boxDisplayPosition = glm::mix(currentObject.boxDisplayPosition, currentObject.boxPosition, t);
-				if (t >= 1)
-				{
-					currentObject.boxIn = false;
-					t = 0;
-				}
+				currentObject.boxIn = false;
+				currentObject.showPortrait = true;
+				t = 0;
 			}
 		}
 		else
@@ -232,7 +234,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				currentObject.fadeValue = 1;
 				currentObject.fadeIn = false;
 				focusedObject++;
-				if (focusedObject >= textObjects.size())
+				if (focusedObject >= 2)
 				{
 					focusedObject = textLines[currentLine].location;
 					state = READING_TEXT;
@@ -241,7 +243,8 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				{
 					if (textObjects[focusedObject].portraitID >= 0)
 					{
-						textObjects[focusedObject].showPortrait = true;
+						textObjects[focusedObject].showBox = true;
+						textObjects[focusedObject].active = true;
 					}
 					else
 					{
@@ -267,25 +270,21 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			{
 				currentObject.fadeIn = false;
 				currentObject.showPortrait = false;
-				focusedObject++;
-				if (focusedObject >= textObjects.size())
+				int nextObject = focusedObject + 1;
+				//focusedObject++;
+				if (nextObject >= 2)
 				{
-					focusedObject = 0;
+					nextObject = 0;
 				}
-				if (!textObjects[focusedObject].showPortrait)
+				if (textObjects[nextObject].active)
 				{
-					state = LAYER_1_FADE_IN;
-					finishing = false;
-
-					fadeIn = false;
-					if (talkActivated)
-					{
-						talkActivated = false;
-					}
-					else
-					{
-						textLines[currentLine].speaker->moveAnimate = false;
-					}
+					focusedObject = nextObject;
+				}
+				if (!textObjects[nextObject].showPortrait)
+				{
+					state = FADE_BOX_OUT;
+					boxFadeOut = true;
+				//	textObjects[focusedObject].displayedText = "";
 				}
 			}
 			else
@@ -304,6 +303,60 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		}
 	}
 		break;
+	case FADE_BOX_OUT:
+	{
+		if (boxFadeOut)
+		{
+			t += 0.1f;
+			if (t > 0.7f)
+			{
+				t = 0;
+				boxFadeOut = false;
+				textObjects[focusedObject].displayedText = "";
+			}
+		}
+		else
+		{
+			auto& currentObject = textObjects[focusedObject];
+			t += 0.1f;
+			currentObject.boxDisplayPosition = glm::mix(currentObject.boxPosition, boxStarts[focusedObject], std::min(1.0f, t));
+			if (t > 1)
+			{
+				currentObject.showBox = false;
+			}
+			if (t >= 2)
+			{
+				currentObject.boxIn = false;
+				t = 0;
+				textObjects[focusedObject].active = false;
+				focusedObject++;
+				if (focusedObject >= 2)
+				{
+					focusedObject = 0;
+				}
+				if (!textObjects[focusedObject].showBox)
+				{
+					state = LAYER_1_FADE_IN;
+					finishing = false;
+
+					fadeIn = false;
+					if (talkActivated)
+					{
+						talkActivated = false;
+					}
+					else
+					{
+						textLines[currentLine].speaker->moveAnimate = false;
+					}
+				}
+				else
+				{
+					textObjects[focusedObject].displayedText = "";
+				}
+			}
+		}
+		break;
+	}
 	case FADE_GAME_OUT:
 		if (fadeIn)
 		{
@@ -361,7 +414,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				layer1Alpha = layer1MaxAlpha;
 				state = PORTRAIT_FADE_IN;
 				//Figure out how to put both portraits on
-				textObjects[focusedObject].showPortrait = true;
+				textObjects[focusedObject].showBox = true;
 			}
 		}
 		else
@@ -484,9 +537,17 @@ void TextObjectManager::GoToNextLine()
 			if (textObjects[focusedObject].portraitID != portraitID)
 			{
 				state = PORTRAIT_FADE_IN;
-				textObjects[focusedObject].showPortrait = true;
+				if (!textObjects[focusedObject].showBox)
+				{
+					textObjects[focusedObject].showBox = true;
+				}
+				else
+				{
+					textObjects[focusedObject].showPortrait = true;
+				}
 				textObjects[focusedObject].portraitID = portraitID;
 			}
+
 		}
 		textObjects[focusedObject].text = textLines[currentLine].text;
 		if (!talkActivated)
@@ -523,7 +584,22 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 
 	for (int i = 0; i < textObjects.size(); i++)
 	{
-		textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits);
+		if (textObjects[i].active || showAnyway)
+		{
+			textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits);
+		}
+	}
+	if (state == WAITING_ON_INPUT)
+	{
+		if (focusedObject == 0)
+		{
+			MenuManager::menuManager.DrawArrow(glm::ivec2(120, 65));
+		}
+		else if (focusedObject == 1)
+		{
+			MenuManager::menuManager.DrawArrow(glm::ivec2(120, 217));
+
+		}
 	}
 }
 
