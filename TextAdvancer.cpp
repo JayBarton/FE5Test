@@ -19,39 +19,10 @@ TextObject::TextObject()
 	displayedText = "";
 }
 
-void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow)
+void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow, bool canShowBox)
 {
 	if (canShow)
 	{
-		if (showBox)
-		{
-			Renderer->shader = ResourceManager::GetShader("clip");
-
-			Texture2D dsagasdg = ResourceManager::GetTexture("TextBackground");
-			ResourceManager::GetShader("clip").Use();
-			ResourceManager::GetShader("clip").SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("clip").SetVector4f("bounds",
-				glm::vec4(boxDisplayPosition.x + 1, boxDisplayPosition.y + 1,
-					boxDisplayPosition.x + 1 + boxDisplayPosition.z - 2, boxDisplayPosition.y + 1 + boxDisplayPosition.w - 2)); //clip area should be the border's position + 1 and the border's size -2
-			Renderer->setUVs();
-			Renderer->DrawSprite(dsagasdg, glm::vec2(boxPosition.x + 2, boxPosition.y + 2), 0, glm::vec2(236, 60));
-
-			Renderer->shader = ResourceManager::GetShader("sliceFull");
-
-			ResourceManager::GetShader("sliceFull").Use();
-			ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera->getOrthoMatrix());
-
-			auto texture = ResourceManager::GetTexture("TextBorder");
-			glm::vec2 size = glm::vec2(boxDisplayPosition.z, boxDisplayPosition.w);
-			float borderSize = 5.0f;
-			ResourceManager::GetShader("sliceFull").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
-			ResourceManager::GetShader("sliceFull").SetVector2f("u_border", borderSize / 24.0f, borderSize / 24.0f);
-
-			Renderer->setUVs();
-			Renderer->DrawSprite(texture, glm::vec2(boxDisplayPosition.x, boxDisplayPosition.y), 0.0f, size);
-
-			Renderer->shader = ResourceManager::GetShader("Nsprite");
-		}
 		if (showPortrait)
 		{
 			Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
@@ -68,7 +39,6 @@ TextObjectManager::TextObjectManager()
 {
 	focusedObject = 0;
 	delay = normalDelay;
-	boxStarts.resize(3);
 	textObjects.resize(3);
 
 	boxStarts[0] = glm::vec4(72, 48, 56, 24);
@@ -80,6 +50,7 @@ TextObjectManager::TextObjectManager()
 	textObjects[0].mirrorPortrait = true;
 	textObjects[0].fadeIn = true;
 	textObjects[0].boxPosition = glm::vec4(8, 8, 240, 64);
+	textObjects[0].extraPosition = glm::vec2(80, 64);
 
 	textObjects[1].portraitPosition = glm::vec2(176, 96);
 	textObjects[1].position = glm::vec2(62, 455);
@@ -87,16 +58,24 @@ TextObjectManager::TextObjectManager()
 	textObjects[1].mirrorPortrait = false;
 	textObjects[1].fadeIn = true;
 	textObjects[1].boxPosition = glm::vec4(8, 160, 240, 64);
+	textObjects[1].extraPosition = glm::vec2(144, 152);
 
 	textObjects[2].position = glm::vec2(275.0f, 48.0f);
 	textObjects[2].portraitPosition = glm::vec2(16, 16);
 	textObjects[2].mirrorPortrait = true;
 	textObjects[2].showPortrait = true;
-	textObjects[2].showBox = true;
+	textObjects[2].showBox = false;
 	textObjects[2].displayedPosition = textObjects[2].position;
 	textObjects[2].boxPosition = glm::vec4(80, 8, 176, 64);
 	textObjects[2].boxDisplayPosition = textObjects[2].boxPosition;
+}
 
+void TextObjectManager::setUVs()
+{
+	auto texture = ResourceManager::GetTexture("UIItems");
+	extraUVs = texture.GetUVs(0, 96, 16, 16, 2, 1);
+	textObjects[0].extraUV = &extraUVs[0];
+	textObjects[1].extraUV = &extraUVs[1];
 }
 
 void TextObjectManager::init(int line/* = 0 */)
@@ -141,10 +120,13 @@ void TextObjectManager::init(int line/* = 0 */)
 		state = READING_TEXT;
 		textObjects[focusedObject].fadeValue = 1.0f;
 	}
-	textObjects[0].boxDisplayPosition = boxStarts[0];
-	textObjects[0].boxIn = true;
-	textObjects[1].boxDisplayPosition = boxStarts[1];
-	textObjects[1].boxIn = true;
+	if (!showBoxAnyway)
+	{
+		textObjects[0].boxDisplayPosition = boxStarts[0];
+		textObjects[0].boxIn = true;
+		textObjects[1].boxDisplayPosition = boxStarts[1];
+		textObjects[1].boxIn = true;
+	}
 }
 
 void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool finished)
@@ -282,9 +264,18 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				}
 				if (!textObjects[nextObject].showPortrait)
 				{
-					state = FADE_BOX_OUT;
-					boxFadeOut = true;
-				//	textObjects[focusedObject].displayedText = "";
+					if (showBoxAnyway)
+					{
+						state = LAYER_1_FADE_IN;
+						finishing = false;
+
+						fadeIn = false;
+					}
+					else
+					{
+						state = FADE_BOX_OUT;
+						boxFadeOut = true;
+					}
 				}
 			}
 			else
@@ -385,7 +376,15 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		{
 			BGAlpha = 1;
 			state = PORTRAIT_FADE_IN;
-			textObjects[focusedObject].showPortrait = true;
+			if (showBoxAnyway)
+			{
+				textObjects[focusedObject].boxIn = false;
+				textObjects[focusedObject].showPortrait = true;
+			}
+			else
+			{
+				textObjects[focusedObject].showBox = true;
+			}
 		}
 		break;
 	case FADE_BG_OUT:
@@ -540,6 +539,7 @@ void TextObjectManager::GoToNextLine()
 				if (!textObjects[focusedObject].showBox)
 				{
 					textObjects[focusedObject].showBox = true;
+					textObjects[focusedObject].active = true;
 				}
 				else
 				{
@@ -581,12 +581,17 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 	}
 
 	bool showPortraits = (state != FADE_BG_IN && state != FADE_GAME_OUT && state != FADE_BG_OUT);
-
+	bool showBox = showPortraits || (showBoxAnyway && state == FADE_BG_IN);
 	for (int i = 0; i < textObjects.size(); i++)
 	{
 		if (textObjects[i].active || showAnyway)
 		{
-			textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits);
+			if (showBox)
+			{
+				NewFunction(i, Renderer, camera);
+			}
+
+			textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits, showBox);
 		}
 	}
 	if (state == WAITING_ON_INPUT)
@@ -600,6 +605,51 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 			MenuManager::menuManager.DrawArrow(glm::ivec2(120, 217));
 
 		}
+	}
+}
+
+void TextObjectManager::NewFunction(int i, SpriteRenderer* Renderer, Camera* camera)
+{
+	auto current = textObjects[i];
+	if (current.showBox)
+	{
+		Renderer->shader = ResourceManager::GetShader("clip");
+		float alpha = 1.0f;
+		if (state == FADE_BG_IN)
+		{
+			alpha = BGAlpha;
+		}
+
+		Texture2D texture = ResourceManager::GetTexture("TextBackground");
+		ResourceManager::GetShader("clip").Use();
+		ResourceManager::GetShader("clip").SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("clip").SetVector4f("bounds",
+			glm::vec4(current.boxDisplayPosition.x + 1, current.boxDisplayPosition.y + 1,
+				current.boxDisplayPosition.x + 1 + current.boxDisplayPosition.z - 2, current.boxDisplayPosition.y + 1 + current.boxDisplayPosition.w - 2)); //clip area should be the border's position + 1 and the border's size -2
+		Renderer->setUVs();
+		Renderer->DrawSprite(texture, glm::vec2(current.boxPosition.x + 2, current.boxPosition.y + 2), 0, glm::vec2(236, 60), glm::vec4(1, 1, 1, alpha));
+
+		Renderer->shader = ResourceManager::GetShader("sliceFull");
+
+		ResourceManager::GetShader("sliceFull").Use();
+		ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera->getOrthoMatrix());
+
+		texture = ResourceManager::GetTexture("TextBorder");
+		glm::vec2 size = glm::vec2(current.boxDisplayPosition.z, current.boxDisplayPosition.w);
+		float borderSize = 5.0f;
+		ResourceManager::GetShader("sliceFull").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+		ResourceManager::GetShader("sliceFull").SetVector2f("u_border", borderSize / 24.0f, borderSize / 24.0f);
+
+		Renderer->setUVs();
+		Renderer->DrawSprite(texture, glm::vec2(current.boxDisplayPosition.x, current.boxDisplayPosition.y), 0.0f, size, glm::vec4(1, 1, 1, alpha));
+
+		Renderer->shader = ResourceManager::GetShader("Nsprite");
+
+		texture = ResourceManager::GetTexture("UIItems");
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		Renderer->setUVs(extraUVs[i]);
+		Renderer->DrawSprite(texture, current.extraPosition, 0, glm::vec2(16, 16), glm::vec4(1, 1, 1, alpha));
 	}
 }
 
@@ -638,4 +688,17 @@ void TextObjectManager::DrawLayer1Fade(Camera* camera, int shapeVAO)
 bool TextObjectManager::ShowText()
 {
 	return active || showAnyway;
+}
+
+void TextObjectManager::EndingScene()
+{
+	showBoxAnyway = true;
+	textObjects[0].active = true;
+	textObjects[0].showBox = true;
+	textObjects[0].boxIn = false;
+	textObjects[0].boxDisplayPosition = textObjects[0].boxPosition;
+	textObjects[1].active = true;
+	textObjects[1].showBox = true;
+	textObjects[1].boxIn = false;
+	textObjects[1].boxDisplayPosition = textObjects[1].boxPosition;
 }

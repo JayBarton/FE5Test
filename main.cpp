@@ -396,6 +396,7 @@ struct EndingEvents : public Observer<>
 	{
 		//Probably want a delay before this...
 		endingGame = true;
+		textManager.EndingScene();
 		sceneManager.scenes[endingID]->activation->CheckActivation();
 	}
 };
@@ -622,10 +623,11 @@ int main(int argc, char** argv)
 	minimap.cursorUvs = ResourceManager::GetTexture("UIItems").GetUVs(64, 0, 70, 62, 2, 1, 2);
 	terrainStatusUVs = ResourceManager::GetTexture("UIItems").GetUVs(132, 64, 66, 34, 1, 1)[0];
 	nameBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 64, 66, 32, 2, 1);
-	//cursor.dimensions = glm::vec2(TileManager::TILE_SIZE);
 
 	UnitResources::LoadUVs();
 	UnitResources::LoadAnimData();
+
+	textManager.setUVs();
 
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);

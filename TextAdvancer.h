@@ -17,7 +17,9 @@ struct TextObject
 	glm::vec2 displayedPosition;
 	glm::vec2 portraitPosition;
 	glm::vec4 boxPosition;
+	glm::vec2 extraPosition;
 	glm::vec4 boxDisplayPosition;
+	glm::vec4* extraUV;
 	//The full text to be displayed
 	std::string text;
 	//The currently displayed text
@@ -35,7 +37,7 @@ struct TextObject
 
 	TextObject();
 
-	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera, bool canShow);
+	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera, bool canShow, bool canShowBox);
 };
 
 struct SpeakerText
@@ -71,6 +73,7 @@ struct TextObjectManager
 	bool finishing = false;
 
 	bool boxFadeOut = false;
+	bool showBoxAnyway = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -95,17 +98,22 @@ struct TextObjectManager
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;
 
-	std::vector<glm::vec4> boxStarts;
+	glm::vec4 boxStarts[2];
+	std::vector<glm::vec4> extraUVs;
 
 	TextObjectState state;
 
 	TextObjectManager();
+	void setUVs();
 	void init(int line = 0);
 	void Update(float deltaTime, class InputManager& inputManager, bool finished = false);
 	void ReadText(InputManager& inputManager, float deltaTime);
 	void GoToNextLine();
 	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
+	void NewFunction(int i, SpriteRenderer* Renderer, Camera* camera);
 	void DrawFade(Camera* camera, int shapeVAO);
 	void DrawLayer1Fade(Camera* camera, int shapeVAO);
 	bool ShowText();
+
+	void EndingScene();
 };
