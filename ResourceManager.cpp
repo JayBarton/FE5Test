@@ -281,7 +281,7 @@ Texture2D ResourceManager::loadTextureFromFile2(const GLchar* file)
     Texture2D texture;
     // Load image
     SDL_Surface* surface = IMG_Load(file);
-    SDL_Surface* paletteSurface = IMG_Load("E:/Damon/dev stuff/FE5Test/TestSprites/palette.png");
+    SDL_Surface* paletteSurface = IMG_Load("TestSprites/palette.png");
     if (surface == NULL)
     {
         printf("Unable to load image %s! SDL_image Error: %s\n", file, IMG_GetError());

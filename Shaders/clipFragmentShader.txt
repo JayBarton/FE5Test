@@ -15,4 +15,8 @@ void main()
 	{
 		color = spriteColor * texture(image, TextureCoordinates);
 	}
+	else
+	{
+		discard;
+	}
 }
