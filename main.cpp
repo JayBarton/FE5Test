@@ -868,7 +868,7 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
-	//	std::cout << fps << std::endl;
+		//std::cout << fps << std::endl;
 	}
 
 	delete Renderer;
@@ -1272,6 +1272,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 				{
 					int round = 0;
 					map >> round;
+					currentObject->introDelay = 1.0f; //Not entirely sure if I want to hard code the intro delay or load them from the level...
 					currentObject->activation = new EnemyTurnEnd(currentObject, activationType, round);
 					currentObject->extraSetup(&roundSubject);
 				}
@@ -1671,15 +1672,18 @@ void Draw()
 			}
 			else
 			{
-				DrawText();
-				if (displays.state == NONE)
+				if (currentTurn == 0)
 				{
-					if (currentTurn == 0 && !cursor.movingUnit)
+					DrawText();
+					if (displays.state == NONE)
 					{
-						ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
-						Renderer->setUVs(cursor.uvs[cursor.currentFrame]);
-						Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
-						Renderer->DrawSprite(displayTexture, cursor.position - glm::vec2(2, 3), 0.0f, cursor.dimensions);
+						if (!cursor.movingUnit)
+						{
+							ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getCameraMatrix());
+							Renderer->setUVs(cursor.uvs[cursor.currentFrame]);
+							Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
+							Renderer->DrawSprite(displayTexture, cursor.position - glm::vec2(2, 3), 0.0f, cursor.dimensions);
+						}
 					}
 				}
 			}
@@ -1824,7 +1828,6 @@ void DrawText()
 		glm::vec2 fixedPosition = camera.worldToScreen(cursor.position);
 		if (Settings::settings.showTerrain)
 		{
-
 			//Going to need to look into a better way of handling UI placement at some point
 			int xStart = SCREEN_WIDTH;
 			int xWindow = 188;

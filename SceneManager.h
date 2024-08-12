@@ -48,6 +48,9 @@ struct Scene
 	std::vector<struct SceneUnit*> introUnits;
 	std::vector<std::vector<glm::vec4>> UVs;
 
+	//The initial delay before starting the scene
+	//This is only going to be relevant in a few cases
+	float introDelay = 0.0f;
 	float delayTimer = 0.0f;
 	float currentDelay = 0.0f;
 	//The delay between a new movement action starting, since multiple enemies can move at once

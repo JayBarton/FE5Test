@@ -128,7 +128,8 @@ void ResourceManager::PlayMusic(std::string name, std::string next)
 {
     if (Settings::settings.music)
     {
-      //  Mix_HaltMusic(); //Fade out isn't working properly
+        //Need to make sure music is entirely stopped, if it is still fading mixer freezes the entire application
+        Mix_HaltMusic(); 
         Mix_PlayMusic(Music[name], 1);
         currentSong = name;
         nextSong = next;

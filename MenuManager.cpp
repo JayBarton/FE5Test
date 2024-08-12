@@ -1198,6 +1198,7 @@ void SelectEnemyMenu::Draw()
 
 void SelectEnemyMenu::SelectOption()
 {
+	ResourceManager::PlaySound("select2");
 	std::cout << unitsToAttack[currentOption]->name << std::endl;
 	cursor->selectedUnit->equipWeapon(selectedWeapon);
 	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, attackDistance, enemyCanCounter, *camera, false, capturing);

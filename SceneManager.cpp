@@ -28,22 +28,8 @@ Scene::~Scene()
 void Scene::init()
 {
 	playingScene = true;
-/*	testText.position = glm::vec2(62, 48);
-	testText.displayedPosition = testText.position;
-	testText.portraitPosition = glm::vec2(32, 96);
-	testText.charsPerLine = 55;
-	testText.nextIndex = 55;
-	testText.mirrorPortrait = true;
-	testText.fadeIn = true;
-
-	testText2.portraitPosition = glm::vec2(176, 96);
-	testText2.position = glm::vec2(62, 455);
-	testText2.charsPerLine = 55;
-	testText2.nextIndex = 55;
-	testText2.displayedPosition = testText2.position;
-	testText2.mirrorPortrait = false;
-	testText2.fadeIn = true;*/
 	owner->currentScene = ID;
+	currentDelay = introDelay;
 }
 
 void Scene::extraSetup(Subject<int>* subject)

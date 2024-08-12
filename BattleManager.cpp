@@ -139,7 +139,6 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		camera.SetCenter(defender->sprite.getPosition());
 		if (battleScene)
 		{	
-			ResourceManager::PlaySound("battleTransition");
 
 			transitionX = -286.0f;
 			ResourceManager::GetShader("sprite").Use().SetVector2f("cameraPosition", (camera.position - glm::vec2(camera.halfWidth, camera.halfHeight)));
@@ -150,13 +149,12 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			GetFacing();
 			if (!aiDelay)
 			{
+				ResourceManager::PlaySound("battleTransition");
 				ResourceManager::FadeOutPause(500);
 			}
 		}
 		else
 		{
-			ResourceManager::PlaySound("select2");
-
 			GetFacing();
 			attacker->sprite.moveAnimate = true;
 			defender->sprite.moveAnimate = true;
@@ -215,6 +213,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			aiDelay = false;
 			if (battleScene)
 			{
+				ResourceManager::PlaySound("battleTransition");
 				ResourceManager::FadeOutPause(500);
 			}
 		}
