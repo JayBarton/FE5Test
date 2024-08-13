@@ -12,6 +12,25 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 	//This check insures the cursor moves properly to it's target location
 	if (moving)
 	{
+		if (!fastCursor)
+		{
+			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			{
+				futureDirection.x = 1;
+			}
+			if (inputManager.isKeyPressed(SDLK_LEFT))
+			{
+				futureDirection.x = -1;
+			}
+			if (inputManager.isKeyPressed(SDLK_UP))
+			{
+				futureDirection.y = -1;
+			}
+			if (inputManager.isKeyPressed(SDLK_DOWN))
+			{
+				futureDirection.y = 1;
+			}
+		}
 		position += cursorSpeed * moveDirection;
 		glm::vec2 diff = ((position - movePosition) * moveDirection);
 		auto distance = glm::distance(position, movePosition);
@@ -188,7 +207,7 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 		settled = false;
 		settleTimer = 0.0f;
 	}
-	else if (inputManager.isKeyReleased(SDLK_LSHIFT))
+	else if (inputManager.isKeyUp(SDLK_LSHIFT))
 	{
 		fastCursor = false;
 	}
@@ -196,29 +215,38 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 	int yDirection = 0;
 	if (!fastCursor)
 	{
-		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		if (futureDirection.x != 0 || futureDirection.y != 0)
 		{
-			xDirection = 1;
+			Move(futureDirection.x, futureDirection.y);
 			firstMove = true;
+			futureDirection = glm::vec2(0);
 		}
-		if (inputManager.isKeyPressed(SDLK_LEFT))
+		else
 		{
-			xDirection = -1;
-			firstMove = true;
-		}
-		if (inputManager.isKeyPressed(SDLK_UP))
-		{
-			yDirection = -1;
-			firstMove = true;
-		}
-		if (inputManager.isKeyPressed(SDLK_DOWN))
-		{
-			yDirection = 1;
-			firstMove = true;
-		}
-		if (xDirection != 0 || yDirection != 0)
-		{
-			Move(xDirection, yDirection);
+			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			{
+				xDirection = 1;
+				firstMove = true;
+			}
+			if (inputManager.isKeyPressed(SDLK_LEFT))
+			{
+				xDirection = -1;
+				firstMove = true;
+			}
+			if (inputManager.isKeyPressed(SDLK_UP))
+			{
+				yDirection = -1;
+				firstMove = true;
+			}
+			if (inputManager.isKeyPressed(SDLK_DOWN))
+			{
+				yDirection = 1;
+				firstMove = true;
+			}
+			if (xDirection != 0 || yDirection != 0)
+			{
+				Move(xDirection, yDirection);
+			}
 		}
 	}
 	if (inputManager.isKeyDown(SDLK_RIGHT))
@@ -252,7 +280,6 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 		if (movementDelay >= delayTime)
 		{
 			Move(xDirection, yDirection, true);
-			movementDelay = 0.0f;
 			firstMove = false;
 		}
 	}
@@ -266,7 +293,12 @@ void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
 //Not happy with this, but it works for now
 void Cursor::Move(int x, int y, bool held)
 {
+	movementDelay = 0.0f;
 	glm::vec2 moveTo = glm::ivec2(position) + glm::ivec2(x, y) * TileManager::TILE_SIZE;
+	if (int(moveTo.x) % 16 != 0 || int(moveTo.y) % 16 != 0)
+	{
+		int a = 2;
+	}
 	bool move = true;
 	//This is to check if I want to stop movement for a moment when the cursor hits the edge of a unit's movement range
 	if (held && !fastCursor)

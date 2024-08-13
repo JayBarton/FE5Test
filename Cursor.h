@@ -22,6 +22,7 @@ struct Cursor
 	glm::vec2 previousPosition;
 	glm::vec2 movePosition;
 	glm::vec2 moveDirection;
+	glm::vec2 futureDirection;
 
 	float settleTimer = 0.0f;
 	float moveDelay = 0.0666f;

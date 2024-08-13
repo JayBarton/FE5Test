@@ -432,11 +432,11 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 
 void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
 {
-	if (inputManager.isKeyPressed(SDLK_RETURN))
+	if (inputManager.isKeyDown(SDLK_RETURN))
 	{
 		delay = fastDelay;
 	}
-	else if (inputManager.isKeyReleased(SDLK_RETURN))
+	else if (inputManager.isKeyUp(SDLK_RETURN))
 	{
 		delay = normalDelay;
 	}
