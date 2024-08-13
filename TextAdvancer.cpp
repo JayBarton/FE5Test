@@ -50,7 +50,7 @@ TextObjectManager::TextObjectManager()
 	textObjects[0].mirrorPortrait = true;
 	textObjects[0].fadeIn = true;
 	textObjects[0].boxPosition = glm::vec4(8, 8, 240, 64);
-	textObjects[0].extraPosition = glm::vec2(80, 64);
+	textObjects[0].extraPosition = glm::vec2(88, 64);
 
 	textObjects[1].portraitPosition = glm::vec2(176, 96);
 	textObjects[1].position = glm::vec2(62, 455);
@@ -58,7 +58,7 @@ TextObjectManager::TextObjectManager()
 	textObjects[1].mirrorPortrait = false;
 	textObjects[1].fadeIn = true;
 	textObjects[1].boxPosition = glm::vec4(8, 160, 240, 64);
-	textObjects[1].extraPosition = glm::vec2(144, 152);
+	textObjects[1].extraPosition = glm::vec2(152, 152);
 
 	textObjects[2].position = glm::vec2(275.0f, 48.0f);
 	textObjects[2].portraitPosition = glm::vec2(16, 16);
@@ -425,6 +425,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				active = false;
 			}
 		}
+		ResourceManager::GetShader("instance").SetFloat("backgroundFade", layer1Alpha, true);
 		break;
 	}
 }
@@ -657,22 +658,6 @@ void TextObjectManager::DrawFade(Camera* camera, int shapeVAO)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", blackAlpha);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-}
-
-void TextObjectManager::DrawLayer1Fade(Camera* camera, int shapeVAO)
-{
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", layer1Alpha);
 	glm::mat4 model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 	model = glm::scale(model, glm::vec3(256, 224, 0.0f));

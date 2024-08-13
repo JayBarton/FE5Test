@@ -524,7 +524,8 @@ int main(int argc, char** argv)
 
 	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("instance").Use().SetVector4f("spriteColor", glm::vec4(1));
+	ResourceManager::GetShader("instance").SetVector4f("spriteColor", glm::vec4(1));
+	ResourceManager::GetShader("instance").SetFloat("backgroundFade", 0);
 
 	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
@@ -1634,7 +1635,6 @@ void Draw()
 			ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 			TileManager::tileManager.showTiles(Renderer, camera);
 			DrawUnitRanges();
-			textManager.DrawLayer1Fade(&camera, shapeVAO);
 			//for intro
 	//		if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
 			{

@@ -459,13 +459,12 @@ struct VendorMenu : public Menu
 	virtual void SelectOption() override;
 	void ActivateText();
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
-	virtual void CancelOption(int num = 1) override; //
+	virtual void CancelOption(int num = 1) override;
 
 	Unit* buyer;
 	Vendor* vendor;
 
 	TextObjectManager textManager;
-//	TextObject testText;
 
 	VendorState state;
 	bool buying = true;
@@ -513,6 +512,12 @@ struct SuspendMenu : public Menu
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
 	bool suspended = false;
+	bool opening = false;
+	bool closing = false;
+
+	float delay = 0.0f;
+	float fadeValue = 0.0f;
+	float fadeValueMax = 0.525f;
 };
 
 struct MenuManager

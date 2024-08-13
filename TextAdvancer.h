@@ -91,7 +91,7 @@ struct TextObjectManager
 	float BGAlpha = 0.0f;
 	float blackAlpha = 0.0f;
 	float layer1Alpha = 0.0f;
-	float layer1MaxAlpha = 0.35f;
+	float layer1MaxAlpha = 0.525f;
 
 	float t;
 
@@ -112,7 +112,6 @@ struct TextObjectManager
 	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
 	void NewFunction(int i, SpriteRenderer* Renderer, Camera* camera);
 	void DrawFade(Camera* camera, int shapeVAO);
-	void DrawLayer1Fade(Camera* camera, int shapeVAO);
 	bool ShowText();
 
 	void EndingScene();

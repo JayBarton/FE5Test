@@ -4673,62 +4673,65 @@ SuspendMenu::SuspendMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int
 {
 	numberOfOptions = 2;
 	currentOption = 1;
-	
+	opening = true;
 }
 
 void SuspendMenu::Draw()
 {
-	if (suspended)
+	if (!opening && !closing)
 	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(72, 104, 0.0f));
+		if (suspended)
+		{
+			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(72, 104, 0.0f));
 
-		model = glm::scale(model, glm::vec3(106, 82, 0.0f));
+			model = glm::scale(model, glm::vec3(106, 82, 0.0f));
 
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
 
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
 
-		DrawBox(glm::ivec2(72, 104), 106, 82);
+			DrawBox(glm::ivec2(72, 104), 106, 82);
 
-		text->RenderText("So may resume\nthis chapter\nfrom the main\nmenu", 275, 310, 1);
+			text->RenderText("So may resume\nthis chapter\nfrom the main\nmenu", 275, 310, 1);
+		}
+		else
+		{
+			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(72, 104, 0.0f));
+
+			model = glm::scale(model, glm::vec3(109, 50, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+
+			DrawBox(glm::ivec2(72, 104), 109, 50);
+
+			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			MenuManager::menuManager.DrawIndicator(glm::vec2(87 + 32 * currentOption, 129));
+
+			text->RenderText("Suspend the game?", 275, 310, 1);
+			text->RenderText("Yes", 325, 353, 1);
+			text->RenderText("No", 425, 353, 1);
+		}
+
+		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		Renderer->setUVs(UnitResources::portraitUVs[20][0]);
+		Renderer->DrawSprite(portraitTexture, glm::vec2(104, 40), 0, glm::vec2(48, 64), glm::vec4(1), true);
 	}
-	else
-	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(72, 104, 0.0f));
-
-		model = glm::scale(model, glm::vec3(109, 50, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-
-		DrawBox(glm::ivec2(72, 104), 109, 50);
-
-		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		MenuManager::menuManager.DrawIndicator(glm::vec2(87 + 32 * currentOption, 129));
-
-		text->RenderText("Suspend the game?", 275, 310, 1);
-		text->RenderText("Yes", 325, 353, 1);
-		text->RenderText("No", 425, 353, 1);
-	}
-
-	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	ResourceManager::GetShader("Nsprite").Use();
-	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	Renderer->setUVs(UnitResources::portraitUVs[20][0]);
-	Renderer->DrawSprite(portraitTexture, glm::vec2(103, 40), 0, glm::vec2(48, 64), glm::vec4(1), true);
 }
 
 void SuspendMenu::SelectOption()
@@ -4740,39 +4743,64 @@ void SuspendMenu::SelectOption()
 	}
 	else
 	{
-		//Going to be a fade effect
-		CancelOption();
+		closing = true;
 	}
+	ResourceManager::PlaySound("select2");
 }
 
 void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (suspended)
+	if (opening)
 	{
-		if (inputManager.isKeyPressed(SDLK_SPACE))
+		delay += deltaTime;
+		fadeValue += deltaTime * 0.525;
+		if (delay >= 1.0f)
 		{
-			MenuManager::menuManager.suspendSubject.notify(1);
+			delay = 0.0f;
+			opening = false;
+			fadeValue = fadeValueMax;
 		}
+		ResourceManager::GetShader("instance").SetFloat("backgroundFade", fadeValue, true);
+	}
+	else if (closing)
+	{
+		delay += deltaTime;
+		fadeValue -= deltaTime * 5.25f;
+		if (delay >= 0.1f)
+		{
+			ClearMenu();
+		}
+		ResourceManager::GetShader("instance").SetFloat("backgroundFade", fadeValue, true);
 	}
 	else
 	{
-		MenuManager::menuManager.AnimateIndicator(deltaTime);
-		if (inputManager.isKeyPressed(SDLK_LEFT))
+		if (suspended)
 		{
-			NextOption();
+			if (inputManager.isKeyPressed(SDLK_SPACE))
+			{
+				MenuManager::menuManager.suspendSubject.notify(1);
+			}
 		}
-		if (inputManager.isKeyPressed(SDLK_RIGHT))
+		else
 		{
-			NextOption();
-		}
-		else if (inputManager.isKeyPressed(SDLK_RETURN))
-		{
-			SelectOption();
-		}
-		else if (inputManager.isKeyPressed(SDLK_z))
-		{
-			ResourceManager::PlaySound("cancel");
-			ClearMenu();
+			MenuManager::menuManager.AnimateIndicator(deltaTime);
+			if (inputManager.isKeyPressed(SDLK_LEFT))
+			{
+				NextOption();
+			}
+			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			{
+				NextOption();
+			}
+			else if (inputManager.isKeyPressed(SDLK_RETURN))
+			{
+				SelectOption();
+			}
+			else if (inputManager.isKeyPressed(SDLK_z))
+			{
+				closing = true;
+				ResourceManager::PlaySound("cancel");
+			}
 		}
 	}
 }
