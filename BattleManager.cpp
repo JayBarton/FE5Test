@@ -37,6 +37,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	this->attacker = attacker;
 	this->defender = defender;
 	this->canDefenderAttack = canDefenderAttack;
+	drawInfo = false;
 	if (capturing && defender->GetEquippedWeapon().type < 0)
 	{
 		//If defender is unarmed and we attempt to capture, it's an automatic success
@@ -47,7 +48,6 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	}
 	else
 	{
-		drawInfo = true;
 		this->attackDistance = attackDistance;
 		this->attackerStats = attackerStats;
 		this->defenderStats = defenderStats;
@@ -139,7 +139,6 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		camera.SetCenter(defender->sprite.getPosition());
 		if (battleScene)
 		{	
-
 			transitionX = -286.0f;
 			ResourceManager::GetShader("sprite").Use().SetVector2f("cameraPosition", (camera.position - glm::vec2(camera.halfWidth, camera.halfHeight)));
 			ResourceManager::GetShader("sprite").SetFloat("maskX", transitionX);
@@ -155,9 +154,14 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		}
 		else
 		{
+			if (!aiDelay)
+			{
+				drawInfo = true;
+			}
 			GetFacing();
 			attacker->sprite.moveAnimate = true;
 			defender->sprite.moveAnimate = true;
+			fadeBoxIn = true;
 		}
 	}
 }
@@ -215,6 +219,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			{
 				ResourceManager::PlaySound("battleTransition");
 				ResourceManager::FadeOutPause(500);
+			}
+			else
+			{
+				drawInfo = true;
 			}
 		}
 	}
@@ -430,12 +438,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 							if (capturing)
 							{
 								unitCaptured = true;
-								drawInfo = false;
 							}
 							else
 							{
 								unitDied = true;
-								drawInfo = false;
 								if (deadUnit->deathMessage != "")
 								{
 									displays.PlayerUnitDied(deadUnit);
@@ -521,7 +527,30 @@ void BattleManager::PrepareCapture()
 
 void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
 {
-	if (unitDied)
+	if (fadeBoxIn)
+	{
+		boxThing -= 1.6f;
+		if (boxThing <= 0)
+		{
+			boxThing = 0;
+			fadeBoxIn = false;
+		}
+	}
+	else if (fadeBoxOut)
+	{
+		boxThing += 1.6f;
+		if (boxThing >= 16)
+		{
+			boxThing = 16;
+			fadeBoxOut = false;
+			drawInfo = false;
+			if (unitDied && deadUnit->deathMessage != "")
+			{
+				displays.PlayerUnitDied(deadUnit);
+			}
+		}
+	}
+	else if (unitDied)
 	{
 		if (displays.state == NONE)
 		{
@@ -632,16 +661,12 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 					if (capturing)
 					{
 						unitCaptured = true;
-						drawInfo = false;
+						fadeBoxOut = true;
 					}
 					else
 					{
 						unitDied = true;
-						drawInfo = false;
-						if (deadUnit->deathMessage != "")
-						{
-							displays.PlayerUnitDied(deadUnit);
-						}
+						fadeBoxOut = true;
 					}
 				}
 				else
@@ -738,7 +763,7 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 	auto roll = (*distribution)(*gen);
 	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
-	if (roll <= 100)
+	if (roll <= accuracy)
 	{
 		int dealtDamage = theseStats.attackDamage;
 		int critFactor = 1;
@@ -896,6 +921,11 @@ void BattleManager::CaptureUnit()
 	DropHeldUnit();
 }
 
+void BattleManager::GetUVs()
+{
+	mapBattleBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 128, 96, 32, 2, 2, 3);
+}
+
 void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, InfoDisplays& displays, int shapeVAO)
 {
 	if (aiDelay)
@@ -976,32 +1006,75 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 	}
 	else if (drawInfo)
 	{
-		int yOffset = 150;
+		int yOffset = 139;
+		int boxY = 48;
+
+		if (camera.position.y <= 112)
+		{
+			yOffset = 353;
+			boxY = 128;
+		}
+
+		StencilWindow(camera, boxY, shapeVAO);
+
+		glm::vec2 attackerBoxPosition;
+		glm::vec2 defenderBoxPosition;
 		//The hp should be drawn based on which side each unit is. So if the attacker is to the left of the defender, the hp should be on the left, and vice versa
 		glm::vec2 attackerDraw;
 		glm::vec2 defenderDraw;
 		if (attacker->sprite.getPosition().x < defender->sprite.getPosition().x)
 		{
-			attackerDraw = glm::vec2(200, yOffset);
-			defenderDraw = glm::vec2(500, yOffset);
+			attackerDraw = glm::vec2(150, yOffset);
+			defenderDraw = glm::vec2(450, yOffset);
+			attackerBoxPosition = glm::vec2(32, boxY);
+			defenderBoxPosition = glm::vec2(128, boxY);
 		}
 		else
 		{
-			defenderDraw = glm::vec2(200, yOffset);
-			attackerDraw = glm::vec2(500, yOffset);
+			defenderDraw = glm::vec2(150, yOffset);
+			attackerDraw = glm::vec2(450, yOffset);
+			defenderBoxPosition = glm::vec2(32, boxY);
+			attackerBoxPosition = glm::vec2(128, boxY);
 		}
 
-		text->RenderText(attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
-		attackerDraw.y += 22.0f;
-		text->RenderText("HP", attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-		attackerDraw.x += 25;
-		text->RenderText(intToString(attacker->currentHP) + "/" + intToString(attacker->maxHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(0.0f));
+		//Have to draw a shadow type of effect here
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(38, boxY + 14, 0.0f));
 
-		text->RenderText(defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
-		defenderDraw.y += 22.0f;
-		text->RenderText("HP", defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-		defenderDraw.x += 25;
-		text->RenderText(intToString(defender->currentHP) + "/" + intToString(defender->maxHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(0.0f));
+		model = glm::scale(model, glm::vec3(188, 20, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.062f, 0.062f, 0.062f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
+		if (capturing)
+		{
+			Renderer->setUVs(mapBattleBoxUVs[2]);
+		}
+		else
+		{
+			Renderer->setUVs(mapBattleBoxUVs[attacker->team]);
+		}
+		Renderer->DrawSprite(displayTexture, attackerBoxPosition, 0, glm::vec2(96, 32));
+		Renderer->setUVs(mapBattleBoxUVs[defender->team]);
+		Renderer->DrawSprite(displayTexture, defenderBoxPosition, 0, glm::vec2(96, 32));
+
+		text->RenderText(attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(1.0f));
+		attackerDraw.y += 35.0f;
+		attackerDraw.x -= 25;
+		text->RenderText(intToString(attacker->currentHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(1.0f));
+
+		text->RenderText(defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(1.0f));
+		defenderDraw.y += 35.0f;
+		defenderDraw.x -= 25;
+		text->RenderText(intToString(defender->currentHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(1.0f));
 
 		if (missedText.active)
 		{
@@ -1009,5 +1082,36 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
 			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
 		}
+		glDisable(GL_STENCIL_TEST);
 	}
+}
+
+void BattleManager::StencilWindow(Camera& camera, int boxY, int shapeVAO)
+{
+	//Cannot believe this works and barely understand it.
+	//I THINK what is happening here is I turn on all this stuff
+	glEnable(GL_STENCIL_TEST);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_FALSE);
+	//Then the shape I draw here is my mask
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 0.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(32, boxY + boxThing, 0.0f));
+
+	model = glm::scale(model, glm::vec3(194, 34 - boxThing * 2, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//Then when I turn everything off, everything after is drawn in that mask? No idea man. Works though!
+	glStencilFunc(GL_EQUAL, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glDepthMask(GL_TRUE);
 }

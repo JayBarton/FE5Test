@@ -530,6 +530,7 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 	{
 		if (displayTimer > experienceTime)
 		{
+			ResourceManager::PlaySound("experience", 1);
 			displayedExperience++;
 			if (displayedExperience >= 100)
 			{

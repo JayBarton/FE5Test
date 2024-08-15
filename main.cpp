@@ -595,6 +595,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadSound("Sounds/levelUp.wav", "levelUp");
 	ResourceManager::LoadSound("Sounds/nodamage.wav", "nodamage");
 	ResourceManager::LoadSound("Sounds/battleTransition.wav", "battleTransition");
+	ResourceManager::LoadSound("Sounds/experience.wav", "experience");
 
 	ResourceManager::LoadMusic("Sounds/Map1.ogg", "PlayerTurn");
 	ResourceManager::LoadMusic("Sounds/Map2.1.ogg", "EnemyTurnStart");
@@ -630,6 +631,8 @@ int main(int argc, char** argv)
 
 	textManager.setUVs();
 
+	battleManager.GetUVs();
+
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
 	ItemManager::itemManager.SetUpItems();
@@ -653,8 +656,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	loadMap("2.map", unitEvents);
-	//loadSuspendedGame();
+//	loadMap("2.map", unitEvents);
+	loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
@@ -1061,7 +1064,7 @@ void init()
 {
 	int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
 	SDL_Init(SDL_INIT_EVERYTHING);
-
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
 	int imgFlags = IMG_INIT_PNG;
 	if (!(IMG_Init(imgFlags) & imgFlags))
 	{
@@ -1109,7 +1112,8 @@ void init()
 	resizeWindow(SCREEN_WIDTH, SCREEN_HEIGHT);
 //	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
-	glDisable(GL_MULTISAMPLE);	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_MULTISAMPLE);	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void loadMap(std::string nextMap, UnitEvents* unitEvents)
@@ -1596,7 +1600,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 void Draw()
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	bool fullScreenMenu = false;
 	bool drawingMenu = false;

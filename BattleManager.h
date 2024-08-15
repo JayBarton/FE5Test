@@ -50,7 +50,11 @@ struct BattleManager
 
 	void CaptureUnit();
 
+	void GetUVs();
+
 	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, InfoDisplays& displays, int shapeVAO);
+
+	void StencilWindow(Camera& camera, int boxY, int shapeVAO);
 
 	Unit* attacker = nullptr;
 	Unit* defender = nullptr;
@@ -60,7 +64,8 @@ struct BattleManager
 
 	glm::vec2 movementDirection;
 	glm::vec2 startPosition;
-	bool moveBack = false;
+
+	std::vector<glm::vec4> mapBattleBoxUVs;
 
 	BattleStats attackerStats;
 	BattleStats defenderStats;
@@ -73,6 +78,7 @@ struct BattleManager
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;
 
+	bool moveBack = false;
 	bool battleActive = false;
 	bool canDefenderAttack = true;
 	bool attackerTurn = true;
@@ -88,6 +94,9 @@ struct BattleManager
 	bool captureAnimation = false;
 	//Not crazy about this either, just seems the easiest way to handle drawing at 12:06 am
 	bool drawInfo = true;
+	//These two are for handling the fade in of the name/display boxes during map battles
+	bool fadeBoxIn = false;
+	bool fadeBoxOut = false;
 
 	//god there's so many fucking bools here dude
 	//Battle scene variables
@@ -105,6 +114,9 @@ struct BattleManager
 	float fadeTimer = 0.0f;
 	float transitionX = -286.0f;
 	float fadeAlpha = 0.0f;
+
+	float boxThing = 16;
+
 
 	//end battle scene variables
 

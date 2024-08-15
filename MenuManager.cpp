@@ -2579,6 +2579,7 @@ void ExtraMenu::SelectOption()
 	}
 	case END:
 		MenuManager::menuManager.subject.notify(0);
+		ResourceManager::PlaySound("select2");
 		ClearMenu();
 		break;
 	}

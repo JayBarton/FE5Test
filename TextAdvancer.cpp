@@ -509,7 +509,6 @@ void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
 				currentObject->index++;
 				ResourceManager::PlaySound("speech");
 			}
-
 		}
 	}
 	currentObject->frame = frame;
