@@ -1,0 +1,27 @@
+#version 330 core
+out vec4 color;
+
+uniform vec3 shapeColor;
+uniform float alpha;
+uniform vec2 scale;
+
+in vec3 FragPos;  
+
+void main()
+{
+	color = vec4(shapeColor, alpha);
+	vec3 outerColor = vec3(0.482, 0.0627, 0);
+	vec2 scaledFragPos = FragPos.xy * scale;
+    if (scaledFragPos.y < 1 || scaledFragPos.y > 3) 
+	{
+		color = vec4(outerColor, alpha);
+	}
+	else
+	{
+		color = vec4(shapeColor, alpha);
+	//	if(int(scaledFragPos.x) % 2 == 1)
+		{
+	//		color.a = 0;
+		}
+	}
+}

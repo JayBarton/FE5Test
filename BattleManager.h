@@ -38,7 +38,7 @@ struct BattleManager
 
 	void CheckAccost();
 
-	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, int* foeHP, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, BattleStats& theseStats, Attack& attack, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
@@ -74,6 +74,11 @@ struct BattleManager
 	glm::vec2 battleDirection;
 
 	int attackDistance;
+
+	int attackerDisplayHealth;
+	int defenderDisplayHealth;
+	int targetHealth;
+	int* displayHealth = nullptr;
 
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;

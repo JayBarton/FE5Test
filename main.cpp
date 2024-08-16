@@ -500,6 +500,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/normalSpriteFragmentShader.txt", nullptr, "Nsprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/instanceFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
+	ResourceManager::LoadShader("Shaders/shapeSpecialVertexShader.txt", "Shaders/shapeSpecialFragmentShader.txt", nullptr, "shapeSpecial");
 	ResourceManager::LoadShader("Shaders/shapeInstanceVertexShader.txt", "Shaders/shapeInstanceFragmentShader.txt", nullptr, "shapeInstance");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFullFragmentShader.txt", nullptr, "sliceFull");
@@ -507,6 +508,9 @@ int main(int argc, char** argv)
 
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1.0f);
 
 	ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
@@ -810,10 +814,13 @@ int main(int argc, char** argv)
 				//Should be able to level up while in the battle state, need to figure that out
 				if (battleManager.battleActive)
 				{
-					battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
 					if (camera.moving)
 					{
 						camera.MoveTo(deltaTime, 5.0f);
+					}
+					else
+					{
+						battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
 					}
 				}
 				else

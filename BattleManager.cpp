@@ -51,6 +51,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		this->attackDistance = attackDistance;
 		this->attackerStats = attackerStats;
 		this->defenderStats = defenderStats;
+		attackerDisplayHealth = attacker->currentHP;
+		defenderDisplayHealth = defender->currentHP;
 		attackerTurn = true;
 		defenderTurn = false;
 		checkDouble = true;
@@ -239,6 +241,14 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				missedText.active = false;
 			}
 		}
+		if (displayHealth && targetHealth < *displayHealth)
+		{
+			(*displayHealth)--;
+			if (*displayHealth == targetHealth)
+			{
+				displayHealth = nullptr;
+			}
+		}
 		if (battleScene)
 		{
 			if (transitionIn)
@@ -362,11 +372,11 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 							Unit* otherUnit = nullptr;
 							if (attack.firstAttacker)
 							{
-								PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+								PreBattleChecks(attacker, attackerStats, defender, attack, &defenderDisplayHealth, distribution, gen);
 							}
 							else
 							{
-								PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+								PreBattleChecks(defender, defenderStats, attacker, attack, &attackerDisplayHealth, distribution, gen);
 							}
 							startPosition = *actingPosition;
 							moveBack = true;
@@ -603,11 +613,11 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 					battleQueue.erase(battleQueue.begin());
 					if (attack.firstAttacker)
 					{
-						PreBattleChecks(attacker, attackerStats, defender, attack, distribution, gen);
+						PreBattleChecks(attacker, attackerStats, defender, attack, &defenderDisplayHealth, distribution, gen);
 					}
 					else
 					{
-						PreBattleChecks(defender, defenderStats, attacker, attack, distribution, gen);
+						PreBattleChecks(defender, defenderStats, attacker, attack, &attackerDisplayHealth, distribution, gen);
 					}
 					startPosition = actingUnit->sprite.getPosition();
 					moveBack = true;
@@ -716,7 +726,7 @@ void BattleManager::CheckAccost()
 	}
 }
 
-void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
+void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, int* foeHP, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
 {
 	if (attack.vantageAttack)
 	{
@@ -756,6 +766,8 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 		}
 	}
 	DoBattleAction(thisUnit, foe, accuracy, crit, theseStats, attack, foeDefense, distribution, gen);
+	targetHealth = foe->currentHP;
+	displayHealth = foeHP;
 }
 
 void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, BattleStats& theseStats, Attack& attack, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
@@ -1004,7 +1016,7 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		displayTexture = ResourceManager::GetTexture("BattleFadeIn");
 		Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(286, 224), glm::vec4(1, 1, 1, fadeAlpha));
 	}
-	else if (drawInfo)
+	else if (drawInfo && !camera.moving)
 	{
 		int yOffset = 139;
 		int boxY = 48;
@@ -1066,23 +1078,52 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		Renderer->setUVs(mapBattleBoxUVs[defender->team]);
 		Renderer->DrawSprite(displayTexture, defenderBoxPosition, 0, glm::vec2(96, 32));
 
+		ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(attackerBoxPosition.x + 32, boxY + 19, 0.0f));
+
+		int width = 51 * (attackerDisplayHealth / float(attacker->maxHP));
+		glm::vec2 scale(width, 4);
+
+		model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("shapeColor", glm::vec3(1, 0.984f, 0.352f));
+		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(defenderBoxPosition.x + 32, boxY + 19, 0.0f));
+
+		width = 51 * (defenderDisplayHealth / float(defender->maxHP));
+		scale.x = width;
+		model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
 		text->RenderText(attacker->name, attackerDraw.x, attackerDraw.y, 1, glm::vec3(1.0f));
 		attackerDraw.y += 35.0f;
 		attackerDraw.x -= 25;
-		text->RenderText(intToString(attacker->currentHP), attackerDraw.x, attackerDraw.y, 1, glm::vec3(1.0f));
+		text->RenderText(intToString(attackerDisplayHealth), attackerDraw.x, attackerDraw.y, 1, glm::vec3(1.0f));
 
 		text->RenderText(defender->name, defenderDraw.x, defenderDraw.y, 1, glm::vec3(1.0f));
 		defenderDraw.y += 35.0f;
 		defenderDraw.x -= 25;
-		text->RenderText(intToString(defender->currentHP), defenderDraw.x, defenderDraw.y, 1, glm::vec3(1.0f));
+		text->RenderText(intToString(defenderDisplayHealth), defenderDraw.x, defenderDraw.y, 1, glm::vec3(1.0f));
 
+		glDisable(GL_STENCIL_TEST);
 		if (missedText.active)
 		{
 			glm::vec2 drawPosition = glm::vec2(missedText.position.x, missedText.position.y);
 			drawPosition = camera.worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
 			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
 		}
-		glDisable(GL_STENCIL_TEST);
 	}
 }
 
