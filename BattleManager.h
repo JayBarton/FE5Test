@@ -54,6 +54,8 @@ struct BattleManager
 
 	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, InfoDisplays& displays, int shapeVAO);
 
+	void DrawSceneHealthbars(Camera& camera, int shapeVAO);
+
 	void StencilWindow(Camera& camera, int boxY, int shapeVAO);
 
 	Unit* attacker = nullptr;
