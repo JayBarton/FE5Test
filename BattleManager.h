@@ -23,6 +23,14 @@ struct MissText
 	bool active;
 };
 
+struct BattleSceneStats
+{
+	std::string Hit;
+	std::string Atc;
+	int Def;
+	int Lvl;
+};
+
 class Camera;
 struct BattleManager
 {
@@ -77,13 +85,6 @@ struct BattleManager
 
 	int attackDistance;
 
-	int attackerDisplayHealth;
-	int defenderDisplayHealth;
-	int targetHealth;
-	int* displayHealth = nullptr;
-	int* rightDisplayHealth;
-	int* leftDisplayHealth;
-
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;
 
@@ -114,6 +115,17 @@ struct BattleManager
 	bool fadeInBattle = false;
 	bool fadeOutBattle = false;
 	bool fadeBackMap = false;
+
+	int attackerDisplayHealth;
+	int defenderDisplayHealth;
+	int targetHealth;
+	int* displayHealth = nullptr;
+	int* rightDisplayHealth;
+	int* leftDisplayHealth;
+
+	BattleSceneStats leftStats;
+	BattleSceneStats rightStats;
+
 	glm::vec2 leftPosition;
 	glm::vec2 rightPosition;
 	Unit* leftUnit = nullptr;

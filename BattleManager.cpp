@@ -147,17 +147,36 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			transitionIn = true;
 			fadeAlpha = 0.2f;
 			GetFacing();
+
+			std::string hit;
+			std::string dmg;
+			if (canDefenderAttack)
+			{
+				hit = intToString(defenderStats.hitAccuracy);
+				dmg = intToString(defenderStats.attackDamage);
+			}
+			else
+			{
+				hit = "--";
+				dmg = "--";
+			}
 			if (!aiDelay)
 			{
 				ResourceManager::PlaySound("battleTransition");
 				ResourceManager::FadeOutPause(500);
 				rightDisplayHealth = &attackerDisplayHealth;
 				leftDisplayHealth = &defenderDisplayHealth;
+
+				rightStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attacker->getDefense(), attacker->level };
+
+				leftStats = { hit, dmg, defender->getDefense(), defender->level };
 			}
 			else
 			{
 				rightDisplayHealth = &defenderDisplayHealth;
 				leftDisplayHealth = &attackerDisplayHealth;
+				rightStats = { hit, dmg, defender->getDefense(), defender->level };
+				leftStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attacker->getDefense(), attacker->level };
 			}
 		}
 		else
@@ -1002,8 +1021,10 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		}
 
 		text->RenderTextRight(intToString(*rightDisplayHealth), 437, 474, 1, 14);
-		text->RenderTextRight(intToString(rightUnit->getDefense()), 687, 495, 1, 14);
-		text->RenderTextRight(intToString(rightUnit->level), 687, 516, 1, 14);
+		text->RenderTextRight(rightStats.Hit, 537, 495, 1, 14);
+		text->RenderTextRight(rightStats.Atc, 537, 516, 1, 14);
+		text->RenderTextRight(intToString(rightStats.Def), 687, 495, 1, 14);
+		text->RenderTextRight(intToString(rightStats.Lvl), 687, 516, 1, 14);
 
 		text->RenderText(leftUnit->name, leftDraw.x, leftDraw.y, 1);
 		leftDraw.y += 22.0f;
@@ -1014,8 +1035,10 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		}
 
 		text->RenderTextRight(intToString(*leftDisplayHealth), 62, 474, 1, 14);
-		text->RenderTextRight(intToString(leftUnit->getDefense()), 312, 495, 1, 14);
-		text->RenderTextRight(intToString(leftUnit->level), 312, 516, 1, 14);
+		text->RenderTextRight(leftStats.Hit, 162, 495, 1, 14);
+		text->RenderTextRight(leftStats.Atc, 162, 516, 1, 14);
+		text->RenderTextRight(intToString(leftStats.Def), 312, 495, 1, 14);
+		text->RenderTextRight(intToString(leftStats.Lvl), 312, 516, 1, 14);
 
 		if (missedText.active)
 		{
