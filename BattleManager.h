@@ -79,6 +79,8 @@ struct BattleManager
 	int defenderDisplayHealth;
 	int targetHealth;
 	int* displayHealth = nullptr;
+	int* rightDisplayHealth;
+	int* leftDisplayHealth;
 
 	float actionDelay = 1.0f;
 	float actionTimer = 0.0f;

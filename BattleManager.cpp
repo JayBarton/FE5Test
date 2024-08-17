@@ -138,7 +138,6 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			accostQueue[i].vantageAttack = false;
 		}
 
-		camera.SetCenter(defender->sprite.getPosition());
 		if (battleScene)
 		{	
 			transitionX = -286.0f;
@@ -152,10 +151,18 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			{
 				ResourceManager::PlaySound("battleTransition");
 				ResourceManager::FadeOutPause(500);
+				rightDisplayHealth = &attackerDisplayHealth;
+				leftDisplayHealth = &defenderDisplayHealth;
+			}
+			else
+			{
+				rightDisplayHealth = &defenderDisplayHealth;
+				leftDisplayHealth = &attackerDisplayHealth;
 			}
 		}
 		else
 		{
+			camera.SetCenter(defender->sprite.getPosition());
 			if (!aiDelay)
 			{
 				drawInfo = true;
@@ -962,6 +969,9 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		Texture2D displayTexture = ResourceManager::GetTexture("BattleBG");
 		Renderer->DrawSprite(displayTexture, glm::vec2(0, 16), 0.0f, glm::vec2(256, 111), glm::vec4(1, 1, 1, 1));
 
+		displayTexture = ResourceManager::GetTexture("BattleSceneBoxes");
+		Renderer->DrawSprite(displayTexture, glm::vec2(9, 129), 0.0f, glm::vec2(238, 78));
+
 		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		Batch->begin();
 		std::vector<Sprite> carrySprites;
@@ -970,6 +980,8 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		Batch->end();
 		Batch->renderBatch();
 
+		DrawSceneHealthbars(camera, shapeVAO);
+
 		int yOffset = 375;
 		glm::vec2 leftDraw;
 		glm::vec2 rightDraw;
@@ -977,18 +989,18 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		leftDraw = glm::vec2(200, yOffset);
 		rightDraw = glm::vec2(512, yOffset);
 
-		text->RenderText(rightUnit->name, rightDraw.x, rightDraw.y, 1);
+		text->RenderText(rightUnit->name, 512, rightDraw.y, 1);
 		rightDraw.y += 22.0f;
 
 		auto rightWeapon = rightUnit->GetEquippedItem();
 		if (rightWeapon)
 		{
-			text->RenderText(rightWeapon->name, rightDraw.x, rightDraw.y, 1);
+			text->RenderText(rightWeapon->name, 512, 412, 1);
 		}
 
-		text->RenderText("HP", rightDraw.x, 474, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-		rightDraw.x += 25;
-		text->RenderText(intToString(rightUnit->currentHP) + "/" + intToString(rightUnit->maxHP), rightDraw.x, 474, 1);
+		text->RenderTextRight(intToString(*rightDisplayHealth), 437, 474, 1, 14);
+		text->RenderTextRight(intToString(rightUnit->getDefense()), 687, 495, 1, 14);
+		text->RenderTextRight(intToString(rightUnit->level), 687, 516, 1, 14);
 
 		text->RenderText(leftUnit->name, leftDraw.x, leftDraw.y, 1);
 		leftDraw.y += 22.0f;
@@ -998,9 +1010,9 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			text->RenderText(leftWeapon->name, leftDraw.x, leftDraw.y, 1);
 		}
 
-		text->RenderText("HP", leftDraw.x, 474, 1, glm::vec3(0.1f, 0.11f, 0.22f));
-		leftDraw.x += 25;
-		text->RenderText(intToString(leftUnit->currentHP) + "/" + intToString(leftUnit->maxHP), leftDraw.x, 474, 1);
+		text->RenderTextRight(intToString(*leftDisplayHealth), 62, 474, 1, 14);
+		text->RenderTextRight(intToString(leftUnit->getDefense()), 312, 495, 1, 14);
+		text->RenderTextRight(intToString(leftUnit->level), 312, 516, 1, 14);
 
 		if (missedText.active)
 		{
@@ -1087,8 +1099,13 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 
 		model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
-		ResourceManager::GetShader("shapeSpecial").SetVector3f("shapeColor", glm::vec3(1, 0.984f, 0.352f));
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(1, 0.984f, 0.352f));
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.482f, 0.0627f, 0));
 		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+		ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 1);
+		ResourceManager::GetShader("shapeSpecial").SetInteger("innerBottom", 3);
+		ResourceManager::GetShader("shapeSpecial").SetInteger("shouldSkip", 0);
+		ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1);
 		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
 		glBindVertexArray(shapeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -1125,6 +1142,74 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
 		}
 	}
+}
+
+void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
+{
+	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(0, 0.8901f, 0.4823f));
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.0627f, 0.1568f, 0.2235));
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 3);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerBottom", 4);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("skipLine", 0);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("shouldSkip", 1);
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(36, 176, 0.0f));
+
+	glm::vec2 scale(leftUnit->maxHP * 2 + 1, 7);
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(156, 176, 0.0f));
+
+	scale.x = rightUnit->maxHP * 2 + 1;
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0, 0.8901f, 0.4823f));
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(1, 0.9843f, 0.9058f));
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 2);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerBottom", 3);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("skipLine", 1);
+
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(37, 177, 0.0f));
+
+	scale = glm::vec2(std::max(0, *leftDisplayHealth * 2 - 1), 5);
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(157, 177, 0.0f));
+
+	scale = glm::vec2(std::max(0, *rightDisplayHealth * 2 - 1), 5);
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 }
 
 void BattleManager::StencilWindow(Camera& camera, int boxY, int shapeVAO)

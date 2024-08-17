@@ -5,7 +5,7 @@
         "Level": "2.map"
     },
     "Scenes": [
-        false,
+        true,
         true,
         true,
         true,
@@ -19,7 +19,7 @@
         true
     ],
     "Settings": {
-        "Animations": 1,
+        "Animations": 0,
         "AutoCursor": true,
         "Music": true,
         "ShowTerrain": true,
@@ -665,12 +665,12 @@
             "ID": 2,
             "Inventory": [
                 [
-                    6,
-                    34
-                ],
-                [
                     5,
                     30
+                ],
+                [
+                    6,
+                    40
                 ],
                 [
                     7,
@@ -680,8 +680,8 @@
             "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                112.0,
-                224.0
+                48.0,
+                288.0
             ],
             "Skills": [
                 1
@@ -697,8 +697,8 @@
                 "Skl": 18,
                 "Spd": 20,
                 "Str": 9,
-                "currentHP": 18,
-                "exp": 9
+                "currentHP": 28,
+                "exp": 0
             },
             "WeaponProf": {
                 "Sword": 5
@@ -755,23 +755,23 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 4,
             "Inventory": [
                 [
-                    8,
-                    30
+                    16,
+                    56
                 ],
                 [
-                    16,
-                    60
+                    8,
+                    30
                 ]
             ],
             "LevelID": 4,
             "Name": "Othin",
             "Position": [
-                64.0,
-                288.0
+                160.0,
+                192.0
             ],
             "Skills": [
                 2
@@ -790,137 +790,11 @@
                 "Skl": 7,
                 "Spd": 9,
                 "Str": 6,
-                "currentHP": 27,
-                "exp": 0
+                "currentHP": 23,
+                "exp": 97
             },
             "WeaponProf": {
                 "Axe": 1
-            }
-        },
-        {
-            "BattleAnimation": true,
-            "Carried": false,
-            "Class": "Bow Fighter",
-            "ClassID": 8,
-            "ClassPower": 2,
-            "HasMoved": false,
-            "ID": 6,
-            "Inventory": [
-                [
-                    3,
-                    40
-                ],
-                [
-                    7,
-                    1
-                ]
-            ],
-            "LevelID": 5,
-            "Name": "Tania",
-            "Position": [
-                80.0,
-                144.0
-            ],
-            "Stats": {
-                "Bld": 4,
-                "Def": 2,
-                "HP": 20,
-                "Lck": 6,
-                "Level": 1,
-                "Mag": 1,
-                "Mov": 6,
-                "Skl": 6,
-                "Spd": 10,
-                "Str": 3,
-                "currentHP": 20,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Bow": 1
-            }
-        },
-        {
-            "BattleAnimation": true,
-            "Carried": false,
-            "Class": "Warrior",
-            "ClassID": 7,
-            "ClassPower": 3,
-            "HasMoved": false,
-            "ID": 5,
-            "Inventory": [
-                [
-                    14,
-                    20
-                ],
-                [
-                    15,
-                    20
-                ]
-            ],
-            "LevelID": 6,
-            "Name": "Dagda",
-            "Position": [
-                80.0,
-                128.0
-            ],
-            "Skills": [
-                4
-            ],
-            "Stats": {
-                "Bld": 15,
-                "Def": 10,
-                "HP": 43,
-                "Lck": 2,
-                "Level": 6,
-                "Mag": 1,
-                "Mov": 7,
-                "Skl": 11,
-                "Spd": 9,
-                "Str": 14,
-                "currentHP": 43,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Axe": 5,
-                "Bow": 1
-            }
-        },
-        {
-            "BattleAnimation": true,
-            "Carried": false,
-            "Class": "Mountain Thief",
-            "ClassID": 9,
-            "ClassPower": 3,
-            "HasMoved": false,
-            "ID": 7,
-            "Inventory": [
-                [
-                    13,
-                    25
-                ]
-            ],
-            "LevelID": 7,
-            "Name": "Marty",
-            "Position": [
-                64.0,
-                112.0
-            ],
-            "Stats": {
-                "Bld": 15,
-                "Def": 6,
-                "HP": 32,
-                "Lck": 6,
-                "Level": 1,
-                "Mag": 0,
-                "Mov": 6,
-                "Skl": 0,
-                "Spd": 0,
-                "Str": 9,
-                "currentHP": 32,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Axe": 2
             }
         }
     ]

@@ -1,27 +1,34 @@
 #version 330 core
 out vec4 color;
 
-uniform vec3 shapeColor;
+uniform vec3 innerColor;
+uniform vec3 outerColor;
 uniform float alpha;
 uniform vec2 scale;
+uniform int innerTop;
+uniform int innerBottom;
+uniform int skipLine; 
+uniform int shouldSkip;
 
 in vec3 FragPos;  
 
 void main()
 {
-	color = vec4(shapeColor, alpha);
-	vec3 outerColor = vec3(0.482, 0.0627, 0);
+	//vec3 outerColor = vec3(0.482, 0.0627, 0);
 	vec2 scaledFragPos = FragPos.xy * scale;
-    if (scaledFragPos.y < 1 || scaledFragPos.y > 3) 
+    if (scaledFragPos.y < innerTop || scaledFragPos.y > innerBottom) 
 	{
-		color = vec4(outerColor, alpha);
+		color = vec4(outerColor, 1);
 	}
 	else
 	{
-		color = vec4(shapeColor, alpha);
-	//	if(int(scaledFragPos.x) % 2 == 1)
+		color = vec4(innerColor, 1);
+	}
+	if(shouldSkip > 0)
+	{
+		if(int(scaledFragPos.x) % 2 == skipLine)
 		{
-	//		color.a = 0;
+			color = vec4(outerColor, alpha);
 		}
 	}
 }

@@ -567,6 +567,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBackground.png", "TextBackground");
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBorder.png", "TextBorder");
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/VendorBackground.png", "VendorBackground");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/BattleSceneBoxes.png", "BattleSceneBoxes");
 
 	ResourceManager::LoadTexture("TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("TestSprites/test2.png", "test2");
