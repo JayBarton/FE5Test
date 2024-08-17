@@ -497,6 +497,7 @@ void InfoDisplays::UpdateLevelUpDisplay(float deltaTime)
 void InfoDisplays::ClearLevelUpDisplay()
 {
 	delete preLevelStats;
+	preLevelStats = nullptr;
 	focusedUnit = nullptr;
 	state = NONE;
 }
@@ -513,7 +514,14 @@ void InfoDisplays::UpdateExperienceDisplay(float deltaTime)
 			if (state == ADD_EXPERIENCE)
 			{
 				focusedUnit = nullptr;
-				state = NONE;
+				if (battleDisplay)
+				{
+					state = BATTLE_EXPERIENCE_DELAY;
+				}
+				else
+				{
+					state = NONE;
+				}
 				if (capturing)
 				{
 					endBattle.notify(4);
@@ -558,6 +566,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	case NONE:
 		break;
 	case ADD_EXPERIENCE:
+	case BATTLE_EXPERIENCE_DELAY:
 		DrawExperienceDisplay(camera, shapeVAO, Text, renderer);
 		break;
 	case LEVEL_UP_NOTE:

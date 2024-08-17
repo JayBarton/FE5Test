@@ -422,61 +422,64 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				}
 				else
 				{
-					actionTimer += deltaTime;
-					if (actionTimer >= actionDelay)
+					if (displays.state == NONE)
 					{
-						actionTimer = 0;
+						actionTimer += deltaTime;
+						if (actionTimer >= actionDelay)
+						{
+							actionTimer = 0;
 
-						if (battleQueue.size() > 0)
-						{
-							auto attack = battleQueue[0];
-							if (attack.firstAttacker)
+							if (battleQueue.size() > 0)
 							{
-								actingUnit = attacker;
-							}
-							else
-							{
-								actingUnit = defender;
-							}
-							if (actingUnit == leftUnit)
-							{
-								movementDirection = glm::ivec2(1, 0);
-								actingPosition = &leftPosition;
-							}
-							else
-							{
-								movementDirection = glm::ivec2(-1, 0);
-								actingPosition = &rightPosition;
-							}
-							startPosition = *actingPosition;
-						}
-						else if (deadUnit)
-						{
-							if (capturing)
-							{
-								unitCaptured = true;
-							}
-							else
-							{
-								unitDied = true;
-								if (deadUnit->deathMessage != "")
+								auto attack = battleQueue[0];
+								if (attack.firstAttacker)
 								{
-									displays.PlayerUnitDied(deadUnit);
+									actingUnit = attacker;
+								}
+								else
+								{
+									actingUnit = defender;
+								}
+								if (actingUnit == leftUnit)
+								{
+									movementDirection = glm::ivec2(1, 0);
+									actingPosition = &leftPosition;
+								}
+								else
+								{
+									movementDirection = glm::ivec2(-1, 0);
+									actingPosition = &rightPosition;
+								}
+								startPosition = *actingPosition;
+							}
+							else if (deadUnit)
+							{
+								if (capturing)
+								{
+									unitCaptured = true;
+								}
+								else
+								{
+									unitDied = true;
+									if (deadUnit->deathMessage != "")
+									{
+										displays.PlayerUnitDied(deadUnit);
+									}
 								}
 							}
-						}
-						else
-						{
-							//if either unit has accost and accost has not fired
-							//reset battle queue
-							if (!accostFired)
-							{
-								CheckAccost();
-							}
-							//We are in an accost round, and it should only fire once(I think)
 							else
 							{
-								EndAttack();
+								//if either unit has accost and accost has not fired
+								//reset battle queue
+								if (!accostFired)
+								{
+									CheckAccost();
+								}
+								//We are in an accost round, and it should only fire once(I think)
+								else
+								{
+									EndAttack();
+								}
 							}
 						}
 					}
@@ -1146,6 +1149,7 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 
 void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 {
+	//Max
 	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 	ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(0, 0.8901f, 0.4823f));
 	ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.0627f, 0.1568f, 0.2235));
@@ -1158,6 +1162,14 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	model = glm::translate(model, glm::vec3(36, 176, 0.0f));
 
 	glm::vec2 scale(leftUnit->maxHP * 2 + 1, 7);
+	//This nonsense is all to handle multiple health bars when hp is greater than 40
+	//Only supports two, so a max hp of 80. Would require a rewrite if HP could be higher
+	int extraX = 0;
+	if (leftUnit->maxHP > 40)
+	{
+		extraX = (leftUnit->maxHP - 40) * 2 + 1;
+		scale.x = 81;
+	}
 	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
 	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
@@ -1166,11 +1178,33 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+	if (extraX > 0)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(36, 168, 0.0f));
+		model = glm::scale(model, glm::vec3(extraX, scale.y, 0.0f));
+
+		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(extraX, scale.y));
+
+		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(156, 176, 0.0f));
 
 	scale.x = rightUnit->maxHP * 2 + 1;
+
+	extraX = 0;
+	if (rightUnit->maxHP > 40)
+	{
+		extraX = (rightUnit->maxHP - 40) * 2 + 1;
+		scale.x = 81;
+	}
+
 	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
 	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
@@ -1179,6 +1213,21 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	if (extraX > 0)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(156, 168, 0.0f));
+		model = glm::scale(model, glm::vec3(extraX, scale.y, 0.0f));
+
+		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(extraX, scale.y));
+
+		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+
+	//Current
 	ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0, 0.8901f, 0.4823f));
 	ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(1, 0.9843f, 0.9058f));
 	ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 2);
@@ -1191,6 +1240,12 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	model = glm::translate(model, glm::vec3(37, 177, 0.0f));
 
 	scale = glm::vec2(std::max(0, *leftDisplayHealth * 2 - 1), 5);
+	extraX = 0;
+	if (*leftDisplayHealth > 40)
+	{
+		extraX = (*leftDisplayHealth - 40) * 2 - 1;
+		scale.x = 79;
+	}
 	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
 	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
@@ -1198,11 +1253,32 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+	if (extraX > 0)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(37, 169, 0.0f));
+		model = glm::scale(model, glm::vec3(extraX, scale.y, 0.0f));
+
+		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(extraX, scale.y));
+		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(157, 177, 0.0f));
 
 	scale = glm::vec2(std::max(0, *rightDisplayHealth * 2 - 1), 5);
+
+	extraX = 0;
+	if (*rightDisplayHealth > 40)
+	{
+		extraX = (*rightDisplayHealth - 40) * 2 - 1;
+		scale.x = 79;
+	}
+
 	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
 	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
@@ -1210,6 +1286,19 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
+
+	if (extraX > 0)
+	{
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(157, 169, 0.0f));
+		model = glm::scale(model, glm::vec3(extraX, scale.y, 0.0f));
+
+		ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(extraX, scale.y));
+		ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 }
 
 void BattleManager::StencilWindow(Camera& camera, int boxY, int shapeVAO)

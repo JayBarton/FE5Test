@@ -190,7 +190,6 @@ void EnemyManager::SetUp(std::ifstream& map,
         }
     }
 
-    //  units[14]->currentHP = 14;
     //  units[0]->move = 6;
     //  units[9]->mount = new Mount(Unit::HORSE, 1, 1, 1, 2, 3);
 }
