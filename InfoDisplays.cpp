@@ -967,18 +967,18 @@ void InfoDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRende
 	}
 	else
 	{
-		DrawMapExperience(camera, shapeVAO, Text);
+		DrawMapExperience(camera, shapeVAO, Text, renderer);
 	}
 }
 
-void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text)
+void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(40, 96, 0.0f));
+	model = glm::translate(model, glm::vec3(43, 99, 0.0f));
 
-	model = glm::scale(model, glm::vec3(160, 26, 0.0f));
+	model = glm::scale(model, glm::vec3(154, 18, 0.0f));
 
 	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -987,26 +987,31 @@ void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer*
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	ResourceManager::GetShader("Nsprite").Use();
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	Texture2D texture = ResourceManager::GetTexture("MapExperienceBackground");
+	renderer->setUVs();
+	renderer->DrawSprite(texture, glm::vec2(40, 96), 0, glm::vec2(160, 26));
+
+
+	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(71, 106, 0.0f));
+	model = glm::translate(model, glm::vec3(72, 107, 0.0f));
 
-	model = glm::scale(model, glm::vec3(102, 6, 0.0f));
+	int width = displayedExperience;
+	glm::vec2 scale(width, 4);
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(71, 106, 0.0f));
-
-	model = glm::scale(model, glm::vec3(1 * displayedExperience, 6, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(0.9725f, 0.9725f, 0.6588f));
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.6901f, 0.345f, 0.0627f));
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 1);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerBottom", 3);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("shouldSkip", 0);
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1);
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
@@ -1024,32 +1029,26 @@ void InfoDisplays::DrawBattleExperience(Camera* camera, int shapeVAO, TextRender
 	renderer->setUVs();
 	renderer->DrawSprite(texture, glm::vec2(5, 140), 0, glm::vec2(246, 32));
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(72, 154, 0.0f));
+	model = glm::translate(model, glm::vec3(74, 155, 0.0f));
 
-	model = glm::scale(model, glm::vec3(159, 5, 0.0f));
+	int width = 157 * (displayedExperience / 100.0f);
+	glm::vec2 scale(width, 3);
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 0.0f));
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
 
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(0.7098f, 0.9843f, 1.0f));
+	ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.1294f, 0.4431f, 0.0627f));
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 1);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerBottom", 2);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("shouldSkip", 0);
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1);
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(72, 154, 0.0f));
-
-	model = glm::scale(model, glm::vec3(1 * displayedExperience, 5, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.7f, 1.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	Text->RenderText("EXP", 75, 407, 1);
 	Text->RenderTextRight(intToString(displayedExperience), 175, 409, 1, 14);
 }

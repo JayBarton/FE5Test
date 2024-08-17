@@ -125,6 +125,6 @@ struct InfoDisplays
 	void DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 
 	void DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
-	void DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text);
+	void DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 	void DrawBattleExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 };

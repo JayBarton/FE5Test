@@ -555,6 +555,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("TestSprites/BattleFadeIn.png", "BattleFadeIn");
 	ResourceManager::LoadTexture("TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
 	ResourceManager::LoadTexture("TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
+	ResourceManager::LoadTexture("TestSprites/MapExperienceBackground.png", "MapExperienceBackground");
 	ResourceManager::LoadTexture("TestSprites/OptionsScreenBackground.png", "OptionsScreenBackground");
 	ResourceManager::LoadTexture("TestSprites/UnitViewBG.png", "UnitViewBG");
 	ResourceManager::LoadTexture("TestSprites/TradeMenuBG.png", "TradeMenuBG");
