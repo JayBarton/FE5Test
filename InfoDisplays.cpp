@@ -882,6 +882,14 @@ void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer
 	{
 		auto unit = focusedUnit;
 		Text->RenderTextRight(intToString(preLevelStats->maxHP), 309, y, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->strength), 309, y + 21, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->magic), 309, y + 42, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->skill), 309, y + 63, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->speed), 459, y, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->luck), 459, y + 21, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->defense), 459, y + 42, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->build), 459, y + 63, textSize, 14);
+
 		//I am thinking I'll do some sort of instanced rendering for the arrows, because I don't like all of the shader switching here
 		auto texture = ResourceManager::GetTexture("UIItems");
 		renderer->setUVs(arrowUV);
@@ -891,51 +899,43 @@ void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer
 			Text->RenderText(intToString(1), 375, y, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(111, 104 - arrowY), 0.0f, glm::ivec2(7, 8));
-
 		}
-		Text->RenderTextRight(intToString(preLevelStats->strength), 309, y + 21, textSize, 14);
 		if (unit->strength > preLevelStats->strength)
 		{
 			Text->RenderText(intToString(1), 375, y + 21, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(111, 112 - arrowY), 0.0f, glm::ivec2(7, 8));
 		}
-		Text->RenderTextRight(intToString(preLevelStats->magic), 309, y + 42, textSize, 14);
 		if (unit->magic > preLevelStats->magic)
 		{
 			Text->RenderText(intToString(1), 375, y + 42, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(111, 120 - arrowY), 0.0f, glm::ivec2(7, 8));
 		}
-		Text->RenderTextRight(intToString(preLevelStats->skill), 309, y + 63, textSize, 14);
 		if (unit->skill > preLevelStats->skill)
 		{
 			Text->RenderText(intToString(1), 375, y + 63, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(111, 128 - arrowY), 0.0f, glm::ivec2(7, 8));
 		}
-		Text->RenderTextRight(intToString(preLevelStats->speed), 459, y, textSize, 14);
 		if (unit->speed > preLevelStats->speed)
 		{
 			Text->RenderText(intToString(1), 525, y, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(159, 104 - arrowY), 0.0f, glm::ivec2(7, 8));
 		}
-		Text->RenderTextRight(intToString(preLevelStats->luck), 459, y + 21, textSize, 14);
 		if (unit->luck > preLevelStats->luck)
 		{
 			Text->RenderText(intToString(1), 525, y + 21, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(159, 112 - arrowY), 0.0f, glm::ivec2(7, 8));
 		}
-		Text->RenderTextRight(intToString(preLevelStats->defense), 459, y + 42, textSize, 14);
 		if (unit->defense > preLevelStats->defense)
 		{
 			Text->RenderText(intToString(1), 525, y + 42, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
 
 			renderer->DrawSprite(texture, glm::vec2(159, 120 - arrowY), 0.0f, glm::ivec2(7, 8));
 		}
-		Text->RenderTextRight(intToString(preLevelStats->build), 459, y + 63, textSize, 14);
 		if (unit->build > preLevelStats->build)
 		{
 			Text->RenderText(intToString(1), 525, y + 63, textSize, glm::vec3(0.7529f, 0.685f, 0.9725f));
