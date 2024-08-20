@@ -19,7 +19,7 @@
         true
     ],
     "Settings": {
-        "Animations": 0,
+        "Animations": 1,
         "AutoCursor": true,
         "Music": true,
         "ShowTerrain": true,

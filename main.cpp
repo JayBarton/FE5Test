@@ -641,6 +641,7 @@ int main(int argc, char** argv)
 
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/Teko-Light.TTF", 30);
+
 	ItemManager::itemManager.SetUpItems();
 
 	UnitEvents* unitEvents = new UnitEvents();
@@ -662,8 +663,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	loadMap("2.map", unitEvents);
-	//loadSuspendedGame();
+	//loadMap("2.map", unitEvents);
+	loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);

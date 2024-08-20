@@ -7,6 +7,10 @@ class StatGrowths;
 class TextRenderer;
 class Camera;
 
+//I think I rework this in the future, and will split off the different states into different structs,
+//I think it will help to not have a bunch of variables hanging around that are only used for 1-2 states
+//For now I will just deal with this being a mess
+
 enum DisplayState
 {
 	NONE,
@@ -42,6 +46,11 @@ struct InfoDisplays
 
 	StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
 
+	glm::vec4 arrowUV;
+
+	float arrowY;
+	float arrowT;
+
 	float displayTimer = 0.0f;
 	float levelUpTime = 2.5f;
 	float experienceTime = 0.0025f;
@@ -62,6 +71,7 @@ struct InfoDisplays
 	int displayedExperience = 0;
 	int gainedExperience = 0;
 	int finalExperience = 0;
+
 	bool displayingExperience = false;
 	bool finishedHealing = false;
 	bool usedItem = false;
@@ -69,13 +79,16 @@ struct InfoDisplays
 	bool healDelay = false;
 	bool unitDeathFadeBack = false;
 	bool statDelay = false;
-
 	bool capturing = false;
-
 	bool playTurnChange = false;
-
 	bool battleDisplay = false;
-	
+
+	//For map level up display
+	bool mapStats = false;
+	bool mapNames = false;
+
+	int textOffset = -30;
+
 	float levelUpNoteTime = 1.4f;
 
 	int itemToUse;
@@ -112,7 +125,9 @@ struct InfoDisplays
 	void Update(float deltaTime, class InputManager& inputManager);
 	void TurnChangeUpdate(InputManager& inputManager, float deltaTime);
 	void UpdateHealthBarDisplay(float deltaTime);
-	void UpdateLevelUpDisplay(float deltaTime);
+	void UpdateMapLevelUpDisplay(float deltaTime);
+	void UpdateBattleLevelUpDisplay(float deltaTime);
+	void EndBattle();
 	void ClearLevelUpDisplay();
 	void UpdateExperienceDisplay(float deltaTime);
 	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO, struct SpriteRenderer* renderer);
@@ -121,8 +136,10 @@ struct InfoDisplays
 
 	void DrawHealAnimation(Camera* camera, int shapeVAO);
 
-	void DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text);
+	void DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 	void DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
+
+	void DrawStatBars(Camera* camera, int shapeVAO);
 
 	void DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 	void DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);

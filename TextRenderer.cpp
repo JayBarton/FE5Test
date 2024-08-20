@@ -117,7 +117,7 @@ void TextRenderer::Load(std::string font, GLuint fontSize)
 }
 
 //cutOff is being used for a cut off effect for my advancable text; it can be removed if I reuse this code elsewhere
-void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color, float cutOff /* = 0*/)
+void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color, glm::vec2 cutOff /* = 0*/)
 {
     // Activate corresponding render state
     //Adjust scale to font size(need to replace with variable
@@ -125,7 +125,7 @@ void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat sc
     float copyX = x;
     this->TextShader.Use();
     this->TextShader.SetVector3f("textColor", color);
-    this->TextShader.SetFloat("textCutOff", cutOff);
+    this->TextShader.SetVector2f("textCutOff", cutOff);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
 
@@ -186,10 +186,11 @@ void TextRenderer::TextRenderCall(int length)
     }
 }
 
-void TextRenderer::RenderTextRight(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color)
+void TextRenderer::RenderTextRight(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color, glm::vec2 cutOff)
 {
-    GLfloat startX = x  + (containerWidth - GetTextWidth(text, scale));
-    RenderText(text, startX, y, scale, color);
+    int extra = std::max(0, containerWidth - GetTextWidth(text, scale));
+    GLfloat startX = x  + extra;
+    RenderText(text, startX, y, scale, color, cutOff);
 }
 
 void TextRenderer::RenderTextCenter(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color)

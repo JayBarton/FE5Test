@@ -32,7 +32,7 @@ void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Came
 			Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), fadeValue), mirrorPortrait);
 		}
 	}
-	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), position.y - 10);
+	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), glm::vec2(0, position.y - 10));
 }
 
 TextObjectManager::TextObjectManager()

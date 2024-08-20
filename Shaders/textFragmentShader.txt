@@ -11,7 +11,7 @@ in vec3 FragPos;
 uniform sampler2DArray text;
 uniform int letterMap[200];
 uniform vec3 textColor;
-uniform float textCutOff;
+uniform vec2 textCutOff;
 
 void main()
 {    
@@ -19,7 +19,11 @@ void main()
 
     color = vec4(textColor, 1.0) * sampled;
 	//textCutOff exists for an effect with my advancable text; it can be removed if I reuse this code elsewhere
-	if(textCutOff > 0 && FragPos.y < textCutOff)
+	if(textCutOff.y > 0 && FragPos.y < textCutOff.y)
+	{
+		color.a = 0.0;
+	}
+	if(textCutOff.x > 0 && FragPos.x < textCutOff.x)
 	{
 		color.a = 0.0;
 	}

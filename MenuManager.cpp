@@ -1890,7 +1890,6 @@ void UnitStatsViewMenu::DrawPage1()
 
 	auto texture = ResourceManager::GetTexture("UIItems");
 
-	//TODO don't want to be loading these every time need to save em somewhere
 	glm::vec4 uvs = MenuManager::menuManager.statBarUV;
 	glm::vec2 size;
 	float borderSize = 1.0f;

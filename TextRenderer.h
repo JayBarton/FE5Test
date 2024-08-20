@@ -47,13 +47,13 @@ public:
     // Pre-compiles a list of characters from the given font
     void Load(std::string font, GLuint fontSize);
     // Renders a string of text using the precompiled list of characters
-    void RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color = glm::vec3(1.0f), float cutOff = 0);
+    void RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color = glm::vec3(1.0f), glm::vec2 cutOff = glm::vec2(0));
 
     void TextRenderCall(int length);
 
     //containerWidth is the width I want to justify to. If I have a bunch of text, and the widest is say 40, 
     //I should set containerWidth to 40 for anything I want to line up with that text
-    void RenderTextRight(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color = glm::vec3(1.0f));
+    void RenderTextRight(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color = glm::vec3(1.0f), glm::vec2 cutOff = glm::vec2(0));
     void RenderTextCenter(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color = glm::vec3(1.0f));
     int GetTextWidth(std::string text, GLfloat scale);
 private:
