@@ -253,7 +253,7 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		}
 		break;
 	case MAP_LEVEL_UP:
-		UpdateMapLevelUpDisplay(deltaTime);
+		UpdateMapLevelUpDisplay(deltaTime, inputManager);
 		break;
 	case BATTLE_LEVEL_UP:
 		UpdateBattleLevelUpDisplay(deltaTime);
@@ -475,7 +475,7 @@ void InfoDisplays::UpdateHealthBarDisplay(float deltaTime)
 	}
 }
 
-void InfoDisplays::UpdateMapLevelUpDisplay(float deltaTime)
+void InfoDisplays::UpdateMapLevelUpDisplay(float deltaTime, InputManager& inputManager)
 {
 	if (!mapStats)
 	{
@@ -495,6 +495,10 @@ void InfoDisplays::UpdateMapLevelUpDisplay(float deltaTime)
 	}
 	else
 	{
+		if (inputManager.isKeyPressed(SDLK_RETURN))
+		{
+			displayTimer = 5.0f;
+		}
 		textOffset += 6;
 		if (textOffset >= 0)
 		{
@@ -502,12 +506,11 @@ void InfoDisplays::UpdateMapLevelUpDisplay(float deltaTime)
 		}
 		float t = pow(sin(arrowT), 2);
 		
-	//	arrowY = glm::mix(0, 4, pow(sin(arrowT), 2));
 		arrowY = glm::mix(0.0f, 3.0f, glm::smoothstep(0.2f, 0.8f, t));
-		arrowT += 5.5f * deltaTime;
+		arrowT += 3.5f * deltaTime;
 		arrowT = fmod(arrowT, glm::pi<float>());
 
-		if (displayTimer > 20.0f)
+		if (displayTimer >= 5.0f)
 		{
 			displayTimer = 0;
 
@@ -520,13 +523,86 @@ void InfoDisplays::UpdateMapLevelUpDisplay(float deltaTime)
 
 void InfoDisplays::UpdateBattleLevelUpDisplay(float deltaTime)
 {
-	if (displayTimer > 2.0f)
+	if (activeStat >= 0)
 	{
-		displayTimer = 0;
+		angle += 10 * deltaTime;
 
-		state = BATTLE_LEVEL_DELAY;
+		// Calculate the new position using the parametric equation of a circle
+		statPos = center + glm::vec2(20 * cos(angle), 20 * sin(angle));
 
-		EndBattle();
+		if (displayTimer >= 0.5f)
+		{
+			displayTimer = 0;
+			changedStat[activeStat] = false;
+			activeStat = -1;
+		}
+	}
+	else
+	{
+		auto unit = focusedUnit;
+		if (unit->maxHP > preLevelStats->maxHP)
+		{
+			activeStat = 0;
+			preLevelStats->maxHP++;
+			statPos = glm::vec2(431, 423);
+		}
+		else if (unit->strength > preLevelStats->strength)
+		{
+			activeStat = 1;
+			preLevelStats->strength++;
+			statPos = glm::vec2(431, 444);
+		}
+		else if (unit->magic > preLevelStats->magic)
+		{
+			activeStat = 2;
+			preLevelStats->magic++;
+			statPos = glm::vec2(431, 465);
+		}
+		else if (unit->skill > preLevelStats->skill)
+		{
+			activeStat = 3;
+			preLevelStats->skill++;
+			statPos = glm::vec2(431, 486);
+		}
+		else if (unit->speed > preLevelStats->speed)
+		{
+			activeStat = 4;
+			preLevelStats->speed++;
+			statPos = glm::vec2(706, 423);
+		}
+		else if (unit->luck > preLevelStats->luck)
+		{
+			activeStat = 5;
+			preLevelStats->luck++;
+			statPos = glm::vec2(706, 444);
+		}
+		else if (unit->defense > preLevelStats->defense)
+		{
+			activeStat = 6;
+			preLevelStats->defense++;
+			statPos = glm::vec2(706, 465);
+		}
+		else if (unit->build > preLevelStats->build)
+		{
+			activeStat = 7;
+			preLevelStats->build++;
+			statPos = glm::vec2(706, 486);
+		}
+		if (activeStat >= 0)
+		{
+			changedStat[activeStat] = true;
+			center = glm::vec2(statPos.x + 20.0f, statPos.y);
+			angle = glm::half_pi<float>();
+			ResourceManager::PlaySound("pointUp");
+		}
+		else if (displayTimer > 2.0f)
+		{
+			displayTimer = 0;
+
+			state = BATTLE_LEVEL_DELAY;
+
+			EndBattle();
+		}
 	}
 }
 
@@ -969,52 +1045,66 @@ void InfoDisplays::DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRe
 	int x1 = 400;
 	int x2 = 675;
 	y = 450;
-	Text->RenderTextRight(intToString(preLevelStats->maxHP), x1, y, 1, 14);
-	if (unit->maxHP > preLevelStats->maxHP)
+	glm::vec3 color(1);
+	glm::vec3 changedColor(0.7529f, 0.596f, 0.3764f);
+	if (changedStat[0])
 	{
-	//	Text->RenderText(intToString(1), x - 65, y - 30, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->maxHP), x1, y, 1, 14, color);
 	y += 21;
-	Text->RenderTextRight(intToString(preLevelStats->strength), x1, y, 1, 14);
-	if (unit->strength > preLevelStats->strength)
+	color = glm::vec3(1);
+	if (changedStat[1])
 	{
-	//	Text->RenderText(intToString(1), x - 65, y - 5, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->strength), x1, y, 1, 14, color);
 	y += 21;
-	Text->RenderTextRight(intToString(preLevelStats->magic), x1, y, 1, 14);
-	if (unit->magic > preLevelStats->magic)
+	color = glm::vec3(1);
+	if (changedStat[2])
 	{
-	//	Text->RenderText(intToString(1), x - 65, y + 20, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->magic), x1, y, 1, 14, color);
 	y += 21;
-	Text->RenderTextRight(intToString(preLevelStats->skill), x1, y, 1, 14);
-	if (unit->skill > preLevelStats->skill)
+	color = glm::vec3(1);
+	if (changedStat[3])
 	{
-//		Text->RenderText(intToString(1), x - 65, y + 45, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->skill), x1, y, 1, 14, color);
 	y = 450;
-	Text->RenderTextRight(intToString(preLevelStats->speed), x2, y, 1, 14);
-	if (unit->speed > preLevelStats->speed)
+	color = glm::vec3(1);
+	if (changedStat[4])
 	{
-	//	Text->RenderText(intToString(1), x + 55, y - 30, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->speed), x2, y, 1, 14, color);
 	y += 21;
-	Text->RenderTextRight(intToString(preLevelStats->luck), x2, y, 1, 14);
-	if (unit->luck > preLevelStats->luck)
+	color = glm::vec3(1);
+	if (changedStat[5])
 	{
-	//	Text->RenderText(intToString(1), x + 55, y - 5, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->luck), x2, y, 1, 14, color);
 	y += 21;
-	Text->RenderTextRight(intToString(preLevelStats->defense), x2, y, 1, 14);
-	if (unit->defense > preLevelStats->defense)
+	color = glm::vec3(1);
+	if (changedStat[6])
 	{
-	//	Text->RenderText(intToString(1), x + 55, y + 20, 1);
+		color = changedColor;
 	}
+	Text->RenderTextRight(intToString(preLevelStats->defense), x2, y, 1, 14, color);
 	y += 21;
-	Text->RenderTextRight(intToString(preLevelStats->build), x2, y, 1, 14);
-	if (unit->build > preLevelStats->build)
+	color = glm::vec3(1);
+	if (changedStat[7])
 	{
-	//	Text->RenderText(intToString(1), x + 55, y + 45, 1);
+		color = changedColor;
+	}
+	Text->RenderTextRight(intToString(preLevelStats->build), x2, y, 1, 14, color);
+
+	if (activeStat >= 0)
+	{
+		Text->RenderText("+1", statPos.x, statPos.y, 1, changedColor);
 	}
 
 	DrawStatBars(camera, shapeVAO);

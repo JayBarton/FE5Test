@@ -87,6 +87,14 @@ struct InfoDisplays
 	bool mapStats = false;
 	bool mapNames = false;
 
+	bool changedStat[8];
+	
+	int activeStat = -1;
+
+	glm::vec2 statPos;
+	glm::vec2 center;
+	float angle;
+
 	int textOffset = -30;
 
 	float levelUpNoteTime = 1.4f;
@@ -125,7 +133,7 @@ struct InfoDisplays
 	void Update(float deltaTime, class InputManager& inputManager);
 	void TurnChangeUpdate(InputManager& inputManager, float deltaTime);
 	void UpdateHealthBarDisplay(float deltaTime);
-	void UpdateMapLevelUpDisplay(float deltaTime);
+	void UpdateMapLevelUpDisplay(float deltaTime, InputManager& inputManager);
 	void UpdateBattleLevelUpDisplay(float deltaTime);
 	void EndBattle();
 	void ClearLevelUpDisplay();
