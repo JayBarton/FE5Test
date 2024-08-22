@@ -159,25 +159,26 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	playTurnChange = true;
 }
 
-void InfoDisplays::PlayerUnitDied(Unit* unit)
+void InfoDisplays::PlayerUnitDied(Unit* unit, bool battleScene)
 {
+	battleDisplay = battleScene;
+	int id = 1;
+	if (battleScene)
+	{
+		id = 3;
+		state = PLAYER_DIED_SCENE;
+	}
+	else
+	{
+		state = PLAYER_DIED;
+	}
+	//If it's a battle scene, we use a different text object
 	textManager->textLines.clear();
-	textManager->textLines.push_back(SpeakerText{ nullptr, 1, unit->deathMessage, unit->portraitID });
-	textManager->textObjects[1].fadeIn = true;
-/*	testText.position = glm::vec2(62, 455);
-	testText.portraitPosition = glm::vec2(176, 96);
-	testText.displayedPosition = testText.position;
-	testText.charsPerLine = 55;
-	testText.nextIndex = 55;
-	testText.fadeIn = true;
-
-	textManager->textObjects.clear();
-	textManager->textObjects.push_back(testText);*/
+	textManager->textLines.push_back(SpeakerText{ nullptr, id, unit->deathMessage, unit->portraitID });
+	//textManager->textObjects[1].fadeIn = true;
 	textManager->init();
 	textManager->active = true;
 	textManager->talkActivated = true;
-
-	state = PLAYER_DIED;
 }
 
 void InfoDisplays::PlayerLost(int messageID)
@@ -201,15 +202,6 @@ void InfoDisplays::PlayerLost(int messageID)
 	}
 	textManager->textObjects[1].fadeIn = true;
 	//This is repeated from up above in player death, need to fix this shit
-/*	testText.position = glm::vec2(62, 455);
-	testText.portraitPosition = glm::vec2(176, 96);
-	testText.displayedPosition = testText.position;
-	testText.charsPerLine = 55;
-	testText.nextIndex = 55;
-	testText.fadeIn = true;
-
-	textManager->textObjects.clear();
-	textManager->textObjects.push_back(testText);*/
 	textManager->init();
 	textManager->active = true;
 	textManager->talkActivated = true;
@@ -329,6 +321,12 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		break;
 	case PLAYER_DIED:
 		if (!textManager->active)
+		{
+			state = NONE;
+		}
+		break;
+	case PLAYER_DIED_SCENE:
+		if (textManager->finishing)
 		{
 			state = NONE;
 		}
@@ -861,6 +859,23 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		}
 		break;
 	}
+	case PLAYER_DIED:
+	/*	if (battleDisplay)
+		{
+			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+			glm::mat4 model = glm::mat4();
+			model = glm::translate(model, glm::vec3(0, 127, 0.0f));
+			model = glm::scale(model, glm::vec3(256, 97, 0.0f));
+
+			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+			ResourceManager::GetShader("shape").SetMatrix4("model", model);
+			glBindVertexArray(shapeVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
+		}*/
+		break;
 	}
 }
 

@@ -60,7 +60,7 @@ struct BattleManager
 
 	void GetUVs();
 
-	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, InfoDisplays& displays, int shapeVAO);
+	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, InfoDisplays& displays, int shapeVAO, class TextObjectManager* textManager);
 
 	void DrawSceneHealthbars(Camera& camera, int shapeVAO);
 
@@ -71,6 +71,7 @@ struct BattleManager
 	Unit* deadUnit = nullptr;
 	Unit* unitToDrop = nullptr;
 	Unit* actingUnit = nullptr;
+	Unit* talkingUnit = nullptr;
 
 	glm::vec2 movementDirection;
 	glm::vec2 startPosition;
@@ -115,6 +116,8 @@ struct BattleManager
 	bool fadeInBattle = false;
 	bool fadeOutBattle = false;
 	bool fadeBackMap = false;
+
+	int sceneUnitID = -1;
 
 	int attackerDisplayHealth;
 	int defenderDisplayHealth;

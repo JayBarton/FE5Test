@@ -34,6 +34,7 @@ struct TextObject
 	bool fadeOut = false;
 	bool boxIn = true; //idk man
 	bool active = false;
+	bool showAnyway = false;
 
 	TextObject();
 
@@ -60,14 +61,14 @@ enum TextObjectState
 	FADE_GAME_OUT,
 	FADE_BG_IN,
 	FADE_BG_OUT,
-	FADE_BOX_OUT
+	FADE_BOX_OUT,
+	BATTLE_BOX_FADE_IN
 };
 
 struct TextObjectManager
 {
 	bool active = false;
 	bool talkActivated = false;
-	bool showAnyway = false;
 	bool showBG = false;
 	bool fadeIn = false;
 	bool finishing = false;
@@ -92,6 +93,7 @@ struct TextObjectManager
 	float blackAlpha = 0.0f;
 	float layer1Alpha = 0.0f;
 	float layer1MaxAlpha = 0.525f;
+	float battleBoxAlpha = 0.0f;
 
 	float t;
 
@@ -100,6 +102,7 @@ struct TextObjectManager
 
 	glm::vec4 boxStarts[2];
 	std::vector<glm::vec4> extraUVs;
+	glm::vec4 battleTextUV;
 
 	TextObjectState state;
 
@@ -107,11 +110,13 @@ struct TextObjectManager
 	void setUVs();
 	void init(int line = 0);
 	void Update(float deltaTime, class InputManager& inputManager, bool finished = false);
+	void BattleTextClose();
 	void ReadText(InputManager& inputManager, float deltaTime);
 	void GoToNextLine();
 	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera);
-	void NewFunction(int i, SpriteRenderer* Renderer, Camera* camera);
+	void DrawBox(int i, SpriteRenderer* Renderer, Camera* camera);
 	void DrawFade(Camera* camera, int shapeVAO);
+	void DrawOverBattleBox(Camera* camera, int shapeVAO);
 	bool ShowText();
 
 	void EndingScene();

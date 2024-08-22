@@ -236,6 +236,7 @@ struct UnitEvents : public Observer<Unit*>
 		displays.OnUnitLevel(lUnit);
 	}
 };
+
 Subject<int> roundSubject;
 struct TurnEvents : public Observer<int>
 {
@@ -349,6 +350,8 @@ struct PostBattleEvents : public Observer<int>
 				//Real brute force here
 				battleManager.defender->sprite.moveAnimate = false;
 				battleManager.defender->sprite.currentFrame = idleFrame;
+				textManager.textObjects[3].showAnyway = false;
+
 			}
 			break;
 			//Player used an item
@@ -663,8 +666,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
-	//loadMap("2.map", unitEvents);
-	loadSuspendedGame();
+	loadMap("2.map", unitEvents);
+	//loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
@@ -761,10 +764,15 @@ int main(int argc, char** argv)
 			textManager.Update(deltaTime, inputManager);
 			if (inputManager.isKeyPressed(SDLK_SPACE))
 			{
-				textManager.state = PORTRAIT_FADE_OUT;
-				textManager.finishing = true;
-				//if(textManager.state)
-				//textManager.active = false;
+				if (battleManager.battleActive && battleManager.battleScene)
+				{
+					textManager.BattleTextClose();
+				}
+				else
+				{
+					textManager.state = PORTRAIT_FADE_OUT;
+					textManager.finishing = true;
+				}
 			}
 			//Annoying dupe for now
 			if (sceneManager.PlayingScene())
@@ -1628,12 +1636,7 @@ void Draw()
 	}
 	else if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
 	{
-		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO);
-		if (textManager.active)
-		{
-			textManager.Draw(Text, Renderer, &camera);
-			textManager.DrawFade(&camera, shapeVAO);
-		}
+		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO, &textManager);
 	}
 	else
 	{
@@ -1682,7 +1685,7 @@ void Draw()
 			}
 			else if (battleManager.battleActive)
 			{
-				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO);
+				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO, &textManager);
 			}
 			else
 			{

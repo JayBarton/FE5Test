@@ -4230,7 +4230,7 @@ void VendorMenu::SelectOption()
 
 void VendorMenu::ActivateText()
 {
-	textManager.textObjects[0].displayedText = "";
+	textManager.textObjects[2].displayedText = "";
 	textManager.active = true;
 	delay = true;
 }

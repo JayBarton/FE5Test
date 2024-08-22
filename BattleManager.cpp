@@ -19,6 +19,8 @@
 #include "SBatch.h"
 #include "Settings.h"
 
+#include "TextAdvancer.h"
+
 void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerStats, 
 	BattleStats defenderStats, int attackDistance, bool canDefenderAttack, Camera& camera, bool aiDelay /*= false*/, bool capturing /*= false*/)
 {
@@ -38,6 +40,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	this->defender = defender;
 	this->canDefenderAttack = canDefenderAttack;
 	drawInfo = false;
+
 	if (capturing && defender->GetEquippedWeapon().type < 0)
 	{
 		//If defender is unarmed and we attempt to capture, it's an automatic success
@@ -138,6 +141,28 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			accostQueue[i].vantageAttack = false;
 		}
 
+		talkingUnit = nullptr;
+		sceneUnitID = -1;
+
+		if (defender->battleTalkData.size() > 0)
+		{
+			auto talkData = defender->battleTalkData;
+			if (talkData.count(attacker->sceneID))
+			{
+				sceneUnitID = attacker->sceneID;
+			}
+			talkingUnit = defender;
+		}
+		else if (attacker->battleTalkData.size() > 0)
+		{
+			auto talkData = attacker->battleTalkData;
+			if (talkData.count(defender->sceneID))
+			{
+				sceneUnitID = defender->sceneID;
+			}
+			talkingUnit = attacker;
+		}
+
 		if (battleScene)
 		{	
 			transitionX = -286.0f;
@@ -173,6 +198,10 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			}
 			else
 			{
+			/*	if (talkingUnit)
+				{
+					defender->battleTalkData[sceneUnitID]->activation->CheckActivation();
+				}*/
 				rightDisplayHealth = &defenderDisplayHealth;
 				leftDisplayHealth = &attackerDisplayHealth;
 				rightStats = { hit, dmg, defender->getDefense(), defender->level };
@@ -185,7 +214,12 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			if (!aiDelay)
 			{
 				drawInfo = true;
+				if (talkingUnit)
+				{
+				//	talkingUnit->battleTalkData[sceneUnitID]->activation->CheckActivation();
+				}
 			}
+
 			GetFacing();
 			attacker->sprite.moveAnimate = true;
 			defender->sprite.moveAnimate = true;
@@ -250,6 +284,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			}
 			else
 			{
+				if (talkingUnit)
+				{
+			//		talkingUnit->battleTalkData[sceneUnitID]->activation->CheckActivation();
+				}
 				drawInfo = true;
 			}
 		}
@@ -331,6 +369,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					fadeTimer = 0;
 					fadeAlpha = 0;
 					fadeInBattle = false;
+					if (talkingUnit)
+					{
+				//		talkingUnit->battleTalkData[sceneUnitID]->activation->CheckActivation();
+					}
 				}
 			}
 			else if (fadeOutBattle)
@@ -482,7 +524,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 									unitDied = true;
 									if (deadUnit->deathMessage != "")
 									{
-										displays.PlayerUnitDied(deadUnit);
+										displays.PlayerUnitDied(deadUnit, true);
 									}
 								}
 							}
@@ -585,7 +627,7 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 			drawInfo = false;
 			if (unitDied && deadUnit->deathMessage != "")
 			{
-				displays.PlayerUnitDied(deadUnit);
+				displays.PlayerUnitDied(deadUnit, false);
 			}
 		}
 	}
@@ -967,7 +1009,7 @@ void BattleManager::GetUVs()
 	mapBattleBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 128, 96, 32, 2, 2, 3);
 }
 
-void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, InfoDisplays& displays, int shapeVAO)
+void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, InfoDisplays& displays, int shapeVAO, TextObjectManager* textManager)
 {
 	if (aiDelay)
 	{
@@ -1049,6 +1091,13 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		{
 			displays.Draw(&camera, text, shapeVAO, Renderer);
 		}
+
+		if (textManager->ShowText())
+		{
+			textManager->DrawOverBattleBox(&camera, shapeVAO);
+			textManager->Draw(text, Renderer, &camera);
+		}
+
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 		Renderer->setUVs();
 		displayTexture = ResourceManager::GetTexture("BattleFadeIn");

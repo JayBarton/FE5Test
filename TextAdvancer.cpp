@@ -39,7 +39,7 @@ TextObjectManager::TextObjectManager()
 {
 	focusedObject = 0;
 	delay = normalDelay;
-	textObjects.resize(3);
+	textObjects.resize(4);
 
 	boxStarts[0] = glm::vec4(72, 48, 56, 24);
 	boxStarts[1] = glm::vec4(144, 160, 32, 24);
@@ -68,6 +68,16 @@ TextObjectManager::TextObjectManager()
 	textObjects[2].displayedPosition = textObjects[2].position;
 	textObjects[2].boxPosition = glm::vec4(80, 8, 176, 64);
 	textObjects[2].boxDisplayPosition = textObjects[2].boxPosition;
+
+	textObjects[3].position = glm::vec2(250, 391);
+	textObjects[3].portraitPosition = glm::vec2(8, 136);
+	textObjects[3].mirrorPortrait = true;
+	textObjects[3].showPortrait = true;
+	textObjects[3].showBox = false;
+	textObjects[3].fadeIn = false;
+	textObjects[3].displayedPosition = textObjects[3].position;
+	textObjects[3].boxPosition = glm::vec4(64, 136, 184, 64);
+	textObjects[3].boxDisplayPosition = textObjects[3].boxPosition;
 }
 
 void TextObjectManager::setUVs()
@@ -76,6 +86,7 @@ void TextObjectManager::setUVs()
 	extraUVs = texture.GetUVs(0, 96, 16, 16, 2, 1);
 	textObjects[0].extraUV = &extraUVs[0];
 	textObjects[1].extraUV = &extraUVs[1];
+	battleTextUV = texture.GetUVs(0, 192, 184, 64, 1, 1)[0];
 }
 
 void TextObjectManager::init(int line/* = 0 */)
@@ -117,8 +128,18 @@ void TextObjectManager::init(int line/* = 0 */)
 	}
 	else
 	{
-		state = READING_TEXT;
-		textObjects[focusedObject].fadeValue = 1.0f;
+		if (focusedObject == 3)
+		{
+			state = BATTLE_BOX_FADE_IN;
+			textObjects[focusedObject].active = false;
+			battleBoxAlpha = 0.0f;
+			textObjects[focusedObject].fadeValue = 0;
+		}
+		else
+		{
+			state = READING_TEXT;
+			textObjects[focusedObject].fadeValue = 1.0f;
+		}
 	}
 	if (!showBoxAnyway)
 	{
@@ -137,6 +158,17 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		MenuManager::menuManager.AnimateArrow(deltaTime);
 		if (inputManager.isKeyPressed(SDLK_RETURN))
 		{
+			if (focusedObject == 3)
+			{
+				if (nextOption == 1)
+				{
+					BattleTextClose();
+				}
+				else
+				{
+					GoToNextLine();
+				}
+			}
 			//Do something here
 			//The idea is that dependent on what the next option is, I can end text display, display images, move units, etc
 			//0: End line
@@ -144,7 +176,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			//2: Vendor dialogue line
 			//3: Exit vendor dialogue
 			//4: Skip directly to the next line without waiting on player input
-			if (nextOption == 1)
+			else if (nextOption == 1)
 			{
 				state = PORTRAIT_FADE_OUT;
 				finishing = true;
@@ -153,7 +185,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			else if (nextOption == 3)
 			{
 				active = false;
-				showAnyway = true;
+				textObjects[focusedObject].showAnyway = true;
 				textObjects[focusedObject].index = 0;
 				textObjects[focusedObject].active = false;
 			}
@@ -427,7 +459,26 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		}
 		ResourceManager::GetShader("instance").SetFloat("backgroundFade", layer1Alpha, true);
 		break;
+	case BATTLE_BOX_FADE_IN:
+		battleBoxAlpha += deltaTime;
+		if (battleBoxAlpha >= 1)
+		{
+			battleBoxAlpha = 1;
+			textObjects[focusedObject].active = true;
+			state = PORTRAIT_FADE_IN;
+		}
+		break;
 	}
+}
+
+void TextObjectManager::BattleTextClose()
+{
+	finishing = true;
+	active = false;
+
+	textObjects[focusedObject].showAnyway = true;
+	textObjects[focusedObject].index = 0;
+	textObjects[focusedObject].active = false;
 }
 
 void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
@@ -488,7 +539,7 @@ void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
 				if (nextOption == 2)
 				{
 					active = false;
-					showAnyway = true;
+					textObjects[focusedObject].showAnyway = true;
 					currentObject->index = 0;
 				}
 				else if (nextOption == 4)
@@ -584,11 +635,22 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 	bool showBox = showPortraits || (showBoxAnyway && state == FADE_BG_IN);
 	for (int i = 0; i < textObjects.size(); i++)
 	{
-		if (textObjects[i].active || showAnyway)
+		if (textObjects[i].active || textObjects[i].showAnyway)
 		{
-			if (showBox)
+			if (i == 3)
 			{
-				NewFunction(i, Renderer, camera);
+
+				auto texture = ResourceManager::GetTexture("UIItems");
+				glm::vec2 position(textObjects[3].boxPosition.x, textObjects[3].boxPosition.y);
+				glm::vec2 size(textObjects[3].boxPosition.z, textObjects[3].boxPosition.w);
+				ResourceManager::GetShader("Nsprite").Use();
+				ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+				Renderer->setUVs(battleTextUV);
+				Renderer->DrawSprite(texture, position, 0, size, glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), textObjects[i].fadeValue));
+			}
+			else if (showBox)
+			{
+				DrawBox(i, Renderer, camera);
 			}
 
 			textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits, showBox);
@@ -608,7 +670,7 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 	}
 }
 
-void TextObjectManager::NewFunction(int i, SpriteRenderer* Renderer, Camera* camera)
+void TextObjectManager::DrawBox(int i, SpriteRenderer* Renderer, Camera* camera)
 {
 	auto current = textObjects[i];
 	if (current.showBox)
@@ -645,11 +707,14 @@ void TextObjectManager::NewFunction(int i, SpriteRenderer* Renderer, Camera* cam
 
 		Renderer->shader = ResourceManager::GetShader("Nsprite");
 
-		texture = ResourceManager::GetTexture("UIItems");
-		ResourceManager::GetShader("Nsprite").Use();
-		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-		Renderer->setUVs(extraUVs[i]);
-		Renderer->DrawSprite(texture, current.extraPosition, 0, glm::vec2(16, 16), glm::vec4(1, 1, 1, alpha));
+		if (i < 2)
+		{
+			texture = ResourceManager::GetTexture("UIItems");
+			ResourceManager::GetShader("Nsprite").Use();
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+			Renderer->setUVs(extraUVs[i]);
+			Renderer->DrawSprite(texture, current.extraPosition, 0, glm::vec2(16, 16), glm::vec4(1, 1, 1, alpha));
+		}
 	}
 }
 
@@ -669,9 +734,25 @@ void TextObjectManager::DrawFade(Camera* camera, int shapeVAO)
 	glBindVertexArray(0);
 }
 
+void TextObjectManager::DrawOverBattleBox(Camera* camera, int shapeVAO)
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", battleBoxAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 127, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 97, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
 bool TextObjectManager::ShowText()
 {
-	return active || showAnyway;
+	return active || textObjects[focusedObject].showAnyway;
 }
 
 void TextObjectManager::EndingScene()

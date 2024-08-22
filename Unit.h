@@ -353,6 +353,9 @@ struct Unit
 
 	std::vector<TalkData> talkData;
 
+	//This is another thing that should be only present for enemies
+	std::unordered_map<int, std::vector<std::string>> battleTalkData;
+
 	std::vector<Item*> GetOrderedWeapons();
 
 	void StartTurn(class InfoDisplays& displays, class Camera* camera);

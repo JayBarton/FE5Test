@@ -199,7 +199,6 @@
     },
     {
       "ID": 8,
-      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -211,7 +210,6 @@
     },
     {
       "ID": 9,
-      "Start_Portraits": [ 5 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -426,6 +424,28 @@
           "location": 0,
           "portrait": 2,
           "speech": "Wow, a unique background? That's crazy man.<1"
+        }
+      ]
+    },
+    {
+      "ID": 17,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "I'm the bad guy and this is my fight quote.<1"
+        }
+      ]
+    },
+    {
+      "ID": 18,
+      "dialogue": [
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "This is another fight quote, just for fun.<1"
         }
       ]
     }
