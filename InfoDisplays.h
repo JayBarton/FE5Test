@@ -29,8 +29,7 @@ enum DisplayState
 	TURN_CHANGE,
 	ENEMY_BUY,
 	GOT_ITEM,
-	PLAYER_DIED,
-	PLAYER_DIED_SCENE,
+	BATTLE_SPEECH,
 	UNIT_ESCAPED,
 	STAT_BOOST
 };
@@ -126,6 +125,7 @@ struct InfoDisplays
 	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
 	void PlayerUnitDied(Unit* unit, bool battleScene);
+	void UnitBattleMessage(Unit* unit, bool battleScene, bool continuing = false);
 	void PlayerLost(int messageID);
 	void UnitEscaped(EnemyManager* enemyManager);
 

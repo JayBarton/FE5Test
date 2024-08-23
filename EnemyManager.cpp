@@ -187,6 +187,9 @@ void EnemyManager::SetUp(std::ifstream& map,
         else if (units[i]->ID == 2)
         {
             units[i]->portraitID = 11;
+            //I am just going to manually set the battle message here. A lot of enemy specific stuff I haven't figured out, and I think I will save for a future project.
+            units[i]->battleMessage = "Hypertension<1";
+            units[i]->deathMessage = "I'm fuckin' dying!<1";
         }
     }
 
@@ -216,6 +219,7 @@ void EnemyManager::Load(json saveData, std::vector<Unit*>* playerUnits, std::vec
         else if (newUnit->ID == 2)
         {
             newUnit->portraitID = 11;
+            newUnit->deathMessage = "I'm fuckin' dying!<1";
         }
         newUnit->team = 1;
         newUnit->sceneID = -1;
@@ -225,6 +229,11 @@ void EnemyManager::Load(json saveData, std::vector<Unit*>* playerUnits, std::vec
         newUnit->active = AI["active"];
         newUnit->boss = AI["boss"];
         newUnit->stationary = AI["stationary"];
+
+        if (AI.count("battleMessage"))
+        {
+            newUnit->battleMessage = AI["battleMessage"];
+        }
 
         units[current] = newUnit;
         current++;
@@ -1401,8 +1410,6 @@ void EnemyManager::EndTurn()
         units[i]->EndTurn();
     }
     subject.notify(1);
-    std::cout << "Player Turn Start\n";
-
 }
 
 void EnemyManager::Clear()

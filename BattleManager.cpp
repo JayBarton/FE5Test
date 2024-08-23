@@ -144,22 +144,12 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 		talkingUnit = nullptr;
 		sceneUnitID = -1;
 
-		if (defender->battleTalkData.size() > 0)
+		if (defender->battleMessage != "")
 		{
-			auto talkData = defender->battleTalkData;
-			if (talkData.count(attacker->sceneID))
-			{
-				sceneUnitID = attacker->sceneID;
-			}
 			talkingUnit = defender;
 		}
-		else if (attacker->battleTalkData.size() > 0)
+		else if (attacker->battleMessage != "")
 		{
-			auto talkData = attacker->battleTalkData;
-			if (talkData.count(defender->sceneID))
-			{
-				sceneUnitID = defender->sceneID;
-			}
 			talkingUnit = attacker;
 		}
 
@@ -198,10 +188,6 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			}
 			else
 			{
-			/*	if (talkingUnit)
-				{
-					defender->battleTalkData[sceneUnitID]->activation->CheckActivation();
-				}*/
 				rightDisplayHealth = &defenderDisplayHealth;
 				leftDisplayHealth = &attackerDisplayHealth;
 				rightStats = { hit, dmg, defender->getDefense(), defender->level };
@@ -216,7 +202,7 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 				drawInfo = true;
 				if (talkingUnit)
 				{
-				//	talkingUnit->battleTalkData[sceneUnitID]->activation->CheckActivation();
+					displays->UnitBattleMessage(talkingUnit, false, false);
 				}
 			}
 
@@ -268,7 +254,7 @@ void BattleManager::GetFacing()
 	}
 }
  
-void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InfoDisplays& displays, InputManager& inputManager)
+void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InputManager& inputManager)
 {
 	if (aiDelay)
 	{
@@ -286,7 +272,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			{
 				if (talkingUnit)
 				{
-			//		talkingUnit->battleTalkData[sceneUnitID]->activation->CheckActivation();
+					displays->UnitBattleMessage(talkingUnit, false, false);
 				}
 				drawInfo = true;
 			}
@@ -371,7 +357,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					fadeInBattle = false;
 					if (talkingUnit)
 					{
-				//		talkingUnit->battleTalkData[sceneUnitID]->activation->CheckActivation();
+						displays->UnitBattleMessage(talkingUnit, true, true);
 					}
 				}
 			}
@@ -392,12 +378,12 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 						deadUnit->sprite.alpha = 1;
 					}
 					GetFacing();
-					displays.ClearLevelUpDisplay();
+					displays->ClearLevelUpDisplay();
 				}
 			}
 			else if (unitDied || unitCaptured)
 			{
-				if (displays.state == NONE)
+				if (displays->state == NONE)
 				{
 					if (deadUnit->Dying(deltaTime))
 					{
@@ -483,7 +469,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 				}
 				else
 				{
-					if (displays.state == NONE)
+					if (displays->state == NONE)
 					{
 						actionTimer += deltaTime;
 						if (actionTimer >= actionDelay)
@@ -524,7 +510,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 									unitDied = true;
 									if (deadUnit->deathMessage != "")
 									{
-										displays.PlayerUnitDied(deadUnit, true);
+										displays->PlayerUnitDied(deadUnit, true);
 									}
 								}
 							}
@@ -567,13 +553,13 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					}
 					else
 					{
-						displays.endBattle.notify(0);
+						displays->endBattle.notify(0);
 					}
 				}
 			}
 			else
 			{
-				MapUpdate(displays, deltaTime, inputManager, distribution, gen);
+				MapUpdate(deltaTime, inputManager, distribution, gen);
 			}
 		}
 	}
@@ -606,7 +592,7 @@ void BattleManager::PrepareCapture()
 	}
 }
 
-void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
+void BattleManager::MapUpdate(float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
 {
 	if (fadeBoxIn)
 	{
@@ -627,13 +613,13 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 			drawInfo = false;
 			if (unitDied && deadUnit->deathMessage != "")
 			{
-				displays.PlayerUnitDied(deadUnit, false);
+				displays->PlayerUnitDied(deadUnit, false);
 			}
 		}
 	}
 	else if (unitDied)
 	{
-		if (displays.state == NONE)
+		if (displays->state == NONE)
 		{
 			if (deadUnit->Dying(deltaTime))
 			{
@@ -664,7 +650,7 @@ void BattleManager::MapUpdate(InfoDisplays& displays, float deltaTime, InputMana
 		if (!defender->movementComponent.moving)
 		{
 			defender->hide = true;
-			displays.endBattle.notify(0);
+			displays->endBattle.notify(0);
 			captureAnimation = false;
 		}
 	}
@@ -1009,7 +995,7 @@ void BattleManager::GetUVs()
 	mapBattleBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 128, 96, 32, 2, 2, 3);
 }
 
-void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, InfoDisplays& displays, int shapeVAO, TextObjectManager* textManager)
+void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, int shapeVAO, TextObjectManager* textManager)
 {
 	if (aiDelay)
 	{
@@ -1087,9 +1073,9 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			glm::vec2 drawPosition = glm::vec2(missedText.position.x/256.0f * 800, missedText.position.y/ 224.0f * 600);
 			text->RenderTextCenter(missedText.message, drawPosition.x, drawPosition.y, missedText.scale, 40);
 		}
-		if (displays.state != NONE)
+		if (displays->state != NONE)
 		{
-			displays.Draw(&camera, text, shapeVAO, Renderer);
+			displays->Draw(&camera, text, shapeVAO, Renderer);
 		}
 
 		if (textManager->ShowText())

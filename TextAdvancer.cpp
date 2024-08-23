@@ -19,7 +19,7 @@ TextObject::TextObject()
 	displayedText = "";
 }
 
-void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow, bool canShowBox)
+void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Camera* camera, bool canShow, bool canShowBox, glm::vec3 color)
 {
 	if (canShow)
 	{
@@ -32,7 +32,8 @@ void TextObject::Draw(TextRenderer* textRenderer, SpriteRenderer* Renderer, Came
 			Renderer->DrawSprite(portraitTexture, portraitPosition, 0, glm::vec2(48, 64), glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), fadeValue), mirrorPortrait);
 		}
 	}
-	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, glm::vec3(1), glm::vec2(0, position.y - 10));
+	//Use of mix here is hacky thing to handle battle transitions
+	textRenderer->RenderText(displayedText, displayedPosition.x, displayedPosition.y, 1, color, glm::vec2(0, position.y - 10));
 }
 
 TextObjectManager::TextObjectManager()
@@ -87,13 +88,13 @@ void TextObjectManager::setUVs()
 	textObjects[0].extraUV = &extraUVs[0];
 	textObjects[1].extraUV = &extraUVs[1];
 	battleTextUV = texture.GetUVs(0, 192, 184, 64, 1, 1)[0];
+	battleBoxIndicator = texture.GetUVs(0, 112, 9, 5, 2, 1);
 }
 
 void TextObjectManager::init(int line/* = 0 */)
 {
 	for (int i = 0; i < textObjects.size(); i++)
 	{
-		//textObjects[i].text = "";
 		textObjects[i].displayedText = "";
 		textObjects[i].index = 0;
 	}
@@ -134,6 +135,7 @@ void TextObjectManager::init(int line/* = 0 */)
 			textObjects[focusedObject].active = false;
 			battleBoxAlpha = 0.0f;
 			textObjects[focusedObject].fadeValue = 0;
+			textObjects[focusedObject].showPortrait = true;
 		}
 		else
 		{
@@ -155,7 +157,24 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 	switch (state)
 	{
 	case WAITING_ON_INPUT:
-		MenuManager::menuManager.AnimateArrow(deltaTime);
+		if (focusedObject == 3)
+		{
+			//animate indicator
+			battleBoxTimer += deltaTime;
+			if (battleBoxTimer >= 0.5f)
+			{
+				battleBoxFrame++;
+				battleBoxTimer = 0;
+				if (battleBoxFrame > 1)
+				{
+					battleBoxFrame = 0;
+				}
+			}
+		}
+		else
+		{
+			MenuManager::menuManager.AnimateArrow(deltaTime);
+		}
 		if (inputManager.isKeyPressed(SDLK_RETURN))
 		{
 			if (focusedObject == 3)
@@ -280,7 +299,14 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		if (currentObject.fadeValue <= 0)
 		{
 			currentObject.fadeValue = 0;
-			if (finishing)
+			if (continueBattle)
+			{
+				currentObject.fadeIn = false;
+				currentObject.showPortrait = false;
+				currentObject.displayedText = "";
+				state = BATTLE_BOX_FADE_OUT;
+			}
+			else if (finishing)
 			{
 				currentObject.fadeIn = false;
 				currentObject.showPortrait = false;
@@ -468,17 +494,37 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			state = PORTRAIT_FADE_IN;
 		}
 		break;
+	case BATTLE_BOX_FADE_OUT:
+		battleBoxAlpha -= deltaTime;
+		if (battleBoxAlpha <= 0)
+		{
+			finishing = true;
+			active = false;
+
+		//	textObjects[focusedObject].showAnyway = true;
+			textObjects[focusedObject].index = 0;
+			textObjects[focusedObject].active = false;
+			continueBattle = false;
+		}
+		break;
 	}
 }
 
 void TextObjectManager::BattleTextClose()
 {
-	finishing = true;
-	active = false;
+	if (continueBattle)
+	{
+		state = PORTRAIT_FADE_OUT;
+	}
+	else
+	{
+		finishing = true;
+		active = false;
 
-	textObjects[focusedObject].showAnyway = true;
-	textObjects[focusedObject].index = 0;
-	textObjects[focusedObject].active = false;
+		textObjects[focusedObject].showAnyway = true;
+		textObjects[focusedObject].index = 0;
+		textObjects[focusedObject].active = false;
+	}
 }
 
 void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
@@ -637,9 +683,9 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 	{
 		if (textObjects[i].active || textObjects[i].showAnyway)
 		{
-			if (i == 3)
+			glm::vec3 color(1);
+			if (i == 3 && textObjects[i].showPortrait)
 			{
-
 				auto texture = ResourceManager::GetTexture("UIItems");
 				glm::vec2 position(textObjects[3].boxPosition.x, textObjects[3].boxPosition.y);
 				glm::vec2 size(textObjects[3].boxPosition.z, textObjects[3].boxPosition.w);
@@ -647,13 +693,13 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 				ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 				Renderer->setUVs(battleTextUV);
 				Renderer->DrawSprite(texture, position, 0, size, glm::mix(glm::vec4(0, 0, 0, 1), glm::vec4(1), textObjects[i].fadeValue));
+				color = glm::mix(glm::vec3(0, 0, 0), glm::vec3(1), textObjects[i].fadeValue);
 			}
 			else if (showBox)
 			{
 				DrawBox(i, Renderer, camera);
 			}
-
-			textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits, showBox);
+			textObjects[i].Draw(textRenderer, Renderer, camera, showPortraits, showBox, color);
 		}
 	}
 	if (state == WAITING_ON_INPUT)
@@ -665,7 +711,17 @@ void TextObjectManager::Draw(TextRenderer* textRenderer, SpriteRenderer* Rendere
 		else if (focusedObject == 1)
 		{
 			MenuManager::menuManager.DrawArrow(glm::ivec2(120, 217));
-
+		}
+		else if (focusedObject == 3)
+		{
+			if (textObjects[3].active)
+			{
+				auto texture = ResourceManager::GetTexture("UIItems");
+				ResourceManager::GetShader("Nsprite").Use();
+				ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+				Renderer->setUVs(battleBoxIndicator[battleBoxFrame]);
+				Renderer->DrawSprite(texture, glm::vec2(219, 192), 0, glm::vec2(9, 5));
+			}
 		}
 	}
 }

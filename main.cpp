@@ -257,7 +257,6 @@ struct TurnEvents : public Observer<int>
 			turnDisplay = true;
 			enemyManager.currentEnemy = 0;
 			currentTurn = 1;
-			std::cout << "Enemy Turn Start\n";
 		}
 		else if (ID == 1)
 		{
@@ -666,6 +665,8 @@ int main(int argc, char** argv)
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
 	enemyManager.init(&gen, &distribution);
 
+	battleManager.displays = &displays;
+
 	loadMap("2.map", unitEvents);
 	//loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
@@ -804,7 +805,7 @@ int main(int argc, char** argv)
 				if (!displays.displayingExperience) //This check is to help with an issue with displaying experience in cases where the unit does not level up
 					//It does not help very much.
 				{
-					battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
+					battleManager.Update(deltaTime, &gen, &distribution, inputManager);
 				}
 				displays.Update(deltaTime, inputManager);
 			}
@@ -831,7 +832,7 @@ int main(int argc, char** argv)
 					}
 					else
 					{
-						battleManager.Update(deltaTime, &gen, &distribution, displays, inputManager);
+						battleManager.Update(deltaTime, &gen, &distribution, inputManager);
 					}
 				}
 				else
@@ -1636,7 +1637,7 @@ void Draw()
 	}
 	else if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
 	{
-		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO, &textManager);
+		battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, shapeVAO, &textManager);
 	}
 	else
 	{
@@ -1685,7 +1686,7 @@ void Draw()
 			}
 			else if (battleManager.battleActive)
 			{
-				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, displays, shapeVAO, &textManager);
+				battleManager.Draw(Text, camera, Renderer, &cursor, &Batch, shapeVAO, &textManager);
 			}
 			else
 			{
@@ -2082,6 +2083,11 @@ void SuspendGame()
 		AI["stationary"] = unit->stationary;
 		AI["boss"] = unit->boss;
 		AI["active"] = unit->active;
+		//Just writing this to here now
+		if (unit->battleMessage != "")
+		{
+			AI["battleMessage"] = unit->battleMessage;
+		}
 
 		if (unit->carriedUnit)
 		{

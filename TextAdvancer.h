@@ -38,7 +38,7 @@ struct TextObject
 
 	TextObject();
 
-	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera, bool canShow, bool canShowBox);
+	void Draw(TextRenderer* textRenderer, class SpriteRenderer* Renderer, class Camera* camera, bool canShow, bool canShowBox, glm::vec3 color);
 };
 
 struct SpeakerText
@@ -62,7 +62,8 @@ enum TextObjectState
 	FADE_BG_IN,
 	FADE_BG_OUT,
 	FADE_BOX_OUT,
-	BATTLE_BOX_FADE_IN
+	BATTLE_BOX_FADE_IN,
+	BATTLE_BOX_FADE_OUT
 };
 
 struct TextObjectManager
@@ -75,6 +76,8 @@ struct TextObjectManager
 
 	bool boxFadeOut = false;
 	bool showBoxAnyway = false;
+	//Hate this, need this to manage the enemy battle messages
+	bool continueBattle = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;
@@ -88,12 +91,15 @@ struct TextObjectManager
 	int frame = 0;
 	int frameDirection = 1;
 	int BG = 0;
+	int battleBoxFrame = 0;
 	float animTime = 0.0f;
 	float BGAlpha = 0.0f;
 	float blackAlpha = 0.0f;
 	float layer1Alpha = 0.0f;
 	float layer1MaxAlpha = 0.525f;
 	float battleBoxAlpha = 0.0f;
+
+	float battleBoxTimer = 0.0f;
 
 	float t;
 
@@ -102,6 +108,7 @@ struct TextObjectManager
 
 	glm::vec4 boxStarts[2];
 	std::vector<glm::vec4> extraUVs;
+	std::vector<glm::vec4> battleBoxIndicator;
 	glm::vec4 battleTextUV;
 
 	TextObjectState state;

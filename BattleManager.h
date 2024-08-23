@@ -4,6 +4,7 @@
 #include "TextAdvancer.h"
 
 class TextRenderer;
+class InfoDisplays;
 
 struct Attack
 {
@@ -38,11 +39,11 @@ struct BattleManager
 
 	void GetFacing();
 
-	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InfoDisplays& displays, class InputManager& inputManager);
+	void Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, class InputManager& inputManager);
 
 	void PrepareCapture();
 
-	void MapUpdate(InfoDisplays& displays, float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+	void MapUpdate(float deltaTime, InputManager& inputManager, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void CheckAccost();
 
@@ -60,7 +61,7 @@ struct BattleManager
 
 	void GetUVs();
 
-	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, InfoDisplays& displays, int shapeVAO, class TextObjectManager* textManager);
+	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, int shapeVAO, class TextObjectManager* textManager);
 
 	void DrawSceneHealthbars(Camera& camera, int shapeVAO);
 
@@ -72,6 +73,8 @@ struct BattleManager
 	Unit* unitToDrop = nullptr;
 	Unit* actingUnit = nullptr;
 	Unit* talkingUnit = nullptr;
+
+	InfoDisplays* displays = nullptr;
 
 	glm::vec2 movementDirection;
 	glm::vec2 startPosition;

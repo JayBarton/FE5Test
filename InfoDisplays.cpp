@@ -166,19 +166,44 @@ void InfoDisplays::PlayerUnitDied(Unit* unit, bool battleScene)
 	if (battleScene)
 	{
 		id = 3;
-		state = PLAYER_DIED_SCENE;
+		if (unit->team > 0)
+		{
+			textManager->continueBattle = true;
+		}
 	}
 	else
 	{
-		state = PLAYER_DIED;
+		textManager->textObjects[1].fadeIn = true;
 	}
-	//If it's a battle scene, we use a different text object
 	textManager->textLines.clear();
 	textManager->textLines.push_back(SpeakerText{ nullptr, id, unit->deathMessage, unit->portraitID });
-	//textManager->textObjects[1].fadeIn = true;
 	textManager->init();
 	textManager->active = true;
 	textManager->talkActivated = true;
+	state = BATTLE_SPEECH;
+}
+
+//A lot of duplicated stuff he I don't feel like refactoring right now
+void InfoDisplays::UnitBattleMessage(Unit* unit, bool battleScene, bool continuing)
+{
+	battleDisplay = battleScene;
+	int id = 1;
+	if (battleScene)
+	{
+		id = 3;
+	}
+	else
+	{
+		textManager->textObjects[1].fadeIn = true;
+	}
+	textManager->textLines.clear();
+	textManager->textLines.push_back(SpeakerText{ nullptr, id, unit->battleMessage, unit->portraitID });
+	textManager->init();
+	textManager->active = true;
+	textManager->continueBattle = continuing;
+	textManager->talkActivated = true;
+	unit->battleMessage = "";
+	state = BATTLE_SPEECH;
 }
 
 void InfoDisplays::PlayerLost(int messageID)
@@ -205,7 +230,7 @@ void InfoDisplays::PlayerLost(int messageID)
 	textManager->init();
 	textManager->active = true;
 	textManager->talkActivated = true;
-	state = PLAYER_DIED;
+	state = BATTLE_SPEECH;
 }
 
 void InfoDisplays::UnitEscaped(EnemyManager* enemyManager)
@@ -319,14 +344,8 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 	case TURN_CHANGE:
 		TurnChangeUpdate(inputManager, deltaTime);
 		break;
-	case PLAYER_DIED:
+	case BATTLE_SPEECH:
 		if (!textManager->active)
-		{
-			state = NONE;
-		}
-		break;
-	case PLAYER_DIED_SCENE:
-		if (textManager->finishing)
 		{
 			state = NONE;
 		}
@@ -859,23 +878,6 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		}
 		break;
 	}
-	case PLAYER_DIED:
-	/*	if (battleDisplay)
-		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(0, 127, 0.0f));
-			model = glm::scale(model, glm::vec3(256, 97, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
-		}*/
-		break;
 	}
 }
 
