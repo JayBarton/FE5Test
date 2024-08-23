@@ -161,7 +161,12 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		{
 			//animate indicator
 			battleBoxTimer += deltaTime;
-			if (battleBoxTimer >= 0.5f)
+			float delay = 0.32f;
+			if (battleBoxFrame == 1)
+			{
+				delay = 0.2f;
+			}
+			if (battleBoxTimer >= delay)
 			{
 				battleBoxFrame++;
 				battleBoxTimer = 0;
