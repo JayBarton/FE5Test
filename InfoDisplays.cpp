@@ -747,19 +747,41 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		DrawHealAnimation(camera, shapeVAO);
 		break;
 	case HEALING_BAR:
-		DrawHealthBar(camera, shapeVAO, Text);
+		DrawHealthBar(camera, shapeVAO, Text, renderer);
 		break;
 	case ENEMY_USE:
-		Text->RenderText(focusedUnit->name + " used " + focusedUnit->inventory[itemToUse]->name, 300, 300, 1);
+	{
+		float boxY = 16;
+		float textY = 75;
+		if (camera->position.y <= 112)
+		{
+			boxY = 174;
+			textY = 498;
+		}
+		DrawBox(glm::vec2(88, boxY), 74, 34, renderer, camera);
+
+		Text->RenderText("Used " + focusedUnit->inventory[itemToUse]->name, 300, textY, 1);
 		break;
+	}
 	case ENEMY_TRADE:
-		Text->RenderText(focusedUnit->name + " recieved " + focusedUnit->inventory[itemToUse]->name, 300, 300, 1);
+	{
+		DrawBox(glm::vec2(88, 102), 74, 34, renderer, camera);
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(MenuManager::menuManager.itemIconUVs[focusedUnit->inventory[itemToUse]->ID]);
+		renderer->DrawSprite(texture, glm::vec2(96, 112), 0.0f, glm::ivec2(16));
+		Text->RenderText("Recieved " + focusedUnit->inventory[itemToUse]->name, 350, 300, 1);
 		break;
+	}
 	case ENEMY_BUY:
-		Text->RenderText(focusedUnit->name + " bought " + focusedUnit->GetEquippedItem()->name, 300, 300, 1);
+		DrawBox(glm::vec2(88, 102), 74, 34, renderer, camera);
+		Text->RenderText(focusedUnit->GetEquippedItem()->name, 350, 300, 1);
 		break;
 	case GOT_ITEM:
 	{
+		DrawBox(glm::vec2(80, 96), 90, 34, renderer, camera);
 		Text->RenderText(ItemManager::itemManager.items[itemToUse].name, 325, 289, 1);
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
@@ -881,23 +903,65 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	}
 }
 
-void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text)
+void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(80, 98, 0.0f));
-	model = glm::scale(model, glm::vec3(100 * (float(displayedHP) / float(focusedUnit->maxHP)), 5, 0.0f));
+	model = glm::translate(model, glm::vec3(78, 86, 0.0f));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
+	model = glm::scale(model, glm::vec3(92, 20, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.062f, 0.062f, 0.062f));
 
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	Text->RenderText("HP", 215, 260, 1);
-	Text->RenderText(intToString(displayedHP), 565, 260, 1);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
+	auto mapBattleBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 128, 96, 32, 2, 2, 3);
+	renderer->setUVs(mapBattleBoxUVs[focusedUnit->team]);
+	
+	glm::vec2 pos(72, 72);
+
+	renderer->DrawSprite(displayTexture, pos, 0, glm::vec2(96, 32));
+
+	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(pos.x + 32, pos.y + 19, 0.0f));
+
+	int width = 51 * (displayedHP / float(focusedUnit->maxHP));
+	glm::vec2 scale(width, 4);
+
+	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
+
+	if (finishedHealing)
+	{
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(1, 0.984f, 0.352f));
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.482f, 0.0627f, 0));
+	}
+	else
+	{
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("innerColor", glm::vec3(0.9725f, 0.4705f, 0));
+		ResourceManager::GetShader("shapeSpecial").SetVector3f("outerColor", glm::vec3(0.345f, 0, 0));
+	}
+	ResourceManager::GetShader("shapeSpecial").SetVector2f("scale", glm::vec2(scale.x, scale.y));
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerTop", 1);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("innerBottom", 3);
+	ResourceManager::GetShader("shapeSpecial").SetInteger("shouldSkip", 0);
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1);
+	ResourceManager::GetShader("shapeSpecial").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	glm::vec2 textDraw(275, 203);
+	Text->RenderText(focusedUnit->name, textDraw.x, textDraw.y, 1, glm::vec3(1.0f));
+	textDraw.y += 35.0f;
+	textDraw.x -= 25;
+	Text->RenderText(intToString(displayedHP), textDraw.x, textDraw.y, 1, glm::vec3(1.0f));
 }
 
 void InfoDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
@@ -1362,4 +1426,26 @@ void InfoDisplays::DrawBattleExperience(Camera* camera, int shapeVAO, TextRender
 	glBindVertexArray(0);
 
 	Text->RenderTextRight(intToString(displayedExperience), 175, 409, 1, 14);
+}
+
+void InfoDisplays::DrawBox(glm::ivec2 position, int width, int height, SpriteRenderer* renderer, Camera* camera)
+{
+	renderer->shader = ResourceManager::GetShader("slice");
+
+	ResourceManager::GetShader("slice").Use();
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera->getOrthoMatrix());
+
+	auto texture = ResourceManager::GetTexture("UIStuff");
+
+	glm::vec4 uvs = MenuManager::menuManager.boxesUVs[0];
+	glm::vec2 size = glm::vec2(width, height);
+	float borderSize = 10.0f;
+	ResourceManager::GetShader("slice").SetVector2f("u_dimensions", borderSize / size.x, borderSize / size.y);
+	ResourceManager::GetShader("slice").SetVector2f("u_border", borderSize / 32.0f, borderSize / 32.0f);
+	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
+
+	renderer->setUVs();
+	renderer->DrawSprite(texture, glm::vec2(position.x, position.y), 0.0f, size);
+
+	renderer->shader = ResourceManager::GetShader("Nsprite");
 }

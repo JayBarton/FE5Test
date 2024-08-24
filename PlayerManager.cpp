@@ -50,7 +50,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		currentUnit++;
 	}
 	units[0]->currentHP = 1;
-	units[4]->currentHP = 1;
+//	units[4]->currentHP = 1;
 /*	units[0]->currentHP = 1;
 //	units[0]->build = 2;
 	units[4]->experience = 99;

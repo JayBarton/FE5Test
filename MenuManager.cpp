@@ -4384,6 +4384,10 @@ void FullInventoryMenu::Draw()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	DrawBox(glm::vec2(128, 0), 122, 66);
+	DrawBox(glm::vec2(24, 72), 122, 146);
+	DrawBox(glm::vec2(152, 72), 98, 130);
+
 	//Selection
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(24, 81 + (16 * currentOption)));

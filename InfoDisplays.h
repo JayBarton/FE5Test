@@ -141,7 +141,7 @@ struct InfoDisplays
 	void UpdateExperienceDisplay(float deltaTime);
 	void Draw(Camera* camera, TextRenderer* Text, int shapeVAO, struct SpriteRenderer* renderer);
 
-	void DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text);
+	void DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 
 	void DrawHealAnimation(Camera* camera, int shapeVAO);
 
@@ -153,4 +153,8 @@ struct InfoDisplays
 	void DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 	void DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 	void DrawBattleExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
+
+	//Duped from menumanager
+	void DrawBox(glm::ivec2 position, int width, int height, SpriteRenderer* renderer, Camera* camera);
+
 };
