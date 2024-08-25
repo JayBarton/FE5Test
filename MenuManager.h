@@ -348,6 +348,10 @@ struct UnitStatsViewMenu : public Menu
 	float goal;
 
 	float t = 0.0f;
+
+	float skillAniamteTimer = 0;
+
+	int skillAnimateFrame = 0;
 };
 
 //No idea what to call this one
@@ -559,10 +563,12 @@ struct MenuManager
 	std::vector<glm::vec4> skillIconUVs;
 	std::vector<glm::vec4> optionIconUVs;
 	std::vector<glm::vec4> arrowAnimUVs;
-	std::vector<glm::vec4> indicatorUV;
 	std::vector<glm::vec4> arrowUV;
 	std::vector<glm::vec4> carryingIconsUVs;
 	std::vector<glm::vec4> boxesUVs;
+	std::vector<glm::vec4> skillHighlightUVs;
+	
+	glm::vec4 indicatorUV;
 	glm::vec4 statBarUV;
 
 	glm::vec2 indicatorPosition;

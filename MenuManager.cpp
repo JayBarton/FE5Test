@@ -2090,28 +2090,6 @@ void UnitStatsViewMenu::DrawPage2()
 	Renderer->setUVs();
 	Renderer->DrawSprite(pageTexture, glm::vec2(0, 79 + yOffset), 0, glm::vec2(256, 145));
 
-	if (examining)
-	{
-		ResourceManager::GetShader("shape").Use();
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(120 + 16 * currentOption, 200, 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-	}
-	else
-	{
-		if (!transition)
-		{
-			MenuManager::menuManager.DrawArrow(glm::ivec2(124, 80), false);
-		}
-	}
 	auto iconsTexture = ResourceManager::GetTexture("icons");
 	for (int i = 0; i < unit->skills.size(); i++)
 	{
@@ -2120,9 +2098,16 @@ void UnitStatsViewMenu::DrawPage2()
 	}
 	if (examining && !transition)
 	{
+		auto skillHighlightTexture = ResourceManager::GetTexture("UIItems");
+		Renderer->setUVs(MenuManager::menuManager.skillHighlightUVs[skillAnimateFrame]);
+		Renderer->DrawSprite(skillHighlightTexture, glm::vec2(120 + 16 * currentOption, 200), 0, glm::vec2(16));
+
 		ResourceManager::GetShader("Nsprite").Use();
 		MenuManager::menuManager.DrawIndicator(glm::ivec2(121, 188 + 16 * currentOption), true, 1.5708f);
-		//There's an outline I need to be drawing here too. Don't know how to animate it...
+	}
+	else if (!transition)
+	{
+		MenuManager::menuManager.DrawArrow(glm::ivec2(124, 80), false);
 	}
 
 	auto& profMap = MenuManager::menuManager.profcienciesMap;
@@ -2463,6 +2448,8 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				{
 					if (unit->skills.size() > 0)
 					{
+						skillAniamteTimer = 0;
+						skillAnimateFrame = 0;
 						examining = true;
 						currentOption = 0;
 						numberOfOptions = unit->skills.size();
@@ -2493,6 +2480,17 @@ void UnitStatsViewMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			}
 			else
 			{
+				skillAniamteTimer += deltaTime;
+				//4 frame animation
+				if (skillAniamteTimer >= 0.0666f)
+				{
+					skillAniamteTimer = 0;
+					skillAnimateFrame++;
+					if (skillAnimateFrame >= 4)
+					{
+						skillAnimateFrame = 0;
+					}
+				}
 				if (inputManager.isKeyPressed(SDLK_LEFT))
 				{
 					PreviousOption();
@@ -4835,10 +4833,11 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
 	optionIconUVs = uiTexture.GetUVs(0, 0, 16, 16, 4, 3, 10);
 	arrowAnimUVs = uiTexture.GetUVs(0, 48, 7, 6, 6, 1);
-	indicatorUV = uiTexture.GetUVs(32, 32, 16, 16, 1, 1);
+	indicatorUV = uiTexture.GetUVs(32, 32, 16, 16, 1, 1)[0];
 	arrowUV = uiTexture.GetUVs(48, 32, 8, 8, 1, 1);
 	carryingIconsUVs = uiTexture.GetUVs(32, 54, 8, 8, 2, 1);
 	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
+	skillHighlightUVs = uiTexture.GetUVs(32, 96, 16, 16, 4, 1);
 
 	auto boxesTexture = ResourceManager::GetTexture("UIStuff");
 	boxesUVs = boxesTexture.GetUVs(0, 0, 32, 32, 3, 1);
@@ -4928,7 +4927,7 @@ void MenuManager::AnimateIndicator(float deltaTime)
 
 void MenuManager::DrawIndicator(glm::ivec2 position, bool animated, float rot)
 {
-	renderer->setUVs(indicatorUV[0]);
+	renderer->setUVs(indicatorUV);
 	Texture2D texture = ResourceManager::GetTexture("UIItems");
 	if (animated)
 	{
