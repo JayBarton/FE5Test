@@ -705,7 +705,7 @@ void ItemOptionsMenu::DrawItemWindow(std::vector<Item*>& inventory, Unit* unit, 
 			color = grey;
 		}
 		text->RenderText(item->name, 175, yPosition, 1, color);
-		text->RenderTextRight(intToString(item->remainingUses), 375, yPosition, 1, 14, color);
+		text->RenderTextRight(intToString(item->remainingUses), 375, yPosition, 1, 28, color);
 
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
@@ -731,31 +731,31 @@ void ItemOptionsMenu::DrawWeaponComparison(std::vector<Item*>& inventory)
 	text->RenderText("Type", xStatName, yPosition, 1);
 	yPosition += offSet;
 	text->RenderText("Atk", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 28);
 	if (selectedStats.attackDamage > currentStats.attackDamage)
 	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 	}
 	yPosition += offSet;
 	text->RenderText("Hit", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 28);
 	if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
 	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 	}
 	yPosition += offSet;
 	text->RenderText("Crit", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.hitCrit), xStatValue, yPosition, 1, 28);
 	if (selectedStats.hitCrit > currentStats.hitCrit)
 	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 	}
 	yPosition += offSet;
 	text->RenderText("Avo", xStatName, yPosition, 1);
-	text->RenderTextRight(intToString(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
+	text->RenderTextRight(intToString(selectedStats.hitAvoid), xStatValue, yPosition, 1, 28);
 	if (selectedStats.hitAvoid > currentStats.hitAvoid)
 	{
-		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+		text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 	}
 
 	ResourceManager::GetShader("Nsprite").Use();
@@ -1049,7 +1049,7 @@ void SelectWeaponMenu::Draw()
 	{
 		int yPosition = 225 + i * 42;
 		text->RenderText(inventory[i]->name, 175, yPosition, 1);
-		text->RenderTextRight(intToString(inventory[i]->remainingUses), 375, yPosition, 1, 14);
+		text->RenderTextRight(intToString(inventory[i]->remainingUses), 375, yPosition, 1, 28);
 		auto texture = ResourceManager::GetTexture("icons");
 
 		Renderer->setUVs(itemIconUVs[inventory[i]->ID]);
@@ -1159,39 +1159,39 @@ void SelectEnemyMenu::Draw()
 	}
 
 	int statsY = 180;
-	text->RenderTextRight(intToString(enemy->level), enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(intToString(enemy->level), enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("LV", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(intToString(unit->level), enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(intToString(unit->level), enemyStatsTextX + 160, statsY, 1, 28);
 
 	statsY += 30;
-	text->RenderTextRight(intToString(enemy->currentHP), enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(intToString(enemy->currentHP), enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("HP", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(intToString(unit->currentHP), enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(intToString(unit->currentHP), enemyStatsTextX + 160, statsY, 1, 28);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.atk, enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.atk, enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("Atk", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.atk, enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(playerStats.atk, enemyStatsTextX + 160, statsY, 1, 28);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.def, enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.def, enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("Def", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.def, enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(playerStats.def, enemyStatsTextX + 160, statsY, 1, 28);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.hit, enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.hit, enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("Hit", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.hit, enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(playerStats.hit, enemyStatsTextX + 160, statsY, 1, 28);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.crit, enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.crit, enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("Crit", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.crit, enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(playerStats.crit, enemyStatsTextX + 160, statsY, 1, 28);
 
 	statsY += 30;
-	text->RenderTextRight(enemyStats.attackSpeed, enemyStatsTextX, statsY, 1, 14);
+	text->RenderTextRight(enemyStats.attackSpeed, enemyStatsTextX, statsY, 1, 28);
 	text->RenderText("AS", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.attackSpeed, enemyStatsTextX + 160, statsY, 1, 14);
+	text->RenderTextRight(playerStats.attackSpeed, enemyStatsTextX + 160, statsY, 1, 28);
 
 	text->RenderText(unit->name, enemyStatsTextX + 160, 500, 1);
 }
@@ -1396,7 +1396,7 @@ void SelectTradeUnit::Draw()
 	for (int i = 0; i < inventorySize; i++)
 	{
 		text->RenderText(tradeUnit->inventory[i]->name, xText, textHeight, 1);
-		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 100, textHeight, 1, 14);
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 100, textHeight, 1, 28);
 		textHeight += 30;
 	}
 }
@@ -1587,7 +1587,7 @@ void TradeMenu::Draw()
 	for (int i = 0; i < firstUnit->inventory.size(); i++)
 	{
 		text->RenderText(firstUnit->inventory[i]->name, 125, 267 + i * 42, 1);
-		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 42, 1, 14);
+		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 42, 1, 28);
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
 
@@ -1598,7 +1598,7 @@ void TradeMenu::Draw()
 	for (int i = 0; i < tradeUnit->inventory.size(); i++)
 	{
 		text->RenderText(tradeUnit->inventory[i]->name, 525, 267 + i * 42, 1);
-		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 725, 267 + i * 42, 1, 14);
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 725, 267 + i * 42, 1, 28);
 
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
@@ -1861,8 +1861,8 @@ void UnitStatsViewMenu::DrawPage1()
 			color = grey;
 		}
 		text->RenderText(item->name, 425, yPosition, 1, color);
-		text->RenderTextRight(intToString(item->remainingUses) + "/", 625, yPosition, 1, 14, color);
-		text->RenderTextRight(intToString(item->maxUses), 700, yPosition, 1, 14, color);
+		text->RenderTextRight(intToString(item->remainingUses) + "/", 625, yPosition, 1, 28, color);
+		text->RenderTextRight(intToString(item->maxUses), 700, yPosition, 1, 28, color);
 		if (i == unit->equippedWeapon)
 		{
 			text->RenderText("E", 750, yPosition, 1);
@@ -1982,13 +1982,13 @@ void UnitStatsViewMenu::DrawPage1()
 
 	x = 200;
 	//Going to need an indication of what stats are affected by modifiers
-	text->RenderTextRight(intToString(str), x, 270 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-	text->RenderTextRight(intToString(mag), x, 313 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-	text->RenderTextRight(intToString(skl), x, 356 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-	text->RenderTextRight(intToString(spd), x, 399 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-	text->RenderTextRight(intToString(lck), x, 441 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-	text->RenderTextRight(intToString(def), x, 484 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
-	text->RenderTextRight(intToString(bld), x, 527 - adjustedOffset, 1, 14, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(str), x, 270 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(mag), x, 313 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(skl), x, 356 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(spd), x, 399 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(lck), x, 441 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(def), x, 484 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
+	text->RenderTextRight(intToString(bld), x, 527 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
 	if (!examining)
 	{
 		if (!transition)
@@ -2055,27 +2055,27 @@ void UnitStatsViewMenu::DrawPage1()
 			}
 			yPosition += offSet;
 			text->RenderText("Hit", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Might", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Crit", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Range", xStatName, yPosition, 1);
 			if (weaponData.maxRange == weaponData.minRange)
 			{
-				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 14); //need to display max as well if different
+				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 28); //need to display max as well if different
 			}
 			else
 			{
-				text->RenderTextRight(intToString(weaponData.minRange) + " ~ " + intToString(weaponData.maxRange), xStatValue, yPosition, 1, 30);
+				text->RenderTextRight(intToString(weaponData.minRange) + "~" + intToString(weaponData.maxRange), xStatValue, yPosition, 1, 30);
 
 			}
 			yPosition += offSet;
 			text->RenderText("Weight", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 		}
 		text->RenderText(inventory[currentOption]->description, 50, yPosition, 1);
@@ -2279,7 +2279,7 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 		Texture2D carryTexture = ResourceManager::GetTexture("UIItems");
 
 		Renderer->setUVs(carryUVs[unit->team]);
-		Renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
+		Renderer->DrawSprite(carryTexture, glm::vec2(23, 28), 0, glm::vec2(8));
 	}
 	else
 	{
@@ -2298,24 +2298,24 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 	text->RenderText("Lv", 50, 120, 1);
 	text->RenderText("HP", 50, 163, 1);
 
-	text->RenderTextRight(intToString(unit->level), 125, 120, 1, 14);
-	text->RenderTextRight(intToString(unit->currentHP), 125, 163, 1, 14);
+	text->RenderTextRight(intToString(unit->level), 125, 120, 1, 28);
+	text->RenderTextRight(intToString(unit->currentHP), 125, 163, 1, 28);
 
 	text->RenderText("E", 175, 120, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 	text->RenderText("/", 175, 163, 1, glm::vec3(0.69f, 0.62f, 0.49f));
 
-	text->RenderTextRight(intToString(unit->experience), 200, 120, 1, 14);
-	text->RenderTextRight(intToString(unit->maxHP), 200, 163, 1, 14);
+	text->RenderTextRight(intToString(unit->experience), 200, 120, 1, 28);
+	text->RenderTextRight(intToString(unit->maxHP), 200, 163, 1, 28);
 
 	int leftX = 575;
 	if (unit->equippedWeapon >= 0)
 	{
-		text->RenderTextRight(intToString(battleStats.attackDamage), leftX, 77, 1, 14);
-		text->RenderTextRight(intToString(battleStats.hitAccuracy), leftX, 120, 1, 14);
+		text->RenderTextRight(intToString(battleStats.attackDamage), leftX, 77, 1, 28);
+		text->RenderTextRight(intToString(battleStats.hitAccuracy), leftX, 120, 1, 28);
 		auto weapon = unit->GetEquippedWeapon();
 		if (weapon.maxRange == weapon.minRange)
 		{
-			text->RenderTextRight(intToString(weapon.maxRange), leftX, 163, 1, 14);
+			text->RenderTextRight(intToString(weapon.maxRange), leftX, 163, 1, 28);
 		}
 		else
 		{
@@ -2335,8 +2335,8 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 
 	}
 	int rightX = 725;
-	text->RenderTextRight(intToString(battleStats.hitCrit), rightX, 77, 1, 14);
-	text->RenderTextRight(intToString(battleStats.hitAvoid), rightX, 120, 1, 14);
+	text->RenderTextRight(intToString(battleStats.hitCrit), rightX, 77, 1, 28);
+	text->RenderTextRight(intToString(battleStats.hitAvoid), rightX, 120, 1, 28);
 }
 
 void UnitStatsViewMenu::SelectOption()
@@ -2972,7 +2972,7 @@ void UnitListMenu::Draw()
 		MenuManager::menuManager.DrawArrow(sortIndicatorLocations[currentSort] + glm::ivec2(0, 19), false);
 
 	}
-	MenuManager::menuManager.DrawArrowIndicator(glm::ivec2(168, 14));
+	MenuManager::menuManager.DrawArrowIndicator(glm::ivec2(168, 28));
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
@@ -2998,8 +2998,8 @@ void UnitListMenu::Draw()
 			text->RenderText(unit->name, 106, textY, 1.0f);
 
 			text->RenderText(unit->unitClass, 202, textY, 1.0f);
-			text->RenderTextRight(intToString(unit->level), 480, textY, 1.0f, 14);
-			text->RenderTextRight(intToString(unit->experience), 560, textY, 1.0f, 14, greenText);
+			text->RenderTextRight(intToString(unit->level), 480, textY, 1.0f, 28);
+			text->RenderTextRight(intToString(unit->experience), 560, textY, 1.0f, 28, greenText);
 			text->RenderText(intToString(unit->currentHP) + "/", 690, textY, 1.0f);
 			text->RenderText(intToString(unit->maxHP), 720, textY, 1.0f, greenText);
 		}
@@ -3021,9 +3021,9 @@ void UnitListMenu::Draw()
 			//Should probably just save the battle stats to an array rather than recalculating them here over and over...
 			auto battleStats = unitData[i].second;
 			text->RenderText(unit->GetEquippedItem()->name, 300, textY, 1.0f); //need to account for no equipped
-			text->RenderTextRight(intToString(battleStats.attackDamage), 500, textY, 1, 14);
-			text->RenderTextRight(intToString(battleStats.hitAccuracy), 575, textY, 1, 14, greenText);
-			text->RenderTextRight(intToString(battleStats.hitAvoid), 700, textY, 1.0f, 14);
+			text->RenderTextRight(intToString(battleStats.attackDamage), 500, textY, 1, 28);
+			text->RenderTextRight(intToString(battleStats.hitAccuracy), 575, textY, 1, 28, greenText);
+			text->RenderTextRight(intToString(battleStats.hitAvoid), 700, textY, 1.0f, 28);
 		}
 		break;
 	case COMBAT_STATS:
@@ -3043,13 +3043,13 @@ void UnitListMenu::Draw()
 
 			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
-			text->RenderTextRight(intToString(unit->getStrength()), 275, textY, 1, 14);
-			text->RenderTextRight(intToString(unit->getMagic()), 350, textY, 1, 14, greenText);
-			text->RenderTextRight(intToString(unit->getSkill()), 425, textY, 1.0f, 14);
-			text->RenderTextRight(intToString(unit->getSpeed()), 500, textY, 1.0f, 14, greenText);
-			text->RenderTextRight(intToString(unit->getLuck()), 575, textY, 1.0f, 14);
-			text->RenderTextRight(intToString(unit->getDefense()), 650, textY, 1.0f, 14, greenText);
-			text->RenderTextRight(intToString(unit->getBuild()), 725, textY, 1.0f, 14);
+			text->RenderTextRight(intToString(unit->getStrength()), 275, textY, 1, 28);
+			text->RenderTextRight(intToString(unit->getMagic()), 350, textY, 1, 28, greenText);
+			text->RenderTextRight(intToString(unit->getSkill()), 425, textY, 1.0f, 28);
+			text->RenderTextRight(intToString(unit->getSpeed()), 500, textY, 1.0f, 28, greenText);
+			text->RenderTextRight(intToString(unit->getLuck()), 575, textY, 1.0f, 28);
+			text->RenderTextRight(intToString(unit->getDefense()), 650, textY, 1.0f, 28, greenText);
+			text->RenderTextRight(intToString(unit->getBuild()), 725, textY, 1.0f, 28);
 		}
 		break;
 	case PERSONAL:
@@ -3066,8 +3066,8 @@ void UnitListMenu::Draw()
 
 			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
-			text->RenderTextRight(intToString(unit->getMove()), 300, textY, 1, 14);
-			text->RenderTextRight("--", 350, textY, 1, 14, greenText);
+			text->RenderTextRight(intToString(unit->getMove()), 300, textY, 1, 28);
+			text->RenderTextRight("--", 350, textY, 1, 28, greenText);
 			text->RenderText("----", 450, textY, 1);
 			if (unit->carriedUnit)
 			{
@@ -3546,7 +3546,7 @@ void StatusMenu::Draw()
 	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->currentHP), 475, 530, 1);
 	text->RenderText("/", 500, 530, 1);
 	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
-	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 14);
+	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 28);
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
@@ -3962,7 +3962,7 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 
 	textManager.textLines.clear();
 
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Got a selection of GOOD things on sale, stranger.<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Got a selection of GOOD things on\nsale, stranger.<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya buyin'?<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya sellin'?<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Is that all stranger?<2", 14});
@@ -4034,8 +4034,8 @@ void VendorMenu::Draw()
 		{
 			auto item = items[vendor->items[i]];
 			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
-			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 14);
-			text->RenderTextRight(intToString(item.value), 675, yPos + 43 * i + 1, 1, 40); //price
+			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 28);
+			text->RenderTextRight(intToString(item.value), 675, yPos + 43 * i + 1, 1, 56); //price
 
 			ResourceManager::GetShader("Nsprite").Use();
 			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
@@ -4051,14 +4051,14 @@ void VendorMenu::Draw()
 		{
 			auto item = buyer->inventory[i];
 			text->RenderText(item->name, xPos, yPos + 43 * i + 1, 1);
-			text->RenderTextRight(intToString(item->remainingUses), 575, yPos + 43 * i + 1, 1, 14);
+			text->RenderTextRight(intToString(item->remainingUses), 575, yPos + 43 * i + 1, 1, 28);
 			if (item->value > 0)
 			{
-				text->RenderTextRight(intToString(item->value * 0.5f), 675, yPos + 43 * i + 1, 1, 40);
+				text->RenderTextRight(intToString(item->value * 0.5f), 675, yPos + 43 * i + 1, 1, 56);
 			}
 			else
 			{
-				text->RenderTextRight("----", 675, yPos + 43 * i + 1, 1, 40);
+				text->RenderTextRight("----", 675, yPos + 43 * i + 1, 1, 56);
 			}
 
 			ResourceManager::GetShader("Nsprite").Use();
@@ -4069,7 +4069,7 @@ void VendorMenu::Draw()
 			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
 		}
 	}
-	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 40);
+	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 56);
 	text->RenderText("G", 175, 551, 1);
 
 	if (!shopDelay && (state == BUYING || state == SELLING || state == CONFIRMING))
@@ -4092,22 +4092,22 @@ void VendorMenu::Draw()
 			int xStatName = 50;
 			int xStatValue = 150;
 			text->RenderText("Type", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Hit", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Might", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Crit", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Range", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 			text->RenderText("Weight", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 14);
+			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 28);
 			yPosition += offSet;
 		}
 		else
@@ -4402,7 +4402,7 @@ void FullInventoryMenu::Draw()
 		int yPosition = 225 + i * 42;
 		auto item = inventory[i];
 		text->RenderText(item->name, 175, yPosition, 1, color);
-		text->RenderTextRight(intToString(item->remainingUses), 375, 230 + i * 42, 1, 14, color);
+		text->RenderTextRight(intToString(item->remainingUses), 375, 230 + i * 42, 1, 28, color);
 
 		ResourceManager::GetShader("Nsprite").Use();
 		auto texture = ResourceManager::GetTexture("icons");
@@ -4412,7 +4412,7 @@ void FullInventoryMenu::Draw()
 	}
 	auto item = ItemManager::itemManager.items[newItem];
 	text->RenderText(item.name, 175, 225 + (numberOfOptions - 1) * 42, 1, grey);
-	text->RenderTextRight(intToString(item.remainingUses), 375, 230 + (numberOfOptions - 1) * 42, 1, 14, grey);
+	text->RenderTextRight(intToString(item.remainingUses), 375, 230 + (numberOfOptions - 1) * 42, 1, 28, grey);
 
 	ResourceManager::GetShader("Nsprite").Use();
 	auto texture = ResourceManager::GetTexture("icons");
@@ -4445,47 +4445,47 @@ void FullInventoryMenu::Draw()
 		text->RenderText("Type", xStatName, yPosition, 1);
 		yPosition += offSet;
 		text->RenderText("Atk", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 14);
+		text->RenderTextRight(intToString(selectedStats.attackDamage), xStatValue, yPosition, 1, 28);
 		if (selectedStats.attackDamage > currentStats.attackDamage)
 		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 		}
 		else if (selectedStats.attackDamage < currentStats.attackDamage)
 		{
-			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 28);
 		}
 		yPosition += offSet;
 		text->RenderText("Hit", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 14);
+		text->RenderTextRight(intToString(selectedStats.hitAccuracy), xStatValue, yPosition, 1, 28);
 		if (selectedStats.hitAccuracy > currentStats.hitAccuracy)
 		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 		}
 		else if (selectedStats.hitAccuracy < currentStats.hitAccuracy)
 		{
-			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 28);
 		}
 		yPosition += offSet;
 		text->RenderText("Crit", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString(selectedStats.hitCrit), xStatValue, yPosition, 1, 14);
+		text->RenderTextRight(intToString(selectedStats.hitCrit), xStatValue, yPosition, 1, 28);
 		if (selectedStats.hitCrit > currentStats.hitCrit)
 		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 		}
 		else if (selectedStats.hitCrit < currentStats.hitCrit)
 		{
-			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 28);
 		}
 		yPosition += offSet;
 		text->RenderText("Avo", xStatName, yPosition, 1);
-		text->RenderTextRight(intToString(selectedStats.hitAvoid), xStatValue, yPosition, 1, 14);
+		text->RenderTextRight(intToString(selectedStats.hitAvoid), xStatValue, yPosition, 1, 28);
 		if (selectedStats.hitAvoid > currentStats.hitAvoid)
 		{
-			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("^^^", xStatValue + 60, yPosition, 1, 28);
 		}
 		else if (selectedStats.hitAvoid < currentStats.hitAvoid)
 		{
-			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 14);
+			text->RenderTextRight("v v v", xStatValue + 60, yPosition, 1, 28);
 		}
 	}
 	else

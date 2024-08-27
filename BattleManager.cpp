@@ -181,6 +181,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 				ResourceManager::FadeOutPause(500);
 				rightDisplayHealth = &attackerDisplayHealth;
 				leftDisplayHealth = &defenderDisplayHealth;
+				leftMaxHealth = defender->maxHP;
+				rightMaxHealth = attacker->maxHP;
 
 				rightStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attacker->getDefense(), attacker->level };
 
@@ -190,6 +192,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 			{
 				rightDisplayHealth = &defenderDisplayHealth;
 				leftDisplayHealth = &attackerDisplayHealth;
+				rightMaxHealth = defender->maxHP;
+				leftMaxHealth = attacker->maxHP;
 				rightStats = { hit, dmg, defender->getDefense(), defender->level };
 				leftStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attacker->getDefense(), attacker->level };
 			}
@@ -1048,11 +1052,11 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			text->RenderText(rightWeapon->name, 512, 412, 1);
 		}
 
-		text->RenderTextRight(intToString(*rightDisplayHealth), 437, 474, 1, 14);
-		text->RenderTextRight(rightStats.Hit, 537, 495, 1, 14);
-		text->RenderTextRight(rightStats.Atc, 537, 516, 1, 14);
-		text->RenderTextRight(intToString(rightStats.Def), 687, 495, 1, 14);
-		text->RenderTextRight(intToString(rightStats.Lvl), 687, 516, 1, 14);
+		text->RenderTextRight(intToString(*rightDisplayHealth), 437, 474, 1, 28);
+		text->RenderTextRight(rightStats.Hit, 537, 495, 1, 28);
+		text->RenderTextRight(rightStats.Atc, 537, 516, 1, 28);
+		text->RenderTextRight(intToString(rightStats.Def), 687, 495, 1, 28);
+		text->RenderTextRight(intToString(rightStats.Lvl), 687, 516, 1, 28);
 
 		text->RenderText(leftUnit->name, leftDraw.x, leftDraw.y, 1);
 		leftDraw.y += 22.0f;
@@ -1062,11 +1066,11 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 			text->RenderText(leftWeapon->name, leftDraw.x, leftDraw.y, 1);
 		}
 
-		text->RenderTextRight(intToString(*leftDisplayHealth), 62, 474, 1, 14);
-		text->RenderTextRight(leftStats.Hit, 162, 495, 1, 14);
-		text->RenderTextRight(leftStats.Atc, 162, 516, 1, 14);
-		text->RenderTextRight(intToString(leftStats.Def), 312, 495, 1, 14);
-		text->RenderTextRight(intToString(leftStats.Lvl), 312, 516, 1, 14);
+		text->RenderTextRight(intToString(*leftDisplayHealth), 62, 474, 1, 28);
+		text->RenderTextRight(leftStats.Hit, 162, 495, 1, 28);
+		text->RenderTextRight(leftStats.Atc, 162, 516, 1, 28);
+		text->RenderTextRight(intToString(leftStats.Def), 312, 495, 1, 28);
+		text->RenderTextRight(intToString(leftStats.Lvl), 312, 516, 1, 28);
 
 		if (missedText.active)
 		{
@@ -1218,14 +1222,13 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1);
 	glm::mat4 model = glm::mat4();
 	model = glm::translate(model, glm::vec3(36, 176, 0.0f));
-
-	glm::vec2 scale(leftUnit->maxHP * 2 + 1, 7);
+	glm::vec2 scale(leftMaxHealth * 2 + 1, 7);
 	//This nonsense is all to handle multiple health bars when hp is greater than 40
 	//Only supports two, so a max hp of 80. Would require a rewrite if HP could be higher
 	int extraX = 0;
-	if (leftUnit->maxHP > 40)
+	if (leftMaxHealth > 40)
 	{
-		extraX = (leftUnit->maxHP - 40) * 2 + 1;
+		extraX = (leftMaxHealth - 40) * 2 + 1;
 		scale.x = 81;
 	}
 	model = glm::scale(model, glm::vec3(scale.x, scale.y, 0.0f));
@@ -1253,13 +1256,12 @@ void BattleManager::DrawSceneHealthbars(Camera& camera, int shapeVAO)
 
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(156, 176, 0.0f));
-
-	scale.x = rightUnit->maxHP * 2 + 1;
+	scale.x = rightMaxHealth * 2 + 1;
 
 	extraX = 0;
-	if (rightUnit->maxHP > 40)
+	if (rightMaxHealth > 40)
 	{
-		extraX = (rightUnit->maxHP - 40) * 2 + 1;
+		extraX = (rightMaxHealth - 40) * 2 + 1;
 		scale.x = 81;
 	}
 

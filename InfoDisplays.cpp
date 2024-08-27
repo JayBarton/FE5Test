@@ -847,52 +847,52 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			glBindVertexArray(0);
 
-			Text->RenderTextRight("HP", x - 130, y - 30, 1, 25);
-			Text->RenderTextRight("STR", x - 130, y - 5, 1, 25);
-			Text->RenderTextRight("MAG", x - 130, y + 20, 1, 25);
-			Text->RenderTextRight("SKL", x - 130, y + 45, 1, 25);
-			Text->RenderTextRight("SPD", x - 10, y - 30, 1, 25);
-			Text->RenderTextRight("LCK", x - 10, y - 5, 1, 25);
-			Text->RenderTextRight("DEF", x - 10, y + 20, 1, 25);
-			Text->RenderTextRight("BLD", x - 10, y + 45, 1, 25);
+			Text->RenderTextRight("HP", x - 130, y - 30, 1, 42);
+			Text->RenderTextRight("STR", x - 130, y - 5, 1, 42);
+			Text->RenderTextRight("MAG", x - 130, y + 20, 1, 42);
+			Text->RenderTextRight("SKL", x - 130, y + 45, 1, 42);
+			Text->RenderTextRight("SPD", x - 10, y - 30, 1, 42);
+			Text->RenderTextRight("LCK", x - 10, y - 5, 1, 42);
+			Text->RenderTextRight("DEF", x - 10, y + 20, 1, 42);
+			Text->RenderTextRight("BLD", x - 10, y + 45, 1, 42);
 
 			auto unit = focusedUnit;
-			Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->maxHP), x - 90, y - 30, 1, 28);
 			if (unit->maxHP > preLevelStats->maxHP)
 			{
 				Text->RenderText(intToString(unit->maxHP - preLevelStats->maxHP), x - 65, y - 30, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->strength), x - 90, y - 5, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->strength), x - 90, y - 5, 1, 28);
 			if (unit->strength > preLevelStats->strength)
 			{
 				Text->RenderText(intToString(unit->strength - preLevelStats->strength), x - 65, y - 5, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->magic), x - 90, y + 20, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->magic), x - 90, y + 20, 1, 28);
 			if (unit->magic > preLevelStats->magic)
 			{
 				Text->RenderText(intToString(unit->magic - preLevelStats->magic), x - 65, y + 20, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->skill), x - 90, y + 45, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->skill), x - 90, y + 45, 1, 28);
 			if (unit->skill > preLevelStats->skill)
 			{
 				Text->RenderText(intToString(unit->skill - preLevelStats->skill), x - 65, y + 45, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->speed), x + 30, y - 30, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->speed), x + 30, y - 30, 1, 28);
 			if (unit->speed > preLevelStats->speed)
 			{
 				Text->RenderText(intToString(unit->speed - preLevelStats->speed), x + 55, y - 30, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->luck), x + 30, y - 5, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->luck), x + 30, y - 5, 1, 28);
 			if (unit->luck > preLevelStats->luck)
 			{
 				Text->RenderText(intToString(unit->luck - preLevelStats->luck), x + 55, y - 5, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->defense), x + 30, y + 20, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->defense), x + 30, y + 20, 1, 28);
 			if (unit->defense > preLevelStats->defense)
 			{
 				Text->RenderText(intToString(unit->defense - preLevelStats->defense), x + 55, y + 20, 1);
 			}
-			Text->RenderTextRight(intToString(preLevelStats->build), x + 30, y + 45, 1, 14);
+			Text->RenderTextRight(intToString(preLevelStats->build), x + 30, y + 45, 1, 28);
 			if (unit->build > preLevelStats->build)
 			{
 				Text->RenderText(intToString(unit->build - preLevelStats->build), x + 55, y + 45, 1);
@@ -1026,26 +1026,26 @@ void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer
 	{
 		int x1 = 253;
 		int x2 = 403;
-		Text->RenderTextRight("HP", x1 + textOffset, y, textSize, 25, glm::vec3(1), glm::vec2(x1, 0));
-		Text->RenderTextRight("STR", x1 + textOffset, y + 21, textSize, 25, glm::vec3(1), glm::vec2(x1, 0));
-		Text->RenderTextRight("MAG", x1 + textOffset, y + 42, textSize, 25, glm::vec3(1), glm::vec2(x1, 0));
-		Text->RenderTextRight("SKL", x1 + textOffset, y + 63, textSize, 25, glm::vec3(1), glm::vec2(x1, 0));
-		Text->RenderTextRight("SPD", x2 + textOffset, y, textSize, 25, glm::vec3(1), glm::vec2(x2, 0));
-		Text->RenderTextRight("LCK", x2 + textOffset, y + 21, textSize, 25, glm::vec3(1), glm::vec2(x2, 0));
-		Text->RenderTextRight("DEF", x2 + textOffset, y + 42, textSize, 25, glm::vec3(1), glm::vec2(x2, 0));
-		Text->RenderTextRight("BLD", x2 + textOffset, y + 63, textSize, 25, glm::vec3(1), glm::vec2(x2, 0));
+		Text->RenderTextRight("HP", x1 + textOffset, y, textSize, 42, glm::vec3(1), glm::vec2(x1, 0));
+		Text->RenderTextRight("STR", x1 + textOffset, y + 21, textSize, 42, glm::vec3(1), glm::vec2(x1, 0));
+		Text->RenderTextRight("MAG", x1 + textOffset, y + 42, textSize, 42, glm::vec3(1), glm::vec2(x1, 0));
+		Text->RenderTextRight("SKL", x1 + textOffset, y + 63, textSize, 42, glm::vec3(1), glm::vec2(x1, 0));
+		Text->RenderTextRight("SPD", x2 + textOffset, y, textSize, 42, glm::vec3(1), glm::vec2(x2, 0));
+		Text->RenderTextRight("LCK", x2 + textOffset, y + 21, textSize, 42, glm::vec3(1), glm::vec2(x2, 0));
+		Text->RenderTextRight("DEF", x2 + textOffset, y + 42, textSize, 42, glm::vec3(1), glm::vec2(x2, 0));
+		Text->RenderTextRight("BLD", x2 + textOffset, y + 63, textSize, 42, glm::vec3(1), glm::vec2(x2, 0));
 	}
 	if (mapStats)
 	{
 		auto unit = focusedUnit;
-		Text->RenderTextRight(intToString(preLevelStats->maxHP), 309, y, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->strength), 309, y + 21, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->magic), 309, y + 42, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->skill), 309, y + 63, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->speed), 459, y, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->luck), 459, y + 21, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->defense), 459, y + 42, textSize, 14);
-		Text->RenderTextRight(intToString(preLevelStats->build), 459, y + 63, textSize, 14);
+		Text->RenderTextRight(intToString(preLevelStats->maxHP), 309, y, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->strength), 309, y + 21, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->magic), 309, y + 42, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->skill), 309, y + 63, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->speed), 459, y, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->luck), 459, y + 21, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->defense), 459, y + 42, textSize, 28);
+		Text->RenderTextRight(intToString(preLevelStats->build), 459, y + 63, textSize, 28);
 
 		//I am thinking I'll do some sort of instanced rendering for the arrows, because I don't like all of the shader switching here
 		auto texture = ResourceManager::GetTexture("UIItems");
@@ -1118,7 +1118,7 @@ void InfoDisplays::DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRe
 	renderer->DrawSprite(texture, glm::vec2(16, 136), 0, glm::vec2(48, 64), glm::vec4(1), true);
 
 	Text->RenderText(unit->name, 275, 375, 1);
-	Text->RenderTextRight(intToString(unit->level), 550, 375, 1, 14);
+	Text->RenderTextRight(intToString(unit->level), 550, 375, 1, 28);
 
 	int xString1 = 225;
 	int xString2 = 500;
@@ -1132,56 +1132,56 @@ void InfoDisplays::DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRe
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->maxHP), x1, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->maxHP), x1, y, 1, 28, color);
 	y += 21;
 	color = glm::vec3(1);
 	if (changedStat[1])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->strength), x1, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->strength), x1, y, 1, 28, color);
 	y += 21;
 	color = glm::vec3(1);
 	if (changedStat[2])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->magic), x1, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->magic), x1, y, 1, 28, color);
 	y += 21;
 	color = glm::vec3(1);
 	if (changedStat[3])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->skill), x1, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->skill), x1, y, 1, 28, color);
 	y = 450;
 	color = glm::vec3(1);
 	if (changedStat[4])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->speed), x2, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->speed), x2, y, 1, 28, color);
 	y += 21;
 	color = glm::vec3(1);
 	if (changedStat[5])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->luck), x2, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->luck), x2, y, 1, 28, color);
 	y += 21;
 	color = glm::vec3(1);
 	if (changedStat[6])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->defense), x2, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->defense), x2, y, 1, 28, color);
 	y += 21;
 	color = glm::vec3(1);
 	if (changedStat[7])
 	{
 		color = changedColor;
 	}
-	Text->RenderTextRight(intToString(preLevelStats->build), x2, y, 1, 14, color);
+	Text->RenderTextRight(intToString(preLevelStats->build), x2, y, 1, 28, color);
 
 	if (activeStat >= 0)
 	{
@@ -1392,7 +1392,7 @@ void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer*
 	glBindVertexArray(0);
 
 	Text->RenderText("EXP", 150, 278, 1);
-	Text->RenderTextRight(intToString(displayedExperience), 550, 281, 1, 14);
+	Text->RenderTextRight(intToString(displayedExperience), 550, 281, 1, 28);
 }
 
 void InfoDisplays::DrawBattleExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
@@ -1425,7 +1425,7 @@ void InfoDisplays::DrawBattleExperience(Camera* camera, int shapeVAO, TextRender
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	Text->RenderTextRight(intToString(displayedExperience), 175, 409, 1, 14);
+	Text->RenderTextRight(intToString(displayedExperience), 175, 409, 1, 28);
 }
 
 void InfoDisplays::DrawBox(glm::ivec2 position, int width, int height, SpriteRenderer* renderer, Camera* camera)

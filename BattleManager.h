@@ -128,6 +128,8 @@ struct BattleManager
 	int* displayHealth = nullptr;
 	int* rightDisplayHealth;
 	int* leftDisplayHealth;
+	int leftMaxHealth;
+	int rightMaxHealth;
 
 	BattleSceneStats leftStats;
 	BattleSceneStats rightStats;

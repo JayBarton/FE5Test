@@ -642,7 +642,7 @@ int main(int argc, char** argv)
 	battleManager.GetUVs();
 
 	Text = new TextRenderer(800, 600);
-	Text->Load("fonts/Teko-Light.TTF", 30);
+	Text->Load("fonts/chary___.TTF", 30);
 
 	ItemManager::itemManager.SetUpItems();
 
@@ -1847,11 +1847,11 @@ void DrawText()
 		if (Settings::settings.showTerrain)
 		{
 			//Going to need to look into a better way of handling UI placement at some point
-			int xStart = SCREEN_WIDTH;
+			int xStart = 625;
 			int xWindow = 188;
 			if (fixedPosition.x >= camera.screenWidth * 0.5f)
 			{
-				xStart = 178;
+				xStart = 50;
 				xWindow = 4;
 			}
 
@@ -1864,11 +1864,11 @@ void DrawText()
 
 			auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y)->properties;
 
-			Text->RenderText(tile.name, xStart - 110, 20, 1);
-			Text->RenderText("DEF", xStart - 120, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
-			Text->RenderText(intToString(tile.defense), xStart - 95, 50, 0.7f);
-			Text->RenderText("AVO", xStart - 85, 50, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
-			Text->RenderText(intToString(tile.avoid) + "%", xStart - 60, 50, 0.7f);
+			Text->RenderText(tile.name, xStart, 32, 1);
+			Text->RenderText("DEF", xStart - 12, 66, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
+			Text->RenderText(intToString(tile.defense), xStart + 25, 66, 0.7f);
+			Text->RenderText("AVO", xStart + 59, 66, 0.7f, glm::vec3(0.69f, 0.62f, 0.49f));
+			Text->RenderText(intToString(tile.avoid) + "%", xStart + 100, 66, 0.7f);
 		}
 		auto unit = cursor.focusedUnit;
 		if (unit && cursor.settled)
