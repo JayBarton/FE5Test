@@ -78,6 +78,8 @@ struct TextObjectManager
 	bool showBoxAnyway = false;
 	//Hate this, need this to manage the enemy battle messages
 	bool continueBattle = false;
+	//Same as above, this sucks but need it to handle playing music for the map battles
+	bool playMusic = false;
 
 	int currentLine = 0;
 	int focusedObject = 0;

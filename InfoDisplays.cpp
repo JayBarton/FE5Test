@@ -184,7 +184,7 @@ void InfoDisplays::PlayerUnitDied(Unit* unit, bool battleScene)
 }
 
 //A lot of duplicated stuff he I don't feel like refactoring right now
-void InfoDisplays::UnitBattleMessage(Unit* unit, bool battleScene, bool continuing)
+void InfoDisplays::UnitBattleMessage(Unit* unit, bool battleScene, bool continuing, bool playMusic)
 {
 	battleDisplay = battleScene;
 	int id = 1;
@@ -195,6 +195,7 @@ void InfoDisplays::UnitBattleMessage(Unit* unit, bool battleScene, bool continui
 	else
 	{
 		textManager->textObjects[1].fadeIn = true;
+		textManager->playMusic = playMusic;
 	}
 	textManager->textLines.clear();
 	textManager->textLines.push_back(SpeakerText{ nullptr, id, unit->battleMessage, unit->portraitID });

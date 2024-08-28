@@ -154,6 +154,11 @@ void TextObjectManager::init(int line/* = 0 */)
 
 void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool finished)
 {
+	if (playMusic && !Mix_PlayingMusic())
+	{
+		playMusic = false;
+		ResourceManager::PlayMusic("BossStart", "BossLoop");
+	}
 	switch (state)
 	{
 	case WAITING_ON_INPUT:

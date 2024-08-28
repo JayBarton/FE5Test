@@ -206,7 +206,9 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 				drawInfo = true;
 				if (talkingUnit)
 				{
-					displays->UnitBattleMessage(talkingUnit, false, false);
+					ResourceManager::FadeOutPause(500);
+
+					displays->UnitBattleMessage(talkingUnit, false, false, true);
 				}
 			}
 
@@ -340,7 +342,11 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					defender->sprite.moveAnimate = true;
 
 					fadeInBattle = true;
-					if (attacker->team == 0)
+					if (talkingUnit)
+					{
+						ResourceManager::PlayMusic("BossStart", "BossLoop");
+					}
+					else if (attacker->team == 0)
 					{
 						ResourceManager::PlayMusic("PlayerAttackStart", "PlayerAttackLoop");
 					}
@@ -829,6 +835,10 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 	DoBattleAction(thisUnit, foe, accuracy, crit, theseStats, attack, foeDefense, distribution, gen);
 	targetHealth = foe->currentHP;
 	displayHealth = foeHP;
+	if (*displayHealth == targetHealth)
+	{
+		displayHealth = nullptr;
+	}
 }
 
 void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, BattleStats& theseStats, Attack& attack, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
@@ -971,6 +981,8 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 		unitDiedSubject.notify(deadUnit);
 		deadUnit = nullptr;
 	}
+	//Want a check to see if the music actually changed and can be resumed
+	//This also breaks if the music was supposed to change to the winning/losing theme
 	ResourceManager::ResumeMusic(1000);
 }
 

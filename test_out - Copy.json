@@ -31,6 +31,48 @@
     "enemy": [
         {
             "AI": {
+                "activationType": 2,
+                "active": true,
+                "boss": false,
+                "stationary": false
+            },
+            "Carried": false,
+            "Class": "Soldier",
+            "ClassID": 0,
+            "ClassPower": 2,
+            "ID": 0,
+            "Inventory": [
+                [
+                    11,
+                    19
+                ]
+            ],
+            "LevelID": 1,
+            "Name": "Soldier",
+            "Position": [
+                240.0,
+                176.0
+            ],
+            "Stats": {
+                "Bld": 6,
+                "Def": 2,
+                "HP": 22,
+                "Lck": 0,
+                "Level": 1,
+                "Mag": 1,
+                "Mov": 5,
+                "Skl": 2,
+                "Spd": 3,
+                "Str": 6,
+                "currentHP": 22,
+                "exp": 0
+            },
+            "WeaponProf": {
+                "Lance": 2
+            }
+        },
+        {
+            "AI": {
                 "activationType": 1,
                 "active": false,
                 "boss": false,
@@ -204,6 +246,48 @@
         {
             "AI": {
                 "activationType": 0,
+                "active": true,
+                "boss": false,
+                "stationary": false
+            },
+            "Carried": false,
+            "Class": "Archer",
+            "ClassID": 1,
+            "ClassPower": 2,
+            "ID": 1,
+            "Inventory": [
+                [
+                    4,
+                    19
+                ]
+            ],
+            "LevelID": 12,
+            "Name": "Archer",
+            "Position": [
+                256.0,
+                160.0
+            ],
+            "Stats": {
+                "Bld": 9,
+                "Def": 3,
+                "HP": 21,
+                "Lck": 1,
+                "Level": 1,
+                "Mag": 1,
+                "Mov": 5,
+                "Skl": 1,
+                "Spd": 2,
+                "Str": 3,
+                "currentHP": 21,
+                "exp": 0
+            },
+            "WeaponProf": {
+                "Bow": 1
+            }
+        },
+        {
+            "AI": {
+                "activationType": 0,
                 "active": false,
                 "battleMessage": "Hypertension<1",
                 "boss": true,
@@ -368,12 +452,12 @@
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 5,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 2,
             "Inventory": [
                 [
                     6,
-                    37
+                    39
                 ],
                 [
                     5,
@@ -391,7 +475,7 @@
             "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                240.0,
+                208.0,
                 160.0
             ],
             "Skills": [
@@ -409,7 +493,7 @@
                 "Spd": 20,
                 "Str": 9,
                 "currentHP": 15,
-                "exp": 15
+                "exp": 12
             },
             "WeaponProf": {
                 "Sword": 5
@@ -466,12 +550,12 @@
             "Class": "Axe Fighter",
             "ClassID": 6,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 4,
             "Inventory": [
                 [
                     16,
-                    57
+                    58
                 ],
                 [
                     8,
@@ -481,7 +565,7 @@
             "LevelID": 4,
             "Name": "Othin",
             "Position": [
-                224.0,
+                208.0,
                 176.0
             ],
             "Skills": [
@@ -502,7 +586,7 @@
                 "Spd": 9,
                 "Str": 7,
                 "currentHP": 20,
-                "exp": 67
+                "exp": 42
             },
             "WeaponProf": {
                 "Axe": 1

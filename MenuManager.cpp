@@ -1122,23 +1122,23 @@ void SelectEnemyMenu::Draw()
 {
 	auto enemy = unitsToAttack[currentOption];
 	auto targetPosition = enemy->sprite.getPosition();
-	int enemyStatsTextX = 536;
-	int statsDisplay = 169;
+	int enemyStatsTextX = 550;
+	int statsDisplay = 168;
 
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		enemyStatsTextX = 32;
-		statsDisplay = 7;
+		enemyStatsTextX = 50;
+		statsDisplay = 8;
 	}
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(statsDisplay, 10, 0.0f));
+	model = glm::translate(model, glm::vec3(statsDisplay + 27, 67, 0.0f));
 
-	model = glm::scale(model, glm::vec3(80, 209, 0.0f));
+	model = glm::scale(model, glm::vec3(26, 122, 0.0f));
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.2f));
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
 
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
@@ -1149,51 +1149,53 @@ void SelectEnemyMenu::Draw()
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	
 	Unit* unit = cursor->selectedUnit;
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getCameraMatrix());
 	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
+	displayTexture = ResourceManager::GetTexture("EnemySelectBackground");
+	Renderer->setUVs();
 
-	text->RenderText(enemy->name, enemyStatsTextX, 100, 1);
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	Renderer->DrawSprite(displayTexture, glm::vec2(statsDisplay, 8), 0.0f, glm::vec2(82, 210));
+	int statsY = 53;
+	text->RenderText(enemy->name, enemyStatsTextX, statsY, 1);
+	statsY += 42;
+	text->RenderText(enemy->name, enemyStatsTextX, statsY, 1);
 	if (auto enemyWeapon = enemy->GetEquippedItem())
 	{
-		text->RenderText(enemyWeapon->name, enemyStatsTextX, 130, 1); //need error checking here
+		statsY += 42;
+		text->RenderText(enemyWeapon->name, enemyStatsTextX, statsY, 1); //need error checking here
 	}
 
-	int statsY = 180;
+	statsY = 208;
 	text->RenderTextRight(intToString(enemy->level), enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("LV", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(intToString(unit->level), enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(intToString(unit->level), enemyStatsTextX + 150, statsY, 1, 28);
 
-	statsY += 30;
+	statsY += 42;
 	text->RenderTextRight(intToString(enemy->currentHP), enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("HP", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(intToString(unit->currentHP), enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(intToString(unit->currentHP), enemyStatsTextX + 150, statsY, 1, 28);
 
-	statsY += 30;
+	statsY += 42;
 	text->RenderTextRight(enemyStats.atk, enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("Atk", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.atk, enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(playerStats.atk, enemyStatsTextX + 150, statsY, 1, 28);
 
-	statsY += 30;
+	statsY += 42;
 	text->RenderTextRight(enemyStats.def, enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("Def", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.def, enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(playerStats.def, enemyStatsTextX + 150, statsY, 1, 28);
 
-	statsY += 30;
+	statsY += 42;
 	text->RenderTextRight(enemyStats.hit, enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("Hit", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.hit, enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(playerStats.hit, enemyStatsTextX + 150, statsY, 1, 28);
 
-	statsY += 30;
+	statsY += 42;
 	text->RenderTextRight(enemyStats.crit, enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("Crit", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.crit, enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(playerStats.crit, enemyStatsTextX + 150, statsY, 1, 28);
 
-	statsY += 30;
+	statsY += 42;
 	text->RenderTextRight(enemyStats.attackSpeed, enemyStatsTextX, statsY, 1, 28);
-	text->RenderText("AS", enemyStatsTextX + 80, statsY, 1);
-	text->RenderTextRight(playerStats.attackSpeed, enemyStatsTextX + 160, statsY, 1, 28);
+	text->RenderTextRight(playerStats.attackSpeed, enemyStatsTextX + 150, statsY, 1, 28);
 
-	text->RenderText(unit->name, enemyStatsTextX + 160, 500, 1);
+	text->RenderText(unit->name, enemyStatsTextX + 125, 525, 1);
 }
 
 void SelectEnemyMenu::SelectOption()

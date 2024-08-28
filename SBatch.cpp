@@ -134,19 +134,20 @@ void SBatch::createRenderBatches()
 void SBatch::renderBatch()
 {
     glBindVertexArray(vao);
+    Texture2D texture2 = ResourceManager::GetTexture("palette");
+    glActiveTexture(GL_TEXTURE1);
+    texture2.Bind();
+
+    //Would be nice to have a check to see if this is actually necessary, otherwise I'm swapping this texture for nothing
+    texture2 = ResourceManager::GetTexture("BattleFadeIn");
+    glActiveTexture(GL_TEXTURE2);
+    texture2.Bind();
     for (int i = 0; i < renderBatches.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0);
         ResourceManager::GetShader("sprite").Use().SetInteger("instanceOffset", renderBatches[i].offSet);
         glBindTexture(GL_TEXTURE_2D, renderBatches[i].textureID);
-        Texture2D texture2 = ResourceManager::GetTexture("palette");
-        glActiveTexture(GL_TEXTURE1);
-        texture2.Bind();
 
-        texture2 = ResourceManager::GetTexture("BattleFadeIn");
-        glActiveTexture(GL_TEXTURE2);
-        texture2.Bind();
-        //pass uniform offset here
         glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderBatches[i].numberOfVerticies);
     }
     glBindVertexArray(0);

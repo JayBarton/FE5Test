@@ -25,7 +25,6 @@ void main()
     vec4 sample = c * texture(image, TextureCoordinates);
 	vec2 index = vec2(sample.r, pr/4.0);
 	vec4 indexedColor = texture(palette, index);
-	vec4 FadeIn = texture(BattleFadeIn, vec2(0, 1));
 	indexedColor.a = sample.a;
 	float grey = 0.21 * indexedColor.r + 0.71 * indexedColor.g + 0.07 * indexedColor.b;
 	indexedColor = mix(indexedColor, vec4(1, 1, 1, indexedColor.a), hf);

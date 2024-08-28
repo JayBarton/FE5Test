@@ -125,7 +125,7 @@ struct InfoDisplays
 	void StartUnitHeal(Unit*, int healAmount, Camera* camera);
 	void ChangeTurn(int currentTurn);
 	void PlayerUnitDied(Unit* unit, bool battleScene);
-	void UnitBattleMessage(Unit* unit, bool battleScene, bool continuing = false);
+	void UnitBattleMessage(Unit* unit, bool battleScene, bool continuing = false, bool playMusic = false);
 	void PlayerLost(int messageID);
 	void UnitEscaped(EnemyManager* enemyManager);
 

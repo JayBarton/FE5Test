@@ -444,6 +444,16 @@ struct ChangeMusicEvent : public Observer<>
 		}
 	}
 };
+bool queuedMusic;
+float queuedMusicDelay;
+struct QueueMusicEvent : public Observer<float>
+{
+	virtual void onNotify(float delay)
+	{
+		queuedMusic = true;
+		queuedMusicDelay = delay;
+	}
+};
 
 void loadMap(std::string nextMap, UnitEvents* unitEvents);
 void loadSuspendedGame();
@@ -571,6 +581,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBorder.png", "TextBorder");
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/VendorBackground.png", "VendorBackground");
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/BattleSceneBoxes.png", "BattleSceneBoxes");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/EnemySelectBackground.png", "EnemySelectBackground");
 
 	ResourceManager::LoadTexture("TestSprites/test.png", "test");
 	ResourceManager::LoadTexture("TestSprites/test2.png", "test2");
@@ -621,7 +632,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadMusic("Sounds/PlayerAttackStart.ogg", "PlayerAttackStart");
 	ResourceManager::LoadMusic("Sounds/PlayerAttackLoop.ogg", "PlayerAttackLoop");
 	ResourceManager::LoadMusic("Sounds/EnemyAttack.ogg", "EnemyAttack");
-	ResourceManager::LoadMusic("Sounds/LevelUpTheme.ogg", "LevelUpTheme");
+	ResourceManager::LoadMusic("Sounds/BossStart.ogg", "BossStart");
+	ResourceManager::LoadMusic("Sounds/BossLoop.ogg", "BossLoop");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -667,8 +679,8 @@ int main(int argc, char** argv)
 
 	battleManager.displays = &displays;
 
-	loadMap("2.map", unitEvents);
-	//loadSuspendedGame();
+	//loadMap("2.map", unitEvents);
+	loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
