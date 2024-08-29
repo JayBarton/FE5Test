@@ -444,7 +444,7 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 	}
 	if (state == NONE)
 	{
-		endTurn.notify();
+		endTurn.notify(0);
 	}
 }
 

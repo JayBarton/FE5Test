@@ -157,6 +157,7 @@ struct BattleManager
 
 	Subject<Unit*, Unit*> endAttackSubject;
 	Subject<Unit*> unitDiedSubject;
+	Subject<int> resumeMusic;
 
 	MissText missedText;
 };

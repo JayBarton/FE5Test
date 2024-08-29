@@ -983,7 +983,10 @@ void BattleManager::EndBattle(Cursor* cursor, EnemyManager* enemyManager, Camera
 	}
 	//Want a check to see if the music actually changed and can be resumed
 	//This also breaks if the music was supposed to change to the winning/losing theme
+	Mix_HookMusicFinished(nullptr);
+	Mix_FadeOutMusic(500.0f);
 	ResourceManager::ResumeMusic(1000);
+//	resumeMusic.notify(1);
 }
 
 void BattleManager::DropHeldUnit()

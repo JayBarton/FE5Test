@@ -72,6 +72,8 @@ void resizeWindow(int width, int height);
 
 void SuspendGame();
 
+void PlayerTurnMusic();
+
 const static int TILE_SIZE = 16;
 
 SDL_Window *window;
@@ -115,6 +117,11 @@ std::vector<glm::vec4> nameBoxUVs;
 glm::ivec2 seizePoint;
 int endingID = -1;
 bool endingGame = false;
+
+//0 = standard
+//1 = winning
+//2 = losing
+int mapMusic;
 
 //unitID, dialogueID
 std::unordered_map<int, int> gameOverDialogues;
@@ -318,10 +325,14 @@ struct DeathEvent : public Observer<Unit*>
 			}
 			else
 			{
-				if (enemyManager.units.size() < playerManager.units.size())
+				if (mapMusic != 1)
 				{
-					//play one song
-					ResourceManager::PlayMusic("WinningStart", "WinningLoop");
+					if (enemyManager.units.size() < playerManager.units.size())
+					{
+						ResourceManager::pausedMusic = false;
+						mapMusic = 1;
+						ResourceManager::PlayMusic("WinningStart", "WinningLoop");
+					}
 				}
 			}
 			delete deadUnit;
@@ -418,32 +429,29 @@ struct SuspendEvent : public Observer<int>
 	}
 };
 
-struct ChangeMusicEvent : public Observer<>
+struct ChangeMusicEvent : public Observer<int>
 {
-	virtual void onNotify()
+	virtual void onNotify(int ID)
 	{
-		if (currentTurn == 0)
+		if (ID == 0)
 		{
-			if (enemyManager.units.size() < playerManager.units.size())
+			if (currentTurn == 0)
 			{
-				ResourceManager::PlayMusic("WinningStart", "WinningLoop");
-			}
-			else if (playerManager.units.size() < 2)
-			{
-				//play another
-				ResourceManager::PlayMusic("LosingStart", "LosingLoop");
+				PlayerTurnMusic();
 			}
 			else
 			{
-				ResourceManager::PlayMusic("PlayerTurn");
+				ResourceManager::PlayMusic("EnemyTurnStart", "EnemyTurnLoop");
 			}
 		}
 		else
 		{
-			ResourceManager::PlayMusic("EnemyTurnStart", "EnemyTurnLoop");
+
 		}
 	}
 };
+
+
 bool queuedMusic;
 float queuedMusicDelay;
 struct QueueMusicEvent : public Observer<float>
@@ -671,6 +679,7 @@ int main(int argc, char** argv)
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.endAttackSubject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
+	battleManager.resumeMusic.addObserver(changeMusicEvents);
 	displays.init(&textManager);
 	displays.endBattle.addObserver(postBattleEvents);
 	displays.endTurn.addObserver(changeMusicEvents);
@@ -903,7 +912,6 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
-		//std::cout << fps << std::endl;
 	}
 
 	delete Renderer;
@@ -1408,6 +1416,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	}
 	else
 	{
+		mapMusic = 0;	
 		ResourceManager::PlayMusic("PlayerTurn");
 	}
 	/*Scene* intro = new Scene();
@@ -2471,7 +2480,7 @@ void loadSuspendedGame()
 
 	map.close();
 
-	ResourceManager::PlayMusic("PlayerTurn");
+	PlayerTurnMusic();
 
 	levelWidth = xTiles * TileManager::TILE_SIZE;
 	levelHeight = yTiles * TileManager::TILE_SIZE;
@@ -2480,4 +2489,23 @@ void loadSuspendedGame()
 	camera.setPosition(glm::vec2(0, 0));
 	//	camera.setScale(2.0f);
 	camera.update();
+}
+
+void PlayerTurnMusic()
+{
+	if (enemyManager.units.size() < playerManager.units.size())
+	{
+		mapMusic = 1;
+		ResourceManager::PlayMusic("WinningStart", "WinningLoop");
+	}
+	else if (playerManager.units.size() < 2)
+	{
+		mapMusic = 2;
+		ResourceManager::PlayMusic("LosingStart", "LosingLoop");
+	}
+	else
+	{
+		mapMusic = 0;
+		ResourceManager::PlayMusic("PlayerTurn");
+	}
 }

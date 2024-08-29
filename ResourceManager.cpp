@@ -34,6 +34,8 @@ std::string   ResourceManager::pausedSong;
 std::string   ResourceManager::pausedNextSong;
 double   ResourceManager::pausedTime;
 
+bool ResourceManager::pausedMusic;
+
 Shader ResourceManager::LoadShader(const GLchar *vShaderFile, const GLchar *fShaderFile, const GLchar *gShaderFile, std::string name)
 {
     Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
@@ -153,6 +155,7 @@ void ResourceManager::FadeOutPause(int ms)
 
 void ResourceManager::PauseMusic()
 {
+    pausedMusic = true;
     pausedSong = currentSong;
     pausedNextSong = nextSong;
     pausedTime = Mix_GetMusicPosition(Music[currentSong]);
@@ -160,8 +163,9 @@ void ResourceManager::PauseMusic()
 
 void ResourceManager::ResumeMusic(int ms)
 {
-    if (Settings::settings.music)
+    if (Settings::settings.music && pausedMusic)
     {
+        pausedMusic = false;
         if (pausedNextSong != "")
         {
             nextSong = pausedNextSong;
@@ -175,8 +179,8 @@ void ResourceManager::ResumeMusic(int ms)
             Mix_HookMusicFinished(nullptr);
         }
         currentSong = pausedSong;
+        pausedSong = "";
     }
-    pausedSong = "";
 }
 
 void ResourceManager::Clear()

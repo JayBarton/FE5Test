@@ -57,6 +57,8 @@ public:
     static void PauseMusic();
     static void ResumeMusic(int);
 
+    static bool pausedMusic;
+
     // Properly de-allocates all loaded resources
     static void      Clear();
 private:
