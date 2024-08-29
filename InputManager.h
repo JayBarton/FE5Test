@@ -33,6 +33,8 @@ public:
 
 	bool keyDoublePress(unsigned int keyID);
 
+    bool KeyDownDelay(unsigned int keyID, float normalDelay = 0.05f, float initialDelay = 0.15f);
+
 protected:
 private:
     std::unordered_map<unsigned int, bool> keyMap;
@@ -41,8 +43,12 @@ private:
 	int lastKey = -1;
 	int releasedKey = -1;
 
+    bool heldDelay = false;
+
 	float doubleTimer = 0.0f;
 	float doubleTime = 0.15f;
+    float holdTimer = 0.0f;
+    float holdTime = 0.05f;
 
     bool wasKeyDown(unsigned int keyID);
 };

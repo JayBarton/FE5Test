@@ -27,6 +27,20 @@ void InputManager::update(float delta)
 			releasedKey = -1;
 		}
 	}
+	heldDelay = false;
+	if (lastKey >= 0)
+	{
+		if (wasKeyDown(lastKey))
+		{
+			holdTimer += delta;
+			if (holdTimer >= holdTime)
+			{
+				holdTimer = 0.0f;
+				heldDelay = true;
+			}
+		}
+	}
+
     //loop through keymap using a foreach loop and copy it to previous keymap
     for(auto& it: keyMap)
     {
@@ -60,6 +74,7 @@ void InputManager::releaseKey(unsigned int keyID)
 
 	if (releasedKey < 0)
 	{
+		holdTimer = 0.0f;
 		releasedKey = keyID;
 		doubleTimer = 0.0f;
 	}
@@ -100,6 +115,22 @@ bool InputManager::isKeyReleased(unsigned int keyID)
 bool InputManager::isKeyUp(unsigned int keyID)
 {
     return !isKeyDown(keyID);
+}
+
+
+bool InputManager::KeyDownDelay(unsigned int keyID, float normalDelay, float initialDelay)
+{
+	if(isKeyPressed(keyID))
+	{
+		holdTime = initialDelay;
+		return true;
+	}
+	else if(isKeyDown(keyID) && heldDelay)
+	{
+		holdTime = normalDelay;
+		return true;
+	}
+	return false;
 }
 
 

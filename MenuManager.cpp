@@ -29,11 +29,11 @@ Menu::Menu(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO, Spr
 
 void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (inputManager.isKeyPressed(SDLK_UP))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
 	}
@@ -51,11 +51,25 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 void Menu::NextOption()
 {
 	currentOption++;
-	if (currentOption >= numberOfOptions)
+	if (loopOptions)
 	{
-		currentOption = 0;
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = 0;
+		}
+		ResourceManager::PlaySound("optionSelect1");
 	}
-	ResourceManager::PlaySound("optionSelect1");
+	else
+	{
+		if (currentOption >= numberOfOptions)
+		{
+			currentOption = numberOfOptions - 1;
+		}
+		else
+		{
+			ResourceManager::PlaySound("optionSelect1");
+		}
+	}
 }
 
 void Menu::PreviousOption()
@@ -63,7 +77,8 @@ void Menu::PreviousOption()
 	currentOption--;
 	if (currentOption < 0)
 	{
-		currentOption = numberOfOptions - 1;
+	//	currentOption = numberOfOptions - 1;
+		currentOption = 0;
 	}
 	ResourceManager::PlaySound("optionSelect1");
 }
@@ -3613,7 +3628,8 @@ void OptionsMenu::Draw()
 	for (int i = 0; i < 10; i++)
 	{
 		Renderer->setUVs(optionIconUVs[i]);
-		int adjustedOffset = (yOffset / 600.0f) * 224.0f;
+		float test = (yOffset / 600.0f) * 224.0f;
+		int adjustedOffset = round((yOffset / 600.0f) * 224.0f);
 		Renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
 	}
 
@@ -3719,7 +3735,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	MenuManager::menuManager.AnimateArrow(deltaTime);
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
-	if (inputManager.isKeyPressed(SDLK_UP))
+	if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
 	{
 		currentOption--;
 		if (currentOption < 0)
@@ -3730,15 +3746,31 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			ResourceManager::PlaySound("optionSelect1");
 			indicatorY -= indicatorIncrement;
-			if (indicatorY < 39)
+			if (currentOption == 0)
 			{
 				indicatorY = 39;
+				goal = 0;
 				up = true;
-				goal = yOffset - 64;
+				hitBottom = false;
+			}
+			else
+			{
+				//The boundary is a bit different once the bottom has been hit
+				int bound = 63;
+				if (hitBottom)
+				{
+					bound = 55;
+				}
+				if (indicatorY < bound)
+				{
+					indicatorY = bound;
+					up = true;
+					goal -= 64;
+				}
 			}
 		}
 	}
-	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.25f))
 	{
 		currentOption++;
 		if (currentOption > numberOfOptions)
@@ -3749,11 +3781,26 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			ResourceManager::PlaySound("optionSelect1");
 			indicatorY += indicatorIncrement;
-			if (indicatorY > 159)
+			if (currentOption == numberOfOptions)
 			{
-				indicatorY = 159;
+				indicatorY = 255;
+				goal = 406;
 				down = true;
-				goal = yOffset + 64;
+				hitBottom = true;
+			}
+			else
+			{
+				int bound = 159;
+				if (hitBottom)
+				{
+					bound = 151;
+				}
+				if (indicatorY > bound)
+				{
+					indicatorY = bound;
+					down = true;
+					goal += 64;
+				}
 			}
 		}
 	}
@@ -3905,6 +3952,10 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			yOffset = goal;
 			down = false;
+		}
+		if (currentOption == numberOfOptions)
+		{
+			indicatorY = 255 - round((yOffset / 600.0f) * 224.0f);
 		}
 	}
 	else if (up)

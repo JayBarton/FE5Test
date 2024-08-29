@@ -40,6 +40,7 @@ struct Menu
 	//If this menu covers the whole screen
 	//Used in the main draw call, if it is true, we don't need to draw anything else but the menu
 	bool fullScreen = false;
+	bool loopOptions = true;
 };
 
 struct UnitOptionsMenu : public Menu
@@ -426,9 +427,10 @@ struct OptionsMenu : public Menu
 	int indicatorY = 39;
 	int indicatorIncrement = 24;
 	float yOffset = 0;
-	float goal;
+	float goal = 0;
 	bool up = false;
 	bool down = false;
+	bool hitBottom = false;
 };
 
 struct FullInventoryMenu : public Menu
