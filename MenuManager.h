@@ -21,7 +21,9 @@ struct Menu
 	virtual void GetOptions() {};
 	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
 	void NextOption();
+	void NextOptionStop();
 	void PreviousOption();
+	void PreviousOptionStop();
 	void EndUnitMove();
 	void DrawBox(glm::ivec2 position, int width, int height);
 	void ClearMenu();
@@ -40,7 +42,6 @@ struct Menu
 	//If this menu covers the whole screen
 	//Used in the main draw call, if it is true, we don't need to draw anything else but the menu
 	bool fullScreen = false;
-	bool loopOptions = true;
 };
 
 struct UnitOptionsMenu : public Menu
@@ -431,6 +432,7 @@ struct OptionsMenu : public Menu
 	bool up = false;
 	bool down = false;
 	bool hitBottom = false;
+	bool moveToBottom = false;
 };
 
 struct FullInventoryMenu : public Menu

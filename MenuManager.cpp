@@ -31,13 +31,27 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
-		PreviousOption();
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			PreviousOption();
+		}
+		else
+		{
+			PreviousOptionStop();
+		}
 	}
 	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
-		NextOption();
+		if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			NextOption();
+		}
+		else
+		{
+			NextOptionStop();
+		}
 	}
-	else if (inputManager.isKeyPressed(SDLK_RETURN))
+	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
 		SelectOption();
 	}
@@ -51,24 +65,23 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 void Menu::NextOption()
 {
 	currentOption++;
-	if (loopOptions)
+	if (currentOption >= numberOfOptions)
 	{
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = 0;
-		}
-		ResourceManager::PlaySound("optionSelect1");
+		currentOption = 0;
+	}
+	ResourceManager::PlaySound("optionSelect1");
+}
+
+void Menu::NextOptionStop()
+{
+	currentOption++;
+	if (currentOption >= numberOfOptions)
+	{
+		currentOption = numberOfOptions - 1;
 	}
 	else
 	{
-		if (currentOption >= numberOfOptions)
-		{
-			currentOption = numberOfOptions - 1;
-		}
-		else
-		{
-			ResourceManager::PlaySound("optionSelect1");
-		}
+		ResourceManager::PlaySound("optionSelect1");
 	}
 }
 
@@ -77,10 +90,22 @@ void Menu::PreviousOption()
 	currentOption--;
 	if (currentOption < 0)
 	{
-	//	currentOption = numberOfOptions - 1;
-		currentOption = 0;
+		currentOption = numberOfOptions - 1;
 	}
 	ResourceManager::PlaySound("optionSelect1");
+}
+
+void Menu::PreviousOptionStop()
+{
+	currentOption--;
+	if (currentOption < 0)
+	{
+		currentOption = 0;
+	}
+	else
+	{
+		ResourceManager::PlaySound("optionSelect1");
+	}
 }
 
 void Menu::EndUnitMove()
@@ -93,6 +118,8 @@ void Menu::EndUnitMove()
 	{
 		cursor->Wait();
 	}
+	ResourceManager::PlaySound("cancel");
+
 	ClearMenu();
 
 }
@@ -169,8 +196,8 @@ void UnitOptionsMenu::SelectOption()
 						if (!weaponInRange)
 						{
 							weaponInRange = true;
-							std::vector<Unit*> fuck;
-							unitsToAttack.push_back(fuck);
+							std::vector<Unit*> unitList;
+							unitsToAttack.push_back(unitList);
 							validWeapons.push_back(playerWeapons[i]);
 							unitsToAttack.back().push_back(currentUnit);
 						}
@@ -283,6 +310,8 @@ void UnitOptionsMenu::SelectOption()
 		}
 		visit->sceneMap[sceneID]->initiator = playerUnit;
 		visit->sceneMap[sceneID]->activation->CheckActivation();
+		ResourceManager::PlaySound("select2");
+
 		ClearMenu();
 
 		break;
@@ -653,6 +682,7 @@ void CantoOptionsMenu::Draw()
 		xText = 75;
 		xIndicator = 8;
 	}
+	DrawBox(glm::ivec2(xIndicator, 48), 66, 18 + numberOfOptions * 16);
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 57 + (16 * currentOption)));
@@ -663,6 +693,7 @@ void CantoOptionsMenu::Draw()
 void CantoOptionsMenu::SelectOption()
 {
 	cursor->Wait();
+	ResourceManager::PlaySound("select2");
 	ClearMenu();
 }
 
@@ -1230,15 +1261,32 @@ void SelectEnemyMenu::GetOptions()
 
 void SelectEnemyMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
 	}
+	else if (inputManager.KeyDownDelay(SDLK_LEFT))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_RIGHT))
+	{
+		NextOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
+	}
+
 	if (inputManager.isKeyPressed(SDLK_UP) || inputManager.isKeyPressed(SDLK_DOWN) || inputManager.isKeyPressed(SDLK_RIGHT) || inputManager.isKeyPressed(SDLK_LEFT))
 	{
 		CanEnemyCounter();
@@ -1380,19 +1428,20 @@ void SelectTradeUnit::Draw()
 	{
 		targetPosition = tradeUnit->sprite.getPosition();
 	}
-	int xText = 536;
-	int xIndicator = 169;
+	int xText = 500;
+	int xIndicator = 152;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 32;
-		xIndicator = 7;
+		xText = 50;
+		xIndicator = 8;
 	}
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	DrawBox(glm::ivec2(xIndicator, 8), 98, 10 + (inventorySize + 2) * 16);
+/*	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
 	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
+	model = glm::translate(model, glm::vec3(xIndicator, 8, 0.0f));
 
 	model = glm::scale(model, glm::vec3(80, boxHeight, 0.0f));
 
@@ -1401,20 +1450,20 @@ void SelectTradeUnit::Draw()
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 
 	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
-	int textHeight = 100;
+	int textHeight = 53;
 	text->RenderText(tradeUnit->name, xText, textHeight, 1);
-	textHeight += 60;
+	textHeight += 64;
 	for (int i = 0; i < inventorySize; i++)
 	{
 		text->RenderText(tradeUnit->inventory[i]->name, xText, textHeight, 1);
-		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 100, textHeight, 1, 28);
-		textHeight += 30;
+		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), xText + 200, textHeight, 1, 28);
+		textHeight += 42;
 	}
 }
 
@@ -1431,14 +1480,30 @@ void SelectTradeUnit::GetOptions()
 
 void SelectTradeUnit::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_LEFT))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_RIGHT))
+	{
+		NextOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
 	}
 }
 
@@ -1527,14 +1592,30 @@ void SelectTalkMenu::GetOptions()
 
 void SelectTalkMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_LEFT))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_RIGHT))
+	{
+		NextOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
 	}
 }
 
@@ -2679,18 +2760,34 @@ void SelectRescueUnit::GetOptions()
 
 void SelectRescueUnit::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
 	}
+	else if (inputManager.KeyDownDelay(SDLK_LEFT))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_RIGHT))
+	{
+		NextOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
+	}
 }
 
-DropMenu::DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<glm::ivec2>& positionsr) :
+DropMenu::DropMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, std::vector<glm::ivec2>& positions) :
 	Menu(Cursor, Text, camera, shapeVAO, Renderer), positions(positions)
 {
 	GetOptions();
@@ -2721,14 +2818,30 @@ void DropMenu::GetOptions()
 
 void DropMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_LEFT))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_RIGHT))
+	{
+		NextOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
 	}
 }
 
@@ -2817,14 +2930,30 @@ void SelectTransferUnit::GetOptions()
 
 void SelectTransferUnit::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
 		PreviousOption();
 	}
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
 		NextOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_LEFT))
+	{
+		PreviousOption();
+	}
+	else if (inputManager.KeyDownDelay(SDLK_RIGHT))
+	{
+		NextOption();
+	}
+	if (inputManager.isKeyPressed(SDLK_RETURN))
+	{
+		SelectOption();
+	}
+	else if (inputManager.isKeyPressed(SDLK_z))
+	{
+		CancelOption();
+		currentOption = 0;
 	}
 }
 
@@ -3236,7 +3365,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			sortMode = false;
 			ResourceManager::PlaySound("cancel");
 		}
-		else if (inputManager.isKeyPressed(SDLK_RIGHT))
+		else if (inputManager.KeyDownDelay(SDLK_RIGHT))
 		{
 			if (currentPage < numberOfPages)
 			{
@@ -3253,7 +3382,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				}
 			}
 		}
-		else if (inputManager.isKeyPressed(SDLK_LEFT))
+		else if (inputManager.KeyDownDelay(SDLK_LEFT))
 		{
 			if (currentPage >= 0)
 			{
@@ -3278,23 +3407,27 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					ResourceManager::PlaySound("optionSelect2");
 				}
 			}
-			std::cout << currentSort << std::endl;
 		}
 	}
 	else
 	{
-		if (inputManager.isKeyPressed(SDLK_UP))
+		if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.175f))
 		{
-			currentOption--;
-			if (currentOption < 0)
+			if (currentOption == 0)
 			{
-				currentOption = 0;
-				sortMode = true;
-				//Set to sort mode
+				if (inputManager.isKeyPressed(SDLK_UP))
+				{
+					sortMode = true;
+
+				}
+			}
+			else
+			{
+				currentOption--;
 			}
 			ResourceManager::PlaySound("optionSelect1");
 		}
-		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.175f))
 		{
 			currentOption++;
 			if (currentOption > numberOfOptions - 1)
@@ -3306,7 +3439,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				ResourceManager::PlaySound("optionSelect1");
 			}
 		}
-		else if (inputManager.isKeyPressed(SDLK_RIGHT))
+		else if (inputManager.KeyDownDelay(SDLK_RIGHT, 0.1f, 0.175f))
 		{
 			if (currentPage < numberOfPages - 1)
 			{
@@ -3321,7 +3454,7 @@ void UnitListMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				ResourceManager::PlaySound("optionSelect2");
 			}
 		}
-		else if (inputManager.isKeyPressed(SDLK_LEFT))
+		else if (inputManager.KeyDownDelay(SDLK_LEFT, 0.1f, 0.175f))
 		{
 			currentPage--;
 			if (currentPage < 0)
@@ -3733,215 +3866,221 @@ void OptionsMenu::SelectOption()
 
 void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+	//Still need to handle the bottom case and disable input during that animation
 	MenuManager::menuManager.AnimateArrow(deltaTime);
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
-	if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
+	if (!moveToBottom)
 	{
-		currentOption--;
-		if (currentOption < 0)
+
+		if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
 		{
-			currentOption = 0;
-		}
-		else
-		{
-			ResourceManager::PlaySound("optionSelect1");
-			indicatorY -= indicatorIncrement;
-			if (currentOption == 0)
+			currentOption--;
+			if (currentOption < 0)
 			{
-				indicatorY = 39;
-				goal = 0;
-				up = true;
-				hitBottom = false;
+				currentOption = 0;
 			}
 			else
 			{
-				//The boundary is a bit different once the bottom has been hit
-				int bound = 63;
-				if (hitBottom)
+				ResourceManager::PlaySound("optionSelect1");
+				indicatorY -= indicatorIncrement;
+				if (currentOption == 0)
 				{
-					bound = 55;
-				}
-				if (indicatorY < bound)
-				{
-					indicatorY = bound;
+					indicatorY = 39;
+					goal = 0;
 					up = true;
-					goal -= 64;
+					hitBottom = false;
+				}
+				else
+				{
+					//The boundary is a bit different once the bottom has been hit
+					int bound = 63;
+					if (hitBottom)
+					{
+						bound = 55;
+					}
+					if (indicatorY < bound)
+					{
+						indicatorY = bound;
+						up = true;
+						goal -= 64;
+					}
 				}
 			}
 		}
-	}
-	else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.25f))
-	{
-		currentOption++;
-		if (currentOption > numberOfOptions)
+		else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.25f))
 		{
-			currentOption = numberOfOptions;
-		}
-		else
-		{
-			ResourceManager::PlaySound("optionSelect1");
-			indicatorY += indicatorIncrement;
-			if (currentOption == numberOfOptions)
+			currentOption++;
+			if (currentOption > numberOfOptions)
 			{
-				indicatorY = 255;
-				goal = 406;
-				down = true;
-				hitBottom = true;
+				currentOption = numberOfOptions;
 			}
 			else
 			{
-				int bound = 159;
-				if (hitBottom)
+				ResourceManager::PlaySound("optionSelect1");
+				indicatorY += indicatorIncrement;
+				if (currentOption == numberOfOptions)
 				{
-					bound = 151;
-				}
-				if (indicatorY > bound)
-				{
-					indicatorY = bound;
+					indicatorY = 255;
+					goal = 406;
 					down = true;
-					goal += 64;
+					hitBottom = true;
+					moveToBottom = true;
+				}
+				else
+				{
+					int bound = 159;
+					if (hitBottom)
+					{
+						bound = 151;
+					}
+					if (indicatorY > bound)
+					{
+						indicatorY = bound;
+						down = true;
+						goal += 64;
+					}
 				}
 			}
 		}
-	}
-	else if (inputManager.isKeyPressed(SDLK_RIGHT))
-	{
-		switch (currentOption)
+		else if (inputManager.KeyDownDelay(SDLK_RIGHT, 0.05f, 0.15f))
 		{
-		case 0:
-			Settings::settings.mapAnimations++;
-			if (Settings::settings.mapAnimations > 2)
+			switch (currentOption)
 			{
-				Settings::settings.mapAnimations = 2;
+			case 0:
+				Settings::settings.mapAnimations++;
+				if (Settings::settings.mapAnimations > 2)
+				{
+					Settings::settings.mapAnimations = 2;
+				}
+				else
+				{
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 1:
+				if (Settings::settings.showTerrain)
+				{
+					Settings::settings.showTerrain = false;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 2:
+				if (Settings::settings.autoCursor)
+				{
+					Settings::settings.autoCursor = false;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 3:
+				Settings::settings.textSpeed++;
+				if (Settings::settings.textSpeed > 2)
+				{
+					Settings::settings.textSpeed = 2;
+				}
+				else
+				{
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 4:
+				if (Settings::settings.unitSpeed < 5)
+				{
+					Settings::settings.unitSpeed = 5;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 5:
+				if (Settings::settings.sterero)
+				{
+					Settings::settings.sterero = false;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 6:
+				if (Settings::settings.music)
+				{
+					Settings::settings.music = false;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 7:
+				if (Settings::settings.volume > 1)
+				{
+					Settings::settings.volume--;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
 			}
-			else
-			{
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 1:
-			if (Settings::settings.showTerrain)
-			{
-				Settings::settings.showTerrain = false;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 2:
-			if (Settings::settings.autoCursor)
-			{
-				Settings::settings.autoCursor = false;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 3:
-			Settings::settings.textSpeed++;
-			if (Settings::settings.textSpeed > 2)
-			{
-				Settings::settings.textSpeed = 2;
-			}
-			else
-			{
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 4:
-			if (Settings::settings.unitSpeed < 5)
-			{
-				Settings::settings.unitSpeed = 5;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 5:
-			if (Settings::settings.sterero)
-			{
-				Settings::settings.sterero = false;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 6:
-			if (Settings::settings.music)
-			{
-				Settings::settings.music = false;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 7:
-			if (Settings::settings.volume > 1)
-			{
-				Settings::settings.volume--;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
 		}
-	}
-	else if (inputManager.isKeyPressed(SDLK_LEFT))
-	{
-		switch (currentOption)
+		else if (inputManager.KeyDownDelay(SDLK_LEFT, 0.05f, 0.15f))
 		{
-		case 0:
-			Settings::settings.mapAnimations--;
-			if (Settings::settings.mapAnimations < 0)
+			switch (currentOption)
 			{
-				Settings::settings.mapAnimations = 0;
+			case 0:
+				Settings::settings.mapAnimations--;
+				if (Settings::settings.mapAnimations < 0)
+				{
+					Settings::settings.mapAnimations = 0;
+				}
+				else
+				{
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 1:
+				if (!Settings::settings.showTerrain)
+				{
+					Settings::settings.showTerrain = true;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 2:
+				if (!Settings::settings.autoCursor)
+				{
+					Settings::settings.autoCursor = true;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 3:
+				Settings::settings.textSpeed--;
+				if (Settings::settings.textSpeed < 0)
+				{
+					Settings::settings.textSpeed = 0;
+				}
+				else
+				{
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 4:
+				if (Settings::settings.unitSpeed > 2.5f)
+				{
+					Settings::settings.unitSpeed = 2.5f;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 5:
+				if (!Settings::settings.sterero)
+				{
+					Settings::settings.sterero = true;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 6:
+				if (!Settings::settings.music)
+				{
+					Settings::settings.music = true;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 7:
+				if (Settings::settings.volume < 4)
+				{
+					Settings::settings.volume++;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
 			}
-			else
-			{
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 1:
-			if (!Settings::settings.showTerrain)
-			{
-				Settings::settings.showTerrain = true;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 2:
-			if (!Settings::settings.autoCursor)
-			{
-				Settings::settings.autoCursor = true;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 3:
-			Settings::settings.textSpeed--;
-			if (Settings::settings.textSpeed < 0)
-			{
-				Settings::settings.textSpeed = 0;
-			}
-			else
-			{
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 4:
-			if (Settings::settings.unitSpeed > 2.5f)
-			{
-				Settings::settings.unitSpeed = 2.5f;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 5:
-			if (!Settings::settings.sterero)
-			{
-				Settings::settings.sterero = true;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 6:
-			if (!Settings::settings.music)
-			{
-				Settings::settings.music = true;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
-		case 7:
-			if (Settings::settings.volume < 4)
-			{
-				Settings::settings.volume++;
-				ResourceManager::PlaySound("optionSelect2");
-			}
-			break;
 		}
 	}
 	int rate = 960;
@@ -3952,6 +4091,10 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			yOffset = goal;
 			down = false;
+			if (hitBottom)
+			{
+				moveToBottom = false;
+			}
 		}
 		if (currentOption == numberOfOptions)
 		{
@@ -4322,13 +4465,27 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		}
 		else if (state == BUYING || state == SELLING)
 		{
-			if (inputManager.isKeyPressed(SDLK_UP))
+			if (inputManager.KeyDownDelay(SDLK_UP))
 			{
-				PreviousOption();
+				if (inputManager.isKeyPressed(SDLK_UP))
+				{
+					PreviousOption();
+				}
+				else
+				{
+					PreviousOptionStop();
+				}
 			}
-			else if (inputManager.isKeyPressed(SDLK_DOWN))
+			else if (inputManager.KeyDownDelay(SDLK_DOWN))
 			{
-				NextOption();
+				if (inputManager.isKeyPressed(SDLK_DOWN))
+				{
+					NextOption();
+				}
+				else
+				{
+					NextOptionStop();
+				}
 			}
 		}
 		else if(state == GREETING)
@@ -4572,13 +4729,27 @@ void FullInventoryMenu::SelectOption()
 
 void FullInventoryMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	if (inputManager.isKeyPressed(SDLK_UP))
+	if (inputManager.KeyDownDelay(SDLK_UP))
 	{
-		PreviousOption();
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			PreviousOption();
+		}
+		else
+		{
+			PreviousOptionStop();
+		}
 	}
-	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	else if (inputManager.KeyDownDelay(SDLK_DOWN))
 	{
-		NextOption();
+		if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			NextOption();
+		}
+		else
+		{
+			NextOptionStop();
+		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
@@ -4714,9 +4885,11 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 				movingUnit->hide = true;
 				auto playerUnit = cursor->selectedUnit;
 				playerUnit->sprite.setFocus();
-				Menu::CancelOption(2);
+				MenuManager::menuManager.PreviousMenu();
+				MenuManager::menuManager.PreviousMenu();
 				MenuManager::menuManager.menus.back()->GetOptions();
 				MenuManager::menuManager.mustWait = true;
+				ResourceManager::PlaySound("select1");
 				break;
 			}
 		}
