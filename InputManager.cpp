@@ -70,11 +70,11 @@ void InputManager::releaseKey(unsigned int keyID)
 	if (lastKey >= 0 && !isKeyDown(lastKey))
 	{
 		lastKey = -1;
+		holdTimer = 0.0f;
 	}
 
 	if (releasedKey < 0)
 	{
-		holdTimer = 0.0f;
 		releasedKey = keyID;
 		doubleTimer = 0.0f;
 	}

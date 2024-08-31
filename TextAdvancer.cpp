@@ -271,7 +271,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 		}
 		else
 		{
-			currentObject.fadeValue += deltaTime * 1.5f;
+			currentObject.fadeValue += deltaTime * 3.333333f;
 			if (currentObject.fadeValue >= 1)
 			{
 				currentObject.fadeValue = 1;
@@ -305,7 +305,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 	case PORTRAIT_FADE_OUT:
 	{
 		auto& currentObject = textObjects[focusedObject];
-		currentObject.fadeValue -= deltaTime * 1.5f;
+		currentObject.fadeValue -= deltaTime * 3.333333f;
 		if (currentObject.fadeValue <= 0)
 		{
 			currentObject.fadeValue = 0;

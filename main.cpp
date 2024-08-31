@@ -170,6 +170,8 @@ struct GameOverMode
 			if (displays.state == NONE)
 			{
 				state = FADE_OUT_OF_GAME;
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(2000.0f);
 			}
 			break;
 		case FADE_OUT_OF_GAME:
@@ -179,6 +181,7 @@ struct GameOverMode
 				fadeOutAlpha = 1.0f;
 				state = FADE_IN_BG;
 				canDraw = true;
+				ResourceManager::PlayMusic("GameOver");
 			}
 			break;
 		case FADE_IN_BG:
@@ -642,6 +645,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadMusic("Sounds/EnemyAttack.ogg", "EnemyAttack");
 	ResourceManager::LoadMusic("Sounds/BossStart.ogg", "BossStart");
 	ResourceManager::LoadMusic("Sounds/BossLoop.ogg", "BossLoop");
+	ResourceManager::LoadMusic("Sounds/GameOver.ogg", "GameOver");
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
@@ -688,8 +692,8 @@ int main(int argc, char** argv)
 
 	battleManager.displays = &displays;
 
-	//loadMap("2.map", unitEvents);
-	loadSuspendedGame();
+	loadMap("2.map", unitEvents);
+	//loadSuspendedGame();
 	cursor.SetFocus(playerManager.units[0]);
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
