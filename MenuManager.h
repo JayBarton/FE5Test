@@ -528,6 +528,21 @@ struct SuspendMenu : public Menu
 	float fadeValueMax = 0.525f;
 };
 
+struct TitleMenu : public Menu
+{
+	TitleMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Subject<int>* subject, bool foundSuspend);
+	virtual void Draw() override;
+	virtual void SelectOption() override;
+	virtual void CancelOption(int num = 1) override;
+	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
+	virtual void GetOptions() override;
+
+	Subject<int>* subject;
+	float fadeAlpha = 0.0f;
+	bool foundSuspend = false;
+	bool fadingOut = false;
+};
+
 struct MenuManager
 {
 	void SetUp(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, 
@@ -536,6 +551,7 @@ struct MenuManager
 	void AddMenu(int menuID);
 	void AddUnitStatMenu(Unit* unit);
 	void AddFullInventoryMenu(int itemID);
+	void AddTitleMenu(Subject<int>* subject, bool foundSuspend);
 
 	void PreviousMenu();
 	void ClearMenu();

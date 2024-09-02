@@ -33,8 +33,13 @@ static float EaseOut(float t)
 	return 1 - (1 - t) * (1 - t);
 }
 
+struct IObserver
+{
+	virtual ~IObserver() = default;
+};
+
 template<typename... Args>
-struct Observer
+struct Observer : IObserver
 {
 	virtual ~Observer() {}
 	virtual void onNotify(Args...) = 0;

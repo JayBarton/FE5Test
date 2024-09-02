@@ -2267,6 +2267,10 @@ void UnitStatsViewMenu::DrawPage2()
 		text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
 		text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
 	}
+	else if (unit->carryingUnit)
+	{
+		text->RenderText(unit->carryingUnit->name, 150, 420 + adjustedOffset, 1);
+	}
 	else
 	{
 		text->RenderText("----", 153, 420 + adjustedOffset, 1);
@@ -2377,7 +2381,7 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 		Texture2D carryTexture = ResourceManager::GetTexture("UIItems");
 
 		Renderer->setUVs(carryUVs[unit->team]);
-		Renderer->DrawSprite(carryTexture, glm::vec2(23, 28), 0, glm::vec2(8));
+		Renderer->DrawSprite(carryTexture, glm::vec2(23, 14), 0, glm::vec2(8));
 	}
 	else
 	{
@@ -5033,6 +5037,142 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
+TitleMenu::TitleMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Subject<int>* subject, bool foundSuspend)
+{
+	//Don't actually want to call the base constructor with this one, because that would play a sound,
+	// so have to initialize everything like this
+	this->cursor = Cursor;
+	this->text = Text;
+	this->camera = camera;
+	this->shapeVAO = shapeVAO;
+	this->Renderer = Renderer;
+	this->foundSuspend = foundSuspend;
+	this->subject = subject;
+
+	GetOptions();
+}
+
+void TitleMenu::Draw()
+{
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	Renderer->setUVs();
+	Texture2D displayTexture = ResourceManager::GetTexture("TitleButton");
+	if (foundSuspend)
+	{
+		Renderer->DrawSprite(displayTexture, glm::vec2(72, 64), 0.0f, glm::vec2(112, 32));
+		Renderer->DrawSprite(displayTexture, glm::vec2(72, 96), 0.0f, glm::vec2(112, 32));
+		MenuManager::menuManager.DrawIndicator(glm::vec2(55, 73 + 32 * currentOption));
+		text->RenderText("Resume Game", 325, 195, 1.0f);
+		text->RenderText("New Game", 325, 283, 1.0f);
+	}
+	else
+	{
+		Renderer->DrawSprite(displayTexture, glm::vec2(72, 96), 0.0f, glm::vec2(112, 32));
+		MenuManager::menuManager.DrawIndicator(glm::vec2(55, 105));
+
+		text->RenderText("New Game", 325, 283, 1.0f);
+	}
+	if (fadingOut)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", fadeAlpha);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+}
+
+void TitleMenu::SelectOption()
+{
+	fadingOut = true;
+	Mix_HookMusicFinished(nullptr);
+	Mix_FadeOutMusic(500.0f);
+}
+
+void TitleMenu::CancelOption(int num)
+{
+}
+
+void TitleMenu::CheckInput(InputManager& inputManager, float deltaTime)
+{
+	if (fadingOut)
+	{
+		//30 frames/0.5s
+		fadeAlpha += 0.0333f;
+		if (fadeAlpha >= 1.0f)
+		{
+			fadeAlpha = 1.0f;
+			if (foundSuspend)
+			{
+				if (currentOption == 0)
+				{
+					subject->notify(1);
+				}
+				else
+				{
+					subject->notify(0);
+				}
+			}
+			else
+			{
+				subject->notify(0);
+			}
+			ClearMenu();
+		}
+	}
+	else
+	{
+		MenuManager::menuManager.AnimateIndicator(deltaTime);
+
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			currentOption--;
+			if (currentOption < 0)
+			{
+				currentOption = 0;
+			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect1");
+
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			currentOption++;
+			if (currentOption >= numberOfOptions)
+			{
+				currentOption = numberOfOptions - 1;
+			}
+			else
+			{
+				ResourceManager::PlaySound("optionSelect1");
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_RETURN))
+		{
+			SelectOption();
+		}
+	}
+}
+
+void TitleMenu::GetOptions()
+{
+	numberOfOptions = 1;
+	if (foundSuspend)
+	{
+		numberOfOptions = 2;
+	}
+}
+
 MenuManager MenuManager::menuManager;
 void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int shapeVAO,
 	SpriteRenderer* Renderer, BattleManager* battleManager, PlayerManager* playerManager, EnemyManager* enemyManager)
@@ -5112,6 +5252,12 @@ void MenuManager::AddUnitStatMenu(Unit* unit)
 void MenuManager::AddFullInventoryMenu(int itemID)
 {
 	Menu* newMenu = new FullInventoryMenu(cursor, text, camera, shapeVAO, renderer, itemID);
+	MenuManager::menuManager.menus.push_back(newMenu);
+}
+
+void MenuManager::AddTitleMenu(Subject<int>* subject, bool foundSuspend)
+{
+	Menu* newMenu = new TitleMenu(cursor, text, camera, shapeVAO, renderer, subject, foundSuspend);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
 

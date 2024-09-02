@@ -172,6 +172,7 @@
     <ClInclude Include="Tile.h" />
     <ClInclude Include="TileManager.h" />
     <ClInclude Include="Timing.h" />
+    <ClInclude Include="TitleScreen.h" />
     <ClInclude Include="Unit.h" />
     <ClInclude Include="UnitManager.h" />
     <ClInclude Include="UnitResources.h" />
@@ -206,6 +207,7 @@
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="TileManager.cpp" />
     <ClCompile Include="Timing.cpp" />
+    <ClCompile Include="TitleScreen.cpp" />
     <ClCompile Include="Unit.cpp" />
     <ClCompile Include="UnitManager.cpp" />
     <ClCompile Include="UnitResources.cpp" />

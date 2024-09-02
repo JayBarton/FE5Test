@@ -34,6 +34,8 @@
 
 #include "UnitResources.h"
 
+#include "TitleScreen.h"
+
 #include "csv.h"
 #include <nlohmann/json.hpp>
 
@@ -62,6 +64,7 @@ void IdleAnimation(GLfloat deltaTime);
 void StartTurnChecks();
 void PlayerUpdate(GLfloat deltaTime);
 void EnemyUpdate(GLfloat deltaTime);
+void LoadEverythingElse(std::vector<IObserver*>& observers);
 void CarryIconAnimation();
 void Draw();
 void DrawUnits();
@@ -126,6 +129,8 @@ int mapMusic;
 //unitID, dialogueID
 std::unordered_map<int, int> gameOverDialogues;
 
+float fadeAlpha;
+
 enum GameOverState
 {
 	START,
@@ -154,7 +159,6 @@ struct GameOverMode
 	}
 	void Update(float deltaTime, InputManager& inputManager)
 	{
-
 		float fadeTime = 0.5f;
 		switch (state)
 		{
@@ -216,6 +220,8 @@ struct GameOverMode
 	}
 };
 GameOverMode gameOverMode;
+
+TitleScreen* titleScreen = nullptr;
 
 SBatch Batch;
 
@@ -393,7 +399,7 @@ struct PostBattleEvents : public Observer<int>
 			battleManager.CaptureUnit();
 			break;
 		}
-		
+
 	}
 };
 //This is identical to above so I'm not sure I even need it here...
@@ -453,7 +459,39 @@ struct ChangeMusicEvent : public Observer<int>
 		}
 	}
 };
+std::vector<IObserver*> observers;
+void loadMap(std::string nextMap);
+void loadSuspendedGame();
 
+bool fadingIn = false;
+struct StartGameEvent : public Observer<int>
+{
+	virtual void onNotify(int ID)
+	{
+		Mix_VolumeMusic(128);
+		fadingIn = true;
+		fadeAlpha = 1.0f;
+		LoadEverythingElse(observers);
+		if (ID == 0)
+		{
+			//start new game
+			loadMap("2.map");
+			cursor.SetFocus(playerManager.units[0]);
+		}
+		else
+		{
+			loadSuspendedGame();
+			//Going to be loading this from suspend
+			cursor.SetFocus(playerManager.units[0]);
+			camera.setPosition(cursor.position);
+		//	cursor.SetFocus(playerManager.units[0]);
+		}
+		camera.update();
+
+		delete titleScreen;
+		titleScreen = nullptr;
+	}
+};
 
 bool queuedMusic;
 float queuedMusicDelay;
@@ -466,8 +504,6 @@ struct QueueMusicEvent : public Observer<float>
 	}
 };
 
-void loadMap(std::string nextMap, UnitEvents* unitEvents);
-void loadSuspendedGame();
 
 std::mt19937 gen;
 std::uniform_int_distribution<int> distribution(0, 99);
@@ -563,148 +599,25 @@ int main(int argc, char** argv)
 	ResourceManager::GetShader("clip").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("clip").SetMatrix4("projection", camera.getOrthoMatrix());
 
-	ResourceManager::LoadTexture("TestSprites/Tiles.png", "tiles");
-	ResourceManager::LoadTexture("TestSprites/UIItems.png", "UIItems");
-	ResourceManager::LoadTexture2("TestSprites/sprites.png", "sprites");
-	ResourceManager::LoadTexture2("TestSprites/movesprites.png", "movesprites");
-	ResourceManager::LoadTexture("TestSprites/palette.png", "palette");
-	ResourceManager::LoadTexture("TestSprites/icons.png", "icons");
-	ResourceManager::LoadTexture("TestSprites/carryingIcons.png", "carryingIcons");
-	ResourceManager::LoadTexture("TestSprites/gameovermain.png", "GameOver1");
-	ResourceManager::LoadTexture("TestSprites/gameovertext.png", "GameOver2");
-	ResourceManager::LoadTexture("TestSprites/Portraits.png", "Portraits");
-	ResourceManager::LoadTexture("TestSprites/EndingBackground.png", "EndingBG");
-	ResourceManager::LoadTexture("TestSprites/BattleBackground.png", "BattleBG");
-	ResourceManager::LoadTexture("TestSprites/BattleFadeIn.png", "BattleFadeIn");
-	ResourceManager::LoadTexture("TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
-	ResourceManager::LoadTexture("TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
-	ResourceManager::LoadTexture("TestSprites/MapExperienceBackground.png", "MapExperienceBackground");
-	ResourceManager::LoadTexture("TestSprites/OptionsScreenBackground.png", "OptionsScreenBackground");
-	ResourceManager::LoadTexture("TestSprites/UnitViewBG.png", "UnitViewBG");
-	ResourceManager::LoadTexture("TestSprites/TradeMenuBG.png", "TradeMenuBG");
-	ResourceManager::LoadTexture("TestSprites/StatusMenuBG.png", "StatusMenuBG");
-	ResourceManager::LoadTexture("TestSprites/UIStuff.png", "UIStuff");
-	ResourceManager::LoadTexture("TestSprites/ResizeBox.png", "ResizeBox");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/page1lower.png", "page1lower");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/page2lower.png", "page2lower");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/unitViewUpper.png", "unitViewUpper");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBackground.png", "TextBackground");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBorder.png", "TextBorder");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/VendorBackground.png", "VendorBackground");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/BattleSceneBoxes.png", "BattleSceneBoxes");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/EnemySelectBackground.png", "EnemySelectBackground");
-
-	ResourceManager::LoadTexture("TestSprites/test.png", "test");
-	ResourceManager::LoadTexture("TestSprites/test2.png", "test2");
-	ResourceManager::LoadTexture("TestSprites/test3.png", "test3");
-	ResourceManager::LoadTexture("TestSprites/test4.png", "test4");
-
-	ResourceManager::LoadSound("Sounds/cursormove.wav", "cursorMove");
-	ResourceManager::LoadSound("Sounds/heldCursorMove.wav", "heldCursorMove");
-	ResourceManager::LoadSound("Sounds/select1.wav", "select1");
-	ResourceManager::LoadSound("Sounds/select2.wav", "select2");
-	ResourceManager::LoadSound("Sounds/movementFoot.wav", "footMove");
-	ResourceManager::LoadSound("Sounds/movementHorse.wav", "horseMove");
-	ResourceManager::LoadSound("Sounds/minimapOpen.wav", "minimapOpen");
-	ResourceManager::LoadSound("Sounds/minimapClose.wav", "minimapClose");
-	ResourceManager::LoadSound("Sounds/cancel.wav", "cancel");
-	ResourceManager::LoadSound("Sounds/turnEnd.wav", "turnEnd");
-	ResourceManager::LoadSound("Sounds/optionSelect1.wav", "optionSelect1");
-	ResourceManager::LoadSound("Sounds/optionSelect2.wav", "optionSelect2");
-	ResourceManager::LoadSound("Sounds/fadeout.wav", "fadeout");
-	ResourceManager::LoadSound("Sounds/pagechange.wav", "pagechange");
-	ResourceManager::LoadSound("Sounds/hit.wav", "hit");
-	ResourceManager::LoadSound("Sounds/deathHit.wav", "deathHit");
-	ResourceManager::LoadSound("Sounds/critHit.wav", "critHit");
-	ResourceManager::LoadSound("Sounds/speech.wav", "speech");
-	ResourceManager::LoadSound("Sounds/miss.wav", "miss");
-	ResourceManager::LoadSound("Sounds/heal.wav", "heal");
-	ResourceManager::LoadSound("Sounds/healthbar.wav", "healthbar");
-	ResourceManager::LoadSound("Sounds/pointUp.wav", "pointUp");
-	ResourceManager::LoadSound("Sounds/getItem.wav", "getItem");
-	ResourceManager::LoadSound("Sounds/levelUp.wav", "levelUp");
-	ResourceManager::LoadSound("Sounds/nodamage.wav", "nodamage");
-	ResourceManager::LoadSound("Sounds/battleTransition.wav", "battleTransition");
-	ResourceManager::LoadSound("Sounds/experience.wav", "experience");
-
-	ResourceManager::LoadMusic("Sounds/Map1.ogg", "PlayerTurn");
-	ResourceManager::LoadMusic("Sounds/Map2.1.ogg", "EnemyTurnStart");
-	ResourceManager::LoadMusic("Sounds/Map2.2.ogg", "EnemyTurnLoop");
-	ResourceManager::LoadMusic("Sounds/Map3.1.ogg", "HeroesEnterStart");
-	ResourceManager::LoadMusic("Sounds/Map3.2.ogg", "HeroesEnterLoop");
-	ResourceManager::LoadMusic("Sounds/Map4.1.ogg", "RaydrickStart");
-	ResourceManager::LoadMusic("Sounds/Map4.2.ogg", "RaydrickLoop");
-	ResourceManager::LoadMusic("Sounds/Map5.1.ogg", "WinningStart");
-	ResourceManager::LoadMusic("Sounds/Map5.2.ogg", "WinningLoop");
-	ResourceManager::LoadMusic("Sounds/Map6.1.ogg", "LosingStart");
-	ResourceManager::LoadMusic("Sounds/Map6.2.ogg", "LosingLoop");
-	ResourceManager::LoadMusic("Sounds/Map7.1.ogg", "TurnEndSceneStart");
-	ResourceManager::LoadMusic("Sounds/Map7.2.ogg", "TurnEndSceneLoop");
-	ResourceManager::LoadMusic("Sounds/PlayerAttackStart.ogg", "PlayerAttackStart");
-	ResourceManager::LoadMusic("Sounds/PlayerAttackLoop.ogg", "PlayerAttackLoop");
-	ResourceManager::LoadMusic("Sounds/EnemyAttack.ogg", "EnemyAttack");
-	ResourceManager::LoadMusic("Sounds/BossStart.ogg", "BossStart");
-	ResourceManager::LoadMusic("Sounds/BossLoop.ogg", "BossLoop");
-	ResourceManager::LoadMusic("Sounds/GameOver.ogg", "GameOver");
+	Text = new TextRenderer(800, 600);
+	Text->Load("fonts/chary___.TTF", 30);
 
 	Shader myShader;
 	myShader = ResourceManager::GetShader("Nsprite");
 	Renderer = new SpriteRenderer(myShader);
 
-	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
+	StartGameEvent* startEvent = new StartGameEvent();
 
-	cursor.uvs = ResourceManager::GetTexture("UIItems").GetUVs(208, 0, 21, 21, 2, 2, 3);
-	minimap.cursorUvs = ResourceManager::GetTexture("UIItems").GetUVs(64, 0, 70, 62, 2, 1, 2);
-	terrainStatusUVs = ResourceManager::GetTexture("UIItems").GetUVs(132, 64, 66, 34, 1, 1)[0];
-	nameBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 64, 66, 32, 2, 1);
-
-	UnitResources::LoadUVs();
-	UnitResources::LoadAnimData();
-
-	textManager.setUVs();
-
-	battleManager.GetUVs();
-
-	Text = new TextRenderer(800, 600);
-	Text->Load("fonts/chary___.TTF", 30);
-
-	ItemManager::itemManager.SetUpItems();
-
-	UnitEvents* unitEvents = new UnitEvents();
-	TurnEvents* turnEvents = new TurnEvents();
-	BattleEvents* battleEvents = new BattleEvents();
-	DeathEvent* deathEvents = new DeathEvent();
-	PostBattleEvents* postBattleEvents = new PostBattleEvents();
-	ItemEvents* itemEvents = new ItemEvents();
-	EndingEvents* endingEvents = new EndingEvents();
-	SuspendEvent* suspendEvents = new SuspendEvent();
-	ChangeMusicEvent* changeMusicEvents = new ChangeMusicEvent();
-
-	ItemManager::itemManager.subject.addObserver(itemEvents);
-	battleManager.endAttackSubject.addObserver(battleEvents);
-	battleManager.unitDiedSubject.addObserver(deathEvents);
-	battleManager.resumeMusic.addObserver(changeMusicEvents);
-	displays.init(&textManager);
-	displays.endBattle.addObserver(postBattleEvents);
-	displays.endTurn.addObserver(changeMusicEvents);
-	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
-	enemyManager.init(&gen, &distribution);
-
-	battleManager.displays = &displays;
-
-	loadMap("2.map", unitEvents);
-	//loadSuspendedGame();
-	cursor.SetFocus(playerManager.units[0]);
+	titleScreen = new TitleScreen();
+	titleScreen->subject.addObserver(startEvent);
+	ResourceManager::LoadTexture("TestSprites/UIItems.png", "UIItems");
+	ResourceManager::LoadTexture("TestSprites/icons.png", "icons");
+	ResourceManager::LoadTexture("TestSprites/UIStuff.png", "UIStuff");
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
-	MenuManager::menuManager.subject.addObserver(turnEvents);
-	MenuManager::menuManager.endingSubject.addObserver(endingEvents);
-	MenuManager::menuManager.suspendSubject.addObserver(suspendEvents);
-	MenuManager::menuManager.unitDiedSubject.addObserver(deathEvents);
-	enemyManager.subject.addObserver(turnEvents);
-	enemyManager.unitEscapedSubject.addObserver(deathEvents);
-	enemyManager.displays = &displays;
+	titleScreen->init();
 
+	camera = Camera(256, 224, 0, 0);
 
 	while (isRunning)
 	{
@@ -753,10 +666,6 @@ int main(int argc, char** argv)
 			}
 		}
 
-		if (inputManager.isKeyPressed(SDLK_s))
-		{
-			SuspendGame();
-		}
 		/*if (inputManager.isKeyPressed(SDLK_f))
 		{
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
@@ -764,92 +673,93 @@ int main(int argc, char** argv)
 			resizeWindow(1920, 1080);
 		}*/
 
-		IdleAnimation(deltaTime);
-		CarryIconAnimation();
-		if (endingGame)
+		if (titleScreen)
 		{
-			if (textManager.active)
+			titleScreen->Update(deltaTime, inputManager);
+		}
+		else
+		{
+			IdleAnimation(deltaTime);
+			CarryIconAnimation();
+			if (endingGame)
 			{
-				textManager.Update(deltaTime, inputManager, true);
+				if (textManager.active)
+				{
+					textManager.Update(deltaTime, inputManager, true);
+					if (inputManager.isKeyPressed(SDLK_SPACE))
+					{
+						textManager.active = false;
+					}
+				}
+				else if (sceneManager.PlayingScene())
+				{
+					sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
+				}
+				else
+				{
+					isRunning = false;
+				}
+			}
+			else if (fadingIn)
+			{
+				//15 frames/0.25s
+				fadeAlpha -= 0.0666f;
+				if (fadeAlpha <= 0)
+				{
+					fadeAlpha = 0;
+					fadingIn = false;
+				}
+			}
+			else if (textManager.active)
+			{
+				textManager.Update(deltaTime, inputManager);
 				if (inputManager.isKeyPressed(SDLK_SPACE))
 				{
-					textManager.active = false;
+					if (battleManager.battleActive && battleManager.battleScene)
+					{
+						textManager.BattleTextClose();
+					}
+					else
+					{
+						textManager.state = PORTRAIT_FADE_OUT;
+						textManager.finishing = true;
+					}
 				}
+				//Annoying dupe for now
+				if (sceneManager.PlayingScene())
+				{
+					auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
+					for (int i = 0; i < introUnits.size(); i++)
+					{
+						introUnits[i]->sprite.HandleAnimation(deltaTime, idleFrame);
+					}
+				}
+			}
+			else if (MenuManager::menuManager.menus.size() > 0)
+			{
+				MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
 			}
 			else if (sceneManager.PlayingScene())
 			{
 				sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
-			}
-			else
-			{
-				isRunning = false;
-			}
-		}
-		else if (textManager.active)
-		{
-			textManager.Update(deltaTime, inputManager);
-			if (inputManager.isKeyPressed(SDLK_SPACE))
-			{
-				if (battleManager.battleActive && battleManager.battleScene)
-				{
-					textManager.BattleTextClose();
-				}
-				else
-				{
-					textManager.state = PORTRAIT_FADE_OUT;
-					textManager.finishing = true;
-				}
-			}
-			//Annoying dupe for now
-			if (sceneManager.PlayingScene())
-			{
 				auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
 				for (int i = 0; i < introUnits.size(); i++)
 				{
 					introUnits[i]->sprite.HandleAnimation(deltaTime, idleFrame);
 				}
 			}
-		}
-		else if (MenuManager::menuManager.menus.size() > 0)
-		{
-			MenuManager::menuManager.menus.back()->CheckInput(inputManager, deltaTime);
-		}
-		else if (sceneManager.PlayingScene())
-		{
-			sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
-			auto introUnits = sceneManager.scenes[sceneManager.currentScene]->introUnits;
-			for (int i = 0; i < introUnits.size(); i++)
-			{
-				introUnits[i]->sprite.HandleAnimation(deltaTime, idleFrame);
-			}
-		}
-		else
-		{
-			if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
-			{
-				if (!displays.displayingExperience) //This check is to help with an issue with displaying experience in cases where the unit does not level up
-					//It does not help very much.
-				{
-					battleManager.Update(deltaTime, &gen, &distribution, inputManager);
-				}
-				displays.Update(deltaTime, inputManager);
-			}
-			else if (displays.state != NONE)
-			{
-				if (camera.moving)
-				{
-					camera.MoveTo(deltaTime, 5.0f);
-				}
-				else
-				{
-					displays.Update(deltaTime, inputManager);
-				}
-			}
 			else
 			{
-				//if in battle, handle battle, don't check input
-				//Should be able to level up while in the battle state, need to figure that out
-				if (battleManager.battleActive)
+				if (battleManager.battleActive && battleManager.battleScene && !battleManager.transitionIn)
+				{
+					if (!displays.displayingExperience) //This check is to help with an issue with displaying experience in cases where the unit does not level up
+						//It does not help very much.
+					{
+						battleManager.Update(deltaTime, &gen, &distribution, inputManager);
+					}
+					displays.Update(deltaTime, inputManager);
+				}
+				else if (displays.state != NONE)
 				{
 					if (camera.moving)
 					{
@@ -857,59 +767,76 @@ int main(int argc, char** argv)
 					}
 					else
 					{
-						battleManager.Update(deltaTime, &gen, &distribution, inputManager);
+						displays.Update(deltaTime, inputManager);
 					}
 				}
 				else
 				{
-					if (gameOverMode.active)
+					//if in battle, handle battle, don't check input
+					//Should be able to level up while in the battle state, need to figure that out
+					if (battleManager.battleActive)
 					{
-						if(gameOverMode.canExit)
+						if (camera.moving)
 						{
-							if (inputManager.isKeyPressed(SDLK_RETURN))
-							{
-								//Return to main menu
-								isRunning = false;
-							}
+							camera.MoveTo(deltaTime, 5.0f);
 						}
 						else
 						{
-							gameOverMode.Update(deltaTime, inputManager);
+							battleManager.Update(deltaTime, &gen, &distribution, inputManager);
 						}
-					}
-					else if (turnTransition)
-					{
-						StartTurnChecks();
-					}
-					//nesting getting a little deep here
-					else if (currentTurn == 0)
-					{
-						PlayerUpdate(deltaTime);
 					}
 					else
 					{
-						EnemyUpdate(deltaTime);
+						if (gameOverMode.active)
+						{
+							if (gameOverMode.canExit)
+							{
+								if (inputManager.isKeyPressed(SDLK_RETURN))
+								{
+									//Return to main menu
+									isRunning = false;
+								}
+							}
+							else
+							{
+								gameOverMode.Update(deltaTime, inputManager);
+								fadeAlpha = gameOverMode.fadeOutAlpha;
+							}
+						}
+						else if (turnTransition)
+						{
+							StartTurnChecks();
+						}
+						//nesting getting a little deep here
+						else if (currentTurn == 0)
+						{
+							PlayerUpdate(deltaTime);
+						}
+						else
+						{
+							EnemyUpdate(deltaTime);
+						}
 					}
 				}
 			}
-		}
 
-		//Update unit animation
-		playerManager.Update(deltaTime, idleFrame, inputManager);
-		enemyManager.UpdateEnemies(deltaTime, idleFrame);
-		camera.update();
+			//Update unit animation
+			playerManager.Update(deltaTime, idleFrame, inputManager);
+			enemyManager.UpdateEnemies(deltaTime, idleFrame);
+			camera.update();
 
-		//ugh
-		for (int i = 0; i < visitObjects.size(); i++)
-		{
-			if (visitObjects[i].toDelete)
+			//ugh
+			for (int i = 0; i < visitObjects.size(); i++)
 			{
-				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->visitSpot = nullptr;
-				TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->uvID = 184;
-				TileManager::tileManager.reDraw();
-				visitObjects[i].sceneMap.clear();
-				visitObjects.erase(visitObjects.begin() + i);
-				i--;
+				if (visitObjects[i].toDelete)
+				{
+					TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->visitSpot = nullptr;
+					TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->uvID = 184;
+					TileManager::tileManager.reDraw();
+					visitObjects[i].sceneMap.clear();
+					visitObjects.erase(visitObjects.begin() + i);
+					i--;
+				}
 			}
 		}
 
@@ -920,6 +847,7 @@ int main(int argc, char** argv)
 
 	delete Renderer;
 	delete Text;
+	delete titleScreen;
 	enemyManager.Clear();
 	playerManager.Clear();
 	for (int i = 0; i < sceneManager.scenes.size(); i++)
@@ -927,16 +855,13 @@ int main(int argc, char** argv)
 		delete sceneManager.scenes[i];
 	}
 	ResourceManager::Clear();
-	delete unitEvents;
-	delete turnEvents;
-	delete battleEvents;
-	delete postBattleEvents;
-	delete deathEvents;
-	delete itemEvents;
-	delete endingEvents;
-	delete suspendEvents;
-	delete changeMusicEvents;
-//	unit.subject.observers.clear();
+	for (int i = 0; i < observers.size(); i++)
+	{
+		delete observers[i];
+		observers[i] = nullptr;
+	}
+
+	delete startEvent;
 
 	MenuManager::menuManager.ClearMenu();
 	TileManager::tileManager.clearTiles();
@@ -950,6 +875,137 @@ int main(int argc, char** argv)
 	Mix_Quit();
 
 	return 0;
+}
+
+void LoadEverythingElse(std::vector<IObserver*>& observers)
+{
+	ResourceManager::LoadTexture("TestSprites/Tiles.png", "tiles");
+	ResourceManager::LoadTexture2("TestSprites/sprites.png", "sprites");
+	ResourceManager::LoadTexture2("TestSprites/movesprites.png", "movesprites");
+	ResourceManager::LoadTexture("TestSprites/palette.png", "palette");
+	ResourceManager::LoadTexture("TestSprites/gameovermain.png", "GameOver1");
+	ResourceManager::LoadTexture("TestSprites/gameovertext.png", "GameOver2");
+	ResourceManager::LoadTexture("TestSprites/Portraits.png", "Portraits");
+	ResourceManager::LoadTexture("TestSprites/EndingBackground.png", "EndingBG");
+	ResourceManager::LoadTexture("TestSprites/BattleBackground.png", "BattleBG");
+	ResourceManager::LoadTexture("TestSprites/BattleFadeIn.png", "BattleFadeIn");
+	ResourceManager::LoadTexture("TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
+	ResourceManager::LoadTexture("TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
+	ResourceManager::LoadTexture("TestSprites/MapExperienceBackground.png", "MapExperienceBackground");
+	ResourceManager::LoadTexture("TestSprites/OptionsScreenBackground.png", "OptionsScreenBackground");
+	ResourceManager::LoadTexture("TestSprites/UnitViewBG.png", "UnitViewBG");
+	ResourceManager::LoadTexture("TestSprites/TradeMenuBG.png", "TradeMenuBG");
+	ResourceManager::LoadTexture("TestSprites/StatusMenuBG.png", "StatusMenuBG");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/page1lower.png", "page1lower");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/page2lower.png", "page2lower");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/unitViewUpper.png", "unitViewUpper");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBackground.png", "TextBackground");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBorder.png", "TextBorder");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/VendorBackground.png", "VendorBackground");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/BattleSceneBoxes.png", "BattleSceneBoxes");
+	ResourceManager::LoadTexture("TestSprites/Backgrounds/EnemySelectBackground.png", "EnemySelectBackground");
+
+	ResourceManager::LoadSound("Sounds/cursormove.wav", "cursorMove");
+	ResourceManager::LoadSound("Sounds/heldCursorMove.wav", "heldCursorMove");
+	ResourceManager::LoadSound("Sounds/select1.wav", "select1");
+	ResourceManager::LoadSound("Sounds/select2.wav", "select2");
+	ResourceManager::LoadSound("Sounds/movementFoot.wav", "footMove");
+	ResourceManager::LoadSound("Sounds/movementHorse.wav", "horseMove");
+	ResourceManager::LoadSound("Sounds/minimapClose.wav", "minimapClose");
+	ResourceManager::LoadSound("Sounds/cancel.wav", "cancel");
+	ResourceManager::LoadSound("Sounds/turnEnd.wav", "turnEnd");
+	ResourceManager::LoadSound("Sounds/optionSelect2.wav", "optionSelect2");
+	ResourceManager::LoadSound("Sounds/fadeout.wav", "fadeout");
+	ResourceManager::LoadSound("Sounds/pagechange.wav", "pagechange");
+	ResourceManager::LoadSound("Sounds/hit.wav", "hit");
+	ResourceManager::LoadSound("Sounds/deathHit.wav", "deathHit");
+	ResourceManager::LoadSound("Sounds/critHit.wav", "critHit");
+	ResourceManager::LoadSound("Sounds/speech.wav", "speech");
+	ResourceManager::LoadSound("Sounds/miss.wav", "miss");
+	ResourceManager::LoadSound("Sounds/heal.wav", "heal");
+	ResourceManager::LoadSound("Sounds/healthbar.wav", "healthbar");
+	ResourceManager::LoadSound("Sounds/pointUp.wav", "pointUp");
+	ResourceManager::LoadSound("Sounds/getItem.wav", "getItem");
+	ResourceManager::LoadSound("Sounds/levelUp.wav", "levelUp");
+	ResourceManager::LoadSound("Sounds/nodamage.wav", "nodamage");
+	ResourceManager::LoadSound("Sounds/battleTransition.wav", "battleTransition");
+	ResourceManager::LoadSound("Sounds/experience.wav", "experience");
+
+	ResourceManager::LoadMusic("Sounds/Map1.ogg", "PlayerTurn");
+	ResourceManager::LoadMusic("Sounds/Map2.1.ogg", "EnemyTurnStart");
+	ResourceManager::LoadMusic("Sounds/Map2.2.ogg", "EnemyTurnLoop");
+	ResourceManager::LoadMusic("Sounds/Map3.1.ogg", "HeroesEnterStart");
+	ResourceManager::LoadMusic("Sounds/Map3.2.ogg", "HeroesEnterLoop");
+	ResourceManager::LoadMusic("Sounds/Map4.1.ogg", "RaydrickStart");
+	ResourceManager::LoadMusic("Sounds/Map4.2.ogg", "RaydrickLoop");
+	ResourceManager::LoadMusic("Sounds/Map5.1.ogg", "WinningStart");
+	ResourceManager::LoadMusic("Sounds/Map5.2.ogg", "WinningLoop");
+	ResourceManager::LoadMusic("Sounds/Map6.1.ogg", "LosingStart");
+	ResourceManager::LoadMusic("Sounds/Map6.2.ogg", "LosingLoop");
+	ResourceManager::LoadMusic("Sounds/Map7.1.ogg", "TurnEndSceneStart");
+	ResourceManager::LoadMusic("Sounds/Map7.2.ogg", "TurnEndSceneLoop");
+	ResourceManager::LoadMusic("Sounds/PlayerAttackStart.ogg", "PlayerAttackStart");
+	ResourceManager::LoadMusic("Sounds/PlayerAttackLoop.ogg", "PlayerAttackLoop");
+	ResourceManager::LoadMusic("Sounds/EnemyAttack.ogg", "EnemyAttack");
+	ResourceManager::LoadMusic("Sounds/BossStart.ogg", "BossStart");
+	ResourceManager::LoadMusic("Sounds/BossLoop.ogg", "BossLoop");
+	ResourceManager::LoadMusic("Sounds/GameOver.ogg", "GameOver");
+
+	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
+
+	cursor.uvs = ResourceManager::GetTexture("UIItems").GetUVs(208, 0, 21, 21, 2, 2, 3);
+	minimap.cursorUvs = ResourceManager::GetTexture("UIItems").GetUVs(64, 0, 70, 62, 2, 1, 2);
+	terrainStatusUVs = ResourceManager::GetTexture("UIItems").GetUVs(132, 64, 66, 34, 1, 1)[0];
+	nameBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 64, 66, 32, 2, 1);
+
+	UnitResources::LoadUVs();
+	UnitResources::LoadAnimData();
+
+	textManager.setUVs();
+
+	battleManager.GetUVs();
+
+	ItemManager::itemManager.SetUpItems();
+
+	displays.init(&textManager);
+
+	UnitEvents* unitEvents = new UnitEvents();
+	TurnEvents* turnEvents = new TurnEvents();
+	BattleEvents* battleEvents = new BattleEvents();
+	DeathEvent* deathEvents = new DeathEvent();
+	PostBattleEvents* postBattleEvents = new PostBattleEvents();
+	ItemEvents* itemEvents = new ItemEvents();
+	EndingEvents* endingEvents = new EndingEvents();
+	SuspendEvent* suspendEvents = new SuspendEvent();
+	ChangeMusicEvent* changeMusicEvents = new ChangeMusicEvent();
+
+	observers.push_back(unitEvents);
+	observers.push_back(turnEvents);
+	observers.push_back(battleEvents);
+	observers.push_back(postBattleEvents);
+	observers.push_back(itemEvents);
+	observers.push_back(endingEvents);
+	observers.push_back(suspendEvents);
+	observers.push_back(changeMusicEvents);
+
+	ItemManager::itemManager.subject.addObserver(itemEvents);
+	battleManager.endAttackSubject.addObserver(battleEvents);
+	battleManager.unitDiedSubject.addObserver(deathEvents);
+	battleManager.resumeMusic.addObserver(changeMusicEvents);
+	displays.endBattle.addObserver(postBattleEvents);
+	displays.endTurn.addObserver(changeMusicEvents);
+	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
+	enemyManager.init(&gen, &distribution);
+
+	battleManager.displays = &displays;
+
+	MenuManager::menuManager.subject.addObserver(turnEvents);
+	MenuManager::menuManager.endingSubject.addObserver(endingEvents);
+	MenuManager::menuManager.suspendSubject.addObserver(suspendEvents);
+	MenuManager::menuManager.unitDiedSubject.addObserver(deathEvents);
+	enemyManager.subject.addObserver(turnEvents);
+	enemyManager.unitEscapedSubject.addObserver(deathEvents);
+	enemyManager.displays = &displays;
 }
 
 void EnemyUpdate(GLfloat deltaTime)
@@ -1159,7 +1215,7 @@ void init()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void loadMap(std::string nextMap, UnitEvents* unitEvents)
+void loadMap(std::string nextMap)
 {
 	std::ifstream map(levelDirectory + nextMap);
 	currentLevel = nextMap;
@@ -1423,211 +1479,6 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 		mapMusic = 0;	
 		ResourceManager::PlayMusic("PlayerTurn");
 	}
-	/*Scene* intro = new Scene();
-	intro->ID = 10;
-	intro->owner = &sceneManager;
-	intro->actions.resize(4);
-	intro->actions[0] = new CameraMove(CAMERA_ACTION, glm::vec2(208, 112));
-	std::vector<glm::ivec2> path;
-	path.push_back(glm::ivec2(272, 80));
-	intro->actions[1] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 10, 1, path);
-	path.push_back(glm::ivec2(272, 96));
-	intro->actions[2] = new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 2, 1, path);
-	intro->actions[3] = new DialogueAction(DIALOGUE_ACTION, 12);
-
-	path.clear();
-	path.push_back(glm::ivec2(288, 224));
-	path.push_back(glm::ivec2(288, 192));
-	path.push_back(glm::ivec2(240, 192));
-	path.push_back(glm::ivec2(240, 128));
-	path.push_back(glm::ivec2(272, 128));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.0f, 0.0f));
-
-	path.clear();
-	path.push_back(glm::ivec2(272, 232));
-	path.push_back(glm::ivec2(272, 224));
-	path.push_back(glm::ivec2(272, 192));
-	path.push_back(glm::ivec2(256, 192));
-	path.push_back(glm::ivec2(256, 128));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, path));
-
-	path.clear();
-	path.push_back(glm::ivec2(272, 96));
-	path.push_back(glm::ivec2(288, 96));
-	path.push_back(glm::ivec2(288, 112));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 1, path));
-	path.clear();
-	path.push_back(glm::ivec2(272, 80));
-	path.push_back(glm::ivec2(272, 96));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
-	
-	//Add Nanna and Mareeta
-	path.clear();
-	path.push_back(glm::ivec2(256, 112));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 11, 0, path, 0.1f));
-	path.clear();
-	path.push_back(glm::ivec2(272, 112));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 12, 0, path, 0.1f));
-	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 13));
-	sceneManager.scenes.push_back(intro);
-
-	//Remove Nanna and Mareeta
-	path.clear();
-	path.push_back(glm::ivec2(272, 80));
-	path.push_back(glm::ivec2(272, 112));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
-	intro->actions.push_back(new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, 5, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(272, 112));
-	path.push_back(glm::ivec2(256, 112));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
-	intro->actions.push_back(new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, 4, 0.1f));
-
-	//Reydric exits
-	path.clear();
-	path.push_back(glm::ivec2(256, 112));
-	path.push_back(glm::ivec2(256, 128));
-	path.push_back(glm::ivec2(240, 128));
-	path.push_back(glm::ivec2(240, 176));
-	path.push_back(glm::ivec2(304, 176));
-	path.push_back(glm::ivec2(304, 192));
-	path.push_back(glm::ivec2(336, 192));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 0, path));
-	intro->actions.push_back(new SceneUnitRemove(SCENE_UNIT_REMOVE_ACTION, 0));
-
-	//Enemies get into position
-	path.clear();
-	path.push_back(glm::ivec2(288, 112));
-	path.push_back(glm::ivec2(288, 80));
-	path.push_back(glm::ivec2(272, 80));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 1, path));
-
-	path.clear();
-	path.push_back(glm::ivec2(208, 192));
-	path.push_back(glm::ivec2(240, 192));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path));
-
-	intro->actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(240, 144)));
-
-	path.clear();
-	path.push_back(glm::ivec2(208, 160));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(144, 160));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, path, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(176, 48));
-	path.push_back(glm::ivec2(192, 48));
-	path.push_back(glm::ivec2(192, 64));
-	path.push_back(glm::ivec2(160, 64));
-	path.push_back(glm::ivec2(160, 128));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.0f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(288, 208));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(128, 192));
-	path.push_back(glm::ivec2(160, 192));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(288, 160));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(128, 80));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(128, 224));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(176, 192));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 1, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(192, 96));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 0.1f, 0.1f));
-
-	path.clear();
-	path.push_back(glm::ivec2(208, 256));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 0, 1, path, 2.0f));
-
-	//Player units spawn
-	intro->actions.push_back(new CameraMove(CAMERA_ACTION, glm::vec2(128, 224)));
-	path.clear();
-	path.push_back(glm::ivec2(0, 320));
-	path.push_back(glm::ivec2(0, 304));
-	path.push_back(glm::ivec2(48, 304));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 3, 0, path, 0, 0.1f));
-	path.clear();
-	path.push_back(glm::ivec2(0, 320));
-	path.push_back(glm::ivec2(0, 304));
-	path.push_back(glm::ivec2(32, 304));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 4, 0, path, 0, 0.1f));
-	path.clear();
-	path.push_back(glm::ivec2(0, 320));
-	path.push_back(glm::ivec2(0, 304));
-	path.push_back(glm::ivec2(48, 304));
-	path.push_back(glm::ivec2(48, 288));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 5, 0, path, 0, 0.1f));
-	path.clear();
-	path.push_back(glm::ivec2(0, 320));
-	path.push_back(glm::ivec2(0, 304));
-	path.push_back(glm::ivec2(32, 304));
-	path.push_back(glm::ivec2(32, 288));
-	path.push_back(glm::ivec2(64, 288));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 6, 0, path, 0, 0.1f));
-	path.clear();
-	path.push_back(glm::ivec2(0, 320));
-	path.push_back(glm::ivec2(0, 288));
-	path.push_back(glm::ivec2(32, 288));
-	intro->actions.push_back(new AddSceneUnit(NEW_SCENE_UNIT_ACTION, 6, 0, path));
-
-	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 14));
-
-	//Halvan's shit
-	path.clear();
-	path.push_back(glm::ivec2(32, 288));
-	path.push_back(glm::ivec2(32, 272));
-	path.push_back(glm::ivec2(64, 272));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0.2f));
-
-	path.clear();
-	path.push_back(glm::ivec2(64, 272));
-	path.push_back(glm::ivec2(64, 240));
-	path.push_back(glm::ivec2(80, 240));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0.2f));
-
-	path.clear();
-	path.push_back(glm::ivec2(80, 240));
-	path.push_back(glm::ivec2(80, 224));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0, 0.5f, 2));
-
-	path.clear();
-	path.push_back(glm::ivec2(80, 224));
-	path.push_back(glm::ivec2(80, 240));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0.2f));
-
-	path.clear();
-	path.push_back(glm::ivec2(80, 240));
-	path.push_back(glm::ivec2(64, 240));
-	path.push_back(glm::ivec2(64, 272));
-	path.push_back(glm::ivec2(32, 272));
-	path.push_back(glm::ivec2(32, 288));
-	intro->actions.push_back(new SceneUnitMove(SCENE_UNIT_MOVE_ACTION, 22, path, 0, 2));
-
-	intro->actions.push_back(new DialogueAction(DIALOGUE_ACTION, 15));
-
-	intro->init();*/
-
-	//sceneManager.scenes[1]->extraSetup(&roundSubject);
 
 	map.close();
 
@@ -1636,9 +1487,7 @@ void loadMap(std::string nextMap, UnitEvents* unitEvents)
 	camera = Camera(256, 224, levelWidth, levelHeight);
 
 	camera.setPosition(glm::vec2(0, 0));
-	//	camera.setScale(2.0f);
 	camera.update();
-
 }
 
 void Draw()
@@ -1649,7 +1498,11 @@ void Draw()
 	bool fullScreenMenu = false;
 	bool drawingMenu = false;
 
-	if (gameOverMode.canDraw)
+	if (titleScreen)
+	{
+		titleScreen->Draw(Renderer, Text, camera);
+	}
+	else if (gameOverMode.canDraw)
 	{
 		gameOverMode.DrawBG(Renderer, camera);
 	}
@@ -1734,7 +1587,7 @@ void Draw()
 		minimap.Draw(playerManager.units, enemyManager.units, camera, shapeVAO, Renderer);
 
 		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", gameOverMode.fadeOutAlpha);
+		ResourceManager::GetShader("shape").SetFloat("alpha", fadeAlpha);
 		glm::mat4 model = glm::mat4();
 		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
 		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
@@ -2137,7 +1990,7 @@ void SuspendGame()
 		}
 	}
 
-	std::ofstream file("test_out.json");
+	std::ofstream file("suspendData.json");
 	if (file.is_open()) {
 		file << j.dump(4);  // Pretty-print with 4-space indentation
 		file.close();
@@ -2147,7 +2000,7 @@ void SuspendGame()
 //levelMap should probably be part of the saveFile
 void loadSuspendedGame()
 {
-	std::ifstream f("test_out.json");
+	std::ifstream f("suspendData.json");
 	json data = json::parse(f);
 
 	json mapLevel = data["Map"];
