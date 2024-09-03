@@ -23,6 +23,8 @@ void TitleScreen::init()
 	//Can't get the original resource, this is close enough
 	ResourceManager::LoadSound("Sounds/minimapOpen.wav", "minimapOpen");
 
+	ResourceManager::LoadSound("Sounds/titleconfirm.wav", "titleconfirm");
+
 	ResourceManager::PlayMusic("TitleScreen");
 
 	std::ifstream suspend("suspendData.json");

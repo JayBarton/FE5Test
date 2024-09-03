@@ -5093,6 +5093,7 @@ void TitleMenu::Draw()
 void TitleMenu::SelectOption()
 {
 	fadingOut = true;
+	ResourceManager::PlaySound("titleconfirm");
 	Mix_HookMusicFinished(nullptr);
 	Mix_FadeOutMusic(500.0f);
 }
