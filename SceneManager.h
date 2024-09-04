@@ -84,6 +84,7 @@ struct Activation
 	Scene* owner;
 	Activation(Scene* owner, int type) : type(type), owner(owner)
 	{}
+	virtual ~Activation() {}
 	virtual void CheckActivation() = 0;
 
 };
@@ -99,7 +100,7 @@ struct EnemyTurnEnd : public Activation
 	EnemyTurnEnd(Scene* owner, int type, int round);
 
 	//need virtual destructor
-	~EnemyTurnEnd();
+	~EnemyTurnEnd() override;
 
 	virtual void CheckActivation() override
 	{

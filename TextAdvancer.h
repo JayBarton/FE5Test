@@ -103,7 +103,7 @@ struct TextObjectManager
 
 	float battleBoxTimer = 0.0f;
 
-	float t;
+	float t = 0.0f;
 
 	std::vector<SpeakerText> textLines;
 	std::vector<TextObject> textObjects;
@@ -113,7 +113,7 @@ struct TextObjectManager
 	std::vector<glm::vec4> battleBoxIndicator;
 	glm::vec4 battleTextUV;
 
-	TextObjectState state;
+	TextObjectState state = WAITING_ON_INPUT;
 
 	TextObjectManager();
 	void setUVs();

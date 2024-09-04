@@ -207,9 +207,19 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			//4: Skip directly to the next line without waiting on player input
 			else if (nextOption == 1)
 			{
-				state = PORTRAIT_FADE_OUT;
-				finishing = true;
-				focusedObject = 0; //Just temporary
+				if (showBoxAnyway)
+				{
+					state = LAYER_1_FADE_IN;
+					finishing = false;
+
+					fadeIn = false;
+				}
+				else
+				{
+					state = PORTRAIT_FADE_OUT;
+					finishing = true;
+					focusedObject = 0; //Just temporary
+				}
 			}
 			else if (nextOption == 3)
 			{
@@ -332,18 +342,8 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				}
 				if (!textObjects[nextObject].showPortrait)
 				{
-					if (showBoxAnyway)
-					{
-						state = LAYER_1_FADE_IN;
-						finishing = false;
-
-						fadeIn = false;
-					}
-					else
-					{
-						state = FADE_BOX_OUT;
-						boxFadeOut = true;
-					}
+					state = FADE_BOX_OUT;
+					boxFadeOut = true;
 				}
 			}
 			else

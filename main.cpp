@@ -89,6 +89,8 @@ bool fadingIn = false;
 //I am not reloading assets if the game returns to the title
 bool loaded = false;
 bool returningToMenu = false;
+bool menuDelay = false;
+bool endDelay = false;
 
 SDL_Window *window;
 SpriteRenderer* Renderer;
@@ -192,7 +194,7 @@ struct GameOverMode
 			fadeOutAlpha += fadeTime * deltaTime;
 			if (fadeOutAlpha >= 1.0f)
 			{
-				fadeOutAlpha = 1.0f;
+				fadeOutAlpha = 0.0f;
 				state = FADE_IN_BG;
 				canDraw = true;
 				ResourceManager::PlayMusic("GameOver");
@@ -251,7 +253,7 @@ int idleAnimationDirection = 1;
 float timeForFrame = 0.0f;
 float carryBlinkTime = 0.0f;
 
-
+float endingDelayTimer = 0.0f;
 
 struct UnitEvents : public Observer<Unit*>
 {
@@ -424,8 +426,11 @@ struct EndingEvents : public Observer<>
 {
 	virtual void onNotify()
 	{
-		//Probably want a delay before this...
+		endingDelayTimer = 0.0f;
 		endingGame = true;
+		endDelay = true;
+		Mix_HookMusicFinished(nullptr);
+		Mix_FadeOutMusic(500.0f);
 		textManager.EndingScene();
 		sceneManager.scenes[endingID]->activation->CheckActivation();
 	}
@@ -441,7 +446,7 @@ struct SuspendEvent : public Observer<int>
 		}
 		else
 		{
-			endingGame = true;
+			returningToMenu = true;
 		}
 	}
 };
@@ -476,8 +481,12 @@ struct StartGameEvent : public Observer<int>
 	virtual void onNotify(int ID)
 	{
 		Mix_VolumeMusic(128);
+		textManager = TextObjectManager();
+		textManager.setUVs();
+		gameOverMode = GameOverMode();
 		fadingIn = true;
 		fadeAlpha = 1.0f;
+		currentTurn = 0;
 		if (!loaded)
 		{
 			LoadEverythingElse(observers);
@@ -486,6 +495,7 @@ struct StartGameEvent : public Observer<int>
 		{
 			//start new game
 			loadMap("2.map");
+			currentRound = 0;
 			cursor.SetFocus(playerManager.units[0]);
 		}
 		else
@@ -652,12 +662,31 @@ int main(int argc, char** argv)
 		}*/
 		if (returningToMenu)
 		{
-			ClearMap();
-			titleScreen = new TitleScreen();
-			titleScreen->subject.addObserver(startEvent);
-			titleScreen->init();
-			SetShaderDefaults();
-			returningToMenu = false;
+			if (menuDelay)
+			{
+				endingDelayTimer += deltaTime;
+				if (endingDelayTimer >= 1.0f)
+				{
+					endingDelayTimer = 1.0f;
+					menuDelay = false;
+					Mix_HookMusicFinished(nullptr);
+					Mix_FadeOutMusic(500.0f);
+				}
+				fadeAlpha = glm::mix(0.0f, 1.0f, endingDelayTimer);
+			}
+			else
+			{
+				ClearMap();
+				cursor.ClearTiles();
+			//	roundSubject
+			//	roundSubject.observers.clear();
+				titleScreen = new TitleScreen();
+				titleScreen->subject.addObserver(startEvent);
+				titleScreen->init();
+				SetShaderDefaults();
+				returningToMenu = false;
+				fadeAlpha = 0.0f;
+			}
 		}
 		else if (titleScreen)
 		{
@@ -669,7 +698,17 @@ int main(int argc, char** argv)
 			CarryIconAnimation();
 			if (endingGame)
 			{
-				if (textManager.active)
+				if (endDelay)
+				{
+					endingDelayTimer += deltaTime;
+					if (endingDelayTimer >= 1.0f)
+					{
+						endingDelayTimer = 0.0f;
+						ResourceManager::PlayMusic("Victory");
+						endDelay = false;
+					}
+				}
+				else if (textManager.active)
 				{
 					textManager.Update(deltaTime, inputManager, true);
 					if (inputManager.isKeyPressed(SDLK_SPACE))
@@ -681,9 +720,12 @@ int main(int argc, char** argv)
 				{
 					sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 				}
-				else //Currently end up here if we ended the game via the suspend menu
+				else
 				{
+					fadeAlpha = 0.0f;
+					endingDelayTimer = 0.0f;
 					returningToMenu = true;
+					menuDelay = true;
 					endingGame = false;
 				}
 			}
@@ -781,7 +823,10 @@ int main(int argc, char** argv)
 								if (inputManager.isKeyPressed(SDLK_RETURN))
 								{
 									//Return to main menu
-									isRunning = false;
+									returningToMenu = true;
+									menuDelay = true;
+									fadeAlpha = 0.0f;
+									endingDelayTimer = 0.0f;
 								}
 							}
 							else
@@ -864,6 +909,7 @@ void ClearMap()
 	playerManager.Clear();
 	for (int i = 0; i < sceneManager.scenes.size(); i++)
 	{
+		sceneManager.scenes[i]->ClearActions();
 		delete sceneManager.scenes[i];
 	}
 	sceneManager.scenes.clear();
@@ -982,6 +1028,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	ResourceManager::LoadMusic("Sounds/BossStart.ogg", "BossStart");
 	ResourceManager::LoadMusic("Sounds/BossLoop.ogg", "BossLoop");
 	ResourceManager::LoadMusic("Sounds/GameOver.ogg", "GameOver");
+	ResourceManager::LoadMusic("Sounds/Victory.ogg", "Victory");
 
 	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
 
@@ -1542,7 +1589,7 @@ void Draw()
 	}
 	else if (textManager.showBG)
 	{
-		if (textManager.active)
+//		if (textManager.ShowText())
 		{
 			textManager.Draw(Text, Renderer, &camera);
 		}
@@ -1619,20 +1666,19 @@ void Draw()
 			}
 		}
 		minimap.Draw(playerManager.units, enemyManager.units, camera, shapeVAO, Renderer);
-
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", fadeAlpha);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
 	}
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", fadeAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 	SDL_GL_SwapWindow(window);
 }
 
@@ -1726,23 +1772,6 @@ void DrawUnitRanges()
 		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
 
 		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-	}
-
-	for (int i = 0; i < cursor.drawnPath.size(); i++)
-	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(cursor.drawnPath[i], 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
 
 		ResourceManager::GetShader("shape").SetMatrix4("model", model);
 		glBindVertexArray(shapeVAO);

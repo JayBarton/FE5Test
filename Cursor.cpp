@@ -97,9 +97,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 						if (path.find(position) != path.end())
 						{
 							glm::vec2 pathPoint = position;
-							drawnPath.clear();
+							std::vector<glm::ivec2> drawnPath;
 							drawnPath.push_back(pathPoint);
-							//This is just to make sure I can find a path to follow once I begin animating the units
 							while (pathPoint != unitCurrentPosition)
 							{
 								auto previous = path[pathPoint].previousPosition;
@@ -193,8 +192,11 @@ void Cursor::ClearTiles()
 
 void Cursor::ClearSelected()
 {
-	selectedUnit->sprite.moveAnimate = false;
-	selectedUnit = nullptr;
+	if (selectedUnit)
+	{
+		selectedUnit->sprite.moveAnimate = false;
+		selectedUnit = nullptr;
+	}
 }
 
 void Cursor::MovementInput(InputManager& inputManager, float deltaTime)
@@ -356,14 +358,12 @@ void Cursor::MoveUnitToTile()
 	selectedUnit->ClearPathData();
 	TileManager::tileManager.removeUnit(previousPosition.x, previousPosition.y);
 	selectedUnit->placeUnit(position.x, position.y);
-	drawnPath.clear();
 }
 
 void Cursor::GetRemainingMove()
 {
 	remainingMove = true;
 	MoveUnitToTile();
-	drawnPath.clear();
 	path.clear();
 
 	previousPosition = position;
@@ -386,7 +386,6 @@ void Cursor::UndoMove()
 	position = previousPosition;
 	selectedUnit->placeUnit(position.x, position.y);
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
-	drawnPath.clear();
 	Undo();
 }
 

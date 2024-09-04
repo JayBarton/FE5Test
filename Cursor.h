@@ -16,8 +16,6 @@ struct Cursor
 
 	//This can probably be a map of vec2s rather than this pathPoint thing
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
-	//Temporary, just using to visualize the path taken
-	std::vector<glm::ivec2> drawnPath;
 
 	glm::vec2 previousPosition;
 	glm::vec2 movePosition;
