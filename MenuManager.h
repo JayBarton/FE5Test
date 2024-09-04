@@ -522,10 +522,14 @@ struct SuspendMenu : public Menu
 	bool suspended = false;
 	bool opening = false;
 	bool closing = false;
+	bool returningToMenu = false;
 
 	float delay = 0.0f;
 	float fadeValue = 0.0f;
 	float fadeValueMax = 0.525f;
+	float menuReturnTimer = 0.0f;
+	
+	float fadeOut = 0.0f;
 };
 
 struct TitleMenu : public Menu

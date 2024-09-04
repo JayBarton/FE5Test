@@ -4964,6 +4964,22 @@ void SuspendMenu::Draw()
 		Renderer->setUVs(UnitResources::portraitUVs[20][0]);
 		Renderer->DrawSprite(portraitTexture, glm::vec2(104, 40), 0, glm::vec2(48, 64), glm::vec4(1), true);
 	}
+	if (returningToMenu)
+	{
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", fadeOut);
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+		model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 }
 
 void SuspendMenu::SelectOption()
@@ -4982,6 +4998,16 @@ void SuspendMenu::SelectOption()
 
 void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
+	if (returningToMenu)
+	{
+		menuReturnTimer += deltaTime;
+		if (menuReturnTimer >= 1.0f)
+		{
+			menuReturnTimer = 1.0f;
+			MenuManager::menuManager.suspendSubject.notify(1);
+		}
+		fadeOut = glm::mix(0.0f, 1.0f, menuReturnTimer);
+	}
 	if (opening)
 	{
 		delay += deltaTime;
@@ -5010,7 +5036,9 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			if (inputManager.isKeyPressed(SDLK_SPACE))
 			{
-				MenuManager::menuManager.suspendSubject.notify(1);
+				returningToMenu = true;
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(1000.0f);
 			}
 		}
 		else
@@ -5018,7 +5046,7 @@ void SuspendMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			MenuManager::menuManager.AnimateIndicator(deltaTime);
 			if (inputManager.isKeyPressed(SDLK_LEFT))
 			{
-				NextOption();
+				PreviousOption();
 			}
 			if (inputManager.isKeyPressed(SDLK_RIGHT))
 			{

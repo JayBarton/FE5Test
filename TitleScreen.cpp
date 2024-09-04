@@ -33,6 +33,8 @@ void TitleScreen::init()
 		suspend.close();
 		foundSuspend = true;
 	}
+	ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", wholeTitleFade, true);
+
 }
 
 void TitleScreen::Update(float deltaTime, InputManager& inputManager)

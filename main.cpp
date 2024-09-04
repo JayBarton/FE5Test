@@ -65,6 +65,8 @@ void StartTurnChecks();
 void PlayerUpdate(GLfloat deltaTime);
 void EnemyUpdate(GLfloat deltaTime);
 void LoadEverythingElse(std::vector<IObserver*>& observers);
+void SetShaderDefaults();
+void ClearMap();
 void CarryIconAnimation();
 void Draw();
 void DrawUnits();
@@ -78,6 +80,15 @@ void SuspendGame();
 void PlayerTurnMusic();
 
 const static int TILE_SIZE = 16;
+
+bool endingGame = false;
+bool turnTransition = false;
+bool turnDisplay = false;
+bool showCarry = false;
+bool fadingIn = false;
+//I am not reloading assets if the game returns to the title
+bool loaded = false;
+bool returningToMenu = false;
 
 SDL_Window *window;
 SpriteRenderer* Renderer;
@@ -119,7 +130,6 @@ std::vector<glm::vec4> nameBoxUVs;
 
 glm::ivec2 seizePoint;
 int endingID = -1;
-bool endingGame = false;
 
 //0 = standard
 //1 = winning
@@ -232,8 +242,6 @@ float unitSpeed = 2.5f;
 
 int currentRound = 0;
 int currentTurn = 0;
-bool turnTransition = false;
-bool turnDisplay = false;
 
 //Ugh. To handle healing units on turn transition
 int turnUnit = 0;
@@ -243,7 +251,7 @@ int idleAnimationDirection = 1;
 float timeForFrame = 0.0f;
 float carryBlinkTime = 0.0f;
 
-bool showCarry = false;
+
 
 struct UnitEvents : public Observer<Unit*>
 {
@@ -463,7 +471,6 @@ std::vector<IObserver*> observers;
 void loadMap(std::string nextMap);
 void loadSuspendedGame();
 
-bool fadingIn = false;
 struct StartGameEvent : public Observer<int>
 {
 	virtual void onNotify(int ID)
@@ -471,7 +478,10 @@ struct StartGameEvent : public Observer<int>
 		Mix_VolumeMusic(128);
 		fadingIn = true;
 		fadeAlpha = 1.0f;
-		LoadEverythingElse(observers);
+		if (!loaded)
+		{
+			LoadEverythingElse(observers);
+		}
 		if (ID == 0)
 		{
 			//start new game
@@ -565,39 +575,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFullFragmentShader.txt", nullptr, "sliceFull");
 	ResourceManager::LoadShader("Shaders/clipVertexShader.txt", "Shaders/clipFragmentShader.txt", nullptr, "clip");
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-
-	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1.0f);
-
-	ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
-
-	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("sprite").SetInteger("palette", 1);
-	ResourceManager::GetShader("sprite").SetInteger("BattleFadeIn", 2);
-	ResourceManager::GetShader("sprite").SetVector2f("screenResolution", glm::vec2(286, 224));
-	ResourceManager::GetShader("sprite").SetInteger("battleScreen", 0);
-	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
-
-	ResourceManager::GetShader("Nsprite").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0);
-
-	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("instance").SetVector4f("spriteColor", glm::vec4(1));
-	ResourceManager::GetShader("instance").SetFloat("backgroundFade", 0);
-
-	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
-
-	ResourceManager::GetShader("sliceFull").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera.getOrthoMatrix());
-
-	ResourceManager::GetShader("clip").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("clip").SetMatrix4("projection", camera.getOrthoMatrix());
+	SetShaderDefaults();
 
 	Text = new TextRenderer(800, 600);
 	Text->Load("fonts/chary___.TTF", 30);
@@ -672,8 +650,16 @@ int main(int argc, char** argv)
 
 			resizeWindow(1920, 1080);
 		}*/
-
-		if (titleScreen)
+		if (returningToMenu)
+		{
+			ClearMap();
+			titleScreen = new TitleScreen();
+			titleScreen->subject.addObserver(startEvent);
+			titleScreen->init();
+			SetShaderDefaults();
+			returningToMenu = false;
+		}
+		else if (titleScreen)
 		{
 			titleScreen->Update(deltaTime, inputManager);
 		}
@@ -695,9 +681,10 @@ int main(int argc, char** argv)
 				{
 					sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 				}
-				else
+				else //Currently end up here if we ended the game via the suspend menu
 				{
-					isRunning = false;
+					returningToMenu = true;
+					endingGame = false;
 				}
 			}
 			else if (fadingIn)
@@ -845,26 +832,20 @@ int main(int argc, char** argv)
 		fps = fpsLimiter.end();
 	}
 
+	ClearMap();
+
+	ResourceManager::Clear();
+
 	delete Renderer;
 	delete Text;
 	delete titleScreen;
-	enemyManager.Clear();
-	playerManager.Clear();
-	for (int i = 0; i < sceneManager.scenes.size(); i++)
-	{
-		delete sceneManager.scenes[i];
-	}
-	ResourceManager::Clear();
+
 	for (int i = 0; i < observers.size(); i++)
 	{
 		delete observers[i];
 		observers[i] = nullptr;
 	}
-
 	delete startEvent;
-
-	MenuManager::menuManager.ClearMenu();
-	TileManager::tileManager.clearTiles();
 
 	SDL_DestroyWindow(window);
 	window = nullptr;
@@ -875,6 +856,57 @@ int main(int argc, char** argv)
 	Mix_Quit();
 
 	return 0;
+}
+
+void ClearMap()
+{
+	enemyManager.Clear();
+	playerManager.Clear();
+	for (int i = 0; i < sceneManager.scenes.size(); i++)
+	{
+		delete sceneManager.scenes[i];
+	}
+	sceneManager.scenes.clear();
+
+	MenuManager::menuManager.ClearMenu();
+	TileManager::tileManager.clearTiles();
+}
+
+void SetShaderDefaults()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("sprite").SetInteger("palette", 1);
+	ResourceManager::GetShader("sprite").SetInteger("BattleFadeIn", 2);
+	ResourceManager::GetShader("sprite").SetVector2f("screenResolution", glm::vec2(286, 224));
+	ResourceManager::GetShader("sprite").SetInteger("battleScreen", 0);
+	ResourceManager::GetShader("sprite").SetMatrix4("projection", camera.getCameraMatrix());
+
+	ResourceManager::GetShader("Nsprite").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0);
+
+	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("instance").SetVector4f("spriteColor", glm::vec4(1));
+	ResourceManager::GetShader("instance").SetFloat("backgroundFade", 0);
+
+	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
+
+	ResourceManager::GetShader("sliceFull").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("sliceFull").SetMatrix4("projection", camera.getOrthoMatrix());
+
+	ResourceManager::GetShader("clip").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("clip").SetMatrix4("projection", camera.getOrthoMatrix());
 }
 
 void LoadEverythingElse(std::vector<IObserver*>& observers)
@@ -1006,6 +1038,8 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	enemyManager.subject.addObserver(turnEvents);
 	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;
+
+	loaded = true;
 }
 
 void EnemyUpdate(GLfloat deltaTime)

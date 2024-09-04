@@ -200,7 +200,6 @@ void ResourceManager::Clear()
         Mix_FreeChunk(iter.second);
         iter.second = nullptr;
     }
-
     for (auto iter : Music)
     {
         Mix_FreeMusic(iter.second);

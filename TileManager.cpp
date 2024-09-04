@@ -294,12 +294,8 @@ void TileManager::PositionToTile(int &xass, int &yass)
 
 void TileManager::clearTiles()
 {
-    //Free the tiles
-    for(int i = 0; i < totalTiles; i ++)
-    {
-        //   delete tiles[i];
-    }
     delete [] tiles;
+    tiles = nullptr;
 }
 
 void TileManager::cleanUp()
