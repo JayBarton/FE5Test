@@ -594,6 +594,7 @@ struct MenuManager
 	
 	glm::vec4 indicatorUV;
 	glm::vec4 statBarUV;
+	glm::vec4 malusArrowUV;
 
 	glm::vec2 indicatorPosition;
 	float indicatorDrawX;

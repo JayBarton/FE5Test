@@ -23,6 +23,7 @@ void InfoDisplays::init(TextObjectManager* textManager)
 	this->textManager = textManager;
 
 	arrowUV = ResourceManager::GetTexture("UIItems").GetUVs(8, 54, 7, 8, 1, 1)[0];
+	turnTextUVs = ResourceManager::GetTexture("UIItems").GetUVs(256, 0, 134, 22, 1, 4);
 }
 
 void InfoDisplays::AddExperience(Unit* unit, Unit* foe, glm::vec2 levelUpPosition)
@@ -154,8 +155,12 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	state = TURN_CHANGE;
 	turnChangeStart = true;
 	turnDisplayAlpha = 0.0f;
-	turnTextX = -100;
+	turnTextX = 28;
+	turnTextAlpha1 = 0.0f;
+	turnTextAlpha2 = 0.0f;
 	displayTimer = 0.0f;
+	turnText2 = 0.0f;
+	secondTurnText = false;
 	playTurnChange = true;
 }
 
@@ -415,10 +420,24 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 			{
 				turnDisplayAlpha = turnDisplayMaxAlpha;
 			}
-			turnTextX += deltaTime + 30;
-			if (turnTextX >= turnTextXFinal)
+			float t = displayTimer / turnTextIn;
+			if (t >= 1)
 			{
-				turnTextX = turnTextXFinal;
+				t = 1;
+				secondTurnText = true;
+			}
+			turnTextX = glm::mix(28, 62, t);
+			turnTextAlpha1 = glm::mix(0.0f, 1.0f, t);
+
+			if (secondTurnText)
+			{
+				turnText2 += deltaTime;
+				t = turnText2 / turnTextIn;
+				if (t >= 1)
+				{
+					t = 1;
+				}
+				turnTextAlpha2 = glm::mix(0.0f, 1.0f, t);
 			}
 		}
 		else
@@ -428,6 +447,13 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 			{
 				turnDisplayAlpha = 0;
 			}
+			float t = displayTimer / turnTextIn;
+			if (t >= 1)
+			{
+				t = 1;
+			}
+			turnTextAlpha1 = glm::mix(1.0f, 0.0f, displayTimer);
+			turnTextAlpha2 = glm::mix(1.0f, 0.0f, t);
 		}
 		if (displayTimer > turnDisplayTime)
 		{
@@ -438,6 +464,7 @@ void InfoDisplays::TurnChangeUpdate(InputManager& inputManager, float deltaTime)
 			}
 			else
 			{
+				secondTurnText = false;
 				state = NONE;
 			}
 		}
@@ -797,6 +824,18 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		ResourceManager::GetShader("instance").Use().SetFloat("subtractValue", turnDisplayAlpha);
 		ResourceManager::GetShader("NSprite").Use().SetFloat("subtractValue", turnDisplayAlpha);
 		ResourceManager::GetShader("sprite").Use().SetFloat("subtractValue", turnDisplayAlpha);
+
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("UIItems");
+		renderer->setUVs(turnTextUVs[turn]);
+		renderer->DrawSprite(texture, glm::vec2(turnTextX, 97), 0.0f, glm::ivec2(134, 22), glm::vec4(1, 1, 1, turnTextAlpha1));
+		if (secondTurnText)
+		{
+			renderer->setUVs(turnTextUVs[turn + 2]);
+			renderer->DrawSprite(texture, glm::vec2(62, 97), 0.0f, glm::ivec2(134, 22), glm::vec4(1, 1, 1, turnTextAlpha2));
+		}
+
 		std::string thisTurn;
 		if (turn == 0)
 		{
@@ -807,7 +846,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 			thisTurn = "Enemy Turn";
 		}
 		//Using text now, I think I'll use a sprite ultimately
-		Text->RenderText(thisTurn, turnTextX, 300, 1);
+	//	Text->RenderText(thisTurn, turnTextX, 300, 1);
 		break;
 	}
 	case UNIT_ESCAPED:

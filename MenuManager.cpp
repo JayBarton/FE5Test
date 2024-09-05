@@ -1519,48 +1519,36 @@ void SelectTalkMenu::Draw()
 	auto talkUnit = talkUnits[currentOption];
 
 	auto targetPosition = talkUnit->sprite.getPosition();
-	int xText = 536;
-	int xIndicator = 169;
-	int boxHeight = 96;
+	int xText = 550;
+	int xIndicator = 168;
+	int boxHeight = 98;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 32;
-		xIndicator = 7;
+		xText = 50;
+		xIndicator = 8;
 	}
-
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
-
-	model = glm::scale(model, glm::vec3(80, boxHeight, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawBox(glm::vec2(xIndicator, 8), 82, boxHeight);
 
 	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
 	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
-	int textHeight = 100;
+	int textHeight = 53;
 	text->RenderText(talkUnit->name, xText, textHeight, 1);
-	textHeight += 30;
+	textHeight += 42;
 	text->RenderText(talkUnit->unitClass, xText, textHeight, 1);
-	textHeight += 30;
+	textHeight += 42;
 	if (auto weapon = talkUnit->GetEquippedItem())
 	{
 		text->RenderText(weapon->name, xText, textHeight, 1);
 	}
-	textHeight += 30;
-	text->RenderText(intToString(talkUnit->level), xText + 40, textHeight, 1);
-	textHeight += 30;
-	text->RenderText("HP" + intToString(talkUnit->maxHP) + "/" + intToString(talkUnit->currentHP), xText, textHeight, 1);
+	textHeight += 42;
+	text->RenderTextRight(intToString(talkUnit->level), xText + 150, textHeight, 1, 28);
+	textHeight += 42;
+	text->RenderText("HP", xText, textHeight, 1);
+	text->RenderText(intToString(talkUnit->maxHP) + "/" + intToString(talkUnit->currentHP), xText + 75, textHeight, 1);
 }
 
 void SelectTalkMenu::SelectOption()
@@ -2078,6 +2066,19 @@ void UnitStatsViewMenu::DrawPage1()
 	Renderer->setUVs();
 	Renderer->DrawSprite(texture, glm::vec2(0, 79 - (224 - yOffset)), 0, glm::vec2(256, 145));
 
+
+	if (unit->carryingMalus > 1)
+	{
+		texture = ResourceManager::GetTexture("UIItems");
+
+		Renderer->setUVs(MenuManager::menuManager.malusArrowUV);
+		Renderer->DrawSprite(texture, glm::vec2(56, 98 - (224 - yOffset)), 0, glm::vec2(8, 10));
+		Renderer->DrawSprite(texture, glm::vec2(56, 114 - (224 - yOffset)), 0, glm::vec2(8, 10));
+		Renderer->DrawSprite(texture, glm::vec2(56, 130 - (224 - yOffset)), 0, glm::vec2(8, 10));
+		Renderer->DrawSprite(texture, glm::vec2(56, 146 - (224 - yOffset)), 0, glm::vec2(8, 10));
+		Renderer->DrawSprite(texture, glm::vec2(56, 178 - (224 - yOffset)), 0, glm::vec2(8, 10));
+	}
+
 	x = 200;
 	//Going to need an indication of what stats are affected by modifiers
 	text->RenderTextRight(intToString(str), x, 270 - adjustedOffset, 1, 28, glm::vec3(0.78f, 0.92f, 1.0f));
@@ -2264,8 +2265,13 @@ void UnitStatsViewMenu::DrawPage2()
 		Renderer->setUVs(carryUVs[unit->carriedUnit->team]);
 		Renderer->DrawSprite(carryTexture, glm::vec2(39, 159 + yOffset), 0, glm::vec2(8));
 
+		if (unit->buildMalus > 1)
+		{
+			Renderer->setUVs(MenuManager::menuManager.malusArrowUV);
+			Renderer->DrawSprite(carryTexture, glm::vec2(32, 171 + yOffset), 0, glm::vec2(8, 10));
+		}
+
 		text->RenderText(unit->carriedUnit->name, 150, 420 + adjustedOffset, 1);
-		text->RenderText("V", 100, 466 + adjustedOffset, 1); //replace with arrow sprite later
 	}
 	else if (unit->carryingUnit)
 	{
@@ -2703,47 +2709,36 @@ void SelectRescueUnit::Draw()
 	int boxHeight = 98;
 
 	auto targetPosition = rescueUnit->sprite.getPosition();
-	int xText = 536;
-	int xIndicator = 169;
+	int xText = 550;
+	int xIndicator = 168;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 32;
-		xIndicator = 7;
+		xText = 50;
+		xIndicator = 8;
 	}
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
-
-	model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawBox(glm::vec2(xIndicator, 8), 82, boxHeight);
 
 	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
 	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
-	int textHeight = 100;
+	int textHeight = 53;
 	text->RenderText(rescueUnit->name, xText, textHeight, 1);
-	textHeight += 30;
+	textHeight += 42;
 	text->RenderText(rescueUnit->unitClass, xText, textHeight, 1);
-	textHeight += 30;
+	textHeight += 42;
 	if (auto weapon = rescueUnit->GetEquippedItem())
 	{
 		text->RenderText(weapon->name, xText, textHeight, 1);
 	}
-	textHeight += 30;
-	text->RenderText(intToString(rescueUnit->level), xText + 40, textHeight, 1);
-	textHeight += 30;
-	text->RenderText("HP" + intToString(rescueUnit->maxHP) + "/" + intToString(rescueUnit->currentHP), xText, textHeight, 1);
+	textHeight += 42;
+	text->RenderTextRight(intToString(rescueUnit->level), xText + 150, textHeight, 1, 28);
+	textHeight += 42;
+	text->RenderText("HP", xText, textHeight, 1);
+	text->RenderText(intToString(rescueUnit->maxHP) + "/" + intToString(rescueUnit->currentHP), xText + 75, textHeight, 1);
 }
 
 void SelectRescueUnit::SelectOption()
@@ -2862,47 +2857,37 @@ void SelectTransferUnit::Draw()
 	int boxHeight = 98;
 
 	auto targetPosition = transferUnit->sprite.getPosition();
-	int xText = 536;
-	int xIndicator = 169;
+
+	int xText = 550;
+	int xIndicator = 168;
 	glm::vec2 fixedPosition = camera->worldToScreen(targetPosition);
 	if (fixedPosition.x >= camera->screenWidth * 0.5f)
 	{
-		xText = 32;
-		xIndicator = 7;
+		xText = 50;
+		xIndicator = 8;
 	}
 
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 10, 0.0f));
-
-	model = glm::scale(model, glm::vec3(82, boxHeight, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawBox(glm::vec2(xIndicator, 8), 82, boxHeight);
 
 	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
 	Unit* unit = cursor->selectedUnit;
 	Renderer->DrawSprite(displayTexture, targetPosition - glm::vec2(3), 0.0f, cursor->dimensions);
 
-	int textHeight = 100;
+	int textHeight = 53;
 	text->RenderText(transferUnit->name, xText, textHeight, 1);
-	textHeight += 30;
+	textHeight += 42;
 	text->RenderText(transferUnit->unitClass, xText, textHeight, 1);
-	textHeight += 30;
+	textHeight += 42;
 	if (auto weapon = transferUnit->GetEquippedItem())
 	{
 		text->RenderText(weapon->name, xText, textHeight, 1);
 	}
-	textHeight += 30;
-	text->RenderText(intToString(transferUnit->level), xText + 40, textHeight, 1);
-	textHeight += 30;
-	text->RenderText("HP" + intToString(transferUnit->maxHP) + "/" + intToString(transferUnit->currentHP), xText, textHeight, 1);
+	textHeight += 42;
+	text->RenderTextRight(intToString(transferUnit->level), xText + 150, textHeight, 1, 28);
+	textHeight += 42;
+	text->RenderText("HP", xText, textHeight, 1);
+	text->RenderText(intToString(transferUnit->maxHP) + "/" + intToString(transferUnit->currentHP), xText + 75, textHeight, 1);
 }
 
 void SelectTransferUnit::SelectOption()
@@ -5233,6 +5218,7 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	carryingIconsUVs = uiTexture.GetUVs(32, 54, 8, 8, 2, 1);
 	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
 	skillHighlightUVs = uiTexture.GetUVs(32, 96, 16, 16, 4, 1);
+	malusArrowUV = uiTexture.GetUVs(16, 54, 8, 10, 1, 1)[0];
 
 	auto boxesTexture = ResourceManager::GetTexture("UIStuff");
 	boxesUVs = boxesTexture.GetUVs(0, 0, 32, 32, 3, 1);

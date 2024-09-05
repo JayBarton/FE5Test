@@ -47,6 +47,7 @@ struct InfoDisplays
 	StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
 
 	glm::vec4 arrowUV;
+	std::vector<glm::vec4> turnTextUVs;
 
 	float arrowY;
 	float arrowT;
@@ -59,12 +60,16 @@ struct InfoDisplays
 	float healDisplayTime = 0.026f;
 	float healDelayTime = 0.5f;
 	float turnDisplayTime = 1.0f;
+	float turnTextIn = 0.3f;
+	float turnText2 = 0.0f;
 	float statDisplayTime = 0.5f;
 	float statViewTime = 5.0f;
 
 	float turnDisplayAlpha = 0.0f;
 	float turnDisplayMaxAlpha = 58.0f;
 
+	float turnTextAlpha1 = 0.0f;
+	float turnTextAlpha2 = 0.0f;
 	float turnTextX = -100;
 	int turnTextXFinal = 400;
 
@@ -76,6 +81,7 @@ struct InfoDisplays
 	bool finishedHealing = false;
 	bool usedItem = false;
 	bool turnChangeStart = false;
+	bool secondTurnText = false;
 	bool healDelay = false;
 	bool unitDeathFadeBack = false;
 	bool statDelay = false;
