@@ -1310,6 +1310,7 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 	attackDistance = abs(enemy->sprite.getPosition().x - unit->sprite.getPosition().x) + abs(enemy->sprite.getPosition().y - unit->sprite.getPosition().y);
 	attackDistance /= TileManager::TILE_SIZE;
 	auto enemyWeapon = enemy->GetEquippedWeapon();
+	auto unitWeapon = unit->GetWeaponData(unit->inventory[selectedWeapon]);
 	enemyCanCounter = false;
 	if (enemyWeapon.maxRange >= attackDistance && enemyWeapon.minRange <= attackDistance)
 	{
@@ -1317,84 +1318,16 @@ void SelectEnemyMenu::CanEnemyCounter(bool capturing /*= false */)
 	}
 
 	enemyNormalStats = enemy->CalculateBattleStats();
-
 	unitNormalStats = unit->CalculateBattleStats(unit->inventory[selectedWeapon]->ID);
-	auto unitWeapon = unit->GetWeaponData(unit->inventory[selectedWeapon]);
+
 	enemy->CalculateMagicDefense(enemyWeapon, enemyNormalStats, attackDistance);
 	unit->CalculateMagicDefense(unitWeapon, unitNormalStats, attackDistance);
-	int playerDefense = enemyNormalStats.attackType == 0 ? unit->getDefense() : unit->getMagic();
-	int enemyDefense = unitNormalStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic();
 
-	auto playerPosition = unit->sprite.getPosition();
-	auto playerTile = TileManager::tileManager.getTile(playerPosition.x, playerPosition.y);
-	playerDefense += playerTile->properties.defense;
-	unitNormalStats.hitAvoid += playerTile->properties.avoid;
-	auto enemyPosition = enemy->sprite.getPosition();
-	auto enemyTile = TileManager::tileManager.getTile(enemyPosition.x, enemyPosition.y);
-	enemyDefense += enemyTile->properties.defense;
-	enemyNormalStats.hitAvoid += enemyTile->properties.avoid;
+	MenuManager::menuManager.battleManager->CalculateFinalStats(unitNormalStats, enemyNormalStats, unit, enemy, unitWeapon, enemyWeapon);
 
-	//Physical weapon triangle bonus
-	if (unitWeapon.type == WeaponData::TYPE_SWORD)
-	{
-		if (enemyWeapon.type == WeaponData::TYPE_AXE)
-		{
-			unitNormalStats.hitAccuracy += 5;
-			enemyNormalStats.hitAccuracy -= 5;
-		}
-		else if (enemyWeapon.type == WeaponData::TYPE_LANCE)
-		{
-			unitNormalStats.hitAccuracy -= 5;
-			enemyNormalStats.hitAccuracy += 5;
-		}
-	}
-	else if (unitWeapon.type == WeaponData::TYPE_AXE)
-	{
-		if (enemyWeapon.type == WeaponData::TYPE_LANCE)
-		{
-			unitNormalStats.hitAccuracy += 5;
-			enemyNormalStats.hitAccuracy -= 5;
-		}
-		else if (enemyWeapon.type == WeaponData::TYPE_SWORD)
-		{
-			unitNormalStats.hitAccuracy -= 5;
-			enemyNormalStats.hitAccuracy += 5;
-		}
-	}
-	else if (unitWeapon.type == WeaponData::TYPE_LANCE)
-	{
-		if (enemyWeapon.type == WeaponData::TYPE_SWORD)
-		{
-			unitNormalStats.hitAccuracy += 5;
-			enemyNormalStats.hitAccuracy -= 5;
-		}
-		else if (enemyWeapon.type == WeaponData::TYPE_AXE)
-		{
-			unitNormalStats.hitAccuracy -= 5;
-			enemyNormalStats.hitAccuracy += 5;
-		}
-	}
-	unitNormalStats.hitAccuracy -= enemyNormalStats.hitAvoid;
-	enemyNormalStats.hitAccuracy -= unitNormalStats.hitAvoid;
+	playerStats = DisplayedBattleStats{ intToString(unit->level), intToString(unit->currentHP), intToString(unitNormalStats.attackDamage), intToString(unitNormalStats.defense), intToString(unitNormalStats.hitAccuracy), intToString(unitNormalStats.hitCrit), intToString(unitNormalStats.attackSpeed) };
 
-	unitNormalStats.hitAccuracy = std::max(0, unitNormalStats.hitAccuracy);
-
-	enemyNormalStats.hitAccuracy = std::max(0, enemyNormalStats.hitAccuracy);
-
-	int unitCritEvade = unit->getLuck() / 2;
-	int enemyCritEvade = enemy->getLuck() / 2;
-
-	unitNormalStats.hitCrit -= enemyCritEvade;
-	enemyNormalStats.hitCrit -= unitCritEvade;
-	unitNormalStats.hitCrit = std::min(unitNormalStats.hitCrit, 25);
-	unitNormalStats.hitCrit = std::max(0, unitNormalStats.hitCrit);
-
-	enemyNormalStats.hitCrit = std::min(enemyNormalStats.hitCrit, 25);
-	enemyNormalStats.hitCrit = std::max(0, enemyNormalStats.hitCrit);
-
-	playerStats = DisplayedBattleStats{ intToString(unit->level), intToString(unit->currentHP), intToString(unitNormalStats.attackDamage), intToString(playerDefense), intToString(unitNormalStats.hitAccuracy), intToString(unitNormalStats.hitCrit), intToString(unitNormalStats.attackSpeed) };
-
-	enemyStats = DisplayedBattleStats{ intToString(enemy->level), intToString(enemy->currentHP), intToString(enemyNormalStats.attackDamage), intToString(enemyDefense), intToString(enemyNormalStats.hitAccuracy), intToString(enemyNormalStats.hitCrit), intToString(enemyNormalStats.attackSpeed) };
+	enemyStats = DisplayedBattleStats{ intToString(enemy->level), intToString(enemy->currentHP), intToString(enemyNormalStats.attackDamage), intToString(enemyNormalStats.defense), intToString(enemyNormalStats.hitAccuracy), intToString(enemyNormalStats.hitCrit), intToString(enemyNormalStats.attackSpeed) };
 	if (!enemyCanCounter)
 	{
 		enemyStats.hit = "--";

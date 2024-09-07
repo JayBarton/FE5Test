@@ -585,6 +585,8 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFullFragmentShader.txt", nullptr, "sliceFull");
 	ResourceManager::LoadShader("Shaders/clipVertexShader.txt", "Shaders/clipFragmentShader.txt", nullptr, "clip");
 
+	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/outlineFragmentShader.txt", nullptr, "outline");
+
 	SetShaderDefaults();
 
 	Text = new TextRenderer(800, 600);
@@ -953,6 +955,10 @@ void SetShaderDefaults()
 
 	ResourceManager::GetShader("clip").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("clip").SetMatrix4("projection", camera.getOrthoMatrix());
+
+	ResourceManager::GetShader("outline").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("outline").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+
 }
 
 void LoadEverythingElse(std::vector<IObserver*>& observers)

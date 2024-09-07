@@ -326,16 +326,20 @@ void EnemyManager::TakeAction(Unit* enemy, BattleManager& battleManager, Camera&
         if (capturing)
         {
             auto otherStats = targetUnit->CalculateBattleStats();
+            auto thisWeapon = enemy->GetEquippedWeapon();
             auto weapon = targetUnit->GetEquippedWeapon();
             targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+            battleManager.CalculateFinalStats(battleStats, otherStats, enemy, targetUnit, thisWeapon, weapon);
             battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, attackRange, canCounter, camera, true, capturing);
             capturing = false;
         }
         else
         {
             auto otherStats = targetUnit->CalculateBattleStats();
+            auto thisWeapon = enemy->GetEquippedWeapon();
             auto weapon = targetUnit->GetEquippedWeapon();
             targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
+            battleManager.CalculateFinalStats(battleStats, otherStats, enemy, targetUnit, thisWeapon, weapon);
             battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, attackRange, canCounter, camera, true);
         }
     }
@@ -570,7 +574,6 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
                 {
                     auto weaponData = enemy->GetWeaponData(enemy->weapons[c]);
 
-
                     tempStats = enemy->CalculateBattleStats(enemy->weapons[c]->ID);
 
                     //Okay, so as this is written, an enemy with a magic sword will prefer to attack from range regardless of if attacking
@@ -647,6 +650,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
 
             auto otherStats = targetUnit->CalculateBattleStats();
             auto weapon = targetUnit->GetEquippedWeapon();
+            auto thisWeapon = enemy->GetEquippedWeapon();
             attackRange = finalTarget.range;
             targetUnit->CalculateMagicDefense(weapon, otherStats, attackRange);
             battleStats = finalTarget.battleStats;
@@ -656,6 +660,7 @@ void EnemyManager::StationaryUpdate(Unit* enemy, BattleManager& battleManager, C
             {
                 canCounter = true;
             }
+            battleManager.CalculateFinalStats(battleStats, otherStats, enemy, targetUnit, thisWeapon, weapon);
             battleManager.SetUp(enemy, targetUnit, battleStats, otherStats, attackRange, canCounter, camera, true);
         }
     }

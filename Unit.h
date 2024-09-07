@@ -52,6 +52,7 @@ struct BattleStats
 	int hitAvoid;
 	int hitCrit;
 	int attackSpeed;
+	int defense;
 	//God I have no idea how to handle this
 	//0 physical, 1 magic
 	int attackType = 0;

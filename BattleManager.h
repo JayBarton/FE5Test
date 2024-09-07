@@ -61,6 +61,8 @@ struct BattleManager
 
 	void GetUVs();
 
+	void CalculateFinalStats(BattleStats& unitNormalStats, BattleStats& enemyNormalStats, Unit* unit, Unit* enemy, WeaponData& unitWeapon, WeaponData& enemyWeapon);
+
 	void Draw(TextRenderer* text, Camera& camera, class SpriteRenderer* Renderer, class Cursor* cursor, class SBatch* Batch, int shapeVAO, class TextObjectManager* textManager);
 
 	void DrawSceneHealthbars(Camera& camera, int shapeVAO);

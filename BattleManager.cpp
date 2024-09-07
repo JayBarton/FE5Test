@@ -184,9 +184,9 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 				leftMaxHealth = defender->maxHP;
 				rightMaxHealth = attacker->maxHP;
 
-				rightStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attacker->getDefense(), attacker->level };
+				rightStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attackerStats.defense, attacker->level };
 
-				leftStats = { hit, dmg, defender->getDefense(), defender->level };
+				leftStats = { hit, dmg, defenderStats.defense, defender->level };
 			}
 			else
 			{
@@ -194,8 +194,8 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 				leftDisplayHealth = &attackerDisplayHealth;
 				rightMaxHealth = defender->maxHP;
 				leftMaxHealth = attacker->maxHP;
-				rightStats = { hit, dmg, defender->getDefense(), defender->level };
-				leftStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attacker->getDefense(), attacker->level };
+				rightStats = { hit, dmg, defenderStats.defense, defender->level };
+				leftStats = { intToString(attackerStats.hitAccuracy), intToString(attackerStats.attackDamage), attackerStats.defense, attacker->level };
 			}
 		}
 		else
@@ -1012,6 +1012,81 @@ void BattleManager::CaptureUnit()
 void BattleManager::GetUVs()
 {
 	mapBattleBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 128, 96, 32, 2, 2, 3);
+}
+
+//IMPORTANT: This assumes "CalculateMagicDefense" has already been called for both the attacker and defender
+//Not an ideal solution but it works for now
+void BattleManager::CalculateFinalStats(BattleStats& unitNormalStats, BattleStats& enemyNormalStats, Unit* unit, Unit* enemy, WeaponData& unitWeapon, WeaponData& enemyWeapon)
+{
+	unitNormalStats.defense = enemyNormalStats.attackType == 0 ? unit->getDefense() : unit->getMagic();
+	enemyNormalStats.defense = unitNormalStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic();
+
+	auto playerPosition = unit->sprite.getPosition();
+	auto playerTile = TileManager::tileManager.getTile(playerPosition.x, playerPosition.y);
+	unitNormalStats.defense += playerTile->properties.defense;
+	unitNormalStats.hitAvoid += playerTile->properties.avoid;
+	auto enemyPosition = enemy->sprite.getPosition();
+	auto enemyTile = TileManager::tileManager.getTile(enemyPosition.x, enemyPosition.y);
+	enemyNormalStats.defense += enemyTile->properties.defense;
+	enemyNormalStats.hitAvoid += enemyTile->properties.avoid;
+
+	//Physical weapon triangle bonus
+	if (unitWeapon.type == WeaponData::TYPE_SWORD)
+	{
+		if (enemyWeapon.type == WeaponData::TYPE_AXE)
+		{
+			unitNormalStats.hitAccuracy += 5;
+			enemyNormalStats.hitAccuracy -= 5;
+		}
+		else if (enemyWeapon.type == WeaponData::TYPE_LANCE)
+		{
+			unitNormalStats.hitAccuracy -= 5;
+			enemyNormalStats.hitAccuracy += 5;
+		}
+	}
+	else if (unitWeapon.type == WeaponData::TYPE_AXE)
+	{
+		if (enemyWeapon.type == WeaponData::TYPE_LANCE)
+		{
+			unitNormalStats.hitAccuracy += 5;
+			enemyNormalStats.hitAccuracy -= 5;
+		}
+		else if (enemyWeapon.type == WeaponData::TYPE_SWORD)
+		{
+			unitNormalStats.hitAccuracy -= 5;
+			enemyNormalStats.hitAccuracy += 5;
+		}
+	}
+	else if (unitWeapon.type == WeaponData::TYPE_LANCE)
+	{
+		if (enemyWeapon.type == WeaponData::TYPE_SWORD)
+		{
+			unitNormalStats.hitAccuracy += 5;
+			enemyNormalStats.hitAccuracy -= 5;
+		}
+		else if (enemyWeapon.type == WeaponData::TYPE_AXE)
+		{
+			unitNormalStats.hitAccuracy -= 5;
+			enemyNormalStats.hitAccuracy += 5;
+		}
+	}
+	unitNormalStats.hitAccuracy -= enemyNormalStats.hitAvoid;
+	enemyNormalStats.hitAccuracy -= unitNormalStats.hitAvoid;
+
+	unitNormalStats.hitAccuracy = std::max(0, unitNormalStats.hitAccuracy);
+
+	enemyNormalStats.hitAccuracy = std::max(0, enemyNormalStats.hitAccuracy);
+
+	int unitCritEvade = unit->getLuck() / 2;
+	int enemyCritEvade = enemy->getLuck() / 2;
+
+	unitNormalStats.hitCrit -= enemyCritEvade;
+	enemyNormalStats.hitCrit -= unitCritEvade;
+	unitNormalStats.hitCrit = std::min(unitNormalStats.hitCrit, 25);
+	unitNormalStats.hitCrit = std::max(0, unitNormalStats.hitCrit);
+
+	enemyNormalStats.hitCrit = std::min(enemyNormalStats.hitCrit, 25);
+	enemyNormalStats.hitCrit = std::max(0, enemyNormalStats.hitCrit);
 }
 
 void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, int shapeVAO, TextObjectManager* textManager)

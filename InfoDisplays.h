@@ -62,7 +62,7 @@ struct InfoDisplays
 	float turnDisplayTime = 1.0f;
 	float turnTextIn = 0.3f;
 	float turnText2 = 0.0f;
-	float statDisplayTime = 0.5f;
+	float statDisplayTime = 0.183f;
 	float statViewTime = 5.0f;
 
 	float turnDisplayAlpha = 0.0f;
@@ -92,6 +92,8 @@ struct InfoDisplays
 	//For map level up display
 	bool mapStats = false;
 	bool mapNames = false;
+	bool moveText = false;
+	bool showArrow = false;
 
 	bool changedStat[8];
 	
