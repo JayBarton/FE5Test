@@ -367,11 +367,22 @@ struct PostBattleEvents : public Observer<int>
 		{
 			//Battle ended
 		case 0:
+			//We're going to have some sort of check here that will set a battle manager delay state to handle fading out the music before calling this
+			//again and finally exiting.
+
 			if (battleManager.battleScene)
 			{
 				battleManager.fadeOutBattle = true;
 				Mix_HookMusicFinished(nullptr);
 				Mix_FadeOutMusic(1000.0f);
+			}
+			//If we are here it means there was a talk during a map battle
+			else if (battleManager.talkingUnit && battleManager.attacker->team == 0)
+			{
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(500.0f);
+				battleManager.delayFromTalk = true;
+				battleManager.drawInfo = false;
 			}
 			else
 			{
@@ -380,7 +391,6 @@ struct PostBattleEvents : public Observer<int>
 				battleManager.defender->sprite.moveAnimate = false;
 				battleManager.defender->sprite.currentFrame = idleFrame;
 				textManager.textObjects[3].showAnyway = false;
-
 			}
 			break;
 			//Player used an item

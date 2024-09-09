@@ -262,7 +262,18 @@ void BattleManager::GetFacing()
  
 void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_distribution<int>* distribution, InputManager& inputManager)
 {
-	if (aiDelay)
+	if (delayFromTalk)
+	{
+		delayTimer += deltaTime;
+		if (delayTimer >= 0.784f)
+		{
+			delayFromTalk = false;
+			displays->endBattle.notify(0);
+			delayTimer = 0.0f;
+			talkingUnit = nullptr;
+		}
+	}
+	else if (aiDelay)
 	{
 		delayTimer += deltaTime;
 		if (delayTimer >= delay)
@@ -278,7 +289,9 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 			{
 				if (talkingUnit)
 				{
-					displays->UnitBattleMessage(talkingUnit, false, false);
+					ResourceManager::FadeOutPause(500);
+
+					displays->UnitBattleMessage(talkingUnit, false, false, true);
 				}
 				drawInfo = true;
 			}
@@ -368,6 +381,7 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 					if (talkingUnit)
 					{
 						displays->UnitBattleMessage(talkingUnit, true, true);
+						talkingUnit = nullptr;
 					}
 				}
 			}
@@ -436,11 +450,11 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 							Unit* otherUnit = nullptr;
 							if (attack.firstAttacker)
 							{
-								PreBattleChecks(attacker, attackerStats, defender, attack, &defenderDisplayHealth, distribution, gen);
+								PreBattleChecks(attacker, attackerStats, defender, attack, &defenderDisplayHealth, defenderStats.defense, distribution, gen);
 							}
 							else
 							{
-								PreBattleChecks(defender, defenderStats, attacker, attack, &attackerDisplayHealth, distribution, gen);
+								PreBattleChecks(defender, defenderStats, attacker, attack, &attackerDisplayHealth, attackerStats.defense, distribution, gen);
 							}
 							startPosition = *actingPosition;
 							moveBack = true;
@@ -621,6 +635,11 @@ void BattleManager::MapUpdate(float deltaTime, InputManager& inputManager, std::
 			boxThing = 16;
 			fadeBoxOut = false;
 			drawInfo = false;
+			if (endingMapAttack)
+			{
+				endingMapAttack = false;
+				EndAttack();
+			}
 			if (unitDied && deadUnit->deathMessage != "")
 			{
 				displays->PlayerUnitDied(deadUnit, false);
@@ -680,11 +699,11 @@ void BattleManager::MapUpdate(float deltaTime, InputManager& inputManager, std::
 					battleQueue.erase(battleQueue.begin());
 					if (attack.firstAttacker)
 					{
-						PreBattleChecks(attacker, attackerStats, defender, attack, &defenderDisplayHealth, distribution, gen);
+						PreBattleChecks(attacker, attackerStats, defender, attack, &defenderDisplayHealth, defenderStats.defense, distribution, gen);
 					}
 					else
 					{
-						PreBattleChecks(defender, defenderStats, attacker, attack, &attackerDisplayHealth, distribution, gen);
+						PreBattleChecks(defender, defenderStats, attacker, attack, &attackerDisplayHealth, attackerStats.defense, distribution, gen);
 					}
 					startPosition = actingUnit->sprite.getPosition();
 					moveBack = true;
@@ -757,7 +776,9 @@ void BattleManager::MapUpdate(float deltaTime, InputManager& inputManager, std::
 					//We are in an accost round, and it should only fire once(I think)
 					else
 					{
-						EndAttack();
+						//EndAttack();
+						endingMapAttack = true;
+						fadeBoxOut = true;
 					}
 				}
 			}
@@ -789,11 +810,19 @@ void BattleManager::CheckAccost()
 	//No one has accost, we're done
 	else
 	{
-		EndAttack();
+		if (battleScene)
+		{
+			EndAttack();
+		}
+		else
+		{
+			fadeBoxOut = true;
+			endingMapAttack = true;
+		}
 	}
 }
 
-void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, int* foeHP, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
+void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, int* foeHP, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
 {
 	if (attack.vantageAttack)
 	{
@@ -809,7 +838,7 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 	}
 	auto crit = theseStats.hitCrit;
 	auto accuracy = theseStats.hitAccuracy;
-	int foeDefense = theseStats.attackType == 0 ? foe->getDefense() : foe->getMagic();
+	//wrong, pass in the defense to the function
 	if (attack.wrathAttack)
 	{
 		std::cout << thisUnit->name << " activates wrath\n";
@@ -1018,16 +1047,29 @@ void BattleManager::GetUVs()
 //Not an ideal solution but it works for now
 void BattleManager::CalculateFinalStats(BattleStats& unitNormalStats, BattleStats& enemyNormalStats, Unit* unit, Unit* enemy, WeaponData& unitWeapon, WeaponData& enemyWeapon)
 {
-	unitNormalStats.defense = enemyNormalStats.attackType == 0 ? unit->getDefense() : unit->getMagic();
-	enemyNormalStats.defense = unitNormalStats.attackType == 0 ? enemy->getDefense() : enemy->getMagic();
-
 	auto playerPosition = unit->sprite.getPosition();
 	auto playerTile = TileManager::tileManager.getTile(playerPosition.x, playerPosition.y);
-	unitNormalStats.defense += playerTile->properties.defense;
+	if (enemyNormalStats.attackType == 0)
+	{
+		unitNormalStats.defense = unit->getDefense() + playerTile->properties.defense;
+	}
+	else
+	{
+		unitNormalStats.defense = unit->getMagic();
+	}
 	unitNormalStats.hitAvoid += playerTile->properties.avoid;
 	auto enemyPosition = enemy->sprite.getPosition();
 	auto enemyTile = TileManager::tileManager.getTile(enemyPosition.x, enemyPosition.y);
-	enemyNormalStats.defense += enemyTile->properties.defense;
+	if (unitNormalStats.attackType == 0)
+	{
+		enemyNormalStats.defense = enemy->getDefense();
+		enemyNormalStats.defense += enemyTile->properties.defense;
+	}
+	else
+	{
+		enemyNormalStats.defense = enemy->getMagic();
+	}
+
 	enemyNormalStats.hitAvoid += enemyTile->properties.avoid;
 
 	//Physical weapon triangle bonus

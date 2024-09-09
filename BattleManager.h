@@ -47,7 +47,7 @@ struct BattleManager
 
 	void CheckAccost();
 
-	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, int* foeHP, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
+	void PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Unit* foe, Attack& attack, int* foeHP, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
 	void DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, BattleStats& theseStats, Attack& attack, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen);
 
@@ -113,6 +113,10 @@ struct BattleManager
 	//These two are for handling the fade in of the name/display boxes during map battles
 	bool fadeBoxIn = false;
 	bool fadeBoxOut = false;
+
+	//This is to handle the transition from a talk scene during a map battle
+	bool delayFromTalk = false;
+	bool endingMapAttack = false;
 
 	//god there's so many fucking bools here dude
 	//Battle scene variables

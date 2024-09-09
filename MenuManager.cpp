@@ -282,6 +282,7 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.mustWait = true;
 		MenuManager::menuManager.mountActionTaken = true;
 		GetOptions();
+		ResourceManager::PlaySound("select2");
 		break;
 	}
 	case MOUNT:
@@ -291,6 +292,7 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.mustWait = true;
 		MenuManager::menuManager.mountActionTaken = true;
 		GetOptions();
+		ResourceManager::PlaySound("select2");
 		break;
 	}
 	case TALK:
