@@ -85,9 +85,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 						{
 							selectedUnit->mount->remainingMoves = selectedUnit->getMove();
 						}
-						foundTiles.clear();
-						costTile.clear();
-						attackTiles.clear();
+						ClearRange();
 						GetUnitOptions();
 					}
 					//Can't move to an already occupied tile
@@ -105,9 +103,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 								drawnPath.push_back(previous);
 								pathPoint = previous;
 							}
-							foundTiles.clear();
-							attackTiles.clear();
-							costTile.clear();
+							ClearRange();
 							movingUnit = true;
 							auto unitPosition = selectedUnit->sprite.getPosition();
 							TileManager::tileManager.removeUnit(unitPosition.x, unitPosition.y);
@@ -126,7 +122,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				path = selectedUnit->FindUnitMoveRange();
 				foundTiles = selectedUnit->foundTiles;
 				attackTiles = selectedUnit->attackTiles;
-				costTile = selectedUnit->costTile;
+				drawRanges = true;
 			}
 			else
 			{
@@ -168,6 +164,16 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				settled = true;
 			}
 		}
+		if (drawRanges)
+		{
+			rangeDelay += deltaTime;
+			if (rangeDelay >= 0.05f)
+			{
+				rangeDelay = 0.0f;
+				offset += 1.0f/16.0f;
+				offset = fmod(offset, sqrt(2.0f));
+			}
+		}
 	}
 	frameTimer += deltaTime;
 	if (frameTimer >= 0.25f)
@@ -184,10 +190,8 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 void Cursor::ClearTiles()
 {
 	ClearSelected();
-	foundTiles.clear();
-	attackTiles.clear();
+	ClearRange();
 	path.clear();
-	costTile.clear();
 }
 
 void Cursor::ClearSelected()
@@ -370,8 +374,8 @@ void Cursor::GetRemainingMove()
 	path = selectedUnit->FindRemainingMoveRange();
 	foundTiles = selectedUnit->foundTiles;
 	attackTiles = selectedUnit->attackTiles;
-	costTile = selectedUnit->costTile;
 	selectedUnit->SetFocus();
+	drawRanges = true;
 }
 
 void Cursor::Undo()
@@ -387,6 +391,14 @@ void Cursor::UndoMove()
 	selectedUnit->placeUnit(position.x, position.y);
 	selectedUnit->sprite.SetPosition(glm::vec2(position.x, position.y));
 	Undo();
+}
+
+void Cursor::ClearRange()
+{
+	foundTiles.clear();
+	attackTiles.clear();
+	drawRanges = false;
+	offset = 0.0f;
 }
 
 void Cursor::UndoRemainingMove()
@@ -504,5 +516,43 @@ void Cursor::PushTalkUnit(std::vector<Unit*>& units, Unit*& unit)
 		{
 			units.push_back(unit);
 		}
+	}
+}
+
+void Cursor::DrawUnitRanges(int shapeVAO, Camera& camera)
+{
+	ResourceManager::GetShader("range").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("range").SetFloat("alpha", 0.35f);
+	ResourceManager::GetShader("range").SetFloat("t", offset);
+	ResourceManager::GetShader("range").SetVector2f("offset", glm::vec2(offset, -offset));
+	for (int i = 0; i < foundTiles.size(); i++)
+	{
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(foundTiles[i], 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+		ResourceManager::GetShader("range").SetVector3f("shapeColor", glm::vec3(0, 0.5f, 1.0f));
+		ResourceManager::GetShader("range").SetVector3f("sideColor", glm::vec3(0.0157f, 0.3137f, 0.4078f));
+
+		ResourceManager::GetShader("range").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+
+	for (int i = 0; i < attackTiles.size(); i++)
+	{
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(attackTiles[i], 0.0f));
+
+		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+
+		ResourceManager::GetShader("range").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
+		ResourceManager::GetShader("range").SetVector3f("sideColor", glm::vec3(0.5333f, 0.3764f, 0.0f));
+
+		ResourceManager::GetShader("range").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
 	}
 }

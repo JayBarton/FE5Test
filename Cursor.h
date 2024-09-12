@@ -12,7 +12,7 @@ struct Cursor
 	std::vector<glm::ivec2> foundTiles;
 	std::vector<glm::ivec2> attackTiles;
 	//Temporary, just using to visualize tile costs
-	std::vector<int> costTile;
+	//std::vector<int> costTile;
 
 	//This can probably be a map of vec2s rather than this pathPoint thing
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
@@ -37,6 +37,10 @@ struct Cursor
 
 	float cursorSpeed;
 
+	float rangeDelay = 0.0f;
+
+	float offset = 0.0f;
+
 	bool firstMove = true; //Not sure how to handle this. I want a slightly longer delay the first time the player moves, unless they are moving fast
 	bool fastCursor = false;
 	bool movingUnit = false;
@@ -45,6 +49,8 @@ struct Cursor
 
 	bool moving = false;
 	bool settled = false;
+
+	bool drawRanges = false;
 
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;
@@ -56,6 +62,7 @@ struct Cursor
 
 	void ClearTiles();
 	void ClearSelected();
+	void ClearRange();
 
 	void Wait();
 	void FinishMove();
@@ -74,4 +81,6 @@ struct Cursor
 	void FindDropPosition(glm::ivec2& up, std::vector<glm::ivec2>& dropPositions);
 	void PushTradeUnit(std::vector<Unit*>& units, Unit*& unit);
 	void PushTalkUnit(std::vector<Unit*>& units, Unit*& unit);
+
+	void DrawUnitRanges(int shapeVAO, Camera& camera);
 };

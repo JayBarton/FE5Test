@@ -83,7 +83,6 @@ const static int TILE_SIZE = 16;
 
 bool endingGame = false;
 bool turnTransition = false;
-bool turnDisplay = false;
 bool showCarry = false;
 bool fadingIn = false;
 //I am not reloading assets if the game returns to the title
@@ -280,7 +279,6 @@ struct TurnEvents : public Observer<int>
 			//Whatever enemy manager set up here
 			//Probably going to want to figure out some sort of priority for the order in which enemies act
 			turnTransition = true;
-			turnDisplay = true;
 			enemyManager.currentEnemy = 0;
 			currentTurn = 1;
 		}
@@ -290,7 +288,6 @@ struct TurnEvents : public Observer<int>
 			//Start turn set up here
 			//I'm just looping through right now, will need some different stuff set up to get heal animations playing properly
 			turnTransition = true;
-			turnDisplay = true;
 			turnUnit = 0;
 			currentRound++;
 			roundSubject.notify(currentRound);
@@ -589,6 +586,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/normalSpriteFragmentShader.txt", nullptr, "Nsprite");
 	ResourceManager::LoadShader("Shaders/instanceVertexShader.txt", "Shaders/instanceFragmentShader.txt", nullptr, "instance");
 	ResourceManager::LoadShader("Shaders/shapeVertexShader.txt", "Shaders/shapeFragmentShader.txt", nullptr, "shape");
+	ResourceManager::LoadShader("Shaders/rangeVertexShader.txt", "Shaders/rangeFragmentShader.txt", nullptr, "range");
 	ResourceManager::LoadShader("Shaders/shapeSpecialVertexShader.txt", "Shaders/shapeSpecialFragmentShader.txt", nullptr, "shapeSpecial");
 	ResourceManager::LoadShader("Shaders/shapeInstanceVertexShader.txt", "Shaders/shapeInstanceFragmentShader.txt", nullptr, "shapeInstance");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
@@ -934,6 +932,9 @@ void SetShaderDefaults()
 {
 	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+
+	ResourceManager::GetShader("range").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("range").SetFloat("alpha", 1.0f);
 
 	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shapeSpecial").SetFloat("alpha", 1.0f);
@@ -1627,7 +1628,7 @@ void Draw()
 			ResourceManager::GetShader("instance").Use();
 			ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());
 			TileManager::tileManager.showTiles(Renderer, camera);
-			DrawUnitRanges();
+			cursor.DrawUnitRanges(shapeVAO, camera);
 			//for intro
 	//		if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
 			{
@@ -1757,43 +1758,6 @@ void DrawIntroUnits()
 	}
 	testBatch.end();
 	testBatch.renderBatch();
-}
-
-void DrawUnitRanges()
-{
-	for (int i = 0; i < cursor.foundTiles.size(); i++)
-	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 0.35f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(cursor.foundTiles[i], 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-		float cost = float(cursor.costTile[i]) / 6.0f;
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0, 0.5f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-	}
-
-	for (int i = 0; i < cursor.attackTiles.size(); i++)
-	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getCameraMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 0.35f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(cursor.attackTiles[i], 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-	}
 }
 
 void DrawText()

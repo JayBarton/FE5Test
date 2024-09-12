@@ -156,16 +156,24 @@ void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount, Camera* camera)
 void InfoDisplays::ChangeTurn(int currentTurn)
 {
 	turn = currentTurn;
-	state = TURN_CHANGE;
-	turnChangeStart = true;
-	turnDisplayAlpha = 0.0f;
-	turnTextX = 28;
-	turnTextAlpha1 = 0.0f;
-	turnTextAlpha2 = 0.0f;
-	displayTimer = 0.0f;
-	turnText2 = 0.0f;
-	secondTurnText = false;
-	playTurnChange = true;
+	if (Settings::settings.unitSpeed < 3)
+	{
+
+		state = TURN_CHANGE;
+		turnChangeStart = true;
+		turnDisplayAlpha = 0.0f;
+		turnTextX = 28;
+		turnTextAlpha1 = 0.0f;
+		turnTextAlpha2 = 0.0f;
+		displayTimer = 0.0f;
+		turnText2 = 0.0f;
+		secondTurnText = false;
+		playTurnChange = true;
+	}
+	else
+	{
+		state = FAST_TURN_CHANGE;
+	}
 }
 
 void InfoDisplays::PlayerUnitDied(Unit* unit, bool battleScene)
@@ -354,6 +362,14 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		break;
 	case TURN_CHANGE:
 		TurnChangeUpdate(inputManager, deltaTime);
+		break;
+	case FAST_TURN_CHANGE:
+		if (displayTimer >= 1.0f)
+		{
+			displayTimer = 0.0f;
+			endTurn.notify(0);
+			state = NONE;
+		}
 		break;
 	case BATTLE_SPEECH:
 		if (!textManager->active)
