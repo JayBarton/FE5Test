@@ -1,10 +1,9 @@
 #version 330 core
 out vec4 color;
 
-uniform vec3 shapeColor;
-uniform vec3 sideColor;
+in vec3 inMainColor;
+in vec3 inOuterColor;
 uniform float alpha;
-uniform float t;
 uniform vec2 offset;
 
 in vec2 vertexPos;
@@ -20,17 +19,17 @@ void main()
 {
 	if(vertexPos.x > 0.95f || vertexPos.y > 0.95f)
 	{
-		color = vec4(sideColor, 0.7f);
+		color = vec4(inOuterColor, alpha);
 	}
 	else
 	{
-		float d = mod(floor(dDistance(vertexPos.xy, offset, vec2(-1.0f, 1.0f)) * 6.0) / 6.0, 2.0);
+		float d = mod(floor(dDistance(vertexPos.xy, offset, vec2(-1.0f, 1.0f)) * 8.0) / 8.0, 2.0);
 	    if(d > 1.0f)
 		{
 			d = 2.0f - d;
 		}
-		color = vec4(shapeColor, alpha);
+		color = vec4(inMainColor, alpha);
 		d/= 4.0f;
-		color.rgb -= d;	
+		color.rgb += d;	
 	}
 }

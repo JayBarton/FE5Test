@@ -6,6 +6,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <algorithm>
+#include "RangeBatch.h"
 
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
@@ -164,16 +165,6 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				settled = true;
 			}
 		}
-		if (drawRanges)
-		{
-			rangeDelay += deltaTime;
-			if (rangeDelay >= 0.05f)
-			{
-				rangeDelay = 0.0f;
-				offset += 1.0f/16.0f;
-				offset = fmod(offset, sqrt(2.0f));
-			}
-		}
 	}
 	frameTimer += deltaTime;
 	if (frameTimer >= 0.25f)
@@ -183,6 +174,16 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		if (currentFrame > 1)
 		{
 			currentFrame = 0;
+		}
+	}
+	if (drawRanges)
+	{
+		rangeDelay += deltaTime;
+		if (rangeDelay >= 0.05f)
+		{
+			rangeDelay = 0.0f;
+			offset += 1.0f / 16.0f;
+			offset = fmod(offset, sqrt(2.0f));
 		}
 	}
 }
@@ -521,38 +522,26 @@ void Cursor::PushTalkUnit(std::vector<Unit*>& units, Unit*& unit)
 
 void Cursor::DrawUnitRanges(int shapeVAO, Camera& camera)
 {
-	ResourceManager::GetShader("range").Use().SetMatrix4("projection", camera.getCameraMatrix());
-	ResourceManager::GetShader("range").SetFloat("alpha", 0.35f);
-	ResourceManager::GetShader("range").SetFloat("t", offset);
-	ResourceManager::GetShader("range").SetVector2f("offset", glm::vec2(offset, -offset));
-	for (int i = 0; i < foundTiles.size(); i++)
+	if (drawRanges)
 	{
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(foundTiles[i], 0.0f));
+		RangeBatch rBatch;
+		ResourceManager::GetShader("range").Use().SetMatrix4("projection", camera.getCameraMatrix());
+		ResourceManager::GetShader("range").SetFloat("alpha", 0.35f);
+		ResourceManager::GetShader("range").SetVector2f("offset", glm::vec2(offset, -offset));
+		rBatch.init();
+		rBatch.begin();
 
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-		ResourceManager::GetShader("range").SetVector3f("shapeColor", glm::vec3(0, 0.5f, 1.0f));
-		ResourceManager::GetShader("range").SetVector3f("sideColor", glm::vec3(0.0157f, 0.3137f, 0.4078f));
+		for (int i = 0; i < foundTiles.size(); i++)
+		{
+			rBatch.addToBatch(foundTiles[i], glm::vec3(0.1f, 0.5f, 1.0f), glm::vec3(0.71f, 0.94f, 1.0f));
+		}
 
-		ResourceManager::GetShader("range").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-	}
+		for (int i = 0; i < attackTiles.size(); i++)
+		{
+			rBatch.addToBatch(attackTiles[i], glm::vec3(1.0f, 0.42f, 0.0f), glm::vec3(1.0f, 0.65f, 0.45f));
+		}
 
-	for (int i = 0; i < attackTiles.size(); i++)
-	{
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(attackTiles[i], 0.0f));
-
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
-
-		ResourceManager::GetShader("range").SetVector3f("shapeColor", glm::vec3(1.0f, 0.5f, 0.0f));
-		ResourceManager::GetShader("range").SetVector3f("sideColor", glm::vec3(0.5333f, 0.3764f, 0.0f));
-
-		ResourceManager::GetShader("range").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		rBatch.end();
+		rBatch.renderBatch();
 	}
 }

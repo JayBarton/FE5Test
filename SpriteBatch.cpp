@@ -18,13 +18,15 @@ SpriteBatch::~SpriteBatch()
 }
 void SpriteBatch::init()
 {
-    glGenVertexArrays(1, &vao);
+    if (vao == 0)
+    {
+        glGenVertexArrays(1, &vao);
+    }
     glBindVertexArray(vao);
 
     glBindVertexArray(0);
     ResourceManager::GetShader("instance").Use().SetInteger("model_matrix_tbo", 1);
     ResourceManager::GetShader("instance").SetInteger("uv_tbo", 2);
-
 }
 
 void SpriteBatch::begin()

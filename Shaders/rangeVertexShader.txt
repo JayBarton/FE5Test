@@ -1,13 +1,41 @@
 #version 330 core
-layout (location = 0) in vec2 vertex; 
 
-uniform mat4 model;
 uniform mat4 projection;
+
+uniform samplerBuffer model_matrix_tbo;
+uniform samplerBuffer main_color_tbo;
+uniform samplerBuffer outer_color_tbo;
+
+out vec3 inMainColor;
+out vec3 inOuterColor;
 
 out vec2 vertexPos;
 
 void main()
 {
-   gl_Position = projection * model * vec4(vertex, 0.0, 1.0);
-   vertexPos = vertex;
+
+	const vec2 position [6] = vec2[]
+	(
+	    vec2(0.0f, 1.0f),
+        vec2(1.0f, 0.0f),
+        vec2(0.0f, 0.0f),
+
+        vec2(0.0f, 1.0f),
+        vec2(1.0f, 1.0f),
+        vec2(1.0f, 0.0f)
+	);
+	
+	
+	vec4 col1 = texelFetch(model_matrix_tbo, gl_InstanceID * 4);
+	vec4 col2 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 1);
+	vec4 col3 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 2);
+	vec4 col4 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 3);
+
+	// Now assemble the four columns into a matrix.
+	mat4 model = mat4(col1, col2, col3, col4);
+	inMainColor = texelFetch(main_color_tbo, gl_InstanceID).rgb;
+	inOuterColor = texelFetch(outer_color_tbo, gl_InstanceID).rgb;
+	gl_Position = projection * model * vec4(position[gl_VertexID], 0.0, 1.0);
+
+   vertexPos = position[gl_VertexID];
 }

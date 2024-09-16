@@ -16,7 +16,10 @@ SBatch::~SBatch()
 
 void SBatch::init()
 {
-    glGenVertexArrays(1, &vao);
+    if (vao == 0)
+    {
+        glGenVertexArrays(1, &vao);
+    }
     glBindVertexArray(vao);
 
     glBindVertexArray(0);

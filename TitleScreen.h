@@ -37,6 +37,8 @@ struct TitleScreen
 	float volumeModifier = 1.0f;
 	float menuDelayTimer = 0.0f;
 
+	float flameAnim = 0.0f;
+
 	bool showMenu = false;
 	bool foundSuspend = false;
 };

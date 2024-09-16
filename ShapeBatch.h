@@ -31,8 +31,6 @@ public:
 
 protected:
 private:
-  //  static bool compareTexture(const BatchSprite& a, const BatchSprite& b);
-
     GLuint vao;
 
     std::vector<BatchShape> theShapes;

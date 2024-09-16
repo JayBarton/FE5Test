@@ -27,7 +27,6 @@
 #include "Settings.h"
 
 #include "SBatch.h"
-#include "ShapeBatch.h"
 #include "Minimap.h"
 
 #include "Vendor.h"

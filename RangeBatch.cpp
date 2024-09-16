@@ -1,22 +1,16 @@
-#include "ShapeBatch.h"
-#include "Shader.h"
+#include "RangeBatch.h"
 #include "ResourceManager.h"
-#include <algorithm>
-#include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
-#include <iostream>
 
-
-ShapeBatch::ShapeBatch() : vao(0)
+RangeBatch::RangeBatch() : vao(0)
 {
-    //ctor
 }
 
-ShapeBatch::~ShapeBatch()
+RangeBatch::~RangeBatch()
 {
-    //dtor
 }
-void ShapeBatch::init()
+
+void RangeBatch::init()
 {
     if (vao == 0)
     {
@@ -25,27 +19,28 @@ void ShapeBatch::init()
     glBindVertexArray(vao);
 
     glBindVertexArray(0);
-    ResourceManager::GetShader("shapeInstance").Use().SetInteger("model_matrix_tbo", 3);
-    ResourceManager::GetShader("shapeInstance").SetInteger("color_tbo", 4);
+    ResourceManager::GetShader("range").Use().SetInteger("model_matrix_tbo", 3);
+    ResourceManager::GetShader("range").SetInteger("main_color_tbo", 4);
+    ResourceManager::GetShader("range").SetInteger("outer_color_tbo", 5);
 }
 
-void ShapeBatch::begin()
+void RangeBatch::begin()
 {
-    theShapes.clear();
-    numberOfShapes = 0;
+	theShapes.clear();
+	numberOfShapes = 0;
 }
 
-void ShapeBatch::end()
+void RangeBatch::end()
 {
     createRenderBatches();
 }
 
-void ShapeBatch::addToBatch(glm::vec2 position, int width, int height, const glm::vec3& color)
+void RangeBatch::addToBatch(glm::vec2 position, const glm::vec3& mainColor, const glm::vec3& outerColor)
 {
-    theShapes.emplace_back(position, width, height, color);
+    theShapes.emplace_back(position, mainColor, outerColor);
 }
 
-void ShapeBatch::createRenderBatches()
+void RangeBatch::createRenderBatches()
 {
     if (theShapes.empty())
     {
@@ -54,11 +49,15 @@ void ShapeBatch::createRenderBatches()
 
     GLuint shape_model_matrix_buffer;
     GLuint shape_model_matrix_tbo;
-    GLuint colorTBO;
-    GLuint colorBuffer;
+    GLuint mainColorTBO;
+    GLuint mainColorBuffer;
+    GLuint outerColorTBO;
+    GLuint outerColorBuffer;
 
-    std::vector<glm::vec3> colors;
-    colors.resize(theShapes.size());
+    std::vector<glm::vec3> mainColors;
+    std::vector<glm::vec3> outerColors;
+    mainColors.resize(theShapes.size());
+    outerColors.resize(theShapes.size());
     models.resize(theShapes.size());
 
     int theOffset = 0;
@@ -67,7 +66,7 @@ void ShapeBatch::createRenderBatches()
     glm::mat4 model;
     model = glm::translate(model, glm::vec3(theShapes[currentSprite].shapePosition, 0.0f));  // First translate (transformations are: scale happens first, then rotation and then finall translation happens; reversed order)
 
-    glm::vec2 size(theShapes[currentSprite].spriteWidth, theShapes[currentSprite].spriteHeight);
+    glm::vec2 size(16, 16);
 
     model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f)); // Move origin of rotation to center of quad
     model = glm::rotate(model, 0.0f, glm::vec3(0.0f, 0.0f, 1.0f)); // Then rotate // fix later
@@ -76,7 +75,8 @@ void ShapeBatch::createRenderBatches()
     model = glm::scale(model, glm::vec3(size, 1.0f)); // Last scale
 
     models[currentSprite] = model;
-    colors[currentSprite] = theShapes[currentSprite].color;
+    mainColors[currentSprite] = theShapes[currentSprite].mainColor;
+    outerColors[currentSprite] = theShapes[currentSprite].outerColor;
     theOffset++;
     numberOfShapes++;
     for (currentSprite = 1; currentSprite < theShapes.size(); currentSprite++)
@@ -86,8 +86,6 @@ void ShapeBatch::createRenderBatches()
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(theShapes[currentSprite].shapePosition, 0.0f));  // First translate (transformations are: scale happens first, then rotation and then finall translation happens; reversed order)
 
-        glm::vec2 size(theShapes[currentSprite].spriteWidth, theShapes[currentSprite].spriteHeight);
-
         model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f)); // Move origin of rotation to center of quad
         model = glm::rotate(model, 0.0f, glm::vec3(0.0f, 0.0f, 1.0f)); // Then rotate // fix later
         model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f)); // Move origin back
@@ -95,7 +93,8 @@ void ShapeBatch::createRenderBatches()
         model = glm::scale(model, glm::vec3(size, 1.0f)); // Last scale
 
         models[currentSprite] = model;
-        colors[currentSprite] = theShapes[currentSprite].color;
+        mainColors[currentSprite] = theShapes[currentSprite].mainColor;
+        outerColors[currentSprite] = theShapes[currentSprite].outerColor;
 
         theOffset++;
     }
@@ -113,20 +112,29 @@ void ShapeBatch::createRenderBatches()
 
     glBindVertexArray(0);
 
-     glGenTextures(1, &colorTBO);
-     glActiveTexture(GL_TEXTURE4);
-     glBindTexture(GL_TEXTURE_BUFFER, colorTBO);
-     glGenBuffers(1, &colorBuffer);
-     glBindBuffer(GL_TEXTURE_BUFFER, colorBuffer);
-     glBufferData(GL_TEXTURE_BUFFER, theShapes.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
-     glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, colorBuffer); //Not passing alpha right now, so use GL_RGB32F instead of GL_RGBA32F 
+    glGenTextures(1, &mainColorTBO);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_BUFFER, mainColorTBO);
+    glGenBuffers(1, &mainColorBuffer);
+    glBindBuffer(GL_TEXTURE_BUFFER, mainColorBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, theShapes.size() * sizeof(glm::vec3), mainColors.data(), GL_STATIC_DRAW);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, mainColorBuffer); //Not passing alpha right now, so use GL_RGB32F instead of GL_RGBA32F 
 
-     glActiveTexture(GL_TEXTURE0);
-     glBindVertexArray(0);
+    glActiveTexture(GL_TEXTURE0);
 
+    glGenTextures(1, &outerColorTBO);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_BUFFER, outerColorTBO);
+    glGenBuffers(1, &outerColorBuffer);
+    glBindBuffer(GL_TEXTURE_BUFFER, outerColorBuffer);
+    glBufferData(GL_TEXTURE_BUFFER, theShapes.size() * sizeof(glm::vec3), outerColors.data(), GL_STATIC_DRAW);
+    glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, outerColorBuffer);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(0);
 }
 
-void ShapeBatch::renderBatch()
+void RangeBatch::renderBatch()
 {
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(vao);

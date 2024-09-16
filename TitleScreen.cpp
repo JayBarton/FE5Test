@@ -39,6 +39,9 @@ void TitleScreen::init()
 
 void TitleScreen::Update(float deltaTime, InputManager& inputManager)
 {
+	flameAnim += deltaTime * 5.0f;
+	ResourceManager::GetShader("Nsprite").SetFloat("t", flameAnim , true);
+
 	switch (state)
 	{
 	case FADE_TITLE_IN:
@@ -91,6 +94,7 @@ void TitleScreen::Update(float deltaTime, InputManager& inputManager)
 void TitleScreen::Draw(SpriteRenderer* Renderer, TextRenderer* Text, Camera& camera)
 {
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("Nsprite").SetInteger("fire", 0);
 	Renderer->setUVs();
 	Texture2D displayTexture = ResourceManager::GetTexture("Title1");
 	Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224));
@@ -106,7 +110,10 @@ void TitleScreen::Draw(SpriteRenderer* Renderer, TextRenderer* Text, Camera& cam
 		}
 		//Draw title3
 		displayTexture = ResourceManager::GetTexture("Title3");
-		Renderer->DrawSprite(displayTexture, glm::vec2(23, 88), 0.0f, glm::vec2(218, 60), glm::vec4(1, 1, 1, FEAlpha));
+		Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
+		ResourceManager::GetShader("Nsprite").SetInteger("fire", 1);
+
+		Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
 	}
 	else
 	{
