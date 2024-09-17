@@ -48,6 +48,7 @@ struct InfoDisplays
 	StatGrowths* preLevelStats = nullptr; //just using this because it has all the data I need
 
 	glm::vec4 arrowUV;
+	glm::vec4 levelUpUV;
 	std::vector<glm::vec4> turnTextUVs;
 
 	float arrowY;
@@ -117,6 +118,8 @@ struct InfoDisplays
 
 	float levelUpBlockAlpha = 0.0f;
 	glm::vec2 levelUpPosition;
+	float levelUpStartY;
+	float levelT = 0.0f;
 
 	//I seriously need to fix this stuff, just getting repetitive
 	TextObjectManager* textManager;

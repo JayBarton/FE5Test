@@ -23,6 +23,7 @@ void InfoDisplays::init(TextObjectManager* textManager)
 	this->textManager = textManager;
 
 	arrowUV = ResourceManager::GetTexture("UIItems").GetUVs(8, 54, 7, 8, 1, 1)[0];
+	levelUpUV = ResourceManager::GetTexture("UIItems").GetUVs(96, 96, 30, 8, 1, 1)[0];
 	turnTextUVs = ResourceManager::GetTexture("UIItems").GetUVs(256, 0, 134, 22, 1, 6);
 }
 
@@ -65,7 +66,8 @@ void InfoDisplays::AddExperience(Unit* unit, Unit* foe, glm::vec2 levelUpPositio
 		}
 		else
 		{
-			this->levelUpPosition = focusedUnit->sprite.getPosition();
+			this->levelUpPosition = focusedUnit->sprite.getPosition() + glm::vec2(-8, 8);
+			levelUpStartY = this->levelUpPosition.y;
 			battleDisplay = false;
 		}
 	}
@@ -269,9 +271,18 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 		UpdateExperienceDisplay(deltaTime);
 		break;
 	case LEVEL_UP_NOTE:
+		if (!battleDisplay)
+		{
+			if (levelT < 1)
+			{
+				levelT += (deltaTime) / (0.183f);
+				levelUpPosition.y = glm::mix(levelUpStartY, levelUpStartY - 8, sin(levelT * glm::pi<float>()));
+			}
+		}
 		if (displayTimer > levelUpNoteTime)
 		{
 			displayTimer = 0.0f;
+			levelT = 0;
 			if (battleDisplay)
 			{
 				Mix_FadeInMusic(ResourceManager::Music["LevelUpTheme"], -1, 500);
@@ -650,7 +661,7 @@ void InfoDisplays::UpdateBattleLevelUpDisplay(float deltaTime)
 		angle += 10 * deltaTime;
 
 		// Calculate the new position using the parametric equation of a circle
-		statPos = center + glm::vec2(20 * cos(angle), 20 * sin(angle));
+		statPos = center + glm::vec2(40 * cos(angle), 25 * sin(angle));
 
 		if (displayTimer >= 0.5f)
 		{
@@ -713,8 +724,8 @@ void InfoDisplays::UpdateBattleLevelUpDisplay(float deltaTime)
 		if (activeStat >= 0)
 		{
 			changedStat[activeStat] = true;
-			center = glm::vec2(statPos.x + 20.0f, statPos.y);
-			angle = glm::half_pi<float>();
+			center = glm::vec2(statPos.x + 10.0f, statPos.y + 27.0f);
+			angle = 180.0f;
 			ResourceManager::PlaySound("pointUp");
 		}
 		else if (displayTimer > 2.0f)
@@ -811,16 +822,19 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	case LEVEL_UP_NOTE:
 	{
 		glm::vec2 drawPosition = levelUpPosition;
+		ResourceManager::GetShader("Nsprite").Use();
 		if (battleDisplay)
 		{
-			drawPosition = glm::vec2(drawPosition.x / 256.0f * 800, drawPosition.y / 224.0f * 600);
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 			DrawBattleExperience(camera, shapeVAO, Text, renderer);
 		}
 		else
 		{
-			drawPosition = camera->worldToRealScreen(drawPosition, SCREEN_WIDTH, SCREEN_HEIGHT);
+			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getCameraMatrix());
 		}
-		Text->RenderText("LEVEL UP", drawPosition.x, drawPosition.y, 0.85f, glm::vec3(0.95f, 0.95f, 0.0f));
+		auto texture = ResourceManager::GetTexture("UIItems");
+		renderer->setUVs(levelUpUV);
+		renderer->DrawSprite(texture, drawPosition, 0.0f, glm::ivec2(30, 8));
 		break;
 	}
 	case MAP_LEVEL_UP:

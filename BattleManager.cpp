@@ -1170,7 +1170,7 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		glm::vec2 leftDraw;
 		glm::vec2 rightDraw;
 
-		leftDraw = glm::vec2(200, yOffset);
+		leftDraw = glm::vec2(137, yOffset);
 		rightDraw = glm::vec2(512, yOffset);
 
 		text->RenderText(rightUnit->name, 512, rightDraw.y, 1);
@@ -1188,12 +1188,12 @@ void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Ren
 		text->RenderTextRight(intToString(rightStats.Def), 687, 495, 1, 28);
 		text->RenderTextRight(intToString(rightStats.Lvl), 687, 516, 1, 28);
 
-		text->RenderText(leftUnit->name, leftDraw.x, leftDraw.y, 1);
+		text->RenderTextRight(leftUnit->name, leftDraw.x, leftDraw.y, 1, 150);
 		leftDraw.y += 22.0f;
 		auto leftWeapon = leftUnit->GetEquippedItem();
 		if (leftWeapon)
 		{
-			text->RenderText(leftWeapon->name, leftDraw.x, leftDraw.y, 1);
+			text->RenderText(leftWeapon->name, leftDraw.x, 412, 1);
 		}
 
 		text->RenderTextRight(intToString(*leftDisplayHealth), 62, 474, 1, 28);

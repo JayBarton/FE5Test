@@ -66,10 +66,9 @@ vec4 outline( sampler2D texture, vec2 texturePos )
 	}
 	if(factor >= 0)
 	{
-	//Blue
-	outline = vec4(mix(vec3(0, 0.0313, 0.564), vec3(0.345f, 0.5647f, 0.9098f), factor), spriteColor.a - aFactor);
-//	outline = vec4(mix(vec3(0.2823, 0, 0.0), vec3(0.9725, 0.2509f, 0.6274f), factor), spriteColor.a - aFactor);
+		//Blue
+		outline = vec4(mix(vec3(0, 0.0313, 0.564), vec3(0.345f, 0.5647f, 0.9098f), factor), spriteColor.a - aFactor);
+	//	outline = vec4(mix(vec3(0.2823, 0, 0.0), vec3(0.9725, 0.2509f, 0.6274f), factor), spriteColor.a - aFactor);
 	}
- //   outline = vec4( 0.345f, 0.5647f, 0.9098f, alpha );
     return outline;
 }
