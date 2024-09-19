@@ -591,8 +591,9 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFullFragmentShader.txt", nullptr, "sliceFull");
 	ResourceManager::LoadShader("Shaders/clipVertexShader.txt", "Shaders/clipFragmentShader.txt", nullptr, "clip");
-
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/outlineFragmentShader.txt", nullptr, "outline");
+	ResourceManager::LoadShader("Shaders/patternsVertexShader.txt", "Shaders/patternsFragmentShader.txt", nullptr, "patterns");
+	ResourceManager::LoadShader("Shaders/gradientShapeVertexShader.txt", "Shaders/gradientShapeFragmentShader.txt", nullptr, "gradient");
 
 	SetShaderDefaults();
 
@@ -941,6 +942,9 @@ void SetShaderDefaults()
 	ResourceManager::GetShader("shapeInstance").Use().SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("shapeInstance").SetFloat("alpha", 1.0f);
 
+	ResourceManager::GetShader("gradient").Use().SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("gradient").SetFloat("alpha", 1.0f);
+
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("sprite").SetInteger("palette", 1);
 	ResourceManager::GetShader("sprite").SetInteger("BattleFadeIn", 2);
@@ -968,6 +972,9 @@ void SetShaderDefaults()
 
 	ResourceManager::GetShader("outline").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("outline").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+
+	ResourceManager::GetShader("patterns").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("patterns").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 
 }
 

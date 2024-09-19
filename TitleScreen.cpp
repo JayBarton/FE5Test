@@ -17,6 +17,8 @@ void TitleScreen::init()
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/Title3.png", "Title3");
 	ResourceManager::LoadTexture("TestSprites/Backgrounds/TitleButton.png", "TitleButton");
 
+	ResourceManager::LoadTexture("TestSprites/testpattern.png", "testpattern");
+
 	ResourceManager::LoadMusic("Sounds/TitleScreen.ogg", "TitleScreen");
 	//Need to load these here since they're used in the menu
 	ResourceManager::LoadSound("Sounds/optionSelect1.wav", "optionSelect1");

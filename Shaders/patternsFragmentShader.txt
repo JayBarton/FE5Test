@@ -1,0 +1,25 @@
+#version 330 core
+in vec2 TextureCoordinates;
+out vec4 color;
+
+uniform sampler2D image;
+uniform vec4 spriteColor;
+uniform vec2 scale;
+
+uniform vec3 topColor;
+uniform vec3 bottomColor;
+
+void main()
+{    
+	vec2 texCoord = TextureCoordinates;
+	texCoord.x = mod(texCoord.x * scale.x, 1);
+	texCoord.y = mod(texCoord.y * scale.y, 1);
+	
+	vec4 imageColor = texture(image, texCoord);
+	
+	vec4 tColor = mix(vec4(topColor, 1), imageColor, 0.25);
+	vec4 bColor = mix(vec4(bottomColor, 1), imageColor, 0.25);
+	
+    color = mix(tColor, bColor, TextureCoordinates.y);
+	//color = vec4(topColor, 1);
+}  

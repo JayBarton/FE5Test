@@ -3657,52 +3657,52 @@ void StatusMenu::CheckInput(InputManager& inputManager, float deltaTime)
 OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
 	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	numberOfOptions = 9;
+	numberOfOptions = 15;
 	fullScreen = true;
+
+	topColor = glm::vec3(96, 0, 0);
+	bottomColor = glm::vec3(0, 192, 192);
 }
 
 void OptionsMenu::Draw()
 {
 	//Appears to be a bit of black around/under the main background on the edges, keep in mind
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+	Renderer->shader = ResourceManager::GetShader("patterns");
+	glm::vec2 size(256, 161);
+	ResourceManager::GetShader("patterns").Use();
+	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
+	ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
+	ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
+	auto patternTexture = ResourceManager::GetTexture("testpattern");
 
-	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+	Renderer->setUVs();
+	Renderer->DrawSprite(patternTexture, glm::vec2(0, 31), 0.0f, size);
 
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
 
 	Texture2D optionIcons = ResourceManager::GetTexture("UIItems");
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	auto optionIconUVs = MenuManager::menuManager.optionIconUVs;
 	glm::vec2 iconSize = glm::vec2(16);
+	int adjustedOffset = round((yOffset / 600.0f) * 224.0f);
 	for (int i = 0; i < 10; i++)
 	{
 		Renderer->setUVs(optionIconUVs[i]);
-		float test = (yOffset / 600.0f) * 224.0f;
-		int adjustedOffset = round((yOffset / 600.0f) * 224.0f);
 		Renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
 	}
-
 	//I have no idea why FE5 has this black line being drawn here. It is drawn over the option sprites but under the text.
 	//I don't think it looks as good as drawing over both but it is replicated here.
-	model = glm::mat4();
+	glm::mat4 model = glm::mat4();
 	model = glm::translate(model, glm::vec3(5, 191, 0.0f));
 	model = glm::scale(model, glm::vec3(256, 1, 0.0f));
-	ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
 	ResourceManager::GetShader("shape").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-
-	ResourceManager::GetShader("Nsprite").Use();
-	MenuManager::menuManager.DrawIndicator(glm::vec2(8, indicatorY), false);
 
 	if (yOffset < 256)
 	{
@@ -3752,7 +3752,6 @@ void OptionsMenu::Draw()
 	RenderText("On", selectionXStart, 501 - (yOffset), 1, Settings::settings.music);
 	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 501 - (yOffset), 1, !Settings::settings.music);
 
-
 	text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
 	RenderText("4", selectionXStart, 565 - (yOffset), 1, Settings::settings.volume == 4);
 	xOffset = 0;
@@ -3766,22 +3765,181 @@ void OptionsMenu::Draw()
 	text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
 	text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
 
+	ResourceManager::GetShader("Nsprite").Use();
+
+	Renderer->setUVs(MenuManager::menuManager.colorBarsUV);
+	Renderer->DrawSprite(optionIcons, glm::vec2(128, 263 - adjustedOffset), 0, glm::vec2(107, 56));
+
+	ResourceManager::GetShader("gradient").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("gradient").SetFloat("alpha", 1.0f);
+	ResourceManager::GetShader("gradient").SetFloat("barEnd", 232.0f);
 	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 193, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 31, 0.0f));
-
-	ResourceManager::GetShader("shape").Use().SetVector3f("shapeColor", glm::vec3(0.2f, 0.2f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	model = glm::translate(model, glm::vec3(139, 266 - adjustedOffset, 0.0f));
+	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.x/8)), 2, 0.0f));
+	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
+	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
 	glBindVertexArray(shapeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0); 
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(139, 274 - adjustedOffset, 0.0f));
+	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.y / 8)), 2, 0.0f));
+	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
+	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(139, 282 - adjustedOffset, 0.0f));
+	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.z / 8)), 2, 0.0f));
+	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(139, 298 - adjustedOffset, 0.0f));
+	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.x / 8)), 2, 0.0f));
+	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
+	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(139, 306 - adjustedOffset, 0.0f));
+	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.y / 8)), 2, 0.0f));
+	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
+	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(139, 314 - adjustedOffset, 0.0f));
+	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.z / 8)), 2, 0.0f));
+	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	ResourceManager::GetShader("Nsprite").Use();
+	Renderer->setUVs(MenuManager::menuManager.colorIndicatorUV);
+
+	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.x/8), 263 - adjustedOffset), 0, glm::vec2(3, 8));
+	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.y/8), 271 - adjustedOffset), 0, glm::vec2(3, 8));
+	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.z/8), 279 - adjustedOffset), 0, glm::vec2(3, 8));
+
+	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.x/8), 295 - adjustedOffset), 0, glm::vec2(3, 8));
+	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.y/8), 303 - adjustedOffset), 0, glm::vec2(3, 8));
+	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.z/8), 311 - adjustedOffset), 0, glm::vec2(3, 8));
+
+	DrawIndicators();
+
+	Renderer->shader = ResourceManager::GetShader("patterns");
+
+	size = glm::vec2(256, 32);
+	ResourceManager::GetShader("patterns").Use();
+	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
+	Renderer->setUVs();
+	Renderer->DrawSprite(patternTexture, glm::vec2(0, 192), 0.0f, size);
+
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
 
 	Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
 	ResourceManager::GetShader("Nsprite").Use();
 	Renderer->setUVs();
 	Renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+}
+
+void OptionsMenu::DrawIndicators()
+{
+	MenuManager::menuManager.DrawIndicator(glm::vec2(8, indicatorY), false);
+
+	int xLoc = 111;
+	if (currentOption == 0)
+	{
+		if (Settings::settings.mapAnimations == 1)
+		{
+			xLoc = 151;
+		}
+		else if (Settings::settings.mapAnimations == 1)
+		{
+			xLoc = 183;
+		}
+	}
+	else if (currentOption == 1)
+	{
+		if (Settings::settings.showTerrain == 0)
+		{
+			xLoc = 135;
+		}
+	}
+	else if (currentOption == 2)
+	{
+		if (Settings::settings.autoCursor == 0)
+		{
+			xLoc = 135;
+		}
+	}
+	else if (currentOption == 3)
+	{
+		if (Settings::settings.textSpeed == 1)
+		{
+			xLoc = 143;
+		}
+		else if (Settings::settings.textSpeed == 2)
+		{
+			xLoc = 183;
+		}
+	}
+	else if (currentOption == 4)
+	{
+		if (Settings::settings.unitSpeed > 3)
+		{
+			xLoc = 151;
+		}
+	}
+	else if (currentOption == 5)
+	{
+		if (Settings::settings.sterero == 0)
+		{
+			xLoc = 151;
+		}
+	}
+	else if (currentOption == 6)
+	{
+		if (Settings::settings.music == 0)
+		{
+			xLoc = 135;
+		}
+	}
+	else if (currentOption == 7)
+	{
+		if (Settings::settings.volume == 3)
+		{
+			xLoc = 132;
+		}
+		else if (Settings::settings.volume == 2)
+		{
+			xLoc = 153;
+		}
+		else if (Settings::settings.volume == 1)
+		{
+			xLoc = 173;
+		}
+	}
+	else if (currentOption == 8)
+	{
+		//window type
+	}
+
+	MenuManager::menuManager.DrawIndicator(glm::vec2(xLoc, indicatorY2));
 }
 
 void OptionsMenu::SelectOption()
@@ -3795,7 +3953,6 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
 	if (!moveToBottom)
 	{
-
 		if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
 		{
 			currentOption--;
@@ -3806,30 +3963,47 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			else
 			{
 				ResourceManager::PlaySound("optionSelect1");
-				indicatorY -= indicatorIncrement;
 				if (currentOption == 0)
 				{
 					indicatorY = 39;
 					goal = 0;
 					up = true;
 					hitBottom = false;
+					indicatorY2 = indicatorY;
 				}
 				else
 				{
-					//The boundary is a bit different once the bottom has been hit
-					int bound = 63;
-					if (hitBottom)
+					if (currentOption < 9)
 					{
-						bound = 55;
+						indicatorY -= indicatorIncrement;
+						//The boundary is a bit different once the bottom has been hit
+						int bound = 63;
+						if (hitBottom)
+						{
+							bound = 55;
+						}
+						if (indicatorY < bound)
+						{
+							indicatorY = bound;
+							up = true;
+							goal -= 64;
+						}
+						indicatorY2 = indicatorY;
 					}
-					if (indicatorY < bound)
+					else
 					{
-						indicatorY = bound;
-						up = true;
-						goal -= 64;
+						if (currentOption == 11)
+						{
+							indicatorY2 -= 16;
+						}
+						else
+						{
+							indicatorY2 -= 8;
+						}
 					}
 				}
 			}
+
 		}
 		else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.25f))
 		{
@@ -3841,10 +4015,10 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			else
 			{
 				ResourceManager::PlaySound("optionSelect1");
-				indicatorY += indicatorIncrement;
-				if (currentOption == numberOfOptions)
+				if (currentOption == 9)
 				{
 					indicatorY = 255;
+					indicatorY2 = 257;
 					goal = 406;
 					down = true;
 					hitBottom = true;
@@ -3852,18 +4026,39 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				}
 				else
 				{
-					int bound = 159;
-					if (hitBottom)
+					if (currentOption < 9)
 					{
-						bound = 151;
+						indicatorY += indicatorIncrement;
+
+						int bound = 159;
+						if (hitBottom)
+						{
+							bound = 151;
+						}
+						if (indicatorY > bound)
+						{
+							indicatorY = bound;
+							down = true;
+							goal += 64;
+						}
+						indicatorY2 = indicatorY;
 					}
-					if (indicatorY > bound)
+					else
 					{
-						indicatorY = bound;
-						down = true;
-						goal += 64;
+						if (currentOption == 12)
+						{
+							indicatorY2 += 16;
+						}
+						else
+						{
+							indicatorY2 += 8;
+						}
 					}
 				}
+			}
+			if (currentOption < 9)
+			{
+				indicatorY2 = indicatorY;
 			}
 		}
 		else if (inputManager.KeyDownDelay(SDLK_RIGHT, 0.05f, 0.15f))
@@ -3932,6 +4127,48 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				{
 					Settings::settings.volume--;
 					ResourceManager::PlaySound("optionSelect2");
+				}
+				break;
+			case 9:
+				if (topColor.x < 192)
+				{
+					topColor.x += 8.0f;
+					topColor.x = glm::clamp(topColor.x, 0.0f, 192.0f);
+				}
+				break;
+			case 10:
+				if (topColor.y < 192)
+				{
+					topColor.y += 8.0f;
+					topColor.y = glm::clamp(topColor.y, 0.0f, 192.0f);
+				}
+				break;
+			case 11:
+				if (topColor.z < 192)
+				{
+					topColor.z += 8.0f;
+					topColor.z = glm::clamp(topColor.z, 0.0f, 192.0f);
+				}
+				break;
+			case 12:
+				if (bottomColor.x < 192)
+				{
+					bottomColor.x += 8;
+					bottomColor.x = glm::clamp(bottomColor.x, 0.0f, 192.0f);
+				}
+				break;
+			case 13:
+				if (bottomColor.y < 192)
+				{
+					bottomColor.y += 8;
+					bottomColor.y = glm::clamp(bottomColor.y, 0.0f, 192.0f);
+				}
+				break;
+			case 14:
+				if (bottomColor.z < 192)
+				{
+					bottomColor.z += 8;
+					bottomColor.z = glm::clamp(bottomColor.z, 0.0f, 192.0f);
 				}
 				break;
 			}
@@ -4004,6 +4241,48 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					ResourceManager::PlaySound("optionSelect2");
 				}
 				break;
+			case 9:
+				if (topColor.x > 0)
+				{
+					topColor.x -= 8;
+					topColor.x = glm::clamp(topColor.x, 0.0f, 192.0f);
+				}
+				break;
+			case 10:
+				if (topColor.y > 0)
+				{
+					topColor.y -= 8;
+					topColor.y = glm::clamp(topColor.y, 0.0f, 192.0f);
+				}
+				break;
+			case 11:
+				if (topColor.z > 0)
+				{
+					topColor.z -= 8;
+					topColor.z = glm::clamp(topColor.z, 0.0f, 192.0f);
+				}
+				break;
+			case 12:
+				if (bottomColor.x > 0)
+				{
+					bottomColor.x -= 8;
+					bottomColor.x = glm::clamp(bottomColor.x, 0.0f, 192.0f);
+				}
+				break;
+			case 13:
+				if (bottomColor.y > 0)
+				{
+					bottomColor.y -= 8;
+					bottomColor.y = glm::clamp(bottomColor.y, 0.0f, 192.0f);
+				}
+				break;
+			case 14:
+				if (bottomColor.z > 0)
+				{
+					bottomColor.z -= 8;
+					bottomColor.z = glm::clamp(bottomColor.z, 0.0f, 192.0f);
+				}
+				break;
 			}
 		}
 	}
@@ -4020,9 +4299,10 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				moveToBottom = false;
 			}
 		}
-		if (currentOption == numberOfOptions)
+		if (currentOption == 9)
 		{
 			indicatorY = 255 - round((yOffset / 600.0f) * 224.0f);
+			indicatorY2 = indicatorY + 2;
 		}
 	}
 	else if (up)
@@ -5154,6 +5434,9 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
 	skillHighlightUVs = uiTexture.GetUVs(32, 96, 16, 16, 4, 1);
 	malusArrowUV = uiTexture.GetUVs(16, 54, 8, 10, 1, 1)[0];
+
+	colorBarsUV = uiTexture.GetUVs(196, 196, 107, 56, 1, 1)[0];
+	colorIndicatorUV = uiTexture.GetUVs(50, 54, 3, 8, 1, 1)[0];
 
 	auto boxesTexture = ResourceManager::GetTexture("UIStuff");
 	boxesUVs = boxesTexture.GetUVs(0, 0, 32, 32, 3, 1);

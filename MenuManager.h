@@ -416,6 +416,7 @@ struct OptionsMenu : public Menu
 {
 	OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer);
 	virtual void Draw() override;
+	void DrawIndicators();
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
@@ -426,6 +427,7 @@ struct OptionsMenu : public Menu
 	int distance = 64;
 
 	int indicatorY = 39;
+	int indicatorY2 = 39;
 	int indicatorIncrement = 24;
 	float yOffset = 0;
 	float goal = 0;
@@ -433,6 +435,9 @@ struct OptionsMenu : public Menu
 	bool down = false;
 	bool hitBottom = false;
 	bool moveToBottom = false;
+
+	glm::vec3 topColor;
+	glm::vec3 bottomColor;
 };
 
 struct FullInventoryMenu : public Menu
@@ -595,6 +600,9 @@ struct MenuManager
 	glm::vec4 indicatorUV;
 	glm::vec4 statBarUV;
 	glm::vec4 malusArrowUV;
+
+	glm::vec4 colorBarsUV;
+	glm::vec4 colorIndicatorUV;
 
 	glm::vec2 indicatorPosition;
 	float indicatorDrawX;
