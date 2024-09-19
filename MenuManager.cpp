@@ -3672,11 +3672,13 @@ void OptionsMenu::Draw()
 	ResourceManager::GetShader("patterns").Use();
 	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
+	ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
 	ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
 	ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
+	ResourceManager::GetShader("patterns").SetInteger("index", 1);
 	auto patternTexture = ResourceManager::GetTexture("testpattern");
 
-	Renderer->setUVs();
+	Renderer->setUVs(MenuManager::menuManager.patternUVs[1]);
 	Renderer->DrawSprite(patternTexture, glm::vec2(0, 31), 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
@@ -3844,9 +3846,8 @@ void OptionsMenu::Draw()
 
 	size = glm::vec2(256, 32);
 	ResourceManager::GetShader("patterns").Use();
-	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
 	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
-	Renderer->setUVs();
+	Renderer->setUVs(MenuManager::menuManager.patternUVs[1]);
 	Renderer->DrawSprite(patternTexture, glm::vec2(0, 192), 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
@@ -5433,6 +5434,7 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	carryingIconsUVs = uiTexture.GetUVs(32, 54, 8, 8, 2, 1);
 	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
 	skillHighlightUVs = uiTexture.GetUVs(32, 96, 16, 16, 4, 1);
+
 	malusArrowUV = uiTexture.GetUVs(16, 54, 8, 10, 1, 1)[0];
 
 	colorBarsUV = uiTexture.GetUVs(196, 196, 107, 56, 1, 1)[0];
@@ -5440,6 +5442,9 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 
 	auto boxesTexture = ResourceManager::GetTexture("UIStuff");
 	boxesUVs = boxesTexture.GetUVs(0, 0, 32, 32, 3, 1);
+
+	auto asdgasd = ResourceManager::GetTexture("testpattern");
+	patternUVs = ResourceManager::GetTexture("testpattern").GetUVs(0, 0, 64, 32, 2, 1);
 
 	arrowSprite.setSize(glm::vec2(7, 6));
 	arrowSprite.uv = &arrowAnimUVs;

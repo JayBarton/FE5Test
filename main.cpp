@@ -611,6 +611,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadTexture("TestSprites/UIItems.png", "UIItems");
 	ResourceManager::LoadTexture("TestSprites/icons.png", "icons");
 	ResourceManager::LoadTexture("TestSprites/UIStuff.png", "UIStuff");
+	ResourceManager::LoadTexture("TestSprites/testpattern.png", "testpattern");
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	titleScreen->init();

@@ -596,6 +596,8 @@ struct MenuManager
 	std::vector<glm::vec4> carryingIconsUVs;
 	std::vector<glm::vec4> boxesUVs;
 	std::vector<glm::vec4> skillHighlightUVs;
+
+	std::vector<glm::vec4> patternUVs;
 	
 	glm::vec4 indicatorUV;
 	glm::vec4 statBarUV;
