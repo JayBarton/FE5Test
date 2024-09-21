@@ -168,5 +168,7 @@ struct InfoDisplays
 
 	//Duped from menumanager
 	void DrawBox(glm::ivec2 position, int width, int height, SpriteRenderer* renderer, Camera* camera);
+	void DrawPattern(glm::vec2 scale, glm::vec2 pos, SpriteRenderer* Renderer, Camera* camera);
+	void SetupBackground(glm::vec2& size);
 
 };

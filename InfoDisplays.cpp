@@ -960,18 +960,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	}
 	case UNIT_ESCAPED:
 	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(96, 96, 0.0f));
-		model = glm::scale(model, glm::vec3(66, 34, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		DrawBox(glm::vec2(96, 96), 66, 34, renderer, camera);
 
 		Text->RenderText("Unit Escaped", 325, 289, 1);
 		break;
@@ -980,19 +969,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 	{
 		if (!statDelay)
 		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(77, 101, 0.0f));
-
-			model = glm::scale(model, glm::vec3(102, 38, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
+			DrawPattern(glm::vec2(102, 38), glm::vec2(77, 101), renderer, camera);
 
 			renderer->shader = ResourceManager::GetShader("slice");
 			ResourceManager::GetShader("slice").Use();
@@ -1185,19 +1162,7 @@ void InfoDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
 
 void InfoDisplays::DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(77, 101, 0.0f));
-
-	model = glm::scale(model, glm::vec3(102, 38, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(102, 38), glm::vec2(77, 101), renderer, camera);
 
 	renderer->shader = ResourceManager::GetShader("slice");
 	ResourceManager::GetShader("slice").Use();
@@ -1549,19 +1514,7 @@ void InfoDisplays::DrawExperienceDisplay(Camera* camera, int shapeVAO, TextRende
 
 void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer)
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(43, 99, 0.0f));
-
-	model = glm::scale(model, glm::vec3(154, 18, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(154, 18), glm::vec2(43, 99), renderer, camera);
 
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
@@ -1572,7 +1525,7 @@ void InfoDisplays::DrawMapExperience(Camera* camera, int shapeVAO, TextRenderer*
 
 
 	ResourceManager::GetShader("shapeSpecial").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	model = glm::mat4();
+	glm::mat4 model = glm::mat4();
 	model = glm::translate(model, glm::vec3(72, 107, 0.0f));
 
 	int width = displayedExperience;
@@ -1646,7 +1599,66 @@ void InfoDisplays::DrawBox(glm::ivec2 position, int width, int height, SpriteRen
 	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
 
 	renderer->setUVs();
+
+	SetupBackground(size);
+
 	renderer->DrawSprite(texture, glm::vec2(position.x, position.y), 0.0f, size);
 
 	renderer->shader = ResourceManager::GetShader("Nsprite");
+}
+
+void InfoDisplays::DrawPattern(glm::vec2 size, glm::vec2 pos, SpriteRenderer* Renderer, Camera* camera)
+{
+	//Duplicating this in a couple of places unfortunately
+	int patternID = Settings::settings.backgroundPattern;
+	auto inColor = Settings::settings.backgroundColors[patternID];
+	glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
+	glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
+
+	Renderer->shader = ResourceManager::GetShader("patterns");
+	ResourceManager::GetShader("patterns").Use();
+	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
+	ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
+	ResourceManager::GetShader("patterns").SetInteger("index", patternID);
+
+	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
+	//ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
+
+	auto patternTexture = ResourceManager::GetTexture("testpattern");
+
+	Renderer->setUVs(MenuManager::menuManager.patternUVs[patternID]);
+	Renderer->DrawSprite(patternTexture, pos, 0.0f, size);
+
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
+}
+
+void InfoDisplays::SetupBackground(glm::vec2& size)
+{
+	int patternIndex = Settings::settings.backgroundPattern;
+
+	glm::vec4 uv = MenuManager::menuManager.patternUVs[patternIndex];
+	GLfloat verticies[] =
+	{
+		uv.x, uv.w,
+		uv.y, uv.z,
+		uv.x, uv.z,
+
+		uv.x, uv.w,
+		uv.y, uv.w,
+		uv.y, uv.z
+	};
+	ResourceManager::GetShader("slice").SetVector2fv("backgroundUVs", 12, verticies);
+	auto inColor = Settings::settings.backgroundColors[patternIndex];
+	glm::vec3 topColor(inColor[0], inColor[1], inColor[2]);
+	glm::vec3 bottomColor(inColor[3], inColor[4], inColor[5]);
+	ResourceManager::GetShader("slice").SetVector2f("imageScale", size / glm::vec2(64, 32));
+	ResourceManager::GetShader("slice").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
+	ResourceManager::GetShader("slice").SetVector3f("topColor", topColor / 255.0f);
+	ResourceManager::GetShader("slice").SetVector3f("bottomColor", bottomColor / 255.0f);
+	ResourceManager::GetShader("slice").SetInteger("index", patternIndex);
+
+	auto texture2 = ResourceManager::GetTexture("testpattern");
+	glActiveTexture(GL_TEXTURE1);
+	texture2.Bind();
 }

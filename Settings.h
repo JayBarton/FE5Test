@@ -15,7 +15,7 @@ struct Settings
 	int volume = 4;
 	int mapAnimations = 1;
 
-	int backgroundPattern = 1;
+	int backgroundPattern = 0;
 
 	bool autoCursor = true;
 	bool showTerrain = true;

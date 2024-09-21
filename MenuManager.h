@@ -26,6 +26,7 @@ struct Menu
 	void PreviousOptionStop();
 	void EndUnitMove();
 	void DrawBox(glm::ivec2 position, int width, int height);
+	void DrawPattern(glm::vec2 scale, glm::vec2 pos, bool gray = false);
 	void ClearMenu();
 
 	Cursor* cursor = nullptr;
@@ -319,7 +320,7 @@ struct UnitStatsViewMenu : public Menu
 {
 	UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit);
 	virtual void Draw() override;
-	void DrawUpperSection(glm::mat4& model);
+	void DrawUpperSection();
 	void DrawPage2();
 	void DrawPage1();
 	virtual void SelectOption() override;

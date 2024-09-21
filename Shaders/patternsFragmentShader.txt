@@ -12,6 +12,7 @@ uniform int index;
 uniform vec3 topColor;
 uniform vec3 bottomColor;
 
+uniform int gray;
 
 void main()
 {    
@@ -20,10 +21,15 @@ void main()
 	texCoord.y = mod(texCoord.y * scale.y, sheetScale.y);
 	
 	vec4 imageColor = texture(image, texCoord);
-	
-	vec4 tColor = mix(vec4(topColor, 1), imageColor, 0.25);
-	vec4 bColor = mix(vec4(bottomColor, 1), imageColor, 0.25);
-	
-    color = mix(tColor, bColor, TextureCoordinates.y);
-	//color = vec4(topColor, 1);
+	if(gray >= 1)
+	{
+		color = imageColor;
+	}
+	else
+	{
+		vec4 tColor = mix(vec4(topColor, 1), imageColor, 0.25);
+		vec4 bColor = mix(vec4(bottomColor, 1), imageColor, 0.25);
+		
+		color = mix(tColor, bColor, TextureCoordinates.y);
+	}
 }  

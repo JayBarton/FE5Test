@@ -978,7 +978,8 @@ void SetShaderDefaults()
 	ResourceManager::GetShader("outline").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 
 	ResourceManager::GetShader("patterns").Use().SetInteger("image", 0);
-	ResourceManager::GetShader("patterns").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
 
 }
 
@@ -1786,6 +1787,31 @@ void DrawText()
 				xWindow = 4;
 			}
 
+			int patternID = Settings::settings.backgroundPattern;
+			auto inColor = Settings::settings.backgroundColors[patternID];
+			glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
+			glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
+			glm::vec2 size(58, 26);
+			Renderer->shader = ResourceManager::GetShader("patterns");
+			ResourceManager::GetShader("patterns").Use();
+			ResourceManager::GetShader("patterns").SetMatrix4("projection", camera.getOrthoMatrix());
+			ResourceManager::GetShader("patterns").SetInteger("gray", false);
+			ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
+			ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
+			
+			ResourceManager::GetShader("patterns").SetInteger("index", patternID);
+
+			ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
+			//ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
+
+			auto patternTexture = ResourceManager::GetTexture("testpattern");
+
+			Renderer->setUVs(MenuManager::menuManager.patternUVs[patternID]);
+			Renderer->DrawSprite(patternTexture, glm::vec2(xWindow + 3, 7), 0.0f, size);
+
+			Renderer->shader = ResourceManager::GetShader("Nsprite");
+
+
 			Texture2D terrainBox = ResourceManager::GetTexture("UIItems");
 			ResourceManager::GetShader("Nsprite").Use();
 			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getOrthoMatrix());
@@ -1992,6 +2018,18 @@ void SuspendGame()
 	settings["ShowTerrain"] = Settings::settings.showTerrain;
 	settings["Sterero"] = Settings::settings.sterero;
 	settings["Music"] = Settings::settings.music;
+	json tile;
+	json colorData;
+	settings["SelectedTile"] = Settings::settings.backgroundPattern;
+	for (int i = 0; i < Settings::settings.backgroundColors.size(); i++)
+	{
+		auto color = Settings::settings.backgroundColors;
+		
+		colorData["UpperAndLower"] = color[i];
+		colorData["Edited"] = Settings::settings.editedColor[i];
+		tile.push_back(colorData);
+	}
+	settings["Tile"] = tile;
 
 	for (int i = 0; i < playerManager.units.size(); i++)
 	{
@@ -2072,6 +2110,25 @@ void loadSuspendedGame()
 	Settings::settings.showTerrain = settings["ShowTerrain"];
 	Settings::settings.sterero = settings["Sterero"];
 	Settings::settings.music = settings["Music"];
+
+	Settings::settings.backgroundPattern = settings["SelectedTile"];
+
+	auto colors = settings["Tile"];
+	//UpperAndLower
+	std::vector<std::vector<int>> inColors;
+	inColors.resize(2);
+	Settings::settings.editedColor.resize(2);
+	for (int i = 0; i < 2; i++)
+	{
+		Settings::settings.editedColor[i] = colors[i]["Edited"];
+		inColors[i].resize(6);
+		for (int c = 0; c < 6; c++)
+		{
+			inColors[i][c] = colors[i]["UpperAndLower"][c];
+		}
+	}
+
+	Settings::settings.backgroundColors = inColors;
 
 	int xTiles = 0;
 	int yTiles = 0;

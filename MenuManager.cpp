@@ -135,21 +135,6 @@ void Menu::CancelOption(int num)
 
 void Menu::DrawBox(glm::ivec2 position, int width, int height)
 {
-
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(position, 0.0f));
-
-	model = glm::scale(model, glm::vec3(width, height, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-//	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
 	Renderer->shader = ResourceManager::GetShader("slice");
 
 	ResourceManager::GetShader("slice").Use();
@@ -192,6 +177,36 @@ void Menu::DrawBox(glm::ivec2 position, int width, int height)
 	glActiveTexture(GL_TEXTURE1);
 	texture2.Bind();
 	Renderer->DrawSprite(texture, glm::vec2(position.x, position.y), 0.0f, size);
+
+	Renderer->shader = ResourceManager::GetShader("Nsprite");
+}
+
+void Menu::DrawPattern(glm::vec2 size, glm::vec2 pos, bool gray)
+{
+	//Duplicating this in a couple of places unfortunately
+	int patternID = Settings::settings.backgroundPattern;
+	auto inColor = Settings::settings.backgroundColors[patternID];
+	glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
+	glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
+
+	Renderer->shader = ResourceManager::GetShader("patterns");
+	ResourceManager::GetShader("patterns").Use();
+	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("patterns").SetInteger("gray", gray);
+	if (!gray)
+	{
+		ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
+		ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
+	}
+	ResourceManager::GetShader("patterns").SetInteger("index", patternID);
+
+	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
+	//ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
+
+	auto patternTexture = ResourceManager::GetTexture("testpattern");
+
+	Renderer->setUVs(MenuManager::menuManager.patternUVs[patternID]);
+	Renderer->DrawSprite(patternTexture, pos, 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
 }
@@ -771,6 +786,7 @@ void ItemOptionsMenu::Draw()
 	}
 	else
 	{
+		DrawBox(glm::vec2(152, 72), 98, 130);
 		text->RenderText(inventory[currentOption]->description, 525, 225, 1);
 	}
 }
@@ -1220,19 +1236,8 @@ void SelectEnemyMenu::Draw()
 		enemyStatsTextX = 50;
 		statsDisplay = 8;
 	}
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(statsDisplay + 27, 67, 0.0f));
 
-	model = glm::scale(model, glm::vec3(26, 122, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(26, 122), glm::vec2(statsDisplay + 27, 67));
 
 	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
@@ -1414,19 +1419,6 @@ void SelectTradeUnit::Draw()
 	}
 
 	DrawBox(glm::ivec2(xIndicator, 8), 98, 10 + (inventorySize + 2) * 16);
-/*	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(xIndicator, 8, 0.0f));
-
-	model = glm::scale(model, glm::vec3(80, boxHeight, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);*/
 
 	Renderer->setUVs(cursor->uvs[2]);
 	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
@@ -1593,19 +1585,8 @@ TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int sha
 
 void TradeMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.2f, 0.0f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(256, 80), glm::vec2(0));
+	DrawPattern(glm::vec2(256, 144), glm::vec2(0, 80));
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	Texture2D texture = ResourceManager::GetTexture("TradeMenuBG");
@@ -1878,19 +1859,8 @@ UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 
 void UnitStatsViewMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 79, 0.0f));
 
-	model = glm::scale(model, glm::vec3(256, 145, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.9f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(256, 145), glm::vec2(0, 79));
 
 	//page 1
 	if (firstPage || transition)
@@ -1902,13 +1872,12 @@ void UnitStatsViewMenu::Draw()
 		DrawPage2();
 	}
 
-	DrawUpperSection(model);
+	DrawUpperSection();
 }
 
 void UnitStatsViewMenu::DrawPage1()
 {
 	float adjustedOffset = ((224 - yOffset) / 224.0f) * 600;
-	text->RenderText("Inventory", 500, 180 - adjustedOffset, 1);
 
 	auto inventory = unit->inventory;
 	glm::vec3 color = glm::vec3(1);
@@ -2075,7 +2044,7 @@ void UnitStatsViewMenu::DrawPage1()
 	{
 		MenuManager::menuManager.DrawIndicator(glm::ivec2(103, 97 + 16 * currentOption));
 		
-		ResourceManager::GetShader("shape").Use();
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());;
 
 		glm::mat4 model = glm::mat4();
 		model = glm::translate(model, glm::vec3(8, 79, 0.0f));
@@ -2086,8 +2055,10 @@ void UnitStatsViewMenu::DrawPage1()
 
 		ResourceManager::GetShader("shape").SetMatrix4("model", model);
 		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+	//	glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+
+		DrawPattern(glm::vec2(96, 144), glm::vec2(8, 79), true);
 
 		Renderer->shader = ResourceManager::GetShader("slice");
 		ResourceManager::GetShader("slice").Use();
@@ -2277,8 +2248,10 @@ void UnitStatsViewMenu::DrawPage2()
 
 		ResourceManager::GetShader("shape").SetMatrix4("model", model);
 		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+	//	glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+
+		DrawPattern(glm::vec2(96, 104), glm::vec2(16, 112), true);
 
 		Renderer->shader = ResourceManager::GetShader("slice");
 		ResourceManager::GetShader("slice").Use();
@@ -2306,7 +2279,7 @@ void UnitStatsViewMenu::DrawPage2()
 	}
 }
 
-void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
+void UnitStatsViewMenu::DrawUpperSection()
 {
 	Renderer->shader = ResourceManager::GetShader("slice");
 	ResourceManager::GetShader("slice").Use();
@@ -2323,18 +2296,7 @@ void UnitStatsViewMenu::DrawUpperSection(glm::mat4& model)
 	Renderer->DrawSprite(texture, glm::vec2(0, 0 - (224 - yOffset)), 0.0f, size);
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
 
-	ResourceManager::GetShader("shape").Use();
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 79, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(256, 79), glm::vec2(0));
 
 	ResourceManager::GetShader("Nsprite").Use();
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
@@ -3049,19 +3011,8 @@ UnitListMenu::UnitListMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 
 void UnitListMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(256, 20), glm::vec2(0, 31));
+	DrawPattern(glm::vec2(256, 171), glm::vec2(0, 53));
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
@@ -3070,7 +3021,7 @@ void UnitListMenu::Draw()
 	Renderer->setUVs();
 	Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 
-	model = glm::mat4();
+	glm::mat4 model = glm::mat4();
 	if (!sortMode)
 	{
 		MenuManager::menuManager.DrawIndicator(glm::vec2(-1, 57 + (16 * currentOption)));
@@ -3627,19 +3578,8 @@ StatusMenu::StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 
 void StatusMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	DrawPattern(glm::vec2(256, 72), glm::vec2(0, 32));
+	DrawPattern(glm::vec2(256, 88), glm::vec2(0, 136));
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
@@ -3705,27 +3645,16 @@ OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int
 
 void OptionsMenu::Draw()
 {
+	//Appears to be a bit of black around/under the main background on the edges, keep in mind
+	glm::vec2 size(256, 161);
+	glm::vec2 pos;
+
 	int patternID = Settings::settings.backgroundPattern;
 	auto inColor = Settings::settings.backgroundColors[patternID];
 	glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
 	glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
 
-	//Appears to be a bit of black around/under the main background on the edges, keep in mind
-	Renderer->shader = ResourceManager::GetShader("patterns");
-	glm::vec2 size(256, 161);
-	ResourceManager::GetShader("patterns").Use();
-	ResourceManager::GetShader("patterns").SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
-	ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
-	ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
-	ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
-	ResourceManager::GetShader("patterns").SetInteger("index", patternID);
-	auto patternTexture = ResourceManager::GetTexture("testpattern");
-
-	Renderer->setUVs(MenuManager::menuManager.patternUVs[patternID]);
-	Renderer->DrawSprite(patternTexture, glm::vec2(0, 31), 0.0f, size);
-
-	Renderer->shader = ResourceManager::GetShader("Nsprite");
+	DrawPattern(glm::vec2(256, 161), glm::vec2(0, 31));
 
 	Texture2D optionIcons = ResourceManager::GetTexture("UIItems");
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
@@ -3897,7 +3826,7 @@ void OptionsMenu::Draw()
 
 	DrawIndicators();
 
-	Renderer->shader = ResourceManager::GetShader("patterns");
+/*	Renderer->shader = ResourceManager::GetShader("patterns");
 
 	size = glm::vec2(256, 32);
 	ResourceManager::GetShader("patterns").Use();
@@ -3905,7 +3834,9 @@ void OptionsMenu::Draw()
 	Renderer->setUVs(MenuManager::menuManager.patternUVs[1]);
 	Renderer->DrawSprite(patternTexture, glm::vec2(0, 192), 0.0f, size);
 
-	Renderer->shader = ResourceManager::GetShader("Nsprite");
+	Renderer->shader = ResourceManager::GetShader("Nsprite");*/
+
+	DrawPattern(glm::vec2(256, 32), glm::vec2(0, 192));
 
 	Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
 	ResourceManager::GetShader("Nsprite").Use();
@@ -4059,6 +3990,10 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						{
 							indicatorY2 -= 16;
 						}
+						else if (currentOption == 14)
+						{
+							indicatorY2 = 153;
+						}
 						else
 						{
 							indicatorY2 -= 8;
@@ -4111,6 +4046,10 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						if (currentOption == 12)
 						{
 							indicatorY2 += 16;
+						}
+						else if (currentOption == 15)
+						{
+							indicatorY2 = 169;
 						}
 						else
 						{
@@ -4196,6 +4135,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				if (patternID < 1)
 				{
 					patternID++;
+					ResourceManager::PlaySound("optionSelect2");
 				}
 				break;
 			case 9:
@@ -4320,6 +4260,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				if (patternID > 0)
 				{
 					patternID--;
+					ResourceManager::PlaySound("optionSelect2");
 				}
 				break;
 			case 9:
@@ -4408,6 +4349,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			inColor = defaultColor;
 			Settings::settings.editedColor[patternID] = false;
+			ResourceManager::PlaySound("select2");
 		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_z))
@@ -4447,6 +4389,7 @@ void OptionsMenu::CheckColorChange(std::vector<int>& inColor, std::vector<int>& 
 	{
 		Settings::settings.editedColor[patternID] = false;
 	}
+	ResourceManager::PlaySound("optionSelect2");
 }
 
 void OptionsMenu::RenderText(std::string toWrite, float x, float y, float scale, bool selected)
@@ -4859,46 +4802,6 @@ FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera*
 
 void FullInventoryMenu::Draw()
 {
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	//Inventory box
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(24, 72, 0.0f));
-	model = glm::scale(model, glm::vec3(122, 146, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	//Item info
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(152, 72, 0.0f));
-
-	model = glm::scale(model, glm::vec3(98, 130, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	//"Too many items" box
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(128, 0, 0.0f));
-
-	model = glm::scale(model, glm::vec3(122, 66, 0.0f));
-
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.5f, 0.5f, 1.0f));
-
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
 	DrawBox(glm::vec2(128, 0), 122, 66);
 	DrawBox(glm::vec2(24, 72), 122, 146);
 	DrawBox(glm::vec2(152, 72), 98, 130);
@@ -5217,40 +5120,12 @@ void SuspendMenu::Draw()
 	{
 		if (suspended)
 		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(72, 104, 0.0f));
-
-			model = glm::scale(model, glm::vec3(106, 82, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
-
 			DrawBox(glm::ivec2(72, 104), 106, 82);
 
 			text->RenderText("So may resume\nthis chapter\nfrom the main\nmenu", 275, 310, 1);
 		}
 		else
 		{
-			ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-			ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-			glm::mat4 model = glm::mat4();
-			model = glm::translate(model, glm::vec3(72, 104, 0.0f));
-
-			model = glm::scale(model, glm::vec3(109, 50, 0.0f));
-
-			ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-
-			ResourceManager::GetShader("shape").SetMatrix4("model", model);
-			glBindVertexArray(shapeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0);
-
 			DrawBox(glm::ivec2(72, 104), 109, 50);
 
 			ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
