@@ -135,6 +135,21 @@ void Menu::CancelOption(int num)
 
 void Menu::DrawBox(glm::ivec2 position, int width, int height)
 {
+
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(position, 0.0f));
+
+	model = glm::scale(model, glm::vec3(width, height, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.8f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+//	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
 	Renderer->shader = ResourceManager::GetShader("slice");
 
 	ResourceManager::GetShader("slice").Use();
@@ -150,6 +165,32 @@ void Menu::DrawBox(glm::ivec2 position, int width, int height)
 	ResourceManager::GetShader("slice").SetVector4f("bounds", uvs.x, uvs.y, uvs.z, uvs.w);
 
 	Renderer->setUVs();
+	int patternIndex = Settings::settings.backgroundPattern;
+
+	glm::vec4 uv = MenuManager::menuManager.patternUVs[patternIndex];
+	GLfloat verticies[] =
+	{
+		uv.x, uv.w,
+		uv.y, uv.z,
+		uv.x, uv.z,
+
+		uv.x, uv.w,
+		uv.y, uv.w,
+		uv.y, uv.z
+	};
+	ResourceManager::GetShader("slice").SetVector2fv("backgroundUVs", 12, verticies);
+	auto inColor = Settings::settings.backgroundColors[patternIndex];
+	glm::vec3 topColor(inColor[0], inColor[1], inColor[2]);
+	glm::vec3 bottomColor(inColor[3], inColor[4], inColor[5]);
+	ResourceManager::GetShader("slice").SetVector2f("imageScale", size / glm::vec2(64, 32));
+	ResourceManager::GetShader("slice").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
+	ResourceManager::GetShader("slice").SetVector3f("topColor", topColor / 255.0f);
+	ResourceManager::GetShader("slice").SetVector3f("bottomColor", bottomColor / 255.0f);
+	ResourceManager::GetShader("slice").SetInteger("index", patternIndex);
+
+	auto texture2 = ResourceManager::GetTexture("testpattern");
+	glActiveTexture(GL_TEXTURE1);
+	texture2.Bind();
 	Renderer->DrawSprite(texture, glm::vec2(position.x, position.y), 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
@@ -3660,12 +3701,15 @@ OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int
 	numberOfOptions = 15;
 	fullScreen = true;
 
-	topColor = glm::vec3(96, 0, 0);
-	bottomColor = glm::vec3(0, 192, 192);
 }
 
 void OptionsMenu::Draw()
 {
+	int patternID = Settings::settings.backgroundPattern;
+	auto inColor = Settings::settings.backgroundColors[patternID];
+	glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
+	glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
+
 	//Appears to be a bit of black around/under the main background on the edges, keep in mind
 	Renderer->shader = ResourceManager::GetShader("patterns");
 	glm::vec2 size(256, 161);
@@ -3675,10 +3719,10 @@ void OptionsMenu::Draw()
 	ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
 	ResourceManager::GetShader("patterns").SetVector3f("topColor", topColor / 255.0f);
 	ResourceManager::GetShader("patterns").SetVector3f("bottomColor", bottomColor / 255.0f);
-	ResourceManager::GetShader("patterns").SetInteger("index", 1);
+	ResourceManager::GetShader("patterns").SetInteger("index", patternID);
 	auto patternTexture = ResourceManager::GetTexture("testpattern");
 
-	Renderer->setUVs(MenuManager::menuManager.patternUVs[1]);
+	Renderer->setUVs(MenuManager::menuManager.patternUVs[patternID]);
 	Renderer->DrawSprite(patternTexture, glm::vec2(0, 31), 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
@@ -3765,7 +3809,18 @@ void OptionsMenu::Draw()
 	RenderText("Off", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 1);
 
 	text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
+
+	RenderText("1", selectionXStart, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 0);
+	xOffset = 0;
+	xOffset += selectionXStart + text->GetTextWidth("1", 1) + 50;
+	RenderText("2", xOffset, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 1);
+
 	text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
+
+	text->RenderText("Upper", optionNameX + 50, 735 - (yOffset), 1);
+	text->RenderText("Lower", optionNameX + 50, 799 - (yOffset), 1);
+
+	RenderText("Default", selectionXStart, 864 - (yOffset), 1, Settings::settings.editedColor[patternID]);
 
 	ResourceManager::GetShader("Nsprite").Use();
 
@@ -3937,7 +3992,10 @@ void OptionsMenu::DrawIndicators()
 	}
 	else if (currentOption == 8)
 	{
-		//window type
+		if (Settings::settings.backgroundPattern == 1)
+		{
+			xLoc = 132;
+		}
 	}
 
 	MenuManager::menuManager.DrawIndicator(glm::vec2(xLoc, indicatorY2));
@@ -3945,6 +4003,7 @@ void OptionsMenu::DrawIndicators()
 
 void OptionsMenu::SelectOption()
 {
+
 }
 
 void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
@@ -3952,6 +4011,9 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	//Still need to handle the bottom case and disable input during that animation
 	MenuManager::menuManager.AnimateArrow(deltaTime);
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
+	int& patternID = Settings::settings.backgroundPattern;
+	auto& inColor = Settings::settings.backgroundColors[patternID];
+	auto defaultColor = Settings::settings.defaultColors[patternID];
 	if (!moveToBottom)
 	{
 		if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
@@ -4130,46 +4192,58 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					ResourceManager::PlaySound("optionSelect2");
 				}
 				break;
-			case 9:
-				if (topColor.x < 192)
+			case 8:
+				if (patternID < 1)
 				{
-					topColor.x += 8.0f;
-					topColor.x = glm::clamp(topColor.x, 0.0f, 192.0f);
+					patternID++;
+				}
+				break;
+			case 9:
+				if (inColor[0] < 192)
+				{
+					inColor[0] += 8;
+					inColor[0] = glm::clamp(inColor[0], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 10:
-				if (topColor.y < 192)
+				if (inColor[1] < 192)
 				{
-					topColor.y += 8.0f;
-					topColor.y = glm::clamp(topColor.y, 0.0f, 192.0f);
+					inColor[1] += 8;
+					inColor[1] = glm::clamp(inColor[1], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 11:
-				if (topColor.z < 192)
+				if (inColor[2] < 192)
 				{
-					topColor.z += 8.0f;
-					topColor.z = glm::clamp(topColor.z, 0.0f, 192.0f);
+					inColor[2] += 8;
+					inColor[2] = glm::clamp(inColor[2], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 12:
-				if (bottomColor.x < 192)
+				if (inColor[3] < 192)
 				{
-					bottomColor.x += 8;
-					bottomColor.x = glm::clamp(bottomColor.x, 0.0f, 192.0f);
+					inColor[3] += 8;
+					inColor[3] = glm::clamp(inColor[3], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 13:
-				if (bottomColor.y < 192)
+				if (inColor[4] < 192)
 				{
-					bottomColor.y += 8;
-					bottomColor.y = glm::clamp(bottomColor.y, 0.0f, 192.0f);
+					inColor[4] += 8;
+					inColor[4] = glm::clamp(inColor[4], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 14:
-				if (bottomColor.z < 192)
+				if (inColor[5] < 192)
 				{
-					bottomColor.z += 8;
-					bottomColor.z = glm::clamp(bottomColor.z, 0.0f, 192.0f);
+					inColor[5] += 8;
+					inColor[5] = glm::clamp(inColor[5], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			}
@@ -4242,46 +4316,58 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					ResourceManager::PlaySound("optionSelect2");
 				}
 				break;
-			case 9:
-				if (topColor.x > 0)
+			case 8:
+				if (patternID > 0)
 				{
-					topColor.x -= 8;
-					topColor.x = glm::clamp(topColor.x, 0.0f, 192.0f);
+					patternID--;
+				}
+				break;
+			case 9:
+				if (inColor[0] > 0)
+				{
+					inColor[0] -= 8;
+					inColor[0] = glm::clamp(inColor[0], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 10:
-				if (topColor.y > 0)
+				if (inColor[1] > 0)
 				{
-					topColor.y -= 8;
-					topColor.y = glm::clamp(topColor.y, 0.0f, 192.0f);
+					inColor[1] -= 8;
+					inColor[1] = glm::clamp(inColor[1], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 11:
-				if (topColor.z > 0)
+				if (inColor[2] > 0)
 				{
-					topColor.z -= 8;
-					topColor.z = glm::clamp(topColor.z, 0.0f, 192.0f);
+					inColor[2] -= 8;
+					inColor[2] = glm::clamp(inColor[2], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 12:
-				if (bottomColor.x > 0)
+				if (inColor[3] > 0)
 				{
-					bottomColor.x -= 8;
-					bottomColor.x = glm::clamp(bottomColor.x, 0.0f, 192.0f);
+					inColor[3] -= 8;
+					inColor[3] = glm::clamp(inColor[3], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 13:
-				if (bottomColor.y > 0)
+				if (inColor[4] > 0)
 				{
-					bottomColor.y -= 8;
-					bottomColor.y = glm::clamp(bottomColor.y, 0.0f, 192.0f);
+					inColor[4] -= 8;
+					inColor[4] = glm::clamp(inColor[4], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			case 14:
-				if (bottomColor.z > 0)
+				if (inColor[5] > 0)
 				{
-					bottomColor.z -= 8;
-					bottomColor.z = glm::clamp(bottomColor.z, 0.0f, 192.0f);
+					inColor[5] -= 8;
+					inColor[5] = glm::clamp(inColor[5], 0, 192);
+					CheckColorChange(inColor, defaultColor, patternID);
 				}
 				break;
 			}
@@ -4318,7 +4404,11 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 
 	if (inputManager.isKeyPressed(SDLK_RETURN))
 	{
-		SelectOption();
+		if (currentOption == 15 && Settings::settings.editedColor[patternID])
+		{
+			inColor = defaultColor;
+			Settings::settings.editedColor[patternID] = false;
+		}
 	}
 	else if (inputManager.isKeyPressed(SDLK_z))
 	{
@@ -4344,6 +4434,18 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 		{
 			Mix_Volume(-1, 0);
 		}
+	}
+}
+
+void OptionsMenu::CheckColorChange(std::vector<int>& inColor, std::vector<int>& defaultColor, int& patternID)
+{
+	if (inColor != defaultColor)
+	{
+		Settings::settings.editedColor[patternID] = true;
+	}
+	else
+	{
+		Settings::settings.editedColor[patternID] = false;
 	}
 }
 

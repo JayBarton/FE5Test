@@ -1,8 +1,10 @@
 #version 330 core
 
 in vec2 TextureCoordinates;
+in vec2 backgroundTexCoords;
 
 uniform sampler2D image;
+uniform sampler2D image2;
 
 uniform vec2 u_dimensions;
 uniform vec2 u_border;
@@ -10,9 +12,19 @@ uniform vec4 spriteColor;
 uniform vec4 bounds;
 
 
-float map(float val, float oMin, float oMax, float nMin, float nMax) {
+uniform vec2 imageScale;
+uniform vec2 sheetScale;
+
+uniform int index;
+
+uniform vec3 topColor;
+uniform vec3 bottomColor;
+
+float map(float val, float oMin, float oMax, float nMin, float nMax) 
+{
     return (val - oMin) / (oMax - oMin) * (nMax - nMin) + nMin;
 }
+
 float mapInside(float val, float min, float innerStart, float innerSize, float uDimensions, float uBorder) {
 	float scale = uBorder / uDimensions;
 	if(fract(val * scale) < uBorder)
@@ -53,5 +65,18 @@ void main(void)
 	 newUV = subspriteMap(newUV);
 
 	gl_FragColor = vec4(spriteColor) * texture2D(image, newUV);
-
+	if(gl_FragColor.a == 1 && gl_FragColor.r == 1)
+	{
+		vec2 texCoord = backgroundTexCoords;
+		texCoord.x = mod(texCoord.x * imageScale.x, sheetScale.x) + (sheetScale.x * index);
+		texCoord.y = mod(texCoord.y * imageScale.y, sheetScale.y);
+		
+		vec4 imageColor = texture(image2, texCoord);
+		
+		vec4 tColor = mix(vec4(topColor, 1), imageColor, 0.25);
+		vec4 bColor = mix(vec4(bottomColor, 1), imageColor, 0.25);
+		
+		gl_FragColor = mix(tColor, bColor, backgroundTexCoords.y);
+	//	gl_FragColor = texture2D(image2, TextureCoordinates);
+	}
 }

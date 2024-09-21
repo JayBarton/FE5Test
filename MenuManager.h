@@ -420,6 +420,8 @@ struct OptionsMenu : public Menu
 	virtual void SelectOption() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 
+	void CheckColorChange(std::vector<int>& inColor, std::vector<int>& defaultColor, int& patternID);
+
 	void RenderText(std::string toWrite, float x, float y, float scale, bool selected);
 
 	int top = 117;
@@ -436,8 +438,8 @@ struct OptionsMenu : public Menu
 	bool hitBottom = false;
 	bool moveToBottom = false;
 
-	glm::vec3 topColor;
-	glm::vec3 bottomColor;
+//	glm::vec3 topColor;
+//	glm::vec3 bottomColor;
 };
 
 struct FullInventoryMenu : public Menu

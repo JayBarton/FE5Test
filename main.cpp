@@ -503,6 +503,8 @@ struct StartGameEvent : public Observer<int>
 			loadMap("2.map");
 			currentRound = 0;
 			cursor.SetFocus(playerManager.units[0]);
+			Settings::settings.backgroundColors = Settings::settings.defaultColors;
+			Settings::settings.editedColor.resize(Settings::settings.backgroundColors.size());
 		}
 		else
 		{
@@ -588,7 +590,7 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/rangeVertexShader.txt", "Shaders/rangeFragmentShader.txt", nullptr, "range");
 	ResourceManager::LoadShader("Shaders/shapeSpecialVertexShader.txt", "Shaders/shapeSpecialFragmentShader.txt", nullptr, "shapeSpecial");
 	ResourceManager::LoadShader("Shaders/shapeInstanceVertexShader.txt", "Shaders/shapeInstanceFragmentShader.txt", nullptr, "shapeInstance");
-	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
+	ResourceManager::LoadShader("Shaders/sliceVertexShader.txt", "Shaders/sliceFragmentShader.txt", nullptr, "slice");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/sliceFullFragmentShader.txt", nullptr, "sliceFull");
 	ResourceManager::LoadShader("Shaders/clipVertexShader.txt", "Shaders/clipFragmentShader.txt", nullptr, "clip");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/outlineFragmentShader.txt", nullptr, "outline");
@@ -963,6 +965,7 @@ void SetShaderDefaults()
 	ResourceManager::GetShader("instance").SetFloat("backgroundFade", 0);
 
 	ResourceManager::GetShader("slice").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("slice").Use().SetInteger("image2", 1);
 	ResourceManager::GetShader("slice").SetMatrix4("projection", camera.getOrthoMatrix());
 
 	ResourceManager::GetShader("sliceFull").Use().SetInteger("image", 0);
