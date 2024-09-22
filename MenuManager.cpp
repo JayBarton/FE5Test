@@ -62,6 +62,11 @@ void Menu::CheckInput(InputManager& inputManager, float deltaTime)
 	}
 }
 
+void Menu::DelayedExit()
+{
+	ClearMenu();
+}
+
 void Menu::NextOption()
 {
 	currentOption++;
@@ -209,6 +214,49 @@ void Menu::DrawPattern(glm::vec2 size, glm::vec2 pos, bool gray)
 	Renderer->DrawSprite(patternTexture, pos, 0.0f, size);
 
 	Renderer->shader = ResourceManager::GetShader("Nsprite");
+}
+
+void Menu::HandleFadeIn(float deltaTime)
+{
+	fadeInAlpha += deltaTime * 4;
+	if (fadeInAlpha >= 1.0f)
+	{
+		fadeInAlpha = 1.0f;
+		fullFadeIn = false;
+		fullFadeOut = true;
+		fullScreen = !exitMenu;
+	}
+}
+
+void Menu::HandleFadeOut(float deltaTime)
+{
+	fadeInAlpha -= deltaTime * 4;
+	if (fadeInAlpha <= 0.0f)
+	{
+		fadeInAlpha = 0.0f;
+		fullFadeOut = false;
+		if (exitMenu)
+		{
+			DelayedExit();
+		}
+	}
+}
+
+void Menu::DrawFadeIn()
+{
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", fadeInAlpha);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0, 0, 0.0f));
+
+	model = glm::scale(model, glm::vec3(256, 224, 0.0f));
+
+	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 }
 
 void Menu::ClearMenu()
@@ -539,6 +587,7 @@ void UnitOptionsMenu::GetOptions()
 	canAttack = false;
 	canCapture = false;
 	canDismount = false;
+	canMount = false;
 	heldFriendly = false;
 	heldEnemy = false;
 	canTransfer = false;
@@ -709,7 +758,6 @@ void UnitOptionsMenu::GetOptions()
 			{
 				canMount = true;
 				optionsVector.push_back(MOUNT);
-
 			}
 		}
 	}
@@ -1578,6 +1626,7 @@ void SelectTalkMenu::CheckInput(InputManager& inputManager, float deltaTime)
 TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit)
 	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
+	fullFadeIn = true;
 	tradeUnit = unit;
 	itemIconUVs = MenuManager::menuManager.itemIconUVs;
 	GetOptions();
@@ -1585,30 +1634,18 @@ TradeMenu::TradeMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int sha
 
 void TradeMenu::Draw()
 {
-	DrawPattern(glm::vec2(256, 80), glm::vec2(0));
-	DrawPattern(glm::vec2(256, 144), glm::vec2(0, 80));
-
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	Texture2D texture = ResourceManager::GetTexture("TradeMenuBG");
-	Renderer->setUVs();
-	Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
-
-	int x = 0;
-	if (firstInventory)
+	if ((!fullFadeIn && !exitMenu) || (exitMenu && !fullFadeOut))
 	{
-		x = 7;
-	}
-	else
-	{
-		x = 135;
-	}
+		DrawPattern(glm::vec2(256, 80), glm::vec2(0));
+		DrawPattern(glm::vec2(256, 144), glm::vec2(0, 80));
 
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	MenuManager::menuManager.DrawIndicator(glm::vec2(x, 97 + (16 * currentOption)));
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		Texture2D texture = ResourceManager::GetTexture("TradeMenuBG");
+		Renderer->setUVs();
+		Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 
-	if (moving)
-	{
-		if (moveFromFirst)
+		int x = 0;
+		if (firstInventory)
 		{
 			x = 7;
 		}
@@ -1617,47 +1654,66 @@ void TradeMenu::Draw()
 			x = 135;
 		}
 
-		MenuManager::menuManager.DrawIndicator(glm::vec2(x, 97 + (16 * itemToMove)), false);
-	}
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		MenuManager::menuManager.DrawIndicator(glm::vec2(x, 97 + (16 * currentOption)));
 
-	auto firstUnit = cursor->selectedUnit;
-	text->RenderText(firstUnit->name, 25, 32, 1);
-	text->RenderText(firstUnit->unitClass, 25, 75, 1);
-	text->RenderText(tradeUnit->name, 425, 32, 1);
-	text->RenderText(tradeUnit->unitClass, 425, 75, 1);
-	ResourceManager::GetShader("Nsprite").Use();
+		if (moving)
+		{
+			if (moveFromFirst)
+			{
+				x = 7;
+			}
+			else
+			{
+				x = 135;
+			}
 
-	for (int i = 0; i < firstUnit->inventory.size(); i++)
-	{
-		text->RenderText(firstUnit->inventory[i]->name, 125, 267 + i * 42, 1);
-		text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 42, 1, 28);
+			MenuManager::menuManager.DrawIndicator(glm::vec2(x, 97 + (16 * itemToMove)), false);
+		}
+
+		auto firstUnit = cursor->selectedUnit;
+		text->RenderText(firstUnit->name, 25, 32, 1);
+		text->RenderText(firstUnit->unitClass, 25, 75, 1);
+		text->RenderText(tradeUnit->name, 425, 32, 1);
+		text->RenderText(tradeUnit->unitClass, 425, 75, 1);
 		ResourceManager::GetShader("Nsprite").Use();
-		auto texture = ResourceManager::GetTexture("icons");
 
-		Renderer->setUVs(itemIconUVs[firstUnit->inventory[i]->ID]);
-		Renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, glm::vec2(16));
-	}
+		for (int i = 0; i < firstUnit->inventory.size(); i++)
+		{
+			text->RenderText(firstUnit->inventory[i]->name, 125, 267 + i * 42, 1);
+			text->RenderTextRight(intToString(firstUnit->inventory[i]->remainingUses), 325, 267 + i * 42, 1, 28);
+			ResourceManager::GetShader("Nsprite").Use();
+			auto texture = ResourceManager::GetTexture("icons");
 
-	for (int i = 0; i < tradeUnit->inventory.size(); i++)
-	{
-		text->RenderText(tradeUnit->inventory[i]->name, 525, 267 + i * 42, 1);
-		text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 725, 267 + i * 42, 1, 28);
+			Renderer->setUVs(itemIconUVs[firstUnit->inventory[i]->ID]);
+			Renderer->DrawSprite(texture, glm::vec2(24, 98 + 16 * i), 0.0f, glm::vec2(16));
+		}
 
+		for (int i = 0; i < tradeUnit->inventory.size(); i++)
+		{
+			text->RenderText(tradeUnit->inventory[i]->name, 525, 267 + i * 42, 1);
+			text->RenderTextRight(intToString(tradeUnit->inventory[i]->remainingUses), 725, 267 + i * 42, 1, 28);
+
+			ResourceManager::GetShader("Nsprite").Use();
+			auto texture = ResourceManager::GetTexture("icons");
+
+			Renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
+			Renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, glm::vec2(16));
+		}
+
+		Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
 		ResourceManager::GetShader("Nsprite").Use();
-		auto texture = ResourceManager::GetTexture("icons");
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		Renderer->setUVs(UnitResources::portraitUVs[firstUnit->portraitID][0]);
+		Renderer->DrawSprite(portraitTexture, glm::vec2(72, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
 
-		Renderer->setUVs(itemIconUVs[tradeUnit->inventory[i]->ID]);
-		Renderer->DrawSprite(texture, glm::vec2(152, 98 + 16 * i), 0.0f, glm::vec2(16));
+		Renderer->setUVs(UnitResources::portraitUVs[tradeUnit->portraitID][0]);
+		Renderer->DrawSprite(portraitTexture, glm::vec2(200, 8), 0, glm::vec2(48, 64));
 	}
-
-	Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
-	ResourceManager::GetShader("Nsprite").Use();
-	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-	Renderer->setUVs(UnitResources::portraitUVs[firstUnit->portraitID][0]);
-	Renderer->DrawSprite(portraitTexture, glm::vec2(72, 8), 0, glm::vec2(48, 64), glm::vec4(1), true);
-
-	Renderer->setUVs(UnitResources::portraitUVs[tradeUnit->portraitID][0]);
-	Renderer->DrawSprite(portraitTexture, glm::vec2(200, 8), 0, glm::vec2(48, 64));
+	if (fullFadeIn || fullFadeOut)
+	{
+		DrawFadeIn();
+	}
 }
 
 void TradeMenu::SelectOption()
@@ -1767,30 +1823,45 @@ void TradeMenu::GetOptions()
 
 void TradeMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	Menu::CheckInput(inputManager, deltaTime);
-	if (inputManager.isKeyPressed(SDLK_LEFT) && !firstInventory)
+	if (fullFadeIn)
 	{
-		firstInventory = true;
-		auto firstInv = cursor->selectedUnit->inventory;
-		if (currentOption >= firstInv.size())
-		{
-			currentOption = firstInv.size() - 1;
-		}
-		GetOptions();
-		ResourceManager::PlaySound("optionSelect2");
+		HandleFadeIn(deltaTime);
 	}
-	if (inputManager.isKeyPressed(SDLK_RIGHT) && firstInventory)
+	else if (exitMenu && fullFadeOut)
 	{
-		auto firstInv = cursor->selectedUnit->inventory;
-		firstInventory = false;
-		if (currentOption >= tradeUnit->inventory.size())
-		{
-			currentOption = tradeUnit->inventory.size() - 1;
-		}
-		GetOptions();
-		ResourceManager::PlaySound("optionSelect2");
+		HandleFadeOut(deltaTime);
 	}
-	MenuManager::menuManager.AnimateIndicator(deltaTime);
+	else
+	{
+		if (fullFadeOut)
+		{
+			HandleFadeOut(deltaTime);
+		}
+		Menu::CheckInput(inputManager, deltaTime);
+		if (inputManager.isKeyPressed(SDLK_LEFT) && !firstInventory)
+		{
+			firstInventory = true;
+			auto firstInv = cursor->selectedUnit->inventory;
+			if (currentOption >= firstInv.size())
+			{
+				currentOption = firstInv.size() - 1;
+			}
+			GetOptions();
+			ResourceManager::PlaySound("optionSelect2");
+		}
+		if (inputManager.isKeyPressed(SDLK_RIGHT) && firstInventory)
+		{
+			auto firstInv = cursor->selectedUnit->inventory;
+			firstInventory = false;
+			if (currentOption >= tradeUnit->inventory.size())
+			{
+				currentOption = tradeUnit->inventory.size() - 1;
+			}
+			GetOptions();
+			ResourceManager::PlaySound("optionSelect2");
+		}
+		MenuManager::menuManager.AnimateIndicator(deltaTime);
+	}
 }
 
 void TradeMenu::CancelOption(int num)
@@ -1812,11 +1883,17 @@ void TradeMenu::CancelOption(int num)
 	}
 	else
 	{
-		MenuManager::menuManager.PreviousMenu();
-		MenuManager::menuManager.PreviousMenu();
-		MenuManager::menuManager.menus.back()->currentOption = 0;
-		MenuManager::menuManager.menus.back()->GetOptions();
+		exitMenu = true;
+		fullFadeIn = true;
 	}
+}
+
+void TradeMenu::DelayedExit()
+{
+	MenuManager::menuManager.PreviousMenu();
+	MenuManager::menuManager.PreviousMenu();
+	MenuManager::menuManager.menus.back()->currentOption = 0;
+	MenuManager::menuManager.menus.back()->GetOptions();
 }
 
 UnitStatsViewMenu::UnitStatsViewMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* unit) :
@@ -1867,7 +1944,7 @@ void UnitStatsViewMenu::Draw()
 	{
 		DrawPage1();
 	}
-	if(!firstPage || transition)
+	if (!firstPage || transition)
 	{
 		DrawPage2();
 	}
@@ -2043,20 +2120,6 @@ void UnitStatsViewMenu::DrawPage1()
 	else
 	{
 		MenuManager::menuManager.DrawIndicator(glm::ivec2(103, 97 + 16 * currentOption));
-		
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());;
-
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(8, 79, 0.0f));
-
-		model = glm::scale(model, glm::vec3(96, 144, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.19f, 0.18f, 0.16f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-	//	glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
 
 		DrawPattern(glm::vec2(96, 144), glm::vec2(8, 79), true);
 
@@ -2237,20 +2300,6 @@ void UnitStatsViewMenu::DrawPage2()
 
 	if (examining)
 	{
-		ResourceManager::GetShader("shape").Use();
-
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, glm::vec3(16, 112, 0.0f));
-
-		model = glm::scale(model, glm::vec3(96, 104, 0.0f));
-
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.19f, 0.18f, 0.16f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-	//	glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-
 		DrawPattern(glm::vec2(96, 104), glm::vec2(16, 112), true);
 
 		Renderer->shader = ResourceManager::GetShader("slice");
@@ -3573,44 +3622,50 @@ StatusMenu::StatusMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 2;
-	fullScreen = true;
+	fullFadeIn = true;
 }
 
 void StatusMenu::Draw()
 {
-	DrawPattern(glm::vec2(256, 72), glm::vec2(0, 32));
-	DrawPattern(glm::vec2(256, 88), glm::vec2(0, 136));
+	if ((!fullFadeIn && !exitMenu) || (exitMenu && !fullFadeOut))
+	{
+		DrawPattern(glm::vec2(256, 72), glm::vec2(0, 32));
+		DrawPattern(glm::vec2(256, 88), glm::vec2(0, 136));
 
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 
-	Texture2D texture = ResourceManager::GetTexture("StatusMenuBG");
-	Renderer->setUVs();
-	Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+		Texture2D texture = ResourceManager::GetTexture("StatusMenuBG");
+		Renderer->setUVs();
+		Renderer->DrawSprite(texture, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 
-	MenuManager::menuManager.DrawIndicator(glm::vec2(7, 137 + 16 * currentOption));
+		MenuManager::menuManager.DrawIndicator(glm::vec2(7, 137 + 16 * currentOption));
 
-	text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 0, 26, 1, 744); //Chapter Tile Goes here
-	text->RenderText("Sieze the manor's gate", 175, 91, 1); //Objective goes here
+		text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 0, 26, 1, 744); //Chapter Tile Goes here
+		text->RenderText("Sieze the manor's gate", 175, 91, 1); //Objective goes here
 
-	text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 100, 375, 1);
-	text->RenderText("-----", 100, 431, 1);
+		text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 100, 375, 1);
+		text->RenderText("-----", 100, 431, 1);
 
-	text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 450, 396, 1);
-	text->RenderText(MenuManager::menuManager.playerManager->units[0]->unitClass, 400, 439, 1);
-	text->RenderText("HP", 400, 530, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->currentHP), 475, 530, 1);
-	text->RenderText("/", 500, 530, 1);
-	text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
-	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 28);
+		text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 450, 396, 1);
+		text->RenderText(MenuManager::menuManager.playerManager->units[0]->unitClass, 400, 439, 1);
+		text->RenderText("HP", 400, 530, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+		text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->currentHP), 475, 530, 1);
+		text->RenderText("/", 500, 530, 1);
+		text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
+		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 28);
 
-	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	SBatch Batch;
-	Batch.init();
-	Batch.begin();
-	MenuManager::menuManager.playerManager->units[0]->Draw(&Batch, glm::vec2(128, 144), true);
-	Batch.end();
-	Batch.renderBatch();
-
+		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		SBatch Batch;
+		Batch.init();
+		Batch.begin();
+		MenuManager::menuManager.playerManager->units[0]->Draw(&Batch, glm::vec2(128, 144), true);
+		Batch.end();
+		Batch.renderBatch();
+	}
+	if (fullFadeIn || fullFadeOut)
+	{
+		DrawFadeIn();
+	}
 }
 
 void StatusMenu::SelectOption()
@@ -3619,19 +3674,31 @@ void StatusMenu::SelectOption()
 
 void StatusMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	MenuManager::menuManager.AnimateIndicator(deltaTime);
-	if (inputManager.isKeyPressed(SDLK_UP))
+	if (fullFadeIn)
 	{
-		PreviousOption();
+		HandleFadeIn(deltaTime);
 	}
-	else if (inputManager.isKeyPressed(SDLK_DOWN))
+	else if (fullFadeOut)
 	{
-		NextOption();
+		HandleFadeOut(deltaTime);
 	}
-	else if (inputManager.isKeyPressed(SDLK_z))
+	else
 	{
-		ResourceManager::PlaySound("cancel");
-		ClearMenu();
+		MenuManager::menuManager.AnimateIndicator(deltaTime);
+		if (inputManager.isKeyPressed(SDLK_UP))
+		{
+			PreviousOption();
+		}
+		else if (inputManager.isKeyPressed(SDLK_DOWN))
+		{
+			NextOption();
+		}
+		else if (inputManager.isKeyPressed(SDLK_z))
+		{
+			ResourceManager::PlaySound("cancel");
+			exitMenu = true;
+			fullFadeIn = true;
+		}
 	}
 }
 
@@ -3639,209 +3706,206 @@ OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int
 	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
 	numberOfOptions = 15;
-	fullScreen = true;
-
+	//fullScreen = true;
+	fullFadeIn = true;
 }
 
 void OptionsMenu::Draw()
 {
-	//Appears to be a bit of black around/under the main background on the edges, keep in mind
-	glm::vec2 size(256, 161);
-	glm::vec2 pos;
-
-	int patternID = Settings::settings.backgroundPattern;
-	auto inColor = Settings::settings.backgroundColors[patternID];
-	glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
-	glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
-
-	DrawPattern(glm::vec2(256, 161), glm::vec2(0, 31));
-
-	Texture2D optionIcons = ResourceManager::GetTexture("UIItems");
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	auto optionIconUVs = MenuManager::menuManager.optionIconUVs;
-	glm::vec2 iconSize = glm::vec2(16);
-	int adjustedOffset = round((yOffset / 600.0f) * 224.0f);
-	for (int i = 0; i < 10; i++)
+	if ((!fullFadeIn && !exitMenu) || (exitMenu && !fullFadeOut))
 	{
-		Renderer->setUVs(optionIconUVs[i]);
-		Renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
-	}
-	//I have no idea why FE5 has this black line being drawn here. It is drawn over the option sprites but under the text.
-	//I don't think it looks as good as drawing over both but it is replicated here.
-	glm::mat4 model = glm::mat4();
-	model = glm::translate(model, glm::vec3(5, 191, 0.0f));
-	model = glm::scale(model, glm::vec3(256, 1, 0.0f));
-	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
-	ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
-	ResourceManager::GetShader("shape").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+		//Appears to be a bit of black around/under the main background on the edges, keep in mind
+		glm::vec2 size(256, 161);
+		glm::vec2 pos;
 
-	if (yOffset < 256)
+		int patternID = Settings::settings.backgroundPattern;
+		auto inColor = Settings::settings.backgroundColors[patternID];
+		glm::vec3 topColor = glm::vec3(inColor[0], inColor[1], inColor[2]);
+		glm::vec3 bottomColor = glm::vec3(inColor[3], inColor[4], inColor[5]);
+
+		DrawPattern(glm::vec2(256, 161), glm::vec2(0, 31));
+
+		Texture2D optionIcons = ResourceManager::GetTexture("UIItems");
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		auto optionIconUVs = MenuManager::menuManager.optionIconUVs;
+		glm::vec2 iconSize = glm::vec2(16);
+		int adjustedOffset = round((yOffset / 600.0f) * 224.0f);
+		for (int i = 0; i < 10; i++)
+		{
+			Renderer->setUVs(optionIconUVs[i]);
+			Renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
+		}
+		//I have no idea why FE5 has this black line being drawn here. It is drawn over the option sprites but under the text.
+		//I don't think it looks as good as drawing over both but it is replicated here.
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, glm::vec3(5, 191, 0.0f));
+		model = glm::scale(model, glm::vec3(256, 1, 0.0f));
+		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("shape").SetFloat("alpha", 1.0f);
+		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 0.0f));
+		ResourceManager::GetShader("shape").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		if (yOffset < 256)
+		{
+			MenuManager::menuManager.DrawArrow(glm::ivec2(120, 186));
+		}
+		if (yOffset > 0)
+		{
+			MenuManager::menuManager.DrawArrow(glm::ivec2(120, 32), false);
+		}
+
+		int optionNameX = 125;
+		int selectionXStart = 400;
+		//Distance of about 64 for each option
+		text->RenderText("Animations", optionNameX, 117 - (yOffset), 1);
+		RenderText("Normal", selectionXStart, 117 - (yOffset), 1, Settings::settings.mapAnimations == 0);
+		int xOffset = 0;
+		xOffset += selectionXStart + text->GetTextWidth("Normal", 1) + 50;
+		RenderText("Map", xOffset, 117 - (yOffset), 1, Settings::settings.mapAnimations == 1);
+		xOffset += text->GetTextWidth("Map", 1) + 50;
+		RenderText("By Unit", xOffset, 117 - (yOffset), 1, Settings::settings.mapAnimations == 2);
+
+		text->RenderText("Terrain Window", optionNameX, 181 - (yOffset), 1);
+		RenderText("On", selectionXStart, 181 - (yOffset), 1, Settings::settings.showTerrain);
+		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 181 - (yOffset), 1, !Settings::settings.showTerrain);
+
+		text->RenderText("Autocursor", optionNameX, 245 - (yOffset), 1);
+		RenderText("On", selectionXStart, 245 - (yOffset), 1, Settings::settings.autoCursor);
+		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1, !Settings::settings.autoCursor);
+
+		text->RenderText("Text Speed", optionNameX, 309 - (yOffset), 1);
+		RenderText("Slow", selectionXStart, 309 - (yOffset), 1, Settings::settings.textSpeed == 0);
+		xOffset = 0;
+		xOffset += selectionXStart + text->GetTextWidth("Slow", 1) + 50;
+		RenderText("Normal", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 1);
+		xOffset += text->GetTextWidth("Normal", 1) + 50;
+		RenderText("Fast", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 2);
+
+		text->RenderText("Unit Speed", optionNameX, 373 - (yOffset), 1);
+		RenderText("Normal", selectionXStart, 373 - (yOffset), 1, Settings::settings.unitSpeed < 5);
+		RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, Settings::settings.unitSpeed >= 5);
+
+		text->RenderText("Audio", optionNameX, 437 - (yOffset), 1);
+		RenderText("Stereo", selectionXStart, 437 - (yOffset), 1, Settings::settings.sterero);
+		RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1, !Settings::settings.sterero);
+
+		text->RenderText("Music", optionNameX, 501 - (yOffset), 1);
+		RenderText("On", selectionXStart, 501 - (yOffset), 1, Settings::settings.music);
+		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 501 - (yOffset), 1, !Settings::settings.music);
+
+		text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
+		RenderText("4", selectionXStart, 565 - (yOffset), 1, Settings::settings.volume == 4);
+		xOffset = 0;
+		xOffset += selectionXStart + text->GetTextWidth("4", 1) + 50;
+		RenderText("3", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 3);
+		xOffset += text->GetTextWidth("3", 1) + 50;
+		RenderText("2", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 2);
+		xOffset += text->GetTextWidth("2", 1) + 50;
+		RenderText("Off", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 1);
+
+		text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
+
+		RenderText("1", selectionXStart, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 0);
+		xOffset = 0;
+		xOffset += selectionXStart + text->GetTextWidth("1", 1) + 50;
+		RenderText("2", xOffset, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 1);
+
+		text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
+
+		text->RenderText("Upper", optionNameX + 50, 735 - (yOffset), 1);
+		text->RenderText("Lower", optionNameX + 50, 799 - (yOffset), 1);
+
+		RenderText("Default", selectionXStart, 864 - (yOffset), 1, Settings::settings.editedColor[patternID]);
+
+		ResourceManager::GetShader("Nsprite").Use();
+
+		Renderer->setUVs(MenuManager::menuManager.colorBarsUV);
+		Renderer->DrawSprite(optionIcons, glm::vec2(128, 263 - adjustedOffset), 0, glm::vec2(107, 56));
+
+		ResourceManager::GetShader("gradient").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		ResourceManager::GetShader("gradient").SetFloat("alpha", 1.0f);
+		ResourceManager::GetShader("gradient").SetFloat("barEnd", 232.0f);
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(139, 266 - adjustedOffset, 0.0f));
+		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.x / 8)), 2, 0.0f));
+		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
+		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(139, 274 - adjustedOffset, 0.0f));
+		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.y / 8)), 2, 0.0f));
+		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
+		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(139, 282 - adjustedOffset, 0.0f));
+		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.z / 8)), 2, 0.0f));
+		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(139, 298 - adjustedOffset, 0.0f));
+		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.x / 8)), 2, 0.0f));
+		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
+		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(139, 306 - adjustedOffset, 0.0f));
+		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.y / 8)), 2, 0.0f));
+		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
+		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(139, 314 - adjustedOffset, 0.0f));
+		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.z / 8)), 2, 0.0f));
+		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
+		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
+		glBindVertexArray(shapeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		ResourceManager::GetShader("Nsprite").Use();
+		Renderer->setUVs(MenuManager::menuManager.colorIndicatorUV);
+
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.x / 8), 263 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.y / 8), 271 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.z / 8), 279 - adjustedOffset), 0, glm::vec2(3, 8));
+
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.x / 8), 295 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.y / 8), 303 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.z / 8), 311 - adjustedOffset), 0, glm::vec2(3, 8));
+
+		DrawIndicators();
+
+		DrawPattern(glm::vec2(256, 32), glm::vec2(0, 192));
+
+		Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
+		ResourceManager::GetShader("Nsprite").Use();
+		Renderer->setUVs();
+		Renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
+	}
+	if (fullFadeIn || fullFadeOut)
 	{
-		MenuManager::menuManager.DrawArrow(glm::ivec2(120, 186));
+		DrawFadeIn();
 	}
-	if (yOffset > 0)
-	{
-		MenuManager::menuManager.DrawArrow(glm::ivec2(120, 32), false);
-	}
-
-	int optionNameX = 125;
-	int selectionXStart = 400;
-	//Distance of about 64 for each option
-	text->RenderText("Animations", optionNameX, 117 - (yOffset), 1);
-	RenderText("Normal", selectionXStart, 117 - (yOffset), 1, Settings::settings.mapAnimations == 0);
-	int xOffset = 0;
-	xOffset += selectionXStart + text->GetTextWidth("Normal", 1) + 50;
-	RenderText("Map", xOffset, 117 - (yOffset), 1, Settings::settings.mapAnimations == 1);
-	xOffset += text->GetTextWidth("Map", 1) + 50;
-	RenderText("By Unit", xOffset, 117 - (yOffset), 1, Settings::settings.mapAnimations == 2);
-
-	text->RenderText("Terrain Window", optionNameX, 181 - (yOffset), 1);
-	RenderText("On", selectionXStart, 181 - (yOffset), 1, Settings::settings.showTerrain);
-	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 181 - (yOffset), 1, !Settings::settings.showTerrain);
-
-	text->RenderText("Autocursor", optionNameX, 245 - (yOffset), 1);
-	RenderText("On", selectionXStart, 245 - (yOffset), 1, Settings::settings.autoCursor);
-	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1, !Settings::settings.autoCursor);
-
-	text->RenderText("Text Speed", optionNameX, 309 - (yOffset), 1);
-	RenderText("Slow", selectionXStart, 309 - (yOffset), 1, Settings::settings.textSpeed == 0);
-	xOffset = 0;
-	xOffset += selectionXStart + text->GetTextWidth("Slow", 1) + 50;
-	RenderText("Normal", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 1);
-	xOffset += text->GetTextWidth("Normal", 1) + 50;
-	RenderText("Fast", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 2);
-
-	text->RenderText("Unit Speed", optionNameX, 373 - (yOffset), 1);
-	RenderText("Normal", selectionXStart, 373 - (yOffset), 1, Settings::settings.unitSpeed < 5);
-	RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, Settings::settings.unitSpeed >= 5);
-
-	text->RenderText("Audio", optionNameX, 437 - (yOffset), 1);
-	RenderText("Stereo", selectionXStart, 437 - (yOffset), 1, Settings::settings.sterero);
-	RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1, !Settings::settings.sterero);
-
-	text->RenderText("Music", optionNameX, 501 - (yOffset), 1);
-	RenderText("On", selectionXStart, 501 - (yOffset), 1, Settings::settings.music);
-	RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 501 - (yOffset), 1, !Settings::settings.music);
-
-	text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
-	RenderText("4", selectionXStart, 565 - (yOffset), 1, Settings::settings.volume == 4);
-	xOffset = 0;
-	xOffset += selectionXStart + text->GetTextWidth("4", 1) + 50;
-	RenderText("3", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 3);
-	xOffset += text->GetTextWidth("3", 1) + 50;
-	RenderText("2", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 2);
-	xOffset += text->GetTextWidth("2", 1) + 50;
-	RenderText("Off", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 1);
-
-	text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
-
-	RenderText("1", selectionXStart, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 0);
-	xOffset = 0;
-	xOffset += selectionXStart + text->GetTextWidth("1", 1) + 50;
-	RenderText("2", xOffset, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 1);
-
-	text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
-
-	text->RenderText("Upper", optionNameX + 50, 735 - (yOffset), 1);
-	text->RenderText("Lower", optionNameX + 50, 799 - (yOffset), 1);
-
-	RenderText("Default", selectionXStart, 864 - (yOffset), 1, Settings::settings.editedColor[patternID]);
-
-	ResourceManager::GetShader("Nsprite").Use();
-
-	Renderer->setUVs(MenuManager::menuManager.colorBarsUV);
-	Renderer->DrawSprite(optionIcons, glm::vec2(128, 263 - adjustedOffset), 0, glm::vec2(107, 56));
-
-	ResourceManager::GetShader("gradient").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	ResourceManager::GetShader("gradient").SetFloat("alpha", 1.0f);
-	ResourceManager::GetShader("gradient").SetFloat("barEnd", 232.0f);
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(139, 266 - adjustedOffset, 0.0f));
-	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.x/8)), 2, 0.0f));
-	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
-	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(139, 274 - adjustedOffset, 0.0f));
-	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.y / 8)), 2, 0.0f));
-	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
-	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(139, 282 - adjustedOffset, 0.0f));
-	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.z / 8)), 2, 0.0f));
-	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(139, 298 - adjustedOffset, 0.0f));
-	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.x / 8)), 2, 0.0f));
-	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
-	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(139, 306 - adjustedOffset, 0.0f));
-	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.y / 8)), 2, 0.0f));
-	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
-	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(139, 314 - adjustedOffset, 0.0f));
-	model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.z / 8)), 2, 0.0f));
-	ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
-	ResourceManager::GetShader("gradient").SetMatrix4("model", model);
-	glBindVertexArray(shapeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
-
-	ResourceManager::GetShader("Nsprite").Use();
-	Renderer->setUVs(MenuManager::menuManager.colorIndicatorUV);
-
-	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.x/8), 263 - adjustedOffset), 0, glm::vec2(3, 8));
-	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.y/8), 271 - adjustedOffset), 0, glm::vec2(3, 8));
-	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.z/8), 279 - adjustedOffset), 0, glm::vec2(3, 8));
-
-	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.x/8), 295 - adjustedOffset), 0, glm::vec2(3, 8));
-	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.y/8), 303 - adjustedOffset), 0, glm::vec2(3, 8));
-	Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.z/8), 311 - adjustedOffset), 0, glm::vec2(3, 8));
-
-	DrawIndicators();
-
-/*	Renderer->shader = ResourceManager::GetShader("patterns");
-
-	size = glm::vec2(256, 32);
-	ResourceManager::GetShader("patterns").Use();
-	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
-	Renderer->setUVs(MenuManager::menuManager.patternUVs[1]);
-	Renderer->DrawSprite(patternTexture, glm::vec2(0, 192), 0.0f, size);
-
-	Renderer->shader = ResourceManager::GetShader("Nsprite");*/
-
-	DrawPattern(glm::vec2(256, 32), glm::vec2(0, 192));
-
-	Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
-	ResourceManager::GetShader("Nsprite").Use();
-	Renderer->setUVs();
-	Renderer->DrawSprite(test, glm::vec2(0, 0), 0, glm::vec2(256, 224));
 }
 
 void OptionsMenu::DrawIndicators()
@@ -3939,442 +4003,458 @@ void OptionsMenu::SelectOption()
 
 void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
-	//Still need to handle the bottom case and disable input during that animation
 	MenuManager::menuManager.AnimateArrow(deltaTime);
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
-	int& patternID = Settings::settings.backgroundPattern;
-	auto& inColor = Settings::settings.backgroundColors[patternID];
-	auto defaultColor = Settings::settings.defaultColors[patternID];
-	if (!moveToBottom)
+	if (fullFadeIn)
 	{
-		if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
+		HandleFadeIn(deltaTime);
+	}
+	else if (exitMenu && fullFadeOut)
+	{
+		HandleFadeOut(deltaTime);
+	}
+	else
+	{
+		if (fullFadeOut)
 		{
-			currentOption--;
-			if (currentOption < 0)
+			HandleFadeOut(deltaTime);
+		}
+		//Still need to handle the bottom case and disable input during that animation
+		int& patternID = Settings::settings.backgroundPattern;
+		auto& inColor = Settings::settings.backgroundColors[patternID];
+		auto defaultColor = Settings::settings.defaultColors[patternID];
+		if (!moveToBottom)
+		{
+			if (inputManager.KeyDownDelay(SDLK_UP, 0.05f, 0.25f))
 			{
-				currentOption = 0;
-			}
-			else
-			{
-				ResourceManager::PlaySound("optionSelect1");
-				if (currentOption == 0)
+				currentOption--;
+				if (currentOption < 0)
 				{
-					indicatorY = 39;
-					goal = 0;
-					up = true;
-					hitBottom = false;
+					currentOption = 0;
+				}
+				else
+				{
+					ResourceManager::PlaySound("optionSelect1");
+					if (currentOption == 0)
+					{
+						indicatorY = 39;
+						goal = 0;
+						up = true;
+						hitBottom = false;
+						indicatorY2 = indicatorY;
+					}
+					else
+					{
+						if (currentOption < 9)
+						{
+							indicatorY -= indicatorIncrement;
+							//The boundary is a bit different once the bottom has been hit
+							int bound = 63;
+							if (hitBottom)
+							{
+								bound = 55;
+							}
+							if (indicatorY < bound)
+							{
+								indicatorY = bound;
+								up = true;
+								goal -= 64;
+							}
+							indicatorY2 = indicatorY;
+						}
+						else
+						{
+							if (currentOption == 11)
+							{
+								indicatorY2 -= 16;
+							}
+							else if (currentOption == 14)
+							{
+								indicatorY2 = 153;
+							}
+							else
+							{
+								indicatorY2 -= 8;
+							}
+						}
+					}
+				}
+
+			}
+			else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.25f))
+			{
+				currentOption++;
+				if (currentOption > numberOfOptions)
+				{
+					currentOption = numberOfOptions;
+				}
+				else
+				{
+					ResourceManager::PlaySound("optionSelect1");
+					if (currentOption == 9)
+					{
+						indicatorY = 255;
+						indicatorY2 = 257;
+						goal = 406;
+						down = true;
+						hitBottom = true;
+						moveToBottom = true;
+					}
+					else
+					{
+						if (currentOption < 9)
+						{
+							indicatorY += indicatorIncrement;
+
+							int bound = 159;
+							if (hitBottom)
+							{
+								bound = 151;
+							}
+							if (indicatorY > bound)
+							{
+								indicatorY = bound;
+								down = true;
+								goal += 64;
+							}
+							indicatorY2 = indicatorY;
+						}
+						else
+						{
+							if (currentOption == 12)
+							{
+								indicatorY2 += 16;
+							}
+							else if (currentOption == 15)
+							{
+								indicatorY2 = 169;
+							}
+							else
+							{
+								indicatorY2 += 8;
+							}
+						}
+					}
+				}
+				if (currentOption < 9)
+				{
 					indicatorY2 = indicatorY;
 				}
-				else
+			}
+			else if (inputManager.KeyDownDelay(SDLK_RIGHT, 0.05f, 0.15f))
+			{
+				switch (currentOption)
 				{
-					if (currentOption < 9)
+				case 0:
+					Settings::settings.mapAnimations++;
+					if (Settings::settings.mapAnimations > 2)
 					{
-						indicatorY -= indicatorIncrement;
-						//The boundary is a bit different once the bottom has been hit
-						int bound = 63;
-						if (hitBottom)
-						{
-							bound = 55;
-						}
-						if (indicatorY < bound)
-						{
-							indicatorY = bound;
-							up = true;
-							goal -= 64;
-						}
-						indicatorY2 = indicatorY;
+						Settings::settings.mapAnimations = 2;
 					}
 					else
 					{
-						if (currentOption == 11)
-						{
-							indicatorY2 -= 16;
-						}
-						else if (currentOption == 14)
-						{
-							indicatorY2 = 153;
-						}
-						else
-						{
-							indicatorY2 -= 8;
-						}
+						ResourceManager::PlaySound("optionSelect2");
 					}
+					break;
+				case 1:
+					if (Settings::settings.showTerrain)
+					{
+						Settings::settings.showTerrain = false;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 2:
+					if (Settings::settings.autoCursor)
+					{
+						Settings::settings.autoCursor = false;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 3:
+					Settings::settings.textSpeed++;
+					if (Settings::settings.textSpeed > 2)
+					{
+						Settings::settings.textSpeed = 2;
+					}
+					else
+					{
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 4:
+					if (Settings::settings.unitSpeed < 5)
+					{
+						Settings::settings.unitSpeed = 5;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 5:
+					if (Settings::settings.sterero)
+					{
+						Settings::settings.sterero = false;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 6:
+					if (Settings::settings.music)
+					{
+						Settings::settings.music = false;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 7:
+					if (Settings::settings.volume > 1)
+					{
+						Settings::settings.volume--;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 8:
+					if (patternID < 1)
+					{
+						patternID++;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 9:
+					if (inColor[0] < 192)
+					{
+						inColor[0] += 8;
+						inColor[0] = glm::clamp(inColor[0], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 10:
+					if (inColor[1] < 192)
+					{
+						inColor[1] += 8;
+						inColor[1] = glm::clamp(inColor[1], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 11:
+					if (inColor[2] < 192)
+					{
+						inColor[2] += 8;
+						inColor[2] = glm::clamp(inColor[2], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 12:
+					if (inColor[3] < 192)
+					{
+						inColor[3] += 8;
+						inColor[3] = glm::clamp(inColor[3], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 13:
+					if (inColor[4] < 192)
+					{
+						inColor[4] += 8;
+						inColor[4] = glm::clamp(inColor[4], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 14:
+					if (inColor[5] < 192)
+					{
+						inColor[5] += 8;
+						inColor[5] = glm::clamp(inColor[5], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
 				}
 			}
-
-		}
-		else if (inputManager.KeyDownDelay(SDLK_DOWN, 0.05f, 0.25f))
-		{
-			currentOption++;
-			if (currentOption > numberOfOptions)
+			else if (inputManager.KeyDownDelay(SDLK_LEFT, 0.05f, 0.15f))
 			{
-				currentOption = numberOfOptions;
+				switch (currentOption)
+				{
+				case 0:
+					Settings::settings.mapAnimations--;
+					if (Settings::settings.mapAnimations < 0)
+					{
+						Settings::settings.mapAnimations = 0;
+					}
+					else
+					{
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 1:
+					if (!Settings::settings.showTerrain)
+					{
+						Settings::settings.showTerrain = true;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 2:
+					if (!Settings::settings.autoCursor)
+					{
+						Settings::settings.autoCursor = true;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 3:
+					Settings::settings.textSpeed--;
+					if (Settings::settings.textSpeed < 0)
+					{
+						Settings::settings.textSpeed = 0;
+					}
+					else
+					{
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 4:
+					if (Settings::settings.unitSpeed > 2.5f)
+					{
+						Settings::settings.unitSpeed = 2.5f;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 5:
+					if (!Settings::settings.sterero)
+					{
+						Settings::settings.sterero = true;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 6:
+					if (!Settings::settings.music)
+					{
+						Settings::settings.music = true;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 7:
+					if (Settings::settings.volume < 4)
+					{
+						Settings::settings.volume++;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 8:
+					if (patternID > 0)
+					{
+						patternID--;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 9:
+					if (inColor[0] > 0)
+					{
+						inColor[0] -= 8;
+						inColor[0] = glm::clamp(inColor[0], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 10:
+					if (inColor[1] > 0)
+					{
+						inColor[1] -= 8;
+						inColor[1] = glm::clamp(inColor[1], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 11:
+					if (inColor[2] > 0)
+					{
+						inColor[2] -= 8;
+						inColor[2] = glm::clamp(inColor[2], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 12:
+					if (inColor[3] > 0)
+					{
+						inColor[3] -= 8;
+						inColor[3] = glm::clamp(inColor[3], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 13:
+					if (inColor[4] > 0)
+					{
+						inColor[4] -= 8;
+						inColor[4] = glm::clamp(inColor[4], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				case 14:
+					if (inColor[5] > 0)
+					{
+						inColor[5] -= 8;
+						inColor[5] = glm::clamp(inColor[5], 0, 192);
+						CheckColorChange(inColor, defaultColor, patternID);
+					}
+					break;
+				}
+			}
+		}
+		int rate = 960;
+		if (down)
+		{
+			yOffset += rate * deltaTime;
+			if (yOffset >= goal)
+			{
+				yOffset = goal;
+				down = false;
+				if (hitBottom)
+				{
+					moveToBottom = false;
+				}
+			}
+			if (currentOption == 9)
+			{
+				indicatorY = 255 - round((yOffset / 600.0f) * 224.0f);
+				indicatorY2 = indicatorY + 2;
+			}
+		}
+		else if (up)
+		{
+			yOffset -= rate * deltaTime;
+			if (yOffset <= goal)
+			{
+				yOffset = goal;
+				up = false;
+			}
+		}
+
+		if (inputManager.isKeyPressed(SDLK_RETURN))
+		{
+			if (currentOption == 15 && Settings::settings.editedColor[patternID])
+			{
+				inColor = defaultColor;
+				Settings::settings.editedColor[patternID] = false;
+				ResourceManager::PlaySound("select2");
+			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_z))
+		{
+			if (Settings::settings.music)
+			{
+				if (!Mix_PlayingMusic())
+				{
+					ResourceManager::PlayMusic("PlayerTurn"); //This needs to do something to determine the correct music
+				}
 			}
 			else
 			{
-				ResourceManager::PlaySound("optionSelect1");
-				if (currentOption == 9)
-				{
-					indicatorY = 255;
-					indicatorY2 = 257;
-					goal = 406;
-					down = true;
-					hitBottom = true;
-					moveToBottom = true;
-				}
-				else
-				{
-					if (currentOption < 9)
-					{
-						indicatorY += indicatorIncrement;
-
-						int bound = 159;
-						if (hitBottom)
-						{
-							bound = 151;
-						}
-						if (indicatorY > bound)
-						{
-							indicatorY = bound;
-							down = true;
-							goal += 64;
-						}
-						indicatorY2 = indicatorY;
-					}
-					else
-					{
-						if (currentOption == 12)
-						{
-							indicatorY2 += 16;
-						}
-						else if (currentOption == 15)
-						{
-							indicatorY2 = 169;
-						}
-						else
-						{
-							indicatorY2 += 8;
-						}
-					}
-				}
+				Mix_HookMusicFinished(nullptr);
+				Mix_FadeOutMusic(500.0f);
 			}
-			if (currentOption < 9)
+			if (Settings::settings.volume > 1)
 			{
-				indicatorY2 = indicatorY;
+				Mix_Volume(-1, 128 - 48 * (4 - Settings::settings.volume));
+				ResourceManager::PlaySound("cancel");
 			}
-		}
-		else if (inputManager.KeyDownDelay(SDLK_RIGHT, 0.05f, 0.15f))
-		{
-			switch (currentOption)
+			else
 			{
-			case 0:
-				Settings::settings.mapAnimations++;
-				if (Settings::settings.mapAnimations > 2)
-				{
-					Settings::settings.mapAnimations = 2;
-				}
-				else
-				{
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 1:
-				if (Settings::settings.showTerrain)
-				{
-					Settings::settings.showTerrain = false;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 2:
-				if (Settings::settings.autoCursor)
-				{
-					Settings::settings.autoCursor = false;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 3:
-				Settings::settings.textSpeed++;
-				if (Settings::settings.textSpeed > 2)
-				{
-					Settings::settings.textSpeed = 2;
-				}
-				else
-				{
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 4:
-				if (Settings::settings.unitSpeed < 5)
-				{
-					Settings::settings.unitSpeed = 5;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 5:
-				if (Settings::settings.sterero)
-				{
-					Settings::settings.sterero = false;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 6:
-				if (Settings::settings.music)
-				{
-					Settings::settings.music = false;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 7:
-				if (Settings::settings.volume > 1)
-				{
-					Settings::settings.volume--;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 8:
-				if (patternID < 1)
-				{
-					patternID++;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 9:
-				if (inColor[0] < 192)
-				{
-					inColor[0] += 8;
-					inColor[0] = glm::clamp(inColor[0], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 10:
-				if (inColor[1] < 192)
-				{
-					inColor[1] += 8;
-					inColor[1] = glm::clamp(inColor[1], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 11:
-				if (inColor[2] < 192)
-				{
-					inColor[2] += 8;
-					inColor[2] = glm::clamp(inColor[2], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 12:
-				if (inColor[3] < 192)
-				{
-					inColor[3] += 8;
-					inColor[3] = glm::clamp(inColor[3], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 13:
-				if (inColor[4] < 192)
-				{
-					inColor[4] += 8;
-					inColor[4] = glm::clamp(inColor[4], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 14:
-				if (inColor[5] < 192)
-				{
-					inColor[5] += 8;
-					inColor[5] = glm::clamp(inColor[5], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
+				Mix_Volume(-1, 0);
 			}
-		}
-		else if (inputManager.KeyDownDelay(SDLK_LEFT, 0.05f, 0.15f))
-		{
-			switch (currentOption)
-			{
-			case 0:
-				Settings::settings.mapAnimations--;
-				if (Settings::settings.mapAnimations < 0)
-				{
-					Settings::settings.mapAnimations = 0;
-				}
-				else
-				{
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 1:
-				if (!Settings::settings.showTerrain)
-				{
-					Settings::settings.showTerrain = true;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 2:
-				if (!Settings::settings.autoCursor)
-				{
-					Settings::settings.autoCursor = true;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 3:
-				Settings::settings.textSpeed--;
-				if (Settings::settings.textSpeed < 0)
-				{
-					Settings::settings.textSpeed = 0;
-				}
-				else
-				{
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 4:
-				if (Settings::settings.unitSpeed > 2.5f)
-				{
-					Settings::settings.unitSpeed = 2.5f;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 5:
-				if (!Settings::settings.sterero)
-				{
-					Settings::settings.sterero = true;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 6:
-				if (!Settings::settings.music)
-				{
-					Settings::settings.music = true;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 7:
-				if (Settings::settings.volume < 4)
-				{
-					Settings::settings.volume++;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 8:
-				if (patternID > 0)
-				{
-					patternID--;
-					ResourceManager::PlaySound("optionSelect2");
-				}
-				break;
-			case 9:
-				if (inColor[0] > 0)
-				{
-					inColor[0] -= 8;
-					inColor[0] = glm::clamp(inColor[0], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 10:
-				if (inColor[1] > 0)
-				{
-					inColor[1] -= 8;
-					inColor[1] = glm::clamp(inColor[1], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 11:
-				if (inColor[2] > 0)
-				{
-					inColor[2] -= 8;
-					inColor[2] = glm::clamp(inColor[2], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 12:
-				if (inColor[3] > 0)
-				{
-					inColor[3] -= 8;
-					inColor[3] = glm::clamp(inColor[3], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 13:
-				if (inColor[4] > 0)
-				{
-					inColor[4] -= 8;
-					inColor[4] = glm::clamp(inColor[4], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			case 14:
-				if (inColor[5] > 0)
-				{
-					inColor[5] -= 8;
-					inColor[5] = glm::clamp(inColor[5], 0, 192);
-					CheckColorChange(inColor, defaultColor, patternID);
-				}
-				break;
-			}
-		}
-	}
-	int rate = 960;
-	if (down)
-	{
-		yOffset += rate * deltaTime;
-		if (yOffset >= goal)
-		{
-			yOffset = goal;
-			down = false;
-			if (hitBottom)
-			{
-				moveToBottom = false;
-			}
-		}
-		if (currentOption == 9)
-		{
-			indicatorY = 255 - round((yOffset / 600.0f) * 224.0f);
-			indicatorY2 = indicatorY + 2;
-		}
-	}
-	else if (up)
-	{
-		yOffset -= rate * deltaTime;
-		if (yOffset <= goal)
-		{
-			yOffset = goal;
-			up = false;
-		}
-	}
-
-	if (inputManager.isKeyPressed(SDLK_RETURN))
-	{
-		if (currentOption == 15 && Settings::settings.editedColor[patternID])
-		{
-			inColor = defaultColor;
-			Settings::settings.editedColor[patternID] = false;
-			ResourceManager::PlaySound("select2");
-		}
-	}
-	else if (inputManager.isKeyPressed(SDLK_z))
-	{
-		ClearMenu();
-		if (Settings::settings.music)
-		{
-			if (!Mix_PlayingMusic())
-			{
-				ResourceManager::PlayMusic("PlayerTurn"); //This needs to do something to determine the correct music
-			}
-		}
-		else
-		{
-			Mix_HookMusicFinished(nullptr);
-			Mix_FadeOutMusic(500.0f);
-		}
-		if (Settings::settings.volume > 1)
-		{
-			Mix_Volume(-1, 128 - 48 * (4 - Settings::settings.volume));
-			ResourceManager::PlaySound("cancel");
-		}
-		else
-		{
-			Mix_Volume(-1, 0);
+			exitMenu = true;
+			fullFadeIn = true;
 		}
 	}
 }
@@ -4403,7 +4483,7 @@ void OptionsMenu::RenderText(std::string toWrite, float x, float y, float scale,
 VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, Unit* buyer, Vendor* vendor) :
 	Menu(Cursor, Text, camera, shapeVAO, Renderer), buyer(buyer), vendor(vendor)
 {
-	fullScreen = true;
+	fullFadeIn = true;
 	numberOfOptions = vendor->items.size();
 
 	textManager.textLines.clear();
@@ -4429,137 +4509,147 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 
 void VendorMenu::Draw()
 {
-	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-	auto texture = ResourceManager::GetTexture("VendorBackground");
-
-	Renderer->setUVs();
-	Renderer->DrawSprite(texture, glm::vec2(0), 0.0f, glm::vec2(256, 224));
-
-	if (textManager.ShowText())
+	if ((!fullFadeIn && !exitMenu) || (exitMenu && !fullFadeOut))
 	{
-		textManager.Draw(text, Renderer, camera);
-	}
+		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("VendorBackground");
 
-	if (!textManager.active && !delay)
-	{
-		switch (state)
+		Renderer->setUVs();
+		Renderer->DrawSprite(texture, glm::vec2(0), 0.0f, glm::vec2(256, 224));
+
+		if (textManager.ShowText())
 		{
-		case GREETING:
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(143 + 49 * !buying, 50));
-			text->RenderText("Buy", 500, 133, 1);
-			text->RenderText("Sell", 646, 133, 1);
-			break;
-		case BUYING:
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption));
-			break;
-		case SELLING:
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption));
-			break;
-		case CONFIRMING:
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(143 + (49 * !confirm), 50));
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption), false);
-			text->RenderText("Yes", 500, 133, 1);
-			text->RenderText("No", 646, 133, 1);
-			break;
+			textManager.Draw(text, Renderer, camera);
 		}
-	}
-	else
-	{
-		if (state == CONFIRMING)
-		{
-			MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption), false);
-		}
-	}
 
-	int xPos = 375;
-	int yPos = 246;
-	auto items = ItemManager::itemManager.items;
-	if (buying)
-	{
-		for (int i = 0; i < vendor->items.size(); i++)
+		if (!textManager.active && !delay)
 		{
-			auto item = items[vendor->items[i]];
-			text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
-			text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 28);
-			text->RenderTextRight(intToString(item.value), 675, yPos + 43 * i + 1, 1, 56); //price
-
-			ResourceManager::GetShader("Nsprite").Use();
-			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-			auto texture = ResourceManager::GetTexture("icons");
-
-			Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item.ID]);
-			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
-		}
-	}
-	else
-	{
-		for (int i = 0; i < buyer->inventory.size(); i++)
-		{
-			auto item = buyer->inventory[i];
-			text->RenderText(item->name, xPos, yPos + 43 * i + 1, 1);
-			text->RenderTextRight(intToString(item->remainingUses), 575, yPos + 43 * i + 1, 1, 28);
-			if (item->value > 0)
+			switch (state)
 			{
-				text->RenderTextRight(intToString(item->value * 0.5f), 675, yPos + 43 * i + 1, 1, 56);
+			case GREETING:
+				MenuManager::menuManager.DrawIndicator(glm::ivec2(143 + 49 * !buying, 50));
+				text->RenderText("Buy", 500, 133, 1);
+				text->RenderText("Sell", 646, 133, 1);
+				break;
+			case BUYING:
+				MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption));
+				break;
+			case SELLING:
+				MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption));
+				break;
+			case CONFIRMING:
+				MenuManager::menuManager.DrawIndicator(glm::ivec2(143 + (49 * !confirm), 50));
+				MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption), false);
+				text->RenderText("Yes", 500, 133, 1);
+				text->RenderText("No", 646, 133, 1);
+				break;
+			}
+		}
+		else
+		{
+			if (state == CONFIRMING)
+			{
+				MenuManager::menuManager.DrawIndicator(glm::ivec2(88, 89 + 16 * currentOption), false);
+			}
+		}
+
+		int xPos = 375;
+		int yPos = 246;
+		auto items = ItemManager::itemManager.items;
+		if (buying)
+		{
+			for (int i = 0; i < vendor->items.size(); i++)
+			{
+				auto item = items[vendor->items[i]];
+				text->RenderText(item.name, xPos, yPos + 43 * i + 1, 1);
+				text->RenderTextRight(intToString(item.maxUses), 575, yPos + 43 * i + 1, 1, 28);
+				text->RenderTextRight(intToString(item.value), 675, yPos + 43 * i + 1, 1, 56); //price
+
+				ResourceManager::GetShader("Nsprite").Use();
+				ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+				auto texture = ResourceManager::GetTexture("icons");
+
+				Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item.ID]);
+				Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
+			}
+		}
+		else
+		{
+			for (int i = 0; i < buyer->inventory.size(); i++)
+			{
+				auto item = buyer->inventory[i];
+				text->RenderText(item->name, xPos, yPos + 43 * i + 1, 1);
+				text->RenderTextRight(intToString(item->remainingUses), 575, yPos + 43 * i + 1, 1, 28);
+				if (item->value > 0)
+				{
+					int halfValue = item->value * 0.5f;
+					int useDecrease = ((halfValue / item->maxUses) / 10) * 10;
+					int value = halfValue - useDecrease * (item->maxUses - item->remainingUses);
+					text->RenderTextRight(intToString(value), 675, yPos + 43 * i + 1, 1, 56);
+				}
+				else
+				{
+					text->RenderTextRight("----", 675, yPos + 43 * i + 1, 1, 56);
+				}
+
+				ResourceManager::GetShader("Nsprite").Use();
+				ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+				auto texture = ResourceManager::GetTexture("icons");
+
+				Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item->ID]);
+				Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
+			}
+		}
+		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 56);
+		text->RenderText("G", 175, 551, 1);
+
+		if (!shopDelay && (state == BUYING || state == SELLING || state == CONFIRMING))
+		{
+			Item currentItem;
+			if (buying)
+			{
+				currentItem = items[vendor->items[currentOption]];
 			}
 			else
 			{
-				text->RenderTextRight("----", 675, yPos + 43 * i + 1, 1, 56);
+				currentItem = *buyer->inventory[currentOption]; //Need a way to handle 
 			}
+			int yPosition = 246;
+			if (currentItem.isWeapon)
+			{
+				int offSet = 30;
+				auto weaponData = ItemManager::itemManager.weaponData[currentItem.ID];
 
-			ResourceManager::GetShader("Nsprite").Use();
-			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
-			auto texture = ResourceManager::GetTexture("icons");
-
-			Renderer->setUVs(MenuManager::menuManager.itemIconUVs[item->ID]);
-			Renderer->DrawSprite(texture, glm::vec2(104, 90 + 16 * i), 0.0f, glm::vec2(16));
+				int xStatName = 50;
+				int xStatValue = 150;
+				text->RenderText("Type", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 28);
+				yPosition += offSet;
+				text->RenderText("Hit", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 28);
+				yPosition += offSet;
+				text->RenderText("Might", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 28);
+				yPosition += offSet;
+				text->RenderText("Crit", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 28);
+				yPosition += offSet;
+				text->RenderText("Range", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 28);
+				yPosition += offSet;
+				text->RenderText("Weight", xStatName, yPosition, 1);
+				text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 28);
+				yPosition += offSet;
+			}
+			else
+			{
+				text->RenderText(currentItem.description, 50, yPosition, 1);
+			}
 		}
 	}
-	text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 75, 551, 1, 56);
-	text->RenderText("G", 175, 551, 1);
-
-	if (!shopDelay && (state == BUYING || state == SELLING || state == CONFIRMING))
+	if (fullFadeIn || fullFadeOut)
 	{
-		Item currentItem;
-		if (buying)
-		{
-			currentItem = items[vendor->items[currentOption]];
-		}
-		else
-		{
-			currentItem = *buyer->inventory[currentOption]; //Need a way to handle 
-		}
-		int yPosition = 246;
-		if (currentItem.isWeapon)
-		{
-			int offSet = 30;
-			auto weaponData = ItemManager::itemManager.weaponData[currentItem.ID];
-
-			int xStatName = 50;
-			int xStatValue = 150;
-			text->RenderText("Type", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.type), xStatValue, yPosition, 1, 28);
-			yPosition += offSet;
-			text->RenderText("Hit", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.hit), xStatValue, yPosition, 1, 28);
-			yPosition += offSet;
-			text->RenderText("Might", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.might), xStatValue, yPosition, 1, 28);
-			yPosition += offSet;
-			text->RenderText("Crit", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.crit), xStatValue, yPosition, 1, 28);
-			yPosition += offSet;
-			text->RenderText("Range", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.minRange), xStatValue, yPosition, 1, 28);
-			yPosition += offSet;
-			text->RenderText("Weight", xStatName, yPosition, 1);
-			text->RenderTextRight(intToString(weaponData.weight), xStatValue, yPosition, 1, 28);
-			yPosition += offSet;
-		}
-		else
-		{
-			text->RenderText(currentItem.description, 50, yPosition, 1);
-		}
+		DrawFadeIn();
 	}
 }
 
@@ -4583,14 +4673,17 @@ void VendorMenu::SelectOption()
 			else
 			{
 				textManager.init(10);
+				//cancel sound
 			}
 		}
+		ResourceManager::PlaySound("select2");
 		shopDelay = true;
 		ActivateText();
 		break;
 	case BUYING:
 	{
 		auto items = ItemManager::itemManager.items;
+		//cancel sound plays if you cannot buy. There is another sound that plays when you do buy but I don't think I can isolate that one
 		if (MenuManager::menuManager.playerManager->funds < items[vendor->items[currentOption]].value)
 		{
 			textManager.init(8);
@@ -4605,6 +4698,7 @@ void VendorMenu::SelectOption()
 			confirm = true;
 			textManager.init(7);
 		}
+		ResourceManager::PlaySound("select2");
 		break;
 	}
 	case SELLING:
@@ -4618,6 +4712,7 @@ void VendorMenu::SelectOption()
 			state = CONFIRMING;
 			confirm = true;
 		}
+		ResourceManager::PlaySound("select2");
 		break;
 	case CONFIRMING:
 		if (confirm)
@@ -4632,7 +4727,11 @@ void VendorMenu::SelectOption()
 			}
 			else
 			{
-				MenuManager::menuManager.playerManager->funds += buyer->inventory[currentOption]->value * 0.5f;
+				auto buyerItem = buyer->inventory[currentOption];
+				int halfValue = buyerItem->value * 0.5f;
+				int useDecrease = ((halfValue / buyerItem->maxUses) / 10) * 10;
+				int value = halfValue - useDecrease * (buyerItem->maxUses - buyerItem->remainingUses);
+				MenuManager::menuManager.playerManager->funds += value;
 				buyer->dropItem(currentOption);
 				numberOfOptions--;
 				if (numberOfOptions == 0)
@@ -4650,6 +4749,8 @@ void VendorMenu::SelectOption()
 					state = SELLING;
 				}
 			}
+			ResourceManager::PlaySound("select2");
+
 			MenuManager::menuManager.mustWait = true;
 		}
 		else
@@ -4682,82 +4783,98 @@ void VendorMenu::ActivateText()
 void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 {
 	MenuManager::menuManager.AnimateIndicator(deltaTime);
-	if (textManager.active)
+	if (fullFadeIn)
 	{
-		textManager.Update(deltaTime, inputManager);
+		HandleFadeIn(deltaTime);
 	}
-	else if (delay)
+	else if (fullFadeOut)
 	{
-		delayTimer += deltaTime;
-		if (delayTimer >= delayTime)
-		{
-			delayTimer = 0.0f;
-			delay = false;
-			shopDelay = false;
-		}
-	}
-	else if (state == LEAVING)
-	{
-		Menu::CancelOption();
+		HandleFadeOut(deltaTime);
 	}
 	else
 	{
-		if (state == CONFIRMING)
+		if (textManager.active)
 		{
-			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			textManager.Update(deltaTime, inputManager);
+		}
+		else if (delay)
+		{
+			delayTimer += deltaTime;
+			if (delayTimer >= delayTime)
 			{
-				confirm = false;
-			}
-			else if (inputManager.isKeyPressed(SDLK_LEFT))
-			{
-				confirm = true;
+				delayTimer = 0.0f;
+				delay = false;
+				shopDelay = false;
 			}
 		}
-		else if (state == BUYING || state == SELLING)
+		else if (state == LEAVING)
 		{
-			if (inputManager.KeyDownDelay(SDLK_UP))
-			{
-				if (inputManager.isKeyPressed(SDLK_UP))
-				{
-					PreviousOption();
-				}
-				else
-				{
-					PreviousOptionStop();
-				}
-			}
-			else if (inputManager.KeyDownDelay(SDLK_DOWN))
-			{
-				if (inputManager.isKeyPressed(SDLK_DOWN))
-				{
-					NextOption();
-				}
-				else
-				{
-					NextOptionStop();
-				}
-			}
+			exitMenu = true;
+			fullFadeIn = true;
 		}
-		else if(state == GREETING)
+		else
 		{
-			if (inputManager.isKeyPressed(SDLK_RIGHT))
+			if (state == CONFIRMING)
 			{
-				buying = false;
-				numberOfOptions = buyer->inventory.size();
+				if (inputManager.isKeyPressed(SDLK_RIGHT))
+				{
+					confirm = false;
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				else if (inputManager.isKeyPressed(SDLK_LEFT))
+				{
+					confirm = true;
+					ResourceManager::PlaySound("optionSelect2");
+				}
 			}
-			else if (inputManager.isKeyPressed(SDLK_LEFT))
+			else if (state == BUYING || state == SELLING)
 			{
-				buying = true;
-				numberOfOptions = vendor->items.size();
+				if (inputManager.KeyDownDelay(SDLK_UP))
+				{
+					if (inputManager.isKeyPressed(SDLK_UP))
+					{
+						PreviousOption();
+					}
+					else
+					{
+						PreviousOptionStop();
+					}
+				}
+				else if (inputManager.KeyDownDelay(SDLK_DOWN))
+				{
+					if (inputManager.isKeyPressed(SDLK_DOWN))
+					{
+						NextOption();
+					}
+					else
+					{
+						NextOptionStop();
+					}
+				}
 			}
-		}
-		if (inputManager.isKeyPressed(SDLK_RETURN))
-		{
-			SelectOption();
-		}
-		else if (inputManager.isKeyPressed(SDLK_z))
-		{
-			CancelOption();
+			else if (state == GREETING)
+			{
+				if (inputManager.isKeyPressed(SDLK_RIGHT))
+				{
+					buying = false;
+					numberOfOptions = buyer->inventory.size();
+					ResourceManager::PlaySound("optionSelect2");
+				}
+				else if (inputManager.isKeyPressed(SDLK_LEFT))
+				{
+					buying = true;
+					numberOfOptions = vendor->items.size();
+					ResourceManager::PlaySound("optionSelect2");
+				}
+			}
+			if (inputManager.isKeyPressed(SDLK_RETURN))
+			{
+				SelectOption();
+			}
+			else if (inputManager.isKeyPressed(SDLK_z))
+			{
+				CancelOption();
+			}
 		}
 	}
 }
@@ -4787,7 +4904,30 @@ void VendorMenu::CancelOption(int num)
 		}
 		textManager.init(3);
 	}
+	ResourceManager::PlaySound("cancel");
 	ActivateText();
+}
+
+void VendorMenu::DelayedExit()
+{
+	if (MenuManager::menuManager.mustWait)
+	{
+		if (cursor->selectedUnit->isMounted() && cursor->selectedUnit->mount->remainingMoves > 0)
+		{
+			cursor->GetRemainingMove();
+		}
+		else
+		{
+			cursor->Wait();
+		}
+
+		ClearMenu();
+	}
+	else
+	{
+		MenuManager::menuManager.PreviousMenu();
+		ResourceManager::PlaySound("select2");
+	}
 }
 
 FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, int newItem) :

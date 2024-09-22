@@ -367,6 +367,8 @@ void Cursor::MoveUnitToTile()
 
 void Cursor::GetRemainingMove()
 {
+	ResourceManager::PlaySound("select1");
+
 	remainingMove = true;
 	MoveUnitToTile();
 	path.clear();

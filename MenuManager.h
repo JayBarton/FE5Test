@@ -20,6 +20,7 @@ struct Menu
 	virtual void CancelOption(int num = 1);
 	virtual void GetOptions() {};
 	virtual void CheckInput(class InputManager& inputManager, float deltaTime);
+	virtual void DelayedExit();
 	void NextOption();
 	void NextOptionStop();
 	void PreviousOption();
@@ -27,6 +28,9 @@ struct Menu
 	void EndUnitMove();
 	void DrawBox(glm::ivec2 position, int width, int height);
 	void DrawPattern(glm::vec2 scale, glm::vec2 pos, bool gray = false);
+	void HandleFadeIn(float deltaTime);
+	void HandleFadeOut(float deltaTime);
+	void DrawFadeIn();
 	void ClearMenu();
 
 	Cursor* cursor = nullptr;
@@ -40,9 +44,14 @@ struct Menu
 	int numberOfOptions = 0;
 	std::vector<int> optionsVector;
 
+	float fadeInAlpha = 0.0f;
 	//If this menu covers the whole screen
 	//Used in the main draw call, if it is true, we don't need to draw anything else but the menu
 	bool fullScreen = false;
+	//These are used for fading in a handful of fullscreen menus. Specifically, status, options, trade, and vendor
+	bool fullFadeIn = false;
+	bool fullFadeOut = false;
+	bool exitMenu = false;
 };
 
 struct UnitOptionsMenu : public Menu
@@ -300,6 +309,7 @@ struct TradeMenu : public Menu
 	virtual void GetOptions() override;
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 	virtual void CancelOption(int num = 1) override; //
+	virtual void DelayedExit();
 
 	Unit* tradeUnit = nullptr;
 	int itemToMove;
@@ -476,6 +486,7 @@ struct VendorMenu : public Menu
 	void ActivateText();
 	virtual void CheckInput(InputManager& inputManager, float deltaTime) override;
 	virtual void CancelOption(int num = 1) override;
+	virtual void DelayedExit() override;
 
 	Unit* buyer;
 	Vendor* vendor;
