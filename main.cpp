@@ -691,8 +691,6 @@ int main(int argc, char** argv)
 			{
 				ClearMap();
 				cursor.ClearTiles();
-			//	roundSubject
-			//	roundSubject.observers.clear();
 				titleScreen = new TitleScreen();
 				titleScreen->subject.addObserver(startEvent);
 				titleScreen->init();
@@ -926,6 +924,8 @@ void ClearMap()
 		delete sceneManager.scenes[i];
 	}
 	sceneManager.scenes.clear();
+	visitObjects.clear();
+	vendors.clear();
 
 	MenuManager::menuManager.ClearMenu();
 	TileManager::tileManager.clearTiles();
