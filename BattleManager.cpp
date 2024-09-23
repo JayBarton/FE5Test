@@ -293,7 +293,10 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 
 					displays->UnitBattleMessage(talkingUnit, false, false, true);
 				}
-				drawInfo = true;
+				if (!unitCaptured)
+				{
+					drawInfo = true; //End up needing to do this twice because there is a delay on drawing for enemies.
+				}
 			}
 		}
 	}

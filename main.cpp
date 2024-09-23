@@ -70,7 +70,6 @@ void CarryIconAnimation();
 void Draw();
 void DrawUnits();
 void DrawIntroUnits();
-void DrawUnitRanges();
 void DrawText();
 void resizeWindow(int width, int height);
 
@@ -510,9 +509,11 @@ struct StartGameEvent : public Observer<int>
 		{
 			loadSuspendedGame();
 			//Going to be loading this from suspend
-			cursor.SetFocus(playerManager.units[0]);
 			camera.setPosition(cursor.position);
-		//	cursor.SetFocus(playerManager.units[0]);
+			if (auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y))
+			{
+				cursor.focusedUnit = tile->occupiedBy;
+			}
 		}
 		camera.update();
 
@@ -923,6 +924,7 @@ void ClearMap()
 		sceneManager.scenes[i]->ClearActions();
 		delete sceneManager.scenes[i];
 	}
+	cursor.focusedUnit = nullptr;
 	sceneManager.scenes.clear();
 	visitObjects.clear();
 	vendors.clear();
@@ -1641,7 +1643,7 @@ void Draw()
 			TileManager::tileManager.showTiles(Renderer, camera);
 			cursor.DrawUnitRanges(shapeVAO, camera);
 			//for intro
-	//		if(sceneManager.scenes[sceneManager.currentScene]->activation->type != 3)
+			if (!sceneManager.HideUnits())
 			{
 				DrawUnits();
 			}
@@ -2009,6 +2011,9 @@ void SuspendGame()
 	map["Level"] = currentLevel;
 	map["CurrentRound"] = currentRound;
 	map["Funds"] = playerManager.funds;
+	map["Cursor"] = json::array();
+	map["Cursor"].push_back(cursor.position.x);
+	map["Cursor"].push_back(cursor.position.y);
 
 	settings["UnitSpeed"] = Settings::settings.unitSpeed;
 	settings["TextSpeed"] = Settings::settings.textSpeed;
@@ -2099,6 +2104,7 @@ void loadSuspendedGame()
 	currentRound = mapLevel["CurrentRound"];
 	currentLevel = mapLevel["Level"];
 	playerManager.funds = mapLevel["Funds"];
+	cursor.position = glm::vec2(mapLevel["Cursor"][0], mapLevel["Cursor"][1]);
 	std::ifstream map(levelDirectory + levelMap);
 
 	json settings = data["Settings"];

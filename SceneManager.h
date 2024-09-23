@@ -28,6 +28,7 @@ struct Scene
 	bool playingScene = false;
 	bool repeat = false;
 	bool playingMusic = false;
+	bool hideUnits = false;
 	int actionIndex = 0;
 	int ID = 0;
 	std::vector<SceneAction*> actions;
@@ -76,6 +77,7 @@ struct SceneManager
 	std::vector<Scene*> scenes;
 
 	bool PlayingScene();
+	bool HideUnits();
 };
 
 struct Activation

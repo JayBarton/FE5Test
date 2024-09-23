@@ -30,6 +30,10 @@ void Scene::init()
 	playingScene = true;
 	owner->currentScene = ID;
 	currentDelay = introDelay;
+	if (activation->type == 3)
+	{
+		hideUnits = true;
+	}
 }
 
 void Scene::extraSetup(Subject<int>* subject)
@@ -428,6 +432,18 @@ bool SceneManager::PlayingScene()
 	if (scenes.size() > 0 && scenes[currentScene]->playingScene)
 	{
 		return true;
+	}
+	return false;
+}
+
+bool SceneManager::HideUnits()
+{
+	if (PlayingScene())
+	{
+		if (scenes[currentScene]->hideUnits)
+		{
+			return true;
+		}
 	}
 	return false;
 }

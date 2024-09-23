@@ -1,16 +1,20 @@
 {
     "Map": {
-        "CurrentRound": 2,
+        "CurrentRound": 0,
+        "Cursor": [
+            64.0,
+            240.0
+        ],
         "Funds": 0,
         "Level": "2.map"
     },
     "Scenes": [
-        false,
         true,
         true,
         true,
         true,
-        false,
+        true,
+        true,
         true,
         true,
         true,
@@ -54,6 +58,48 @@
         "Volume": 4
     },
     "enemy": [
+        {
+            "AI": {
+                "activationType": 2,
+                "active": false,
+                "boss": false,
+                "stationary": false
+            },
+            "Carried": false,
+            "Class": "Archer",
+            "ClassID": 1,
+            "ClassPower": 2,
+            "ID": 1,
+            "Inventory": [
+                [
+                    4,
+                    20
+                ]
+            ],
+            "LevelID": 0,
+            "Name": "Archer",
+            "Position": [
+                176.0,
+                192.0
+            ],
+            "Stats": {
+                "Bld": 6,
+                "Def": 1,
+                "HP": 20,
+                "Lck": 3,
+                "Level": 1,
+                "Mag": 0,
+                "Mov": 5,
+                "Skl": 0,
+                "Spd": 3,
+                "Str": 6,
+                "currentHP": 20,
+                "exp": 0
+            },
+            "WeaponProf": {
+                "Bow": 1
+            }
+        },
         {
             "AI": {
                 "activationType": 2,
@@ -146,6 +192,52 @@
                 "stationary": true
             },
             "Carried": false,
+            "Class": "Archer",
+            "ClassID": 1,
+            "ClassPower": 2,
+            "ID": 1,
+            "Inventory": [
+                [
+                    4,
+                    20
+                ],
+                [
+                    0,
+                    3
+                ]
+            ],
+            "LevelID": 3,
+            "Name": "Archer",
+            "Position": [
+                144.0,
+                160.0
+            ],
+            "Stats": {
+                "Bld": 8,
+                "Def": 2,
+                "HP": 23,
+                "Lck": 0,
+                "Level": 3,
+                "Mag": 3,
+                "Mov": 5,
+                "Skl": 0,
+                "Spd": 0,
+                "Str": 5,
+                "currentHP": 23,
+                "exp": 0
+            },
+            "WeaponProf": {
+                "Bow": 1
+            }
+        },
+        {
+            "AI": {
+                "activationType": 1,
+                "active": false,
+                "boss": false,
+                "stationary": true
+            },
+            "Carried": false,
             "Class": "Soldier",
             "ClassID": 0,
             "ClassPower": 2,
@@ -183,7 +275,7 @@
         {
             "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -201,7 +293,7 @@
             "LevelID": 5,
             "Name": "Soldier",
             "Position": [
-                160.0,
+                240.0,
                 192.0
             ],
             "Stats": {
@@ -225,7 +317,7 @@
         {
             "AI": {
                 "activationType": 0,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -237,14 +329,14 @@
             "Inventory": [
                 [
                     11,
-                    19
+                    20
                 ]
             ],
             "LevelID": 6,
             "Name": "Soldier",
             "Position": [
-                176.0,
-                176.0
+                208.0,
+                160.0
             ],
             "Stats": {
                 "Bld": 6,
@@ -266,8 +358,54 @@
         },
         {
             "AI": {
+                "activationType": 2,
+                "active": false,
+                "boss": false,
+                "stationary": false
+            },
+            "Carried": false,
+            "Class": "Soldier",
+            "ClassID": 0,
+            "ClassPower": 2,
+            "ID": 0,
+            "Inventory": [
+                [
+                    11,
+                    20
+                ],
+                [
+                    0,
+                    3
+                ]
+            ],
+            "LevelID": 7,
+            "Name": "Soldier",
+            "Position": [
+                160.0,
+                192.0
+            ],
+            "Stats": {
+                "Bld": 6,
+                "Def": 2,
+                "HP": 22,
+                "Lck": 1,
+                "Level": 5,
+                "Mag": 1,
+                "Mov": 5,
+                "Skl": 1,
+                "Spd": 1,
+                "Str": 4,
+                "currentHP": 22,
+                "exp": 0
+            },
+            "WeaponProf": {
+                "Lance": 2
+            }
+        },
+        {
+            "AI": {
                 "activationType": 1,
-                "active": true,
+                "active": false,
                 "boss": false,
                 "stationary": false
             },
@@ -285,8 +423,8 @@
             "LevelID": 8,
             "Name": "Soldier",
             "Position": [
-                176.0,
-                160.0
+                160.0,
+                128.0
             ],
             "Stats": {
                 "Bld": 10,
@@ -300,6 +438,48 @@
                 "Spd": 2,
                 "Str": 7,
                 "currentHP": 22,
+                "exp": 0
+            },
+            "WeaponProf": {
+                "Lance": 1
+            }
+        },
+        {
+            "AI": {
+                "activationType": 1,
+                "active": false,
+                "boss": false,
+                "stationary": false
+            },
+            "Carried": false,
+            "Class": "Soldier",
+            "ClassID": 0,
+            "ClassPower": 2,
+            "ID": 0,
+            "Inventory": [
+                [
+                    10,
+                    20
+                ]
+            ],
+            "LevelID": 9,
+            "Name": "Soldier",
+            "Position": [
+                128.0,
+                224.0
+            ],
+            "Stats": {
+                "Bld": 6,
+                "Def": 4,
+                "HP": 23,
+                "Lck": 1,
+                "Level": 1,
+                "Mag": 2,
+                "Mov": 5,
+                "Skl": 0,
+                "Spd": 2,
+                "Str": 5,
+                "currentHP": 23,
                 "exp": 0
             },
             "WeaponProf": {
@@ -525,23 +705,14 @@
             "Class": "Lord",
             "ClassID": 3,
             "ClassPower": 3,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 0,
-            "Inventory": [
-                [
-                    2,
-                    60
-                ],
-                [
-                    1,
-                    40
-                ]
-            ],
+            "Inventory": [],
             "LevelID": 0,
             "Name": "Leif",
             "Position": [
-                48.0,
-                304.0
+                64.0,
+                240.0
             ],
             "Skills": [
                 1
@@ -573,12 +744,12 @@
             "Class": "Lance Knight",
             "ClassID": 13,
             "ClassPower": 3,
-            "HasMoved": true,
+            "HasMoved": false,
             "ID": 1,
             "Inventory": [
                 [
                     9,
-                    58
+                    60
                 ],
                 [
                     1,
@@ -608,8 +779,8 @@
             },
             "Name": "Finn",
             "Position": [
-                112.0,
-                176.0
+                32.0,
+                304.0
             ],
             "Skills": [
                 0
@@ -629,7 +800,7 @@
                 "Spd": 9,
                 "Str": 7,
                 "currentHP": 28,
-                "exp": 21
+                "exp": 0
             },
             "WeaponProf": {
                 "Sword": 2
@@ -641,31 +812,35 @@
             "Class": "Sword Master",
             "ClassID": 5,
             "ClassPower": 5,
-            "HasMoved": false,
+            "HasMoved": true,
             "ID": 2,
             "Inventory": [
                 [
-                    6,
-                    36
-                ],
-                [
                     5,
                     30
+                ],
+                [
+                    6,
+                    40
                 ],
                 [
                     7,
                     1
                 ],
                 [
-                    0,
-                    3
+                    2,
+                    60
+                ],
+                [
+                    1,
+                    40
                 ]
             ],
             "LevelID": 2,
             "Name": "Eyvale",
             "Position": [
-                144.0,
-                160.0
+                48.0,
+                288.0
             ],
             "Skills": [
                 1
@@ -682,7 +857,7 @@
                 "Spd": 20,
                 "Str": 9,
                 "currentHP": 28,
-                "exp": 9
+                "exp": 0
             },
             "WeaponProf": {
                 "Sword": 5
@@ -779,132 +954,6 @@
             },
             "WeaponProf": {
                 "Axe": 1
-            }
-        },
-        {
-            "BattleAnimation": true,
-            "Carried": false,
-            "Class": "Bow Fighter",
-            "ClassID": 8,
-            "ClassPower": 2,
-            "HasMoved": false,
-            "ID": 6,
-            "Inventory": [
-                [
-                    3,
-                    40
-                ],
-                [
-                    7,
-                    1
-                ]
-            ],
-            "LevelID": 5,
-            "Name": "Tania",
-            "Position": [
-                80.0,
-                144.0
-            ],
-            "Stats": {
-                "Bld": 4,
-                "Def": 2,
-                "HP": 20,
-                "Lck": 6,
-                "Level": 1,
-                "Mag": 1,
-                "Mov": 6,
-                "Skl": 6,
-                "Spd": 10,
-                "Str": 3,
-                "currentHP": 20,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Bow": 1
-            }
-        },
-        {
-            "BattleAnimation": true,
-            "Carried": false,
-            "Class": "Warrior",
-            "ClassID": 7,
-            "ClassPower": 3,
-            "HasMoved": false,
-            "ID": 5,
-            "Inventory": [
-                [
-                    14,
-                    20
-                ],
-                [
-                    15,
-                    20
-                ]
-            ],
-            "LevelID": 6,
-            "Name": "Dagda",
-            "Position": [
-                80.0,
-                128.0
-            ],
-            "Skills": [
-                4
-            ],
-            "Stats": {
-                "Bld": 15,
-                "Def": 10,
-                "HP": 43,
-                "Lck": 2,
-                "Level": 6,
-                "Mag": 1,
-                "Mov": 7,
-                "Skl": 11,
-                "Spd": 9,
-                "Str": 14,
-                "currentHP": 43,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Axe": 5,
-                "Bow": 1
-            }
-        },
-        {
-            "BattleAnimation": true,
-            "Carried": false,
-            "Class": "Mountain Thief",
-            "ClassID": 9,
-            "ClassPower": 3,
-            "HasMoved": false,
-            "ID": 7,
-            "Inventory": [
-                [
-                    13,
-                    25
-                ]
-            ],
-            "LevelID": 7,
-            "Name": "Marty",
-            "Position": [
-                64.0,
-                112.0
-            ],
-            "Stats": {
-                "Bld": 15,
-                "Def": 6,
-                "HP": 32,
-                "Lck": 6,
-                "Level": 1,
-                "Mag": 0,
-                "Mov": 6,
-                "Skl": 0,
-                "Spd": 0,
-                "Str": 9,
-                "currentHP": 32,
-                "exp": 0
-            },
-            "WeaponProf": {
-                "Axe": 2
             }
         }
     ]
