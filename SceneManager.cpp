@@ -8,6 +8,7 @@
 #include "InfoDisplays.h"
 #include "MenuManager.h"
 #include "SDL.h"
+#include "TextRenderer.h"
 
 #include <sstream>
 #include <fstream>
@@ -106,6 +107,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 			}
 			break;
 		case SCENE_UNIT_MOVE:
+		{
 			bool moving = false;
 			if (movementDelay >= 0)
 			{
@@ -140,6 +142,50 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				actionIndex++;
 				state = WAITING;
 			}
+			break;
+		}
+		case SHOWING_TITLE:
+		{
+			if (openBox)
+			{
+				boxSize -= 2.4f;
+				if (boxSize <= 0)
+				{
+					boxSize = 0;
+				}
+				alpha += deltaTime;
+				if (alpha >= 0.525f)
+				{
+					alpha = 0.525f;
+				}
+				titleTimer += deltaTime;
+				if (titleTimer >= 2.0f)
+				{
+					openBox = false;
+					closeBox = true;
+					alpha = 0.525f;
+				}
+			}
+			else if (closeBox)
+			{
+				alpha -= deltaTime;
+				if (alpha <= 0)
+				{
+					alpha = 0;
+					actionIndex++;
+					state = WAITING;
+				}
+				boxSize += 2.4f;
+				if (boxSize >= 24)
+				{
+					boxSize = 24;
+
+				}
+			}
+			ResourceManager::GetShader("instance").SetFloat("backgroundFade", alpha, true);
+
+			break;
+		}
 		}
 	}
 	else if (actionIndex < actions.size())
@@ -291,7 +337,15 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				actionIndex++;
 				playingMusic = false;
 				break;
+			case SHOW_MAP_TITLE:
+				titleTimer = 0.0f;
+				boxSize = 24;
+				openBox = true;
+				closeBox = false;
+				state = SHOWING_TITLE;
+				break;
 			}
+
 		}
 	}
 	else
@@ -430,6 +484,50 @@ IntroActivation::IntroActivation(Scene* owner, int type) : Activation(owner, typ
 EndingActivation::EndingActivation(Scene* owner, int type) : Activation(owner, type)
 {
 
+}
+
+void SceneManager::Update(float deltaTime, PlayerManager* playerManager, 
+	std::unordered_map<int, Unit*>& sceneUnits, Camera& camera, 
+	InputManager& inputManager, Cursor& cursor, InfoDisplays& displays)
+{
+	scenes[currentScene]->Update(deltaTime, playerManager, sceneUnits, camera, inputManager, cursor, displays);
+}
+
+void SceneManager::DrawTitle(SpriteRenderer* Renderer, TextRenderer* Text, Camera& camera, int shapeVAO, const glm::vec4& uvs)
+{
+	float boxSize = scenes[currentScene]->boxSize;
+	glEnable(GL_STENCIL_TEST);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_FALSE);
+	//Then the shape I draw here is my mask
+	ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	ResourceManager::GetShader("shape").SetFloat("alpha", 0.0f);
+	glm::mat4 model = glm::mat4();
+	model = glm::translate(model, glm::vec3(24, 80 + boxSize, 0.0f));
+
+	model = glm::scale(model, glm::vec3(208, 48 - boxSize * 2, 0.0f));
+
+	ResourceManager::GetShader("shape").SetMatrix4("model", model);
+	glBindVertexArray(shapeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	//Then when I turn everything off, everything after is drawn in that mask? No idea man. Works though!
+	glStencilFunc(GL_EQUAL, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glDepthMask(GL_TRUE);
+
+	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
+	Renderer->setUVs(uvs);
+	Texture2D displayTexture = ResourceManager::GetTexture("UIItems");
+	Renderer->DrawSprite(displayTexture, glm::vec2(24, 80), 0.0f, glm::vec2(208, 48));
+
+	Text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 75, 262, 1, 650);
+	glDisable(GL_STENCIL_TEST);
 }
 
 void SceneManager::ExitScene(Cursor& cursor)

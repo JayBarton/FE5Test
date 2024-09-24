@@ -798,6 +798,12 @@ bool loadMap()
                         map >> delay;
                         currentObject->actions[c] = new StopMusic(actionType, delay);
                     }
+                    else if (actionType == SHOW_MAP_TITLE)
+                    {
+                        int delay;
+                        map >> delay;
+                        currentObject->actions[c] = new ShowTitle(actionType, delay);
+                    }
                 }
                 int activationType = 0;
                 map >> activationType;
@@ -1015,6 +1021,10 @@ void saveMap()
             {
                 auto action = static_cast<StopMusic*>(currentAction);
                 scenes += intToString(action->nextActionDelay) + " ";
+            }
+            else if (currentAction->type == SHOW_MAP_TITLE)
+            {
+                scenes += intToString(currentAction->nextActionDelay) + " ";
             }
         }
         scenes += intToString(currentObject->activation->type) + " ";

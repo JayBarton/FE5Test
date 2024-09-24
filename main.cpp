@@ -130,6 +130,7 @@ std::vector<Vendor> vendors;
 
 glm::vec4 terrainStatusUVs;
 std::vector<glm::vec4> nameBoxUVs;
+glm::vec4 mapTitleUV;
 
 glm::ivec2 seizePoint;
 int endingID = -1;
@@ -761,7 +762,7 @@ int main(int argc, char** argv)
 				}
 				else if (sceneManager.PlayingScene())
 				{
-					sceneManager.scenes[sceneManager.currentScene]->Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
+					sceneManager.Update(deltaTime, &playerManager, sceneUnits, camera, inputManager, cursor, displays);
 				}
 				else
 				{
@@ -1104,11 +1105,13 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	ResourceManager::LoadMusic("Sounds/Victory.ogg", "Victory");
 
 	TileManager::tileManager.uvs = ResourceManager::GetTexture("tiles").GetUVs(TILE_SIZE, TILE_SIZE);
+	auto UITexture = ResourceManager::GetTexture("UIItems");
+	cursor.uvs = UITexture.GetUVs(208, 0, 21, 21, 2, 2, 3);
+	minimap.cursorUvs = UITexture.GetUVs(64, 0, 70, 62, 2, 1, 2);
+	terrainStatusUVs = UITexture.GetUVs(132, 64, 66, 34, 1, 1)[0];
+	nameBoxUVs = UITexture.GetUVs(0, 64, 66, 32, 2, 1);
 
-	cursor.uvs = ResourceManager::GetTexture("UIItems").GetUVs(208, 0, 21, 21, 2, 2, 3);
-	minimap.cursorUvs = ResourceManager::GetTexture("UIItems").GetUVs(64, 0, 70, 62, 2, 1, 2);
-	terrainStatusUVs = ResourceManager::GetTexture("UIItems").GetUVs(132, 64, 66, 34, 1, 1)[0];
-	nameBoxUVs = ResourceManager::GetTexture("UIItems").GetUVs(0, 64, 66, 32, 2, 1);
+	mapTitleUV = UITexture.GetUVs(196, 132, 208, 48, 1, 1)[0];
 
 	UnitResources::LoadUVs();
 	UnitResources::LoadAnimData();
@@ -1510,6 +1513,12 @@ void loadMap(std::string nextMap)
 						map >> delay;
 						currentObject->actions[c] = new StopMusic(actionType, delay);
 					}
+					else if (actionType == SHOW_MAP_TITLE)
+					{
+						float delay;
+						map >> delay;
+						currentObject->actions[c] = new ShowTitle(actionType, delay);
+					}
 				}
 				int activationType = 0;
 				map >> activationType;
@@ -1693,6 +1702,10 @@ void Draw()
 			if (sceneManager.PlayingScene())
 			{
 				DrawIntroUnits();
+				if (sceneManager.scenes[sceneManager.currentScene]->state == SHOWING_TITLE)
+				{
+					sceneManager.DrawTitle(Renderer, Text, camera, shapeVAO, mapTitleUV);
+				}
 				//Need another drawfade here
 				if (displays.state != NONE)
 				{
@@ -2352,6 +2365,12 @@ void loadSuspendedGame()
 							float delay;
 							map >> delay;
 							currentObject->actions[c] = new StopMusic(actionType, delay);
+						}
+						else if (actionType == SHOW_MAP_TITLE)
+						{
+							float delay;
+							map >> delay;
+							currentObject->actions[c] = new ShowTitle(actionType, delay);
 						}
 					}
 					int activationType = 0;

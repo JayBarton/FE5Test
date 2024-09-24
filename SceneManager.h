@@ -12,6 +12,9 @@ using json = nlohmann::json;
 class Unit;
 class Camera;
 class Cursor;
+class InputManager;
+class PlayerManager;
+class InfoDisplays;
 
 enum SceneState
 {
@@ -20,7 +23,8 @@ enum SceneState
 	UNIT_MOVE,
 	TEXT,
 	GET_ITEM,
-	SCENE_UNIT_MOVE
+	SCENE_UNIT_MOVE,
+	SHOWING_TITLE
 };
 struct Scene
 {
@@ -58,14 +62,21 @@ struct Scene
 	//The delay between a new movement action starting, since multiple enemies can move at once
 	float movementDelay = -1.0f;
 
+	//Not sure where to put this. Don't really want it here but where else could it be?
+	float titleTimer = 0.0f;
+	float boxSize = 24;
+	float alpha = 0.0f;
+	bool openBox = false;
+	bool closeBox = false;
+
 	Scene(TextObjectManager* textManager);
 	~Scene();
 	//I imagine a lot of this will ne set up in the map editor, so this is temporary
 	void extraSetup(Subject<int>* subject);
 	void init();
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
-	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
-		Camera& camera, class InputManager& inputManager, Cursor& cursor, class InfoDisplays& displays);
+	void Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
+		Camera& camera, InputManager& inputManager, Cursor& cursor, InfoDisplays& displays);
 
 	void EndScene(Cursor& cursor);
 
@@ -78,6 +89,11 @@ struct SceneManager
 {
 	int currentScene = 0;
 	std::vector<Scene*> scenes;
+
+	void Update(float deltaTime, PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
+		Camera& camera, InputManager& inputManager, Cursor& cursor, InfoDisplays& displays);
+
+	void DrawTitle(SpriteRenderer* Renderer, TextRenderer* Text, Camera& camera, int shapeVAO, const glm::vec4& uvs);
 
 	void ExitScene(Cursor& cursor);
 

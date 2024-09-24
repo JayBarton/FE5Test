@@ -195,6 +195,7 @@ void TextRenderer::RenderTextRight(std::string text, GLfloat x, GLfloat y, GLflo
 
 void TextRenderer::RenderTextCenter(std::string text, GLfloat x, GLfloat y, GLfloat scale, int containerWidth, glm::vec3 color)
 {
+    auto help = (containerWidth - GetTextWidth(text, scale)) / 2.0f;
     GLfloat startX = x + (containerWidth - GetTextWidth(text, scale)) / 2.0f;
     RenderText(text, startX, y, scale, color);
 }

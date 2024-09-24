@@ -11,6 +11,7 @@ const static int SCENE_UNIT_MOVE_ACTION = 6;
 const static int SCENE_UNIT_REMOVE_ACTION = 7;
 const static int START_MUSIC = 8;
 const static int STOP_MUSIC = 9;
+const static int SHOW_MAP_TITLE = 10;
 
 struct SceneAction
 {
@@ -109,5 +110,11 @@ struct StartMusic : public SceneAction
 struct StopMusic : public SceneAction
 {
 	StopMusic(int type, int nextActionDelay) : SceneAction(type, nextActionDelay)
+	{}
+};
+
+struct ShowTitle : public SceneAction
+{
+	ShowTitle(int type, int nextActionDelay) : SceneAction(type, nextActionDelay)
 	{}
 };

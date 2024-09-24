@@ -450,7 +450,20 @@ struct StopMusicActionMenu : public Menu
     float nextDelay = 0.0f;
     float delayIncrement = 0.1f;
     std::vector<SceneAction*>& sceneActions;
+};
 
+//Wholly duplicated from stop music
+struct ShowTitleActionMenu : public Menu
+{
+    ShowTitleActionMenu(TextRenderer* Text, Camera* camera, int shapeVAO, std::vector<SceneAction*>& sceneActions);
+    virtual void Draw() override;
+    virtual void SelectOption() override;
+    virtual void CheckInput(class InputManager& inputManager, float deltaTime) override;
+
+
+    float nextDelay = 0.0f;
+    float delayIncrement = 0.1f;
+    std::vector<SceneAction*>& sceneActions;
 };
 
 struct RequireUnitsMenu : public Menu
