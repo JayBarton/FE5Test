@@ -11,6 +11,7 @@ using json = nlohmann::json;
 
 class Unit;
 class Camera;
+class Cursor;
 
 enum SceneState
 {
@@ -64,7 +65,9 @@ struct Scene
 	void init();
 	//Want this to be able to handle any unit manager, so might need to make that something that can be inherited.
 	void Update(float deltaTime, class PlayerManager* playerManager, std::unordered_map<int, Unit*>& sceneUnits,
-		Camera& camera, class InputManager& inputManager, class Cursor& cursor, class InfoDisplays& displays);
+		Camera& camera, class InputManager& inputManager, Cursor& cursor, class InfoDisplays& displays);
+
+	void EndScene(Cursor& cursor);
 
 	void AddNewSceneUnit(SceneAction* currentAction);
 
@@ -75,6 +78,8 @@ struct SceneManager
 {
 	int currentScene = 0;
 	std::vector<Scene*> scenes;
+
+	void ExitScene(Cursor& cursor);
 
 	bool PlayingScene();
 	bool HideUnits();

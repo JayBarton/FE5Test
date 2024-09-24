@@ -299,41 +299,46 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 		delayTimer += deltaTime;
 		if (delayTimer >= currentDelay)
 		{
-			if (playingMusic)
-			{
-				Mix_HookMusicFinished(nullptr);
-				Mix_FadeOutMusic(500.0f);
-			}
-			for (int i = 0; i < introUnits.size(); i++)
-			{
-				delete introUnits[i];
-			}
-			introUnits.clear();
-			if (initiator)
-			{
-				//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
-				//But it is worth noting I think
-				if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
-				{
-					cursor.GetRemainingMove();
-					MenuManager::menuManager.mustWait = true;
-				}
-				else
-				{
-					cursor.Wait();
-				}
-				initiator = nullptr;
-			}
-			playingScene = false;
-			if (repeat)
-			{
-				actionIndex = 0;
-			}
-			else
-			{
-				ClearActions();
-			}
+			EndScene(cursor);
 		}
+	}
+}
+
+void Scene::EndScene(Cursor& cursor)
+{
+	if (playingMusic)
+	{
+		Mix_HookMusicFinished(nullptr);
+		Mix_FadeOutMusic(500.0f);
+	}
+	for (int i = 0; i < introUnits.size(); i++)
+	{
+		delete introUnits[i];
+	}
+	introUnits.clear();
+	if (initiator)
+	{
+		//I don't think this check really works in the case of an ai unit initiating dialogue. That won't happen in the first level,
+		//But it is worth noting I think
+		if (cursor.selectedUnit->isMounted() && cursor.selectedUnit->mount->remainingMoves > 0)
+		{
+			cursor.GetRemainingMove();
+			MenuManager::menuManager.mustWait = true;
+		}
+		else
+		{
+			cursor.Wait();
+		}
+		initiator = nullptr;
+	}
+	playingScene = false;
+	if (repeat)
+	{
+		actionIndex = 0;
+	}
+	else
+	{
+		ClearActions();
 	}
 }
 
@@ -425,6 +430,13 @@ IntroActivation::IntroActivation(Scene* owner, int type) : Activation(owner, typ
 EndingActivation::EndingActivation(Scene* owner, int type) : Activation(owner, type)
 {
 
+}
+
+void SceneManager::ExitScene(Cursor& cursor)
+{
+	auto activeScene = scenes[currentScene];
+	activeScene->EndScene(cursor);
+	activeScene->state = WAITING;
 }
 
 bool SceneManager::PlayingScene()

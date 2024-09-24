@@ -83,11 +83,15 @@ bool endingGame = false;
 bool turnTransition = false;
 bool showCarry = false;
 bool fadingIn = false;
+bool skippingScene = false;
+bool fadeInDelay = false;
 //I am not reloading assets if the game returns to the title
 bool loaded = false;
 bool returningToMenu = false;
 bool menuDelay = false;
 bool endDelay = false;
+
+float fadeDelayTimer = 0.0f;
 
 SDL_Window *window;
 SpriteRenderer* Renderer;
@@ -481,6 +485,9 @@ std::vector<IObserver*> observers;
 void loadMap(std::string nextMap);
 void loadSuspendedGame();
 
+
+void SetFadeIn(bool delay = false);
+
 struct StartGameEvent : public Observer<int>
 {
 	virtual void onNotify(int ID)
@@ -489,7 +496,7 @@ struct StartGameEvent : public Observer<int>
 		textManager = TextObjectManager();
 		textManager.setUVs();
 		gameOverMode = GameOverMode();
-		fadingIn = true;
+		SetFadeIn();
 		fadeAlpha = 1.0f;
 		currentTurn = 0;
 		if (!loaded)
@@ -708,6 +715,30 @@ int main(int argc, char** argv)
 		{
 			IdleAnimation(deltaTime);
 			CarryIconAnimation();
+			if (sceneManager.HideUnits())
+			{
+				if (inputManager.isKeyPressed(SDLK_SPACE))
+				{
+					skippingScene = true;
+					fadeAlpha = 0.0f;
+				}
+			}
+			if (skippingScene)
+			{
+				//15 frames/0.25s
+				fadeAlpha += 0.0666f;
+				if (fadeAlpha >= 1)
+				{
+					fadeAlpha = 1;
+					skippingScene = false;
+					SetFadeIn(true);
+					sceneManager.ExitScene(cursor);
+					camera.moving = false;
+					camera.setPosition(cursor.position);
+					textManager.active = false;
+					ResourceManager::GetShader("instance").SetFloat("backgroundFade", 0, true);
+				}
+			}
 			if (endingGame)
 			{
 				if (endDelay)
@@ -723,7 +754,7 @@ int main(int argc, char** argv)
 				else if (textManager.active)
 				{
 					textManager.Update(deltaTime, inputManager, true);
-					if (inputManager.isKeyPressed(SDLK_SPACE))
+					if (inputManager.isKeyPressed(SDLK_SPACE) || inputManager.isKeyPressed(SDLK_z))
 					{
 						textManager.active = false;
 					}
@@ -743,18 +774,30 @@ int main(int argc, char** argv)
 			}
 			else if (fadingIn)
 			{
-				//15 frames/0.25s
-				fadeAlpha -= 0.0666f;
-				if (fadeAlpha <= 0)
+				if (fadeInDelay)
 				{
-					fadeAlpha = 0;
-					fadingIn = false;
+					fadeDelayTimer += deltaTime;
+					if (fadeDelayTimer >= 0.5f)
+					{
+						fadeDelayTimer = 0.0f;
+						fadeInDelay = false;
+					}
+				}
+				else
+				{
+					//15 frames/0.25s
+					fadeAlpha -= 0.0666f;
+					if (fadeAlpha <= 0)
+					{
+						fadeAlpha = 0;
+						fadingIn = false;
+					}
 				}
 			}
 			else if (textManager.active)
 			{
 				textManager.Update(deltaTime, inputManager);
-				if (inputManager.isKeyPressed(SDLK_SPACE))
+				if (inputManager.isKeyPressed(SDLK_SPACE) || inputManager.isKeyPressed(SDLK_z))
 				{
 					if (battleManager.battleActive && battleManager.battleScene)
 					{
@@ -1497,7 +1540,7 @@ void loadMap(std::string nextMap)
 				}
 				else if (activationType == 3)
 				{
-				//	intro = i;
+					intro = i;
 					currentObject->activation = new IntroActivation(currentObject, activationType);
 				}
 				else if (activationType == 4)
@@ -2462,6 +2505,13 @@ void loadSuspendedGame()
 	camera.setPosition(glm::vec2(0, 0));
 	//	camera.setScale(2.0f);
 	camera.update();
+}
+
+void SetFadeIn(bool delay)
+{
+	fadingIn = true;
+	fadeInDelay = delay;
+	fadeDelayTimer = 0.0f;
 }
 
 void PlayerTurnMusic()

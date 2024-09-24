@@ -160,7 +160,6 @@ void InfoDisplays::ChangeTurn(int currentTurn)
 	turn = currentTurn;
 	if (Settings::settings.unitSpeed < 3)
 	{
-
 		state = TURN_CHANGE;
 		turnChangeStart = true;
 		turnDisplayAlpha = 0.0f;
