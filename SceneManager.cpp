@@ -251,7 +251,14 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 							Sprite* speaker;
 							if (introUnits.size() > 0)
 							{
-								speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
+								if (dialogue["speaker"] >= 0)
+								{
+									speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
+								}
+								else
+								{
+									speaker = nullptr;
+								}
 							}
 							else
 							{

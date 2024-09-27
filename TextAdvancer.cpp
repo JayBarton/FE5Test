@@ -331,7 +331,6 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				currentObject.fadeIn = false;
 				currentObject.showPortrait = false;
 				int nextObject = focusedObject + 1;
-				//focusedObject++;
 				if (nextObject >= 2)
 				{
 					nextObject = 0;
@@ -345,6 +344,16 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 					state = FADE_BOX_OUT;
 					boxFadeOut = true;
 				}
+			}
+			else if (midTalkPortraitChange)
+			{
+				state = PORTRAIT_FADE_IN;
+				int realfocusedObject = textLines[currentLine].location;
+				auto& agdags = textObjects[realfocusedObject];
+				currentObject.portraitID = agdags.text[agdags.index + 3] - '0';
+				agdags.index += 4;
+				currentObject.showPortrait = true;
+				midTalkPortraitChange = false;
 			}
 			else
 			{
@@ -602,10 +611,31 @@ void TextObjectManager::ReadText(InputManager& inputManager, float deltaTime)
 				{
 					GoToNextLine();
 				}
+				else if (nextOption == 5)
+				{
+					focusedObject = currentObject->text[currentObject->index + 2] - '0';
+					int newPortraitID = currentObject->text[currentObject->index + 3] - '0';
+					if (textObjects[focusedObject].portraitID != newPortraitID)
+					{
+						if (textObjects[focusedObject].displayedText != "")
+						{
+							state = REMOVING_TEXT;
+							textObjects[focusedObject].displayedPosition = textObjects[focusedObject].position;
+						}
+						//if object ID was greater than 0, we need to fade out the old portrait and fade in the new one
+						else if (textObjects[focusedObject].portraitID >= 0)
+						{
+							//fade old portrait out
+							state = PORTRAIT_FADE_OUT;
+						}
+						midTalkPortraitChange = true;
+					}
+				}
 				else
 				{
 					state = WAITING_ON_INPUT;
 				}
+				animTime = 0.0f;
 				frame = 0;
 				frameDirection = 1;
 				ResourceManager::StopSound(-1);
@@ -642,17 +672,26 @@ void TextObjectManager::GoToNextLine()
 			int portraitID = textLines[currentLine].portraitID;
 			if (textObjects[focusedObject].portraitID != portraitID)
 			{
-				state = PORTRAIT_FADE_IN;
-				if (!textObjects[focusedObject].showBox)
+				//if object ID was greater than 0, we need to fade out the old portrait and fade in the new one
+				if (textObjects[focusedObject].portraitID >= 0)
 				{
-					textObjects[focusedObject].showBox = true;
-					textObjects[focusedObject].active = true;
+					//fade old portrait out
+					state = PORTRAIT_FADE_OUT;
 				}
 				else
 				{
-					textObjects[focusedObject].showPortrait = true;
+					state = PORTRAIT_FADE_IN;
+					if (!textObjects[focusedObject].showBox)
+					{
+						textObjects[focusedObject].showBox = true;
+						textObjects[focusedObject].active = true;
+					}
+					else
+					{
+						textObjects[focusedObject].showPortrait = true;
+					}
+					textObjects[focusedObject].portraitID = portraitID;
 				}
-				textObjects[focusedObject].portraitID = portraitID;
 			}
 
 		}

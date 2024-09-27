@@ -73,6 +73,7 @@ struct TextObjectManager
 	bool showBG = false;
 	bool fadeIn = false;
 	bool finishing = false;
+	bool midTalkPortraitChange = false;
 
 	bool boxFadeOut = false;
 	bool showBoxAnyway = false;

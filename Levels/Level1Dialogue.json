@@ -329,19 +329,115 @@
           "speaker": 0,
           "location": 0,
           "portrait": 10,
-          "speech": "Just making sure we can talk to each other<0"
+          "speech": "Have you found the Prince?<0"
         },
         {
           "speaker": 1,
           "location": 1,
           "portrait": 11,
-          "speech": "I'm talking fine, I think.<0"
+          "speech": "No, we've looked all over the village,\nbut still haven't found him.<0"
         },
         {
           "speaker": 0,
           "location": 0,
           "portrait": 10,
-          "speech": "Yes, yes. Very good.<1"
+          "speech": "Fool!\nWhat is taking so long?<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "There is no doubt the survivors of the\nKingdom of Leonster are hiding here.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Bring the villagers to heel and make them talk!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Yes my Lord, of course.\nHowever, it seems like they really are not here.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "The villagers say the Prince and the\nFianna Freeblades went to help a village\nthat was being tormented by pirates.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Fianna Freeblades?\nHuh?\nWho are they?<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "This village was originally a bandit stronghold.\nThen, ten years ago, a travelling mercenary named\nEyvale put down the bandits and took\ncontrol of the area.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Now they call themselves the Freeblades,\nand protect the nearby villages.\nFrom what I hear, she is a fairly capable woman...<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Hmm...\nThat could be a small problem.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "No need to worry.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "We have taken Eyvale's daughter hostage.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Additionally, we have also captured the daughter\nof the Prince's protector the knight Finn.\nThey won't be able to oppose us like this.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Ho.\nI've underestimated you.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Alright,\nI'll take the girls back with me to Manster.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "You remain here and wait for those\nrebels to return. When the Prince returns,\ncapture him no matter what!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Yes, my Lord, leave it to me.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Someone!\nBring the girls here!<1"
         }
       ]
     },
@@ -353,19 +449,25 @@
           "speaker": 0,
           "location": 0,
           "portrait": 10,
-          "speech": "On a dillema<0"
+          "speech": "What's your name, girl?<0"
         },
         {
           "speaker": 4,
           "location": 1,
           "portrait": 8,
-          "speech": "Between what I need and what I just want.<0"
+          "speech": "Hmph....<0"
         },
         {
           "speaker": 0,
           "location": 0,
           "portrait": 10,
-          "speech": "Between your thighs I feel a sensation.<0"
+          "speech": "Ha, it's charming you still have a stubborn side.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Now the other one...<0"
         },
         {
           "speaker": 5,
@@ -377,13 +479,43 @@
           "speaker": 0,
           "location": 0,
           "portrait": 10,
-          "speech": "How long can I resist the temptation?<0"
+          "speech": "Oh, you're Finn's daughter?\nSeems your mother is Nordian royalty.<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "As expected, you can't deny your blood,\neven out here you haven't lost your elegance.<0"
         },
         {
           "speaker": 5,
           "location": 1,
           "portrait": 9,
-          "speech": "..........<1"
+          "speech": "..........<0"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Fu fu fu, you've brought me an unexpected present.\nRight, I will return to Manster.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "<4"
+        },
+        {
+          "speaker": 0,
+          "location": 0,
+          "portrait": 10,
+          "speech": "Weissman, I leave the rest to you!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Yes, my Lord!<1"
         }
       ]
     },
@@ -391,10 +523,16 @@
       "ID": 14,
       "dialogue": [
         {
-          "speaker": 22,
-          "location": 0,
+          "speaker": 1,
+          "location": 1,
           "portrait": 2,
-          "speech": "Placeholder<1"
+          "speech": "What's this?\nSomething is strange here...<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 3,
+          "speech": "I'll go take a look Commander.\nWait here a moment.<1"
         }
       ]
     },
@@ -402,10 +540,166 @@
       "ID": 15,
       "dialogue": [
         {
-          "speaker": 22,
+          "speaker": 1,
           "location": 0,
+          "portrait": 2,
+          "speech": "<4"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
           "portrait": 3,
-          "speech": "Another<1"
+          "speech": "Captain, the village is filled with imperial\nsoldiers! They must have attacked while\nwe were away!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 4,
+          "speech": "What?!\nDammit, those imperial bastards are making\nus look like fools!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 4,
+          "speech": "Captain,<512 let's hurry to the village!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 3,
+          "speech": "Calm down Orthin,\nif we rush into the village without a plan,\nwe'll just face the wrath of the imperial soldiers.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 4,
+          "speech": "Halvan, how can you be so calm?!\nThe village is under attack!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "I agree with Halvan. Orthin, please calm down.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 0,
+          "speech": "<4"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Prince Leif, it seems like the empire\nhas found you.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "I'm sorry, but this is farewell.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "We'll distract the imperial soldiers,\nplease use that time to get as far\naway as possible.<501 Finn, you go with the Prince...<4"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 0,
+          "speech": "Eyvale!\nNanna is in the village,\nthere's no way I can just run away!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "You don't need to worry Leif, I'll rescue Nanna.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 0,
+          "speech": "No, it's not that.\nI've decided I'm done running away.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Finn,<501 what do you think?\nAre you alright exposing the Prince to this danger?<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 1,
+          "speech": "The Prince is already 15 years old.\nHe has made his choice.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 1,
+          "speech": "As his retainer, I will follow his orders.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "15 years old, huh...\nI also had him accompany me in the suppresion\nof the pirates.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Very well.\nIt is as Finn says.\nI was wrong to object.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 4,
+          "speech": "...I don't fully understand what you're all\ntalking about, but if you're done talking\nlet's hurry and go!<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Alright, but be careful.\nThese lower grade imperial soldiers are citizens\nwho have been forcibly conscripted.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "If possible, it would be good to capture them\nwithout killing them, and let them go after\ndisarming them.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 4,
+          "speech": "But we can still beat them until they surrender\nright? Otherwise we'll be the ones who get hurt.\n<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Yeah, that's fine, but only fight back as much\nas you can without killing them.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Orthin, you in particular need to be careful.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 0,
+          "portrait": 4,
+          "speech": "Tsk, do you not trust me?<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 2,
+          "speech": "Let's go.\nEveryone, do the name of the Fianna Freeblades\nproud.<1"
         }
       ]
     },
