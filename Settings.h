@@ -17,6 +17,7 @@ struct Settings
 
 	int backgroundPattern = 0;
 
+	bool unitWindow = true;
 	bool autoCursor = true;
 	bool showTerrain = true;
 	bool sterero = true;

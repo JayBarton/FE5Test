@@ -7,6 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #include "RangeBatch.h"
+#include "Settings.h"
 
 void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
@@ -156,13 +157,16 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 		//Movement input is all a mess
 		MovementInput(inputManager, deltaTime);
 
-		if (!settled)
+		if (Settings::settings.unitWindow)
 		{
-			settleTimer += deltaTime;
-			if (settleTimer >= firstDelay)
+			if (!settled)
 			{
-				settleTimer = 0.0f;
-				settled = true;
+				settleTimer += deltaTime;
+				if (settleTimer >= firstDelay)
+				{
+					settleTimer = 0.0f;
+					settled = true;
+				}
 			}
 		}
 	}

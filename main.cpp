@@ -2075,6 +2075,7 @@ void SuspendGame()
 	settings["TextSpeed"] = Settings::settings.textSpeed;
 	settings["Volume"] = Settings::settings.volume;
 	settings["Animations"] = Settings::settings.mapAnimations;
+	settings["UnitWindow"] = Settings::settings.unitWindow;
 	settings["AutoCursor"] = Settings::settings.autoCursor;
 	settings["ShowTerrain"] = Settings::settings.showTerrain;
 	settings["Sterero"] = Settings::settings.sterero;
@@ -2168,6 +2169,7 @@ void loadSuspendedGame()
 	Settings::settings.textSpeed = settings["TextSpeed"];
 	Settings::settings.volume = settings["Volume"];
 	Settings::settings.mapAnimations = settings["Animations"];
+	Settings::settings.unitWindow = settings["UnitWindow"];
 	Settings::settings.autoCursor = settings["AutoCursor"];
 	Settings::settings.showTerrain = settings["ShowTerrain"];
 	Settings::settings.sterero = settings["Sterero"];

@@ -449,6 +449,8 @@ struct OptionsMenu : public Menu
 	bool hitBottom = false;
 	bool moveToBottom = false;
 
+	std::string optionDescriptions[17];
+
 //	glm::vec3 topColor;
 //	glm::vec3 bottomColor;
 };

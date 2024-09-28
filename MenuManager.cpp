@@ -3083,7 +3083,7 @@ void UnitListMenu::Draw()
 		MenuManager::menuManager.DrawArrow(sortIndicatorLocations[currentSort] + glm::ivec2(0, 19), false);
 
 	}
-	MenuManager::menuManager.DrawArrowIndicator(glm::ivec2(168, 28));
+	MenuManager::menuManager.DrawArrowIndicator(glm::ivec2(168, 14));
 
 	ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	SBatch Batch;
@@ -3705,9 +3705,25 @@ void StatusMenu::CheckInput(InputManager& inputManager, float deltaTime)
 OptionsMenu::OptionsMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer)
 	: Menu(Cursor, Text, camera, shapeVAO, Renderer)
 {
-	numberOfOptions = 15;
-	//fullScreen = true;
+	numberOfOptions = 16;
 	fullFadeIn = true;
+	optionDescriptions[0] = "Attack animation settings";
+	optionDescriptions[1] = "Terrain Display";
+	optionDescriptions[2] = "Unit window display";
+	optionDescriptions[3] = "Auto cursor";
+	optionDescriptions[4] = "How fast to display messages";
+	optionDescriptions[5] = "Unit movement speed";
+	optionDescriptions[6] = "Sound settings(not working)";
+	optionDescriptions[7] = "Music settings";
+	optionDescriptions[8] = "Volume settings";
+	optionDescriptions[9] = "Window tile settings";
+	optionDescriptions[10] = "Upper red layer";
+	optionDescriptions[11] = "Upper green layer";
+	optionDescriptions[12] = "Upper blue layer";
+	optionDescriptions[13] = "Lower red layer";
+	optionDescriptions[14] = "Lower green layer";
+	optionDescriptions[15] = "Lower blue layer";
+	optionDescriptions[16] = "Return to default color";
 }
 
 void OptionsMenu::Draw()
@@ -3730,7 +3746,7 @@ void OptionsMenu::Draw()
 		auto optionIconUVs = MenuManager::menuManager.optionIconUVs;
 		glm::vec2 iconSize = glm::vec2(16);
 		int adjustedOffset = round((yOffset / 600.0f) * 224.0f);
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 11; i++)
 		{
 			Renderer->setUVs(optionIconUVs[i]);
 			Renderer->DrawSprite(optionIcons, glm::vec2(24, 39 + 24 * i - adjustedOffset), 0, iconSize);
@@ -3772,64 +3788,67 @@ void OptionsMenu::Draw()
 		RenderText("On", selectionXStart, 181 - (yOffset), 1, Settings::settings.showTerrain);
 		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 181 - (yOffset), 1, !Settings::settings.showTerrain);
 
-		text->RenderText("Autocursor", optionNameX, 245 - (yOffset), 1);
-		RenderText("On", selectionXStart, 245 - (yOffset), 1, Settings::settings.autoCursor);
-		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1, !Settings::settings.autoCursor);
+		text->RenderText("Unit Window", optionNameX, 245 - (yOffset), 1);
+		RenderText("On", selectionXStart, 245 - (yOffset), 1, Settings::settings.unitWindow);
+		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 245 - (yOffset), 1, !Settings::settings.unitWindow);
 
-		text->RenderText("Text Speed", optionNameX, 309 - (yOffset), 1);
-		RenderText("Slow", selectionXStart, 309 - (yOffset), 1, Settings::settings.textSpeed == 0);
+		text->RenderText("Autocursor", optionNameX, 309 - (yOffset), 1);
+		RenderText("On", selectionXStart, 309 - (yOffset), 1, Settings::settings.autoCursor);
+		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 309 - (yOffset), 1, !Settings::settings.autoCursor);
+
+		text->RenderText("Text Speed", optionNameX, 373 - (yOffset), 1);
+		RenderText("Slow", selectionXStart, 373 - (yOffset), 1, Settings::settings.textSpeed == 0);
 		xOffset = 0;
 		xOffset += selectionXStart + text->GetTextWidth("Slow", 1) + 50;
-		RenderText("Normal", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 1);
+		RenderText("Normal", xOffset, 373 - (yOffset), 1, Settings::settings.textSpeed == 1);
 		xOffset += text->GetTextWidth("Normal", 1) + 50;
-		RenderText("Fast", xOffset, 309 - (yOffset), 1, Settings::settings.textSpeed == 2);
+		RenderText("Fast", xOffset, 373 - (yOffset), 1, Settings::settings.textSpeed == 2);
 
-		text->RenderText("Unit Speed", optionNameX, 373 - (yOffset), 1);
-		RenderText("Normal", selectionXStart, 373 - (yOffset), 1, Settings::settings.unitSpeed < 5);
-		RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 373 - (yOffset), 1, Settings::settings.unitSpeed >= 5);
+		text->RenderText("Unit Speed", optionNameX, 437 - (yOffset), 1);
+		RenderText("Normal", selectionXStart, 437 - (yOffset), 1, Settings::settings.unitSpeed < 5);
+		RenderText("Fast", selectionXStart + text->GetTextWidth("Normal", 1) + 50, 437 - (yOffset), 1, Settings::settings.unitSpeed >= 5);
 
-		text->RenderText("Audio", optionNameX, 437 - (yOffset), 1);
-		RenderText("Stereo", selectionXStart, 437 - (yOffset), 1, Settings::settings.sterero);
-		RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 437 - (yOffset), 1, !Settings::settings.sterero);
+		text->RenderText("Audio", optionNameX, 501 - (yOffset), 1);
+		RenderText("Stereo", selectionXStart, 501 - (yOffset), 1, Settings::settings.sterero);
+		RenderText("Mono", selectionXStart + text->GetTextWidth("Stereo", 1) + 50, 501 - (yOffset), 1, !Settings::settings.sterero);
 
-		text->RenderText("Music", optionNameX, 501 - (yOffset), 1);
-		RenderText("On", selectionXStart, 501 - (yOffset), 1, Settings::settings.music);
-		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 501 - (yOffset), 1, !Settings::settings.music);
+		text->RenderText("Music", optionNameX, 565 - (yOffset), 1);
+		RenderText("On", selectionXStart, 565 - (yOffset), 1, Settings::settings.music);
+		RenderText("Off", selectionXStart + text->GetTextWidth("On", 1) + 50, 565 - (yOffset), 1, !Settings::settings.music);
 
-		text->RenderText("Volume", optionNameX, 565 - (yOffset), 1);
-		RenderText("4", selectionXStart, 565 - (yOffset), 1, Settings::settings.volume == 4);
+		text->RenderText("Volume", optionNameX, 629 - (yOffset), 1);
+		RenderText("4", selectionXStart, 629 - (yOffset), 1, Settings::settings.volume == 4);
 		xOffset = 0;
 		xOffset += selectionXStart + text->GetTextWidth("4", 1) + 50;
-		RenderText("3", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 3);
+		RenderText("3", xOffset, 629 - (yOffset), 1, Settings::settings.volume == 3);
 		xOffset += text->GetTextWidth("3", 1) + 50;
-		RenderText("2", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 2);
+		RenderText("2", xOffset, 629 - (yOffset), 1, Settings::settings.volume == 2);
 		xOffset += text->GetTextWidth("2", 1) + 50;
-		RenderText("Off", xOffset, 565 - (yOffset), 1, Settings::settings.volume == 1);
+		RenderText("Off", xOffset, 629 - (yOffset), 1, Settings::settings.volume == 1);
 
-		text->RenderText("Window Tile", optionNameX, 629 - (yOffset), 1);
-
-		RenderText("1", selectionXStart, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 0);
+		text->RenderText("Window Tile", optionNameX, 693 - (yOffset), 1);
+		RenderText("1", selectionXStart, 693 - (yOffset), 1, Settings::settings.backgroundPattern == 0);
 		xOffset = 0;
 		xOffset += selectionXStart + text->GetTextWidth("1", 1) + 50;
-		RenderText("2", xOffset, 629 - (yOffset), 1, Settings::settings.backgroundPattern == 1);
+		RenderText("2", xOffset, 693 - (yOffset), 1, Settings::settings.backgroundPattern == 1);
 
-		text->RenderText("Window Color", optionNameX, 693 - (yOffset), 1);
+		text->RenderText("Window Color", optionNameX, 757 - (yOffset), 1); //757
 
-		text->RenderText("Upper", optionNameX + 50, 735 - (yOffset), 1);
-		text->RenderText("Lower", optionNameX + 50, 799 - (yOffset), 1);
+		text->RenderText("Upper", optionNameX + 50, 777 - (yOffset), 1); //42 diff
+		text->RenderText("Lower", optionNameX + 50, 841 - (yOffset), 1); //62 diff was 799
 
-		RenderText("Default", selectionXStart, 864 - (yOffset), 1, Settings::settings.editedColor[patternID]);
+		RenderText("Default", selectionXStart, 930 - (yOffset), 1, Settings::settings.editedColor[patternID]);
 
 		ResourceManager::GetShader("Nsprite").Use();
 
 		Renderer->setUVs(MenuManager::menuManager.colorBarsUV);
-		Renderer->DrawSprite(optionIcons, glm::vec2(128, 263 - adjustedOffset), 0, glm::vec2(107, 56));
+		Renderer->DrawSprite(optionIcons, glm::vec2(128, 287 - adjustedOffset), 0, glm::vec2(107, 56));
 
 		ResourceManager::GetShader("gradient").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		ResourceManager::GetShader("gradient").SetFloat("alpha", 1.0f);
 		ResourceManager::GetShader("gradient").SetFloat("barEnd", 232.0f);
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(139, 266 - adjustedOffset, 0.0f));
+		model = glm::translate(model, glm::vec3(139, 290 - adjustedOffset, 0.0f));
 		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.x / 8)), 2, 0.0f));
 		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
 		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
@@ -3838,7 +3857,7 @@ void OptionsMenu::Draw()
 		glBindVertexArray(0);
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(139, 274 - adjustedOffset, 0.0f));
+		model = glm::translate(model, glm::vec3(139, 298 - adjustedOffset, 0.0f));
 		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.y / 8)), 2, 0.0f));
 		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
 		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
@@ -3847,7 +3866,7 @@ void OptionsMenu::Draw()
 		glBindVertexArray(0);
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(139, 282 - adjustedOffset, 0.0f));
+		model = glm::translate(model, glm::vec3(139, 306 - adjustedOffset, 0.0f));
 		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(topColor.z / 8)), 2, 0.0f));
 		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
 		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
@@ -3856,7 +3875,7 @@ void OptionsMenu::Draw()
 		glBindVertexArray(0);
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(139, 298 - adjustedOffset, 0.0f));
+		model = glm::translate(model, glm::vec3(139, 322 - adjustedOffset, 0.0f));
 		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.x / 8)), 2, 0.0f));
 		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(1.0f, 0.0f, 0.0f));
 		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
@@ -3865,7 +3884,7 @@ void OptionsMenu::Draw()
 		glBindVertexArray(0);
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(139, 306 - adjustedOffset, 0.0f));
+		model = glm::translate(model, glm::vec3(139, 330 - adjustedOffset, 0.0f));
 		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.y / 8)), 2, 0.0f));
 		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 1.0f, 0.0f));
 		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
@@ -3874,7 +3893,7 @@ void OptionsMenu::Draw()
 		glBindVertexArray(0);
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(139, 314 - adjustedOffset, 0.0f));
+		model = glm::translate(model, glm::vec3(139, 338 - adjustedOffset, 0.0f));
 		model = glm::scale(model, glm::vec3(std::max(1, 4 * int(bottomColor.z / 8)), 2, 0.0f));
 		ResourceManager::GetShader("gradient").SetVector3f("shapeColor", glm::vec3(0.0f, 0.0f, 1.0f));
 		ResourceManager::GetShader("gradient").SetMatrix4("model", model);
@@ -3885,17 +3904,19 @@ void OptionsMenu::Draw()
 		ResourceManager::GetShader("Nsprite").Use();
 		Renderer->setUVs(MenuManager::menuManager.colorIndicatorUV);
 
-		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.x / 8), 263 - adjustedOffset), 0, glm::vec2(3, 8));
-		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.y / 8), 271 - adjustedOffset), 0, glm::vec2(3, 8));
-		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.z / 8), 279 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.x / 8), 287 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.y / 8), 295 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(topColor.z / 8), 303 - adjustedOffset), 0, glm::vec2(3, 8));
 
-		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.x / 8), 295 - adjustedOffset), 0, glm::vec2(3, 8));
-		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.y / 8), 303 - adjustedOffset), 0, glm::vec2(3, 8));
-		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.z / 8), 311 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.x / 8), 319 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.y / 8), 327 - adjustedOffset), 0, glm::vec2(3, 8));
+		Renderer->DrawSprite(optionIcons, glm::vec2(136 + 4 * int(bottomColor.z / 8), 335 - adjustedOffset), 0, glm::vec2(3, 8));
 
 		DrawIndicators();
 
 		DrawPattern(glm::vec2(256, 32), glm::vec2(0, 192));
+
+		text->RenderTextCenter(optionDescriptions[currentOption], 0, 541, 1, 800);
 
 		Texture2D test = ResourceManager::GetTexture("OptionsScreenBackground");
 		ResourceManager::GetShader("Nsprite").Use();
@@ -3919,7 +3940,7 @@ void OptionsMenu::DrawIndicators()
 		{
 			xLoc = 151;
 		}
-		else if (Settings::settings.mapAnimations == 1)
+		else if (Settings::settings.mapAnimations == 2)
 		{
 			xLoc = 183;
 		}
@@ -3940,6 +3961,13 @@ void OptionsMenu::DrawIndicators()
 	}
 	else if (currentOption == 3)
 	{
+		if (Settings::settings.autoCursor == 0)
+		{
+			xLoc = 135;
+		}
+	}
+	else if (currentOption == 4)
+	{
 		if (Settings::settings.textSpeed == 1)
 		{
 			xLoc = 143;
@@ -3949,28 +3977,28 @@ void OptionsMenu::DrawIndicators()
 			xLoc = 183;
 		}
 	}
-	else if (currentOption == 4)
+	else if (currentOption == 5)
 	{
 		if (Settings::settings.unitSpeed > 3)
 		{
 			xLoc = 151;
 		}
 	}
-	else if (currentOption == 5)
+	else if (currentOption == 6)
 	{
 		if (Settings::settings.sterero == 0)
 		{
 			xLoc = 151;
 		}
 	}
-	else if (currentOption == 6)
+	else if (currentOption == 7)
 	{
 		if (Settings::settings.music == 0)
 		{
 			xLoc = 135;
 		}
 	}
-	else if (currentOption == 7)
+	else if (currentOption == 8)
 	{
 		if (Settings::settings.volume == 3)
 		{
@@ -3985,7 +4013,7 @@ void OptionsMenu::DrawIndicators()
 			xLoc = 173;
 		}
 	}
-	else if (currentOption == 8)
+	else if (currentOption == 9)
 	{
 		if (Settings::settings.backgroundPattern == 1)
 		{
@@ -4045,7 +4073,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					}
 					else
 					{
-						if (currentOption < 9)
+						if (currentOption < 10)
 						{
 							indicatorY -= indicatorIncrement;
 							//The boundary is a bit different once the bottom has been hit
@@ -4064,11 +4092,11 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						}
 						else
 						{
-							if (currentOption == 11)
+							if (currentOption == 12)
 							{
 								indicatorY2 -= 16;
 							}
-							else if (currentOption == 14)
+							else if (currentOption == 15)
 							{
 								indicatorY2 = 153;
 							}
@@ -4091,18 +4119,18 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				else
 				{
 					ResourceManager::PlaySound("optionSelect1");
-					if (currentOption == 9)
+					if (currentOption == 10)
 					{
-						indicatorY = 255;
-						indicatorY2 = 257;
-						goal = 406;
+						indicatorY = 279;
+						indicatorY2 = 281;
+						goal = 470;
 						down = true;
 						hitBottom = true;
 						moveToBottom = true;
 					}
 					else
 					{
-						if (currentOption < 9)
+						if (currentOption < 10)
 						{
 							indicatorY += indicatorIncrement;
 
@@ -4121,11 +4149,11 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						}
 						else
 						{
-							if (currentOption == 12)
+							if (currentOption == 13)
 							{
 								indicatorY2 += 16;
 							}
-							else if (currentOption == 15)
+							else if (currentOption == 16)
 							{
 								indicatorY2 = 169;
 							}
@@ -4136,7 +4164,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						}
 					}
 				}
-				if (currentOption < 9)
+				if (currentOption < 10)
 				{
 					indicatorY2 = indicatorY;
 				}
@@ -4164,13 +4192,20 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					}
 					break;
 				case 2:
+					if (Settings::settings.unitWindow)
+					{
+						Settings::settings.unitWindow = false;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 3:
 					if (Settings::settings.autoCursor)
 					{
 						Settings::settings.autoCursor = false;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 3:
+				case 4:
 					Settings::settings.textSpeed++;
 					if (Settings::settings.textSpeed > 2)
 					{
@@ -4181,42 +4216,42 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 4:
+				case 5:
 					if (Settings::settings.unitSpeed < 5)
 					{
 						Settings::settings.unitSpeed = 5;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 5:
+				case 6:
 					if (Settings::settings.sterero)
 					{
 						Settings::settings.sterero = false;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 6:
+				case 7:
 					if (Settings::settings.music)
 					{
 						Settings::settings.music = false;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 7:
+				case 8:
 					if (Settings::settings.volume > 1)
 					{
 						Settings::settings.volume--;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 8:
+				case 9:
 					if (patternID < 1)
 					{
 						patternID++;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 9:
+				case 10:
 					if (inColor[0] < 192)
 					{
 						inColor[0] += 8;
@@ -4224,7 +4259,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 10:
+				case 11:
 					if (inColor[1] < 192)
 					{
 						inColor[1] += 8;
@@ -4232,7 +4267,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 11:
+				case 12:
 					if (inColor[2] < 192)
 					{
 						inColor[2] += 8;
@@ -4240,7 +4275,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 12:
+				case 13:
 					if (inColor[3] < 192)
 					{
 						inColor[3] += 8;
@@ -4248,7 +4283,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 13:
+				case 14:
 					if (inColor[4] < 192)
 					{
 						inColor[4] += 8;
@@ -4256,7 +4291,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 14:
+				case 15:
 					if (inColor[5] < 192)
 					{
 						inColor[5] += 8;
@@ -4289,13 +4324,20 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					}
 					break;
 				case 2:
+					if (!Settings::settings.unitWindow)
+					{
+						Settings::settings.unitWindow = true;
+						ResourceManager::PlaySound("optionSelect2");
+					}
+					break;
+				case 3:
 					if (!Settings::settings.autoCursor)
 					{
 						Settings::settings.autoCursor = true;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 3:
+				case 4:
 					Settings::settings.textSpeed--;
 					if (Settings::settings.textSpeed < 0)
 					{
@@ -4306,42 +4348,42 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 4:
+				case 5:
 					if (Settings::settings.unitSpeed > 2.5f)
 					{
 						Settings::settings.unitSpeed = 2.5f;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 5:
+				case 6:
 					if (!Settings::settings.sterero)
 					{
 						Settings::settings.sterero = true;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 6:
+				case 7:
 					if (!Settings::settings.music)
 					{
 						Settings::settings.music = true;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 7:
+				case 8:
 					if (Settings::settings.volume < 4)
 					{
 						Settings::settings.volume++;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 8:
+				case 9:
 					if (patternID > 0)
 					{
 						patternID--;
 						ResourceManager::PlaySound("optionSelect2");
 					}
 					break;
-				case 9:
+				case 10:
 					if (inColor[0] > 0)
 					{
 						inColor[0] -= 8;
@@ -4349,7 +4391,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 10:
+				case 11:
 					if (inColor[1] > 0)
 					{
 						inColor[1] -= 8;
@@ -4357,7 +4399,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 11:
+				case 12:
 					if (inColor[2] > 0)
 					{
 						inColor[2] -= 8;
@@ -4365,7 +4407,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 12:
+				case 13:
 					if (inColor[3] > 0)
 					{
 						inColor[3] -= 8;
@@ -4373,7 +4415,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 13:
+				case 14:
 					if (inColor[4] > 0)
 					{
 						inColor[4] -= 8;
@@ -4381,7 +4423,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 						CheckColorChange(inColor, defaultColor, patternID);
 					}
 					break;
-				case 14:
+				case 15:
 					if (inColor[5] > 0)
 					{
 						inColor[5] -= 8;
@@ -4405,9 +4447,9 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 					moveToBottom = false;
 				}
 			}
-			if (currentOption == 9)
+			if (currentOption == 10)
 			{
-				indicatorY = 255 - round((yOffset / 600.0f) * 224.0f);
+				indicatorY = 279 - round((yOffset / 600.0f) * 224.0f);
 				indicatorY2 = indicatorY + 2;
 			}
 		}
@@ -4423,7 +4465,7 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 
 		if (inputManager.isKeyPressed(SDLK_RETURN))
 		{
-			if (currentOption == 15 && Settings::settings.editedColor[patternID])
+			if (currentOption == 16 && Settings::settings.editedColor[patternID])
 			{
 				inColor = defaultColor;
 				Settings::settings.editedColor[patternID] = false;
@@ -5544,10 +5586,10 @@ void MenuManager::SetUp(Cursor* Cursor, TextRenderer* Text, Camera* Camera, int 
 	proficiencyIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 0, 16, 16, 10, 1);
 	itemIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 16, 16, 16, 10, 2, 19);
 	skillIconUVs = ResourceManager::GetTexture("icons").GetUVs(0, 48, 16, 16, 6, 1, 6);
-	optionIconUVs = uiTexture.GetUVs(0, 0, 16, 16, 4, 3, 10);
+	optionIconUVs = uiTexture.GetUVs(0, 0, 16, 16, 4, 3, 11);
 	arrowAnimUVs = uiTexture.GetUVs(0, 48, 7, 6, 6, 1);
-	indicatorUV = uiTexture.GetUVs(32, 32, 16, 16, 1, 1)[0];
-	arrowUV = uiTexture.GetUVs(48, 32, 8, 8, 1, 1);
+	indicatorUV = uiTexture.GetUVs(48, 32, 16, 16, 1, 1)[0];
+	arrowUV = uiTexture.GetUVs(54, 54, 8, 8, 1, 1);
 	carryingIconsUVs = uiTexture.GetUVs(32, 54, 8, 8, 2, 1);
 	statBarUV = uiTexture.GetUVs(0, 54, 7, 7, 1, 1)[0];
 	skillHighlightUVs = uiTexture.GetUVs(32, 96, 16, 16, 4, 1);
