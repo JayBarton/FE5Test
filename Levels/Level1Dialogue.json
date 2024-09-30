@@ -711,13 +711,61 @@
           "location": 1,
           "portrait": 0,
           "BG": 1,
-          "speech": "This is the ending dialogue.<0"
+          "speech": "Nanna! Mareeta! Where are you? Say something!<0"
         },
         {
           "speaker": -1,
           "location": 0,
           "portrait": 2,
-          "speech": "Wow, a unique background? That's crazy man.<1"
+          "speech": "It seems Baron Reydrick has taken them.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "What!? Where? To Manster?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 2,
+          "speech": "Probably. It seems Reydrick\nintends to use keep them as hostages...<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Damn...Eyvale, let's go after them.\nWe have to save them!<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 2,
+          "speech": "Prince Leif...<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Eyvale, they were taken because of me.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "I am not a child anymore.\nI don't want to live my life by sacrificing others.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 2,
+          "speech": "...Understood. We'll set out tomorrow morning.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 2,
+          "speech": "It will be a difficult trip, so rest well tonight.<1"
         }
       ]
     },

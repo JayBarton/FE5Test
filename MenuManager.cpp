@@ -4828,10 +4828,25 @@ void VendorMenu::CheckInput(InputManager& inputManager, float deltaTime)
 	if (fullFadeIn)
 	{
 		HandleFadeIn(deltaTime);
+
 	}
 	else if (fullFadeOut)
 	{
 		HandleFadeOut(deltaTime);
+
+		if (exitMenu)
+		{
+			volumeModifier += deltaTime * 2;
+		}
+		else
+		{
+			volumeModifier -= deltaTime * 2;
+			if (!fullFadeOut)
+			{
+				volumeModifier = 0.5f;
+			}
+		}
+		Mix_VolumeMusic(128 * volumeModifier);
 	}
 	else
 	{
@@ -4970,6 +4985,7 @@ void VendorMenu::DelayedExit()
 		MenuManager::menuManager.PreviousMenu();
 		ResourceManager::PlaySound("select2");
 	}
+	Mix_VolumeMusic(128 * volumeModifier);
 }
 
 FullInventoryMenu::FullInventoryMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int shapeVAO, SpriteRenderer* Renderer, int newItem) :

@@ -504,6 +504,7 @@ struct VendorMenu : public Menu
 
 	float delayTime = 0.15f;
 	float delayTimer = 0.0f;
+	float volumeModifier = 1.0f;
 };
 
 //Not actually a menu, makes unit rescue/release/etc animations easier
