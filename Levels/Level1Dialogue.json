@@ -91,7 +91,7 @@
           "speaker": -1,
           "location": 1,
           "portrait": 15,
-          "speech": "Mareeta and Nanna were taken by the imperial soldiers.<0"
+          "speech": "Mareeta and Nanna were taken by the\nimperial soldiers.<0"
         },
         {
           "speaker": -1,
@@ -103,13 +103,13 @@
           "speaker": -1,
           "location": 1,
           "portrait": 15,
-          "speech": "Oh, before you go, take this magic bracelet with you. I think it will be useful.<0"
+          "speech": "Oh, before you go, take this magic bracelet with you.\nI think it will be useful.<0"
         },
         {
           "speaker": -1,
           "location": 1,
           "portrait": 15,
-          "speech": "But just holding it isn't enough. You have to use it.<1"
+          "speech": "But just holding it isn't enough.\nYou have to use it.<1"
         }
       ]
     },
@@ -139,7 +139,7 @@
           "speaker": -1,
           "location": 1,
           "portrait": 16,
-          "speech": "No, it's fine. Eyvale has done so much for us, this hardly compares...<1"
+          "speech": "No, it's fine. Eyvale has done so much for us,\nthis hardly compares...<1"
         }
       ]
     },
@@ -157,7 +157,7 @@
     },
     {
       "ID": 7,
-      "Start_Portraits": [ 5 ],
+      "Start_Portraits": [ 3 ],
       "dialogue": [
         {
           "speaker": -1,
@@ -187,13 +187,13 @@
           "speaker": -1,
           "location": 0,
           "portrait": 17,
-          "speech": "Awhile back, while I was walking in the hills,\na strange old lady came out of the lake and gave it to me.<0"
+          "speech": "Awhile back, while I was walking in the hills,\na strange old lady came out of the lake\nand gave it to me.<0"
         },
         {
           "speaker": -1,
           "location": 0,
           "portrait": 17,
-          "speech": "But I don't really have a use for an axe, so I'm giving it to you.<1"
+          "speech": "But I don't really have a use for an axe,\nso I'm giving it to you.<1"
         }
       ]
     },
@@ -257,7 +257,7 @@
           "speaker": -1,
           "location": 0,
           "portrait": 19,
-          "speech": "Honestly, you're such a forgetful guy.\nWho''s ever heard of someone going off to war\nand forgetting their own weapon?<0"
+          "speech": "Honestly, you're such a forgetful guy.\nWho's ever heard of someone going off to war\nand forgetting their own weapon?<0"
         },
         {
           "speaker": -1,

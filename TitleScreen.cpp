@@ -111,9 +111,11 @@ void TitleScreen::Draw(SpriteRenderer* Renderer, TextRenderer* Text, Camera& cam
 		//Draw title3
 		displayTexture = ResourceManager::GetTexture("Title3");
 		Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
-		ResourceManager::GetShader("Nsprite").SetInteger("fire", 1);
-
-		Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
+		if (state != FADE_TO_MENU)
+		{
+			ResourceManager::GetShader("Nsprite").SetInteger("fire", 1);
+			Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
+		}
 	}
 	else
 	{

@@ -125,7 +125,7 @@ InfoDisplays displays;
 TextObjectManager textManager;
 
 std::unordered_map<int, Unit*> sceneUnits;
-std::vector<VisitObject> visitObjects;
+std::vector<VisitObject*> visitObjects;
 std::vector<Vendor> vendors;
 
 glm::vec4 terrainStatusUVs;
@@ -916,12 +916,13 @@ int main(int argc, char** argv)
 			//ugh
 			for (int i = 0; i < visitObjects.size(); i++)
 			{
-				if (visitObjects[i].toDelete)
+				if (visitObjects[i]->toDelete)
 				{
-					TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->visitSpot = nullptr;
-					TileManager::tileManager.getTile(visitObjects[i].position.x, visitObjects[i].position.y)->uvID = 184;
+					TileManager::tileManager.getTile(visitObjects[i]->position.x, visitObjects[i]->position.y)->visitSpot = nullptr;
+					TileManager::tileManager.getTile(visitObjects[i]->position.x, visitObjects[i]->position.y)->uvID = 184;
 					TileManager::tileManager.reDraw();
-					visitObjects[i].sceneMap.clear();
+					visitObjects[i]->sceneMap.clear();
+					delete visitObjects[i];
 					visitObjects.erase(visitObjects.begin() + i);
 					i--;
 				}
@@ -1572,16 +1573,17 @@ void loadMap(std::string nextMap)
 				map >> position.x >> position.y;
 				int numberOfIDs = 0;
 				map >> numberOfIDs;
+				visitObjects[i] = new VisitObject();
+				visitObjects[i]->position = position;
 				for (int c = 0; c < numberOfIDs; c++)
 				{
 					int unitID = 0;
 					int sceneID = 0;
 					map >> unitID >> sceneID;
-					visitObjects[i].position = position;
-					visitObjects[i].sceneMap[unitID] = sceneManager.scenes[sceneID];
-					sceneManager.scenes[sceneID]->visit = &visitObjects[i];
+					visitObjects[i]->sceneMap[unitID] = sceneManager.scenes[sceneID];
+					sceneManager.scenes[sceneID]->visit = visitObjects[i];
 				}
-				TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);
+				TileManager::tileManager.placeVisit(position.x, position.y, visitObjects[i]);
 			}
 		}
 		else if (thing == "Vendors")
@@ -2431,6 +2433,8 @@ void loadSuspendedGame()
 				map >> position.x >> position.y;
 				int numberOfIDs = 0;
 				map >> numberOfIDs;
+				visitObjects[i] = new VisitObject();
+				visitObjects[i]->position = position;
 				bool allGood = true;
 				for (int c = 0; c < numberOfIDs; c++)
 				{
@@ -2439,9 +2443,8 @@ void loadSuspendedGame()
 					map >> unitID >> sceneID;
 					if (sceneManager.scenes[sceneID]->activation)
 					{
-						visitObjects[i].position = position;
-						visitObjects[i].sceneMap[unitID] = sceneManager.scenes[sceneID];
-						sceneManager.scenes[sceneID]->visit = &visitObjects[i];
+						visitObjects[i]->sceneMap[unitID] = sceneManager.scenes[sceneID];
+						sceneManager.scenes[sceneID]->visit = visitObjects[i];
 					}
 					else
 					{
@@ -2450,12 +2453,13 @@ void loadSuspendedGame()
 				}
 				if (allGood)
 				{
-					TileManager::tileManager.placeVisit(position.x, position.y, &visitObjects[i]);
+					TileManager::tileManager.placeVisit(position.x, position.y, visitObjects[i]);
 				}
 				else
 				{
 					TileManager::tileManager.getTile(position.x, position.y)->uvID = 184;
 					redraw = true;
+					delete visitObjects[i];
 					visitObjects.erase(visitObjects.begin() + i);
 					i--;
 					numberOfVisits--;
