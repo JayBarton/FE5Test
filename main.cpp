@@ -489,6 +489,8 @@ void loadSuspendedGame();
 
 void SetFadeIn(bool delay = false);
 
+std::mt19937 gen;
+std::uniform_int_distribution<int> distribution(0, 99);
 struct StartGameEvent : public Observer<int>
 {
 	virtual void onNotify(int ID)
@@ -506,6 +508,7 @@ struct StartGameEvent : public Observer<int>
 		}
 		if (ID == 0)
 		{
+			gen.seed(time(nullptr));
 			//start new game
 			loadMap("2.map");
 			currentRound = 0;
@@ -541,9 +544,6 @@ struct QueueMusicEvent : public Observer<float>
 	}
 };
 
-
-std::mt19937 gen;
-std::uniform_int_distribution<int> distribution(0, 99);
 int main(int argc, char** argv)
 {
 	//gen.seed(2);
@@ -2072,6 +2072,12 @@ void SuspendGame()
 	map["Cursor"] = json::array();
 	map["Cursor"].push_back(cursor.position.x);
 	map["Cursor"].push_back(cursor.position.y);
+	std::stringstream genss;
+	std::stringstream distss;
+	genss << gen;
+	map["rand"] = genss.str();
+	distss << distribution;
+	map["dist"] = distss.str();
 
 	settings["UnitSpeed"] = Settings::settings.unitSpeed;
 	settings["TextSpeed"] = Settings::settings.textSpeed;
@@ -2176,6 +2182,13 @@ void loadSuspendedGame()
 	Settings::settings.showTerrain = settings["ShowTerrain"];
 	Settings::settings.sterero = settings["Sterero"];
 	Settings::settings.music = settings["Music"];
+
+	std::string rand = mapLevel["rand"];
+	std::string dist = mapLevel["dist"];
+	std::istringstream iss(rand);
+	iss >> gen;
+	std::istringstream iss2(dist);
+	iss2 >> distribution;
 
 	Settings::settings.backgroundPattern = settings["SelectedTile"];
 
