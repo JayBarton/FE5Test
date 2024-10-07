@@ -1,0 +1,26 @@
+#version 330 core
+in vec2 TextureCoordinates;
+
+in vec2 FragPos;
+
+out vec4 color;
+
+uniform sampler2D image;
+uniform vec4 spriteColor;
+
+uniform float radius;
+uniform float glow;
+
+void main()
+{   
+	float d = sqrt((pow(FragPos.x - 0.5, 2)) + (pow(FragPos.y - 0.5, 2))); 
+	if(d < radius)
+	{
+		color = spriteColor * texture(image, TextureCoordinates);
+		color.rgb += glow;
+	}
+	else
+	{
+		discard;
+	}
+}  

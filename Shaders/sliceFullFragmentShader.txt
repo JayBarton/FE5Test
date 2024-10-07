@@ -9,7 +9,7 @@ uniform vec2 u_border;
 uniform vec4 spriteColor;
 uniform vec4 bounds;
 
-in vec3 FragPos;  
+in vec2 FragPos;  
 
 
 float map(float val, float oMin, float oMax, float nMin, float nMax) {

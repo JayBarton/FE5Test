@@ -765,7 +765,31 @@
           "speaker": -1,
           "location": 0,
           "portrait": 2,
-          "speech": "It will be a difficult trip, so rest well tonight.<1"
+          "speech": "It will be a difficult trip, so rest well tonight.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "<4"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 2,
+          "speech": "<4"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 2,
+          "speech": "Thanks for playing!<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Press the enter key to return to the main menu.<1"
         }
       ]
     },

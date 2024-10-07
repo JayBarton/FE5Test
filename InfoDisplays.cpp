@@ -24,6 +24,8 @@ void InfoDisplays::init(TextObjectManager* textManager)
 
 	arrowUV = ResourceManager::GetTexture("UIItems").GetUVs(8, 54, 7, 8, 1, 1)[0];
 	levelUpUV = ResourceManager::GetTexture("UIItems").GetUVs(96, 96, 30, 8, 1, 1)[0];
+	healUV = ResourceManager::GetTexture("UIItems").GetUVs(96, 104, 20, 20, 1, 1)[0];
+
 	turnTextUVs = ResourceManager::GetTexture("UIItems").GetUVs(256, 0, 134, 22, 1, 6);
 }
 
@@ -149,9 +151,12 @@ void InfoDisplays::StartUnitHeal(Unit* unit, int healAmount, Camera* camera)
 {
 	state = HEALING_ANIMATION;
 	healDelay = true;
+	healStart = true;
 	focusedUnit = unit;
 	displayedHP = focusedUnit->currentHP;
 	healedHP = healAmount;
+	healCircleRadius = 0.0f;
+	healGlow = 0.0f;
 	camera->SetCenter(focusedUnit->sprite.getPosition());
 }
 
@@ -332,10 +337,36 @@ void InfoDisplays::Update(float deltaTime, InputManager& inputManager)
 				ResourceManager::PlaySound("heal");
 			}
 		}
-		else if (displayTimer > healAnimationTime)
+		else
 		{
-			displayTimer = 0.0f;
-			state = HEALING_BAR;
+			if (healStart)
+			{
+				healCircleRadius += deltaTime * 3;
+				if (healCircleRadius > 0.5f)
+				{
+					healCircleRadius = 0.5f;
+					healStart = false;
+					displayTimer = 0.0f;
+				}
+			}
+			else
+			{
+				//glow effect here
+				healGlow += deltaTime * 3.5f;
+				if (displayTimer >= 0.83)
+				{
+					healCircleRadius -= deltaTime * 3;
+					if (healCircleRadius < 0.0f)
+					{
+						healCircleRadius = 0.0f;
+					}
+				}
+				if (displayTimer > healAnimationTime)
+				{
+					displayTimer = 0.0f;
+					state = HEALING_BAR;
+				}
+			}
 		}
 		break;
 	case HEALING_BAR:
@@ -862,7 +893,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		break;
 	}
 	case HEALING_ANIMATION:
-		DrawHealAnimation(camera, shapeVAO);
+		DrawHealAnimation(camera, renderer);
 		break;
 	case HEALING_BAR:
 		DrawHealthBar(camera, shapeVAO, Text, renderer);
@@ -1138,24 +1169,23 @@ void InfoDisplays::DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Tex
 	Text->RenderText(intToString(displayedHP), textDraw.x, textDraw.y, 1, glm::vec3(1.0f));
 }
 
-void InfoDisplays::DrawHealAnimation(Camera* camera, int shapeVAO)
+void InfoDisplays::DrawHealAnimation(Camera* camera, SpriteRenderer* renderer)
 {
 	if (!healDelay)
 	{
-		ResourceManager::GetShader("shape").Use().SetMatrix4("projection", camera->getCameraMatrix());
-		ResourceManager::GetShader("shape").SetFloat("alpha", 0.5f);
-		glm::mat4 model = glm::mat4();
-		auto unitPosition = focusedUnit->sprite.getPosition();
-		model = glm::translate(model, glm::vec3(unitPosition.x, unitPosition.y, 0.0f));
+		//healUV
+		auto unitPosition = focusedUnit->sprite.getPosition() - glm::vec2(2.0f, 3.0f);
+		renderer->shader = ResourceManager::GetShader("circle");
+		ResourceManager::GetShader("circle").Use().SetMatrix4("projection", camera->getCameraMatrix());
+		ResourceManager::GetShader("circle").SetFloat("radius", healCircleRadius);
+		float t = pow(sin(healGlow * 2.0), 2) * 0.25f;
+		ResourceManager::GetShader("circle").SetFloat("glow", t);
 
-		model = glm::scale(model, glm::vec3(16, 16, 0.0f));
+		Texture2D texture = ResourceManager::GetTexture("UIItems");
+		renderer->setUVs(healUV);
+		renderer->DrawSprite(texture, glm::vec2(unitPosition.x, unitPosition.y), 0, glm::vec2(20, 20), glm::vec4(1, 1, 1, 0.5f));
 
-		ResourceManager::GetShader("shape").SetVector3f("shapeColor", glm::vec3(0.0f, 0.5f, 1.0f));
-
-		ResourceManager::GetShader("shape").SetMatrix4("model", model);
-		glBindVertexArray(shapeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		renderer->shader = ResourceManager::GetShader("Nsprite");
 	}
 }
 

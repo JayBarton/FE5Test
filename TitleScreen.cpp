@@ -34,13 +34,14 @@ void TitleScreen::init()
 		foundSuspend = true;
 	}
 	ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", wholeTitleFade, true);
+	ResourceManager::GetShader("fire").SetFloat("subtractValue", wholeTitleFade, true);
 
 }
 
 void TitleScreen::Update(float deltaTime, InputManager& inputManager)
 {
 	flameAnim += deltaTime * 5.0f;
-	ResourceManager::GetShader("Nsprite").SetFloat("t", flameAnim , true);
+	ResourceManager::GetShader("fire").SetFloat("t", flameAnim , true);
 
 	switch (state)
 	{
@@ -52,6 +53,7 @@ void TitleScreen::Update(float deltaTime, InputManager& inputManager)
 			state = SHOW_TITLE;
 		}
 		ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", wholeTitleFade, true);
+		ResourceManager::GetShader("fire").SetFloat("subtractValue", wholeTitleFade, true);
 		break;
 	case SHOW_TITLE:
 		//Whatever needs to be done to handle the fire effect on "Fire Emblem" should be a function called by both this state and the above
@@ -94,7 +96,6 @@ void TitleScreen::Update(float deltaTime, InputManager& inputManager)
 void TitleScreen::Draw(SpriteRenderer* Renderer, TextRenderer* Text, Camera& camera)
 {
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera.getOrthoMatrix());
-	ResourceManager::GetShader("Nsprite").SetInteger("fire", 0);
 	Renderer->setUVs();
 	Texture2D displayTexture = ResourceManager::GetTexture("Title1");
 	Renderer->DrawSprite(displayTexture, glm::vec2(0, 0), 0.0f, glm::vec2(256, 224));
@@ -113,8 +114,13 @@ void TitleScreen::Draw(SpriteRenderer* Renderer, TextRenderer* Text, Camera& cam
 		Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
 		if (state != FADE_TO_MENU)
 		{
-			ResourceManager::GetShader("Nsprite").SetInteger("fire", 1);
+			Renderer->shader = ResourceManager::GetShader("fire");
+			Renderer->setUVs();
+
+			ResourceManager::GetShader("fire").Use().SetMatrix4("projection", camera.getOrthoMatrix());
 			Renderer->DrawSprite(displayTexture, glm::vec2(22, 88), 0.0f, glm::vec2(220, 61), glm::vec4(1, 1, 1, FEAlpha));
+			Renderer->shader = ResourceManager::GetShader("Nsprite");
+
 		}
 	}
 	else

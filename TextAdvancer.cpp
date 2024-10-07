@@ -357,11 +357,7 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 			}
 			else
 			{
-				if (showBG)
-				{
-					state = FADE_BG_OUT;
-				}
-				else if (!finishing)
+				if (!finishing)
 				{
 					state = PORTRAIT_FADE_IN;
 					currentObject.portraitID = textLines[currentLine].portraitID;
@@ -404,7 +400,14 @@ void TextObjectManager::Update(float deltaTime, InputManager& inputManager, bool
 				}
 				if (!textObjects[focusedObject].showBox)
 				{
-					state = LAYER_1_FADE_IN;
+					if (showBG)
+					{
+						state = FADE_BG_OUT;
+					}
+					else
+					{
+						state = LAYER_1_FADE_IN;
+					}
 					finishing = false;
 
 					fadeIn = false;

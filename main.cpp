@@ -605,6 +605,9 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/outlineFragmentShader.txt", nullptr, "outline");
 	ResourceManager::LoadShader("Shaders/patternsVertexShader.txt", "Shaders/patternsFragmentShader.txt", nullptr, "patterns");
 	ResourceManager::LoadShader("Shaders/gradientShapeVertexShader.txt", "Shaders/gradientShapeFragmentShader.txt", nullptr, "gradient");
+	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/fireFragmentShader.txt", nullptr, "fire");
+	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/circleSpriteFragmentShader.txt", nullptr, "circle");
+
 
 	SetShaderDefaults();
 
@@ -1005,6 +1008,14 @@ void SetShaderDefaults()
 	ResourceManager::GetShader("Nsprite").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
 	ResourceManager::GetShader("Nsprite").SetFloat("subtractValue", 0);
+
+	ResourceManager::GetShader("fire").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("fire").SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("fire").SetFloat("subtractValue", 0);
+
+	ResourceManager::GetShader("circle").Use().SetInteger("image", 0);
+	ResourceManager::GetShader("circle").SetMatrix4("projection", camera.getCameraMatrix());
+	ResourceManager::GetShader("circle").SetFloat("subtractValue", 0);
 
 	ResourceManager::GetShader("instance").Use().SetInteger("image", 0);
 	ResourceManager::GetShader("instance").SetMatrix4("projection", camera.getCameraMatrix());

@@ -49,6 +49,7 @@ struct InfoDisplays
 
 	glm::vec4 arrowUV;
 	glm::vec4 levelUpUV;
+	glm::vec4 healUV;
 	std::vector<glm::vec4> turnTextUVs;
 
 	float arrowY;
@@ -84,7 +85,11 @@ struct InfoDisplays
 	bool usedItem = false;
 	bool turnChangeStart = false;
 	bool secondTurnText = false;
+
 	bool healDelay = false;
+	bool healStart = false;
+	bool healEnd = false;
+
 	bool unitDeathFadeBack = false;
 	bool statDelay = false;
 	bool capturing = false;
@@ -125,6 +130,9 @@ struct InfoDisplays
 	TextObjectManager* textManager;
 //	TextObject testText;
 
+	float healCircleRadius = 0.0f;
+	float healGlow = 0.0f;
+
 	void init(TextObjectManager* textManager);
 
 	void AddExperience(Unit* unit, Unit* foe, glm::vec2 levelUpPosition);
@@ -155,7 +163,7 @@ struct InfoDisplays
 
 	void DrawHealthBar(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 
-	void DrawHealAnimation(Camera* camera, int shapeVAO);
+	void DrawHealAnimation(Camera* camera, SpriteRenderer* renderer);
 
 	void DrawLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
 	void DrawBattleLevelUpDisplay(Camera* camera, int shapeVAO, TextRenderer* Text, SpriteRenderer* renderer);
