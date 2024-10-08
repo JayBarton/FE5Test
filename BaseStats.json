@@ -431,7 +431,7 @@
         "Bld": 30,
         "Mov": 2
       },
-      "Inventory": [ 8, 17 ],
+      "Inventory": [ 8 ],
       "WeaponProf": {
         "Axe": 2
       },

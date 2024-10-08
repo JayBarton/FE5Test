@@ -50,20 +50,7 @@ Unit* UnitManager::LoadUnitFromSuspend(const json& unit)
 	newUnit->classID = classID;
 	newUnit->level = stats["Level"];
 	newUnit->levelID = unit["LevelID"];
-	//   (*sceneUnits)[newUnit->sceneID] = newUnit;
 
-	/*    json growths = unit["GrowthRates"];
-	HP = growths["HP"];
-	str = growths["Str"];
-	mag = growths["Mag"];
-	skl = growths["Skl"];
-	spd = growths["Spd"];
-	lck = growths["Lck"];
-	def = growths["Def"];
-	bld = growths["Bld"];
-	mov = growths["Mov"];*/
-
-	//   newUnit->growths = StatGrowths{ HP, str, mag, skl, spd, lck, def, bld, mov };
 	json weaponProf = unit["WeaponProf"];
 	for (auto it = weaponProf.begin(); it != weaponProf.end(); ++it)
 	{

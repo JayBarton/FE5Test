@@ -1130,6 +1130,16 @@ void BattleManager::CalculateFinalStats(BattleStats& unitNormalStats, BattleStat
 
 	enemyNormalStats.hitCrit = std::min(enemyNormalStats.hitCrit, 25);
 	enemyNormalStats.hitCrit = std::max(0, enemyNormalStats.hitCrit);
+
+	if (unitWeapon.armorEffect && enemy->armored)
+	{
+		unitNormalStats.attackDamage *= 2;
+	}
+
+	if (enemyWeapon.armorEffect && unit->armored)
+	{
+		enemyNormalStats.attackDamage *= 2;
+	}
 }
 
 void BattleManager::Draw(TextRenderer* text, Camera& camera, SpriteRenderer* Renderer, Cursor* cursor, SBatch* Batch, int shapeVAO, TextObjectManager* textManager)

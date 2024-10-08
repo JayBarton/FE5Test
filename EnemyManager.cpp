@@ -190,6 +190,8 @@ void EnemyManager::SetUp(std::ifstream& map,
             //I am just going to manually set the battle message here. A lot of enemy specific stuff I haven't figured out, and I think I will save for a future project.
             units[i]->battleMessage = "Hypertension<1";
             units[i]->deathMessage = "I'm fuckin' dying!<1";
+            //I'm also setting this manually here. In the future this should be loaded from the unit data
+            units[i]->armored = true;
         }
     }
 
@@ -220,6 +222,7 @@ void EnemyManager::Load(json saveData, std::vector<Unit*>* playerUnits, std::vec
         {
             newUnit->portraitID = 11;
             newUnit->deathMessage = "I'm fuckin' dying!<1";
+            newUnit->armored = true;
         }
         newUnit->team = 1;
         newUnit->sceneID = -1;

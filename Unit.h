@@ -141,6 +141,9 @@ struct Unit
 	const static int ACCOST = 4;
 	const static int CHARISMA = 5;
 
+	//Was considering making movement and unit type
+	//implicitly the same thing, but it is possible for a unit to be multiple things
+	//They could be mounted and armored for example
 	const static int FOOT = 0;
 	const static int HORSE = 1;
 	const static int FLYING = 2;
@@ -232,6 +235,8 @@ struct Unit
 	bool active = false;
 	bool stationary = false;
 	bool boss = false;
+
+	bool armored = false;
 
 	//Not crazy about this, want this to hide the unit when they are held. 
 	// I can't just use the carried variable because I need them still visible for animation.
