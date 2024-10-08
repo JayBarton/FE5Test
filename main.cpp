@@ -2227,7 +2227,6 @@ void loadSuspendedGame()
 	while (map.good())
 	{
 		std::string thing;
-		//	map >> thing;
 		std::getline(map, thing);
 		if (thing == "Level")
 		{
@@ -2283,12 +2282,13 @@ void loadSuspendedGame()
 				carryingUnit->holdUnit(carriedUnit);
 				carriedUnit->hide = true;
 			}
-
 		}
 		else if (thing == "Scenes")
 		{
 			int numberOfScenes = 0;
 			map >> numberOfScenes;
+			//Need to get to the end of this line so no garbage gets picked up by getline below
+			map.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
 			sceneManager.scenes.resize(numberOfScenes);
 			auto sceneStatus = data["Scenes"];
 			for (int i = 0; i < numberOfScenes; i++)
@@ -2296,9 +2296,12 @@ void loadSuspendedGame()
 				sceneManager.scenes[i] = new Scene(&textManager);
 				if (sceneStatus[i] == true)
 				{
+					std::string line;
+					std::getline(map, line);  
+					std::istringstream mapSS(line);  //Have to do stringstream silliness to skip lines
 					int numberOfActions = 0;
-					map >> numberOfActions;
-					
+					mapSS >> numberOfActions;
+
 					auto currentObject = sceneManager.scenes[i];
 					currentObject->ID = i;
 					currentObject->owner = &sceneManager;
@@ -2306,11 +2309,11 @@ void loadSuspendedGame()
 					for (int c = 0; c < numberOfActions; c++)
 					{
 						int actionType = 0;
-						map >> actionType;
+						mapSS >> actionType;
 						if (actionType == CAMERA_ACTION)
 						{
 							glm::vec2 position;
-							map >> position.x >> position.y;
+							mapSS >> position.x >> position.y;
 							currentObject->actions[c] = new CameraMove(actionType, position);
 						}
 						else if (actionType == NEW_UNIT_ACTION)
@@ -2318,26 +2321,26 @@ void loadSuspendedGame()
 							int unitID;
 							glm::vec2 start;
 							glm::vec2 end;
-							map >> unitID >> start.x >> start.y >> end.x >> end.y;
+							mapSS >> unitID >> start.x >> start.y >> end.x >> end.y;
 							currentObject->actions[c] = new AddUnit(actionType, unitID, start, end);
 						}
 						else if (actionType == MOVE_UNIT_ACTION)
 						{
 							int unitID;
 							glm::vec2 end;
-							map >> unitID >> end.x >> end.y;
+							mapSS >> unitID >> end.x >> end.y;
 							currentObject->actions[c] = new UnitMove(actionType, unitID, end);
 						}
 						else if (actionType == DIALOGUE_ACTION)
 						{
 							int dialogueID;
-							map >> dialogueID;
+							mapSS >> dialogueID;
 							currentObject->actions[c] = new DialogueAction(actionType, dialogueID);
 						}
 						else if (actionType == ITEM_ACTION)
 						{
 							int itemID = 0;
-							map >> itemID;
+							mapSS >> itemID;
 							currentObject->actions[c] = new ItemAction(actionType, itemID);
 						}
 						else if (actionType == NEW_SCENE_UNIT_ACTION)
@@ -2348,13 +2351,13 @@ void loadSuspendedGame()
 							float nextDelay;
 							float moveDelay;
 							std::vector<glm::ivec2> path;
-							map >> unitID >> team >> pathSize;
+							mapSS >> unitID >> team >> pathSize;
 							path.resize(pathSize);
 							for (int i = 0; i < pathSize; i++)
 							{
-								map >> path[i].x >> path[i].y;
+								mapSS >> path[i].x >> path[i].y;
 							}
-							map >> nextDelay >> moveDelay;
+							mapSS >> nextDelay >> moveDelay;
 							currentObject->actions[c] = new AddSceneUnit(actionType, unitID, team, path, nextDelay, moveDelay);
 						}
 						else if (actionType == SCENE_UNIT_MOVE_ACTION)
@@ -2365,13 +2368,13 @@ void loadSuspendedGame()
 							float nextDelay;
 							float moveSpeed;
 							std::vector<glm::ivec2> path;
-							map >> unitID >> pathSize;
+							mapSS >> unitID >> pathSize;
 							path.resize(pathSize);
 							for (int i = 0; i < pathSize; i++)
 							{
-								map >> path[i].x >> path[i].y;
+								mapSS >> path[i].x >> path[i].y;
 							}
-							map >> nextDelay >> moveSpeed >> facing;
+							mapSS >> nextDelay >> moveSpeed >> facing;
 							currentObject->actions[c] = new SceneUnitMove(actionType, unitID, path, nextDelay, moveSpeed, facing);
 						}
 						else if (actionType == SCENE_UNIT_REMOVE_ACTION)
@@ -2379,35 +2382,35 @@ void loadSuspendedGame()
 							int unitID;
 							float nextDelay;
 
-							map >> unitID >> nextDelay;
+							mapSS >> unitID >> nextDelay;
 							currentObject->actions[c] = new SceneUnitRemove(actionType, unitID, nextDelay);
 						}
 						else if (actionType == START_MUSIC)
 						{
 							int musicID;
-							map >> musicID;
+							mapSS >> musicID;
 							currentObject->actions[c] = new StartMusic(actionType, musicID);
 						}
 						else if (actionType == STOP_MUSIC)
 						{
 							float delay;
-							map >> delay;
+							mapSS >> delay;
 							currentObject->actions[c] = new StopMusic(actionType, delay);
 						}
 						else if (actionType == SHOW_MAP_TITLE)
 						{
 							float delay;
-							map >> delay;
+							mapSS >> delay;
 							currentObject->actions[c] = new ShowTitle(actionType, delay);
 						}
 					}
 					int activationType = 0;
-					map >> activationType;
+					mapSS >> activationType;
 					if (activationType == 0)
 					{
 						int talker = 0;
 						int listener = 0;
-						map >> talker >> listener;
+						mapSS >> talker >> listener;
 						if (sceneUnits.count(talker)) //Not currently going to work for enemy scene units...
 						{
 							currentObject->activation = new TalkActivation(currentObject, activationType, talker, listener);
@@ -2417,7 +2420,7 @@ void loadSuspendedGame()
 					else if (activationType == 1)
 					{
 						int round = 0;
-						map >> round;
+						mapSS >> round;
 						currentObject->activation = new EnemyTurnEnd(currentObject, activationType, round);
 						currentObject->extraSetup(&roundSubject);
 					}
@@ -2427,7 +2430,7 @@ void loadSuspendedGame()
 					}
 					else if (activationType == 3) //Should never be hitting this
 					{
-					//	intro = i;
+						//	intro = i;
 						currentObject->activation = new IntroActivation(currentObject, activationType);
 					}
 					else if (activationType == 4)
@@ -2436,12 +2439,12 @@ void loadSuspendedGame()
 						endingID = i;
 					}
 
-					map >> currentObject->repeat;
+					mapSS >> currentObject->repeat;
 				}
 				else
 				{
-					map.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-					map.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+					std::string skip;
+					std::getline(map, skip);
 				}
 			}
 		}
@@ -2554,6 +2557,8 @@ void loadSuspendedGame()
 	camera.setPosition(glm::vec2(0, 0));
 	//	camera.setScale(2.0f);
 	camera.update();
+	f.close();
+	//std::remove("suspendData.json");
 }
 
 void SetFadeIn(bool delay)

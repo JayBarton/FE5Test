@@ -306,10 +306,6 @@ void Cursor::Move(int x, int y, bool held)
 {
 	movementDelay = 0.0f;
 	glm::vec2 moveTo = glm::ivec2(position) + glm::ivec2(x, y) * TileManager::TILE_SIZE;
-	if (int(moveTo.x) % 16 != 0 || int(moveTo.y) % 16 != 0)
-	{
-		int a = 2;
-	}
 	bool move = true;
 	//This is to check if I want to stop movement for a moment when the cursor hits the edge of a unit's movement range
 	if (held && !fastCursor)

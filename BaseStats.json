@@ -353,7 +353,7 @@
         },
         "AnimID": 4
       },
-        "Inventory": [ 9, 1, 0, 18 ],
+        "Inventory": [ 9, 1],
         "WeaponProf": {
           "Sword": 2
         },
@@ -469,7 +469,7 @@
         "Bld": 25,
         "Mov": 2
       },
-      "Inventory": [ 8, 16 ],
+      "Inventory": [ 8 ],
       "WeaponProf": {
         "Axe": 1
       },
