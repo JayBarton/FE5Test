@@ -21,11 +21,20 @@ struct TileProperties
     //Defensive bonus for units on this tile
     int defense;
     //Cost of movement on this tile. Should have a value that means nothing can move on it
-    int movementCost;
+    int movementCost[3];
     //Need this for healing tiles, not sure how this will work though.
     int bonus;
     //The color displayed on the minimap. Want to move this to a separate structure I think
     glm::vec3 miniMapColor;
+
+    TileProperties() {};
+    TileProperties(std::string name, int avoid, int defense, int bonus, glm::vec3 miniMapColor, int footCost, int horseCost, int flyCost)
+        : name(name), avoid(avoid), defense(defense), bonus(bonus), miniMapColor(miniMapColor)
+    {
+        movementCost[0] = footCost;
+        movementCost[1] = horseCost; 
+        movementCost[2] = flyCost;
+    }
 };
 
 struct Tile

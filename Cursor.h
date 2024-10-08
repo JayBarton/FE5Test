@@ -77,8 +77,8 @@ struct Cursor
 	void GetUnitOptions();
 
 	void GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>& talkUnits);
-	std::vector<glm::ivec2> getDropPositions();
-	void FindDropPosition(glm::ivec2& up, std::vector<glm::ivec2>& dropPositions);
+	std::vector<glm::ivec2> getDropPositions(Unit* heldUnit);
+	void FindDropPosition(glm::ivec2& up, std::vector<glm::ivec2>& dropPositions, Unit* heldUnit);
 	void PushTradeUnit(std::vector<Unit*>& units, Unit*& unit);
 	void PushTalkUnit(std::vector<Unit*>& units, Unit*& unit);
 

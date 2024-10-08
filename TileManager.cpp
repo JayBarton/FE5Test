@@ -30,16 +30,17 @@ void TileManager::setUp(int width, int height)
     tiles = new Tile[totalTiles];
 
     tileTypes.resize(10);
-    tileTypes[0] = { "Plains", 0, 0, 1, 0, glm::vec3(0.321, 0.667, 0.321)};
-    tileTypes[1] = { "Forest", 20, 2, 2, 0, glm::vec3(0.129, 0.411, 0.192) };
-    tileTypes[2] = { "Thicket", 30, 5, 2, 0, glm::vec3(0.129, 0.411, 0.192) };
-    tileTypes[3] = { "Road", 0, 0, 1, 0, glm::vec3(0.9, 0.63, 0.41) };
-    tileTypes[4] = { "Cliff", 0, 0, 20, 0, glm::vec3(0.129, 0.411, 0.192) };
-    tileTypes[5] = { "Peak", 40, 5, 20, 0, glm::vec3(0.388, 0.188, 0.03) };
-    tileTypes[6] = { "--", 20, 5, 20, 0, glm::vec3(0.29, 0.286, 0.29)};
-    tileTypes[7] = { "Gate", 30, 10, 1, 1, glm::vec3(1, 0.38, 0.709) };
-    tileTypes[8] = { "Vendor", 10, 1, 1, 0, glm::vec3(1, 0.38, 0.709)};
-    tileTypes[9] = { "House", 10, 1, 1, 0, glm::vec3(1, 0.38, 0.709)};
+    tileTypes[0] = TileProperties("Plains", 0, 0, 0, glm::vec3(0.321, 0.667, 0.321), 1, 1, 1);
+   
+    tileTypes[1] = TileProperties("Forest", 20, 2, 0, glm::vec3(0.129, 0.411, 0.192), 2, 3, 1);
+    tileTypes[2] = TileProperties("Thicket", 30, 5, 0, glm::vec3(0.129, 0.411, 0.192), 2, 3, 1);
+    tileTypes[3]=  TileProperties("Road", 0, 0, 0, glm::vec3(0.9, 0.63, 0.41), 1, 1, 1);
+    tileTypes[4]=  TileProperties("Cliff", 0, 0, 0, glm::vec3(0.129, 0.411, 0.192), 20, 20, 1);
+    tileTypes[5]=  TileProperties("Peak", 40, 5, 0, glm::vec3(0.388, 0.188, 0.03), 20, 20, 1);
+    tileTypes[6]=  TileProperties("--", 20, 5, 0, glm::vec3(0.29, 0.286, 0.29), 20, 20, 20);
+    tileTypes[7]=  TileProperties("Gate", 30, 10, 1, glm::vec3(1, 0.38, 0.709), 1, 1, 1);
+    tileTypes[8]=  TileProperties("Vendor", 10, 1, 0, glm::vec3(1, 0.38, 0.709), 1, 1, 1);
+    tileTypes[9]=  TileProperties("House", 10, 1, 0, glm::vec3(1, 0.38, 0.709), 1, 1, 1);
 
 }
 

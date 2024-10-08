@@ -649,7 +649,7 @@ void UnitOptionsMenu::GetOptions()
 	{
 		if (playerUnit->carriedUnit->team == playerUnit->team)
 		{
-			dropPositions = cursor->getDropPositions();
+			dropPositions = cursor->getDropPositions(playerUnit->carriedUnit);
 			if (dropPositions.size() > 0)
 			{
 				optionsVector.push_back(DROP);

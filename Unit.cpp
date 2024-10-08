@@ -1082,12 +1082,7 @@ void Unit::CheckRemainingAdjacentTiles(glm::vec2& checkingTile, std::vector<std:
     {
         int mCost = startCell.moveCost;
         auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
-        int movementCost = mCost + thisTile->properties.movementCost;
-        //This is just a test, will not be keeping long term
-        if (getMovementType() == Unit::FLYING)
-        {
-            movementCost = mCost + 1;
-        }
+        int movementCost = mCost + thisTile->properties.movementCost[getMovementType()];
 
         auto distance = costs[checkingTile.x][checkingTile.y];
         if (!checked[checkingTile.x][checkingTile.y])
@@ -1125,12 +1120,7 @@ bool Unit::CheckAdjacentTiles(glm::vec2& checkingTile, std::vector<std::vector<b
     {
         int mCost = startCell.moveCost;
         auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
-        int movementCost = mCost + thisTile->properties.movementCost;
-        //This is just a test, will not be keeping long term
-        if (getMovementType() == Unit::FLYING)
-        {
-            movementCost = mCost + 1;
-        }
+        int movementCost = mCost + thisTile->properties.movementCost[getMovementType()];
 
         auto distance = costs[checkingTile.x][checkingTile.y];
         if (!checked[checkingTile.x][checkingTile.y])
@@ -1218,12 +1208,7 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
     {
         int mCost = startCell.moveCost;
         auto thisTile = TileManager::tileManager.getTile(tilePosition.x, tilePosition.y);
-        int movementCost = mCost + thisTile->properties.movementCost;
-        //This is just a test, will not be keeping long term
-        if (getMovementType() == Unit::FLYING)
-        {
-            movementCost = mCost + 1;
-        }
+        int movementCost = mCost + thisTile->properties.movementCost[getMovementType()];
 
         auto distance = costs[checkingTile.x][checkingTile.y];
         if (!checked[checkingTile.x][checkingTile.y])
@@ -1242,7 +1227,7 @@ void Unit::CheckApproachAdjacentTiles(glm::vec2& checkingTile, std::vector<std::
                 //So, past their movement range, I don't actually want to check the tile cost, since anything past that is probably
                 //Part of their attack range. I do want to make sure the tile is not a wall. if it is not, act as thought its movement cost is 1.
                 //This could have Unintended Consequences, so if things break down check here
-                if (thisTile->properties.movementCost < 20 && movementCost >= range)
+                if (thisTile->properties.movementCost[getMovementType()] < 20 && movementCost >= range)
                 {
                     movementCost = mCost + 1;
                     costs[checkingTile.x][checkingTile.y] = movementCost;

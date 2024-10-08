@@ -210,7 +210,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				auto action = static_cast<AddUnit*>(currentAction);
 				playerManager->AddUnit(action->unitID, action->start);
 				activeUnit = playerManager->units[playerManager->units.size() - 1];
-				auto path = pathFinder.findPath(action->start, action->end, 99);
+				auto path = pathFinder.findPath(action->start, action->end, 99, 0);
 				activeUnit->movementComponent.startMovement(path);
 				state = UNIT_MOVE;
 				break;
@@ -221,7 +221,7 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				activeUnit = sceneUnits[action->unitID];
 				auto position = activeUnit->sprite.getPosition();
 				TileManager::tileManager.removeUnit(position.x, position.y);
-				auto path = pathFinder.findPath(position, action->end, 99);
+				auto path = pathFinder.findPath(position, action->end, 99, 0);
 				activeUnit->movementComponent.startMovement(path);
 				state = UNIT_MOVE;
 

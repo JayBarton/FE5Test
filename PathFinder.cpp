@@ -72,10 +72,10 @@ void PathFinder::removeFromOpenList()
     }
 }
 
-std::vector<glm::ivec2> PathFinder::findPath(const glm::vec2& start, const glm::vec2& end, int range)
+std::vector<glm::ivec2> PathFinder::findPath(const glm::vec2& start, const glm::vec2& end, int range, int movementType)
 {
     std::vector<glm::ivec2> thePath;
-
+    moveType = movementType;
     //Clear the Sets
     openSet.clear();
     nodeStatus.clear();
@@ -179,7 +179,7 @@ void PathFinder::addChild(const glm::vec2& position, int cost, Node *parent)
     auto thisTile = TileManager::tileManager.getTile(position.x, position.y);
     //Added the check on the movement cost recently
     //I cannot recall if there is a reason I wasn't ignoring tiles with a high movement cost(cliffs)
-    if (thisTile && thisTile->properties.movementCost < 20) 
+    if (thisTile && thisTile->properties.movementCost[moveType] < 20)
     {
         //Want to treat tiles occupied by another team as impassable.
         //Tiles occupied by the same team are passable, so they can be added to the path, though they cannot be the final node
@@ -196,7 +196,7 @@ void PathFinder::addChild(const glm::vec2& position, int cost, Node *parent)
         }
 
         //create a new node
-        Node newNode(position, thisTile->properties.movementCost + cost, parent, parent->endNode);
+        Node newNode(position, thisTile->properties.movementCost[moveType] + cost, parent, parent->endNode);
         if (nodeStatus.count(position) == 1)
         {
             //check if the new node is in the closed set. If it is, return.

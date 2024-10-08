@@ -312,7 +312,7 @@ void EnemyManager::Update(float deltaTime, BattleManager& battleManager, Camera&
 void EnemyManager::Escape(glm::vec2& enemyPosition, Unit* enemy)
 {
     TileManager::tileManager.removeUnit(enemyPosition.x, enemyPosition.y);
-    auto path = pathFinder.findPath(enemyPosition, escapePoint, enemy->getMove());
+    auto path = pathFinder.findPath(enemyPosition, escapePoint, enemy->getMove(), enemy->getMovementType());
     enemy->startMovement(path, enemy->getMove(), false);
     enemyMoving = true;
     state = ESCAPING;
@@ -530,7 +530,7 @@ bool EnemyManager::CheckStores(Unit* enemy)
 void EnemyManager::GoShopping(glm::vec2& position, Unit* enemy)
 {
     TileManager::tileManager.removeUnit(position.x, position.y);
-    auto path = pathFinder.findPath(position, enemy->storeTarget->position, enemy->getMove());
+    auto path = pathFinder.findPath(position, enemy->storeTarget->position, enemy->getMove(), enemy->getMovementType());
     enemy->startMovement(path, enemy->getMove(), false);
     enemyMoving = true;
     enemy->active = true;

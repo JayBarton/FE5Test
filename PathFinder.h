@@ -104,12 +104,14 @@ public:
 class PathFinder
 {
 public:
-    std::vector<glm::ivec2> findPath(const glm::vec2& start, const glm::vec2& end, int range);
+    std::vector<glm::ivec2> findPath(const glm::vec2& start, const glm::vec2& end, int range, int movementType);
 
 protected:
 private:
     static const int ORTHOGONAL_COST = 10;
     static const int DIAGONAL_COST = 15;
+
+    int moveType;
 
     std::vector<Node> openSet;
     std::unordered_map<glm::vec2, bool, vec2Hash> nodeStatus;

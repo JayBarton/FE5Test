@@ -473,7 +473,7 @@ void Cursor::GetAdjacentUnits(std::vector<Unit*>& tradeUnits, std::vector<Unit*>
 	}
 }
 
-std::vector<glm::ivec2> Cursor::getDropPositions()
+std::vector<glm::ivec2> Cursor::getDropPositions(Unit* heldUnit)
 {
 	std::vector < glm::ivec2 > dropPositions;
 	glm::ivec2 position = glm::ivec2(selectedUnit->sprite.getPosition());
@@ -482,19 +482,19 @@ std::vector<glm::ivec2> Cursor::getDropPositions()
 	glm::ivec2 down = glm::ivec2(position.x, position.y + 1 * TileManager::TILE_SIZE);
 	glm::ivec2 left = glm::ivec2(position.x - 1 * TileManager::TILE_SIZE, position.y);
 	glm::ivec2 right = glm::ivec2(position.x + 1 * TileManager::TILE_SIZE, position.y);
-	FindDropPosition(up, dropPositions);
-	FindDropPosition(right, dropPositions);
-	FindDropPosition(down, dropPositions);
-	FindDropPosition(left, dropPositions);
+	FindDropPosition(up, dropPositions, heldUnit);
+	FindDropPosition(right, dropPositions, heldUnit);
+	FindDropPosition(down, dropPositions, heldUnit);
+	FindDropPosition(left, dropPositions, heldUnit);
 
 	return dropPositions;
 }
 
-void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dropPositions)
+void Cursor::FindDropPosition(glm::ivec2& position, std::vector<glm::ivec2>& dropPositions, Unit* heldUnit)
 {
 	if (!TileManager::tileManager.outOfBounds(position.x, position.y) &&
 		!TileManager::tileManager.getUnit(position.x, position.y) &&
-		TileManager::tileManager.getTile(position.x, position.y)->properties.movementCost < 20)
+		TileManager::tileManager.getTile(position.x, position.y)->properties.movementCost[heldUnit->getMovementType()] < 20)
 	{
 		dropPositions.push_back(position);
 	}
