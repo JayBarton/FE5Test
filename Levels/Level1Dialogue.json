@@ -705,6 +705,8 @@
     },
     {
       "ID": 16,
+      "Req": 2,
+      "Alt": 17,
       "dialogue": [
         {
           "speaker": -1,
@@ -799,19 +801,39 @@
         {
           "speaker": -1,
           "location": 1,
-          "portrait": 11,
-          "speech": "I'm the bad guy and this is my fight quote.<1"
-        }
-      ]
-    },
-    {
-      "ID": 18,
-      "dialogue": [
+          "portrait": 0,
+          "BG": 1,
+          "speech": "Nanna! Mareeta! Where are you? Say something!<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "This is an alternate exchange.<0"
+        },
         {
           "speaker": -1,
           "location": 1,
-          "portrait": 11,
-          "speech": "This is another fight quote, just for fun.<1"
+          "portrait": 0,
+          "speech": "<4"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "<4"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "Thanks for playing!<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Press the enter key to return to the main menu.<1"
         }
       ]
     }

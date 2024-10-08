@@ -234,51 +234,76 @@ void Scene::Update(float deltaTime, PlayerManager* playerManager, std::unordered
 				std::ifstream f("Levels/Level1Dialogue.json");
 				json data = json::parse(f);
 				json texts = data["text"];
+				int dialogueID = action->ID;
 				for (const auto& text : texts)
 				{
 					int ID = text["ID"];
-					if (ID == action->ID)
+					if (ID == dialogueID)
 					{
-						textManager->textObjects[0].portraitID = -1;
-						textManager->textObjects[1].portraitID = -1;
-						if (text.find("Start_Portraits") != text.end())
+						//What I am doing here is handling the case of alternate dialouge for the ending
+						//Specifically, there is an alternate dialouge that plays if Eyvale died.
+						//This will only work properly if the alterate dialogue is after the initial dialogue in the json
+						//Do not think this is a long term solution. One big problem is it cannot easily account for multiple alternates
+						//Another issue is as was said, the alternate dialogues need to be after the initial or we won't be able to find them.
+						//This works for now, will need a more robust solution in the future
+						bool requirementMet = true;
+						if (text.find("Req") != text.end())
 						{
-							textManager->textObjects[1].portraitID = text["Start_Portraits"][0];
-						}
-						auto dialogues = text["dialogue"];
-						for (const auto& dialogue : dialogues)
-						{
-							Sprite* speaker;
-							if (introUnits.size() > 0)
+							requirementMet = false;
+							int req = text["Req"];
+							for (int i = 0; i < playerManager->units.size(); i++)
 							{
-								if (dialogue["speaker"] >= 0)
+								if (req == playerManager->units[i]->ID)
 								{
-									speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
+									requirementMet = true;
+									break;
+								}
+							}
+						}
+						if (requirementMet)
+						{
+							textManager->textObjects[0].portraitID = -1;
+							textManager->textObjects[1].portraitID = -1;
+							if (text.find("Start_Portraits") != text.end())
+							{
+								textManager->textObjects[1].portraitID = text["Start_Portraits"][0];
+							}
+							auto dialogues = text["dialogue"];
+							for (const auto& dialogue : dialogues)
+							{
+								Sprite* speaker;
+								if (introUnits.size() > 0)
+								{
+									if (dialogue["speaker"] >= 0)
+									{
+										speaker = &introUnits[dialogue["speaker"]]->sprite; //For the intro, we are just going to use insert order as scene ID
+									}
+									else
+									{
+										speaker = nullptr;
+									}
 								}
 								else
 								{
-									speaker = nullptr;
+									speaker = &sceneUnits[dialogue["speaker"]]->sprite;
 								}
+								int BG = -1;
+								if (dialogue.find("BG") != dialogue.end())
+								{
+									BG = dialogue["BG"];
+								}
+								SpeakerText text{ speaker, dialogue["location"], dialogue["speech"], dialogue["portrait"] };
+								text.BG = BG;
+								textManager->textLines.push_back(text); // gotta figure this out
 							}
-							else
-							{
-								speaker = &sceneUnits[dialogue["speaker"]]->sprite;
-							}
-							int BG = -1;
-							if (dialogue.find("BG") != dialogue.end())
-							{
-								BG = dialogue["BG"];
-							}
-							SpeakerText text{ speaker, dialogue["location"], dialogue["speech"], dialogue["portrait"] };
-							text.BG = BG;
-							textManager->textLines.push_back(text); // gotta figure this out
+							break;
 						}
-						break;
+						else
+						{
+							dialogueID = text["Alt"];
+						}
 					}
 				}
-				/*textManager->textObjects.clear();
-				textManager->textObjects.push_back(testText);
-				textManager->textObjects.push_back(testText2);*/
 				textManager->textObjects[0].fadeIn = true;
 				textManager->textObjects[1].fadeIn = true;
 				textManager->init();
