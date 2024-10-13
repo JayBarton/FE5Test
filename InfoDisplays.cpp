@@ -964,16 +964,11 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		glm::vec2 size(134, 22);
 
 		ResourceManager::GetShader("outline").SetVector4f("bounds", turnTextUVs[turn]);
+		ResourceManager::GetShader("outline").SetInteger("turn", turn);
 
 		renderer->DrawSprite(texture, glm::vec2(turnTextX, 97), 0.0f, glm::ivec2(134, 22), glm::vec4(1, 1, 1, turnTextAlpha2));
 
 		renderer->shader = ResourceManager::GetShader("Nsprite");
-
-		/*if (secondTurnText)
-		{
-			renderer->setUVs(turnTextUVs[turn + 2]);
-			renderer->DrawSprite(texture, glm::vec2(62, 97), 0.0f, glm::ivec2(134, 22), glm::vec4(1, 1, 1, turnTextAlpha2));
-		}*/
 
 		std::string thisTurn;
 		if (turn == 0)
@@ -984,8 +979,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		{
 			thisTurn = "Enemy Turn";
 		}
-		//Using text now, I think I'll use a sprite ultimately
-	//	Text->RenderText(thisTurn, turnTextX, 300, 1);
+
 		break;
 	}
 	case UNIT_ESCAPED:

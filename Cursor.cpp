@@ -8,8 +8,9 @@
 #include <algorithm>
 #include "RangeBatch.h"
 #include "Settings.h"
+#include "PlayerManager.h"
 
-void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
+void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera, PlayerManager& playerManager)
 {
 	//This check insures the cursor moves properly to it's target location
 	if (moving)
@@ -152,6 +153,27 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				camera.SetMove(position);
 				ResourceManager::PlaySound("cancel", -1, true);
 			}
+		}
+		else if (inputManager.isKeyPressed(SDLK_a))
+		{
+			playerIndex--;
+			if (playerIndex < 0)
+			{
+				playerIndex = playerManager.units.size() - 1;
+			}
+			SetFocus(playerManager.units[playerIndex]);
+			camera.SetMove(position);
+
+		}
+		else if (inputManager.isKeyPressed(SDLK_s))
+		{
+			playerIndex++;
+			if (playerIndex >= playerManager.units.size())
+			{
+				playerIndex = 0;
+			}
+			SetFocus(playerManager.units[playerIndex]);
+			camera.SetMove(position);
 		}
 
 		//Movement input is all a mess

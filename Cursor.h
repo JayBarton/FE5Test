@@ -28,6 +28,8 @@ struct Cursor
 
 	int currentFrame = 0;
 
+	int playerIndex = 0;
+
 	float frameTimer = 0.0f;
 
 	float movementDelay = 0.0f;
@@ -55,7 +57,7 @@ struct Cursor
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;
 	
-	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera);
+	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera, class PlayerManager& playerManager);
 	void MovementInput(InputManager& inputManager, float deltaTime);
 	bool CheckBounds(glm::vec2 pos);
 	void Move(int x, int y, bool held = false);

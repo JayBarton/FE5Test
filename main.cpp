@@ -1208,7 +1208,7 @@ void PlayerUpdate(GLfloat deltaTime)
 		//Oh man I hate this
 		if (!camera.moving)
 		{
-			cursor.CheckInput(inputManager, deltaTime, camera);
+			cursor.CheckInput(inputManager, deltaTime, camera, playerManager);
 		}
 		if (!camera.moving)
 		{
