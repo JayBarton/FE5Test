@@ -55,19 +55,19 @@
           "speaker": 5,
           "location": 1,
           "portrait": 5,
-          "speech": "Does that kid have something to do with why imperial\nsoldiers have come all the way out here?<0"
+          "speech": "Does that kid have something to do with why\nimperial soldiers have come all the way out here?<0"
         },
         {
           "speaker": 2,
           "location": 0,
           "portrait": 2,
-          "speech": "Yeah, actually,\nthat kid is the prince of the fallen Leonster kingdom.<0"
+          "speech": "Yeah, actually, that kid is the prince\nof the fallen Leonster kingdom.<0"
         },
         {
           "speaker": 2,
           "location": 0,
           "portrait": 2,
-          "speech": "I've been sheltering him, sorry for keeping it from you.<0"
+          "speech": "I've been sheltering him, sorry for keeping\nit from you.<0"
         },
         {
           "speaker": 5,
@@ -79,7 +79,7 @@
           "speaker": 5,
           "location": 1,
           "portrait": 5,
-          "speech": "Well, it's fine.\nAs long as I get to fight imperial soldiers, I won't complain.<1"
+          "speech": "Well, it's fine.\nAs long as I get to fight imperial soldiers,\nI won't complain.<1"
         }
       ]
     },
@@ -103,7 +103,7 @@
           "speaker": -1,
           "location": 1,
           "portrait": 15,
-          "speech": "Oh, before you go, take this magic bracelet with you.\nI think it will be useful.<0"
+          "speech": "Oh, before you go, take this magic bracelet with\nyou. I think it will be useful.<0"
         },
         {
           "speaker": -1,
@@ -299,7 +299,7 @@
           "speaker": 4,
           "location": 0,
           "portrait": 4,
-          "speech": "\"Came here to help\"?\nYou're not going to be of any help to us<0"
+          "speech": "\"Came here to help\"?\nYou're not going to be of any help to us.<0"
         },
         {
           "speaker": 4,
@@ -317,7 +317,7 @@
           "speaker": 6,
           "location": 1,
           "portrait": 6,
-          "speech": "Who would want to come to a place like this on purpose you jerk!<1"
+          "speech": "Who would want to come to a place like this on\npurpose you jerk!<1"
         }
       ]
     },

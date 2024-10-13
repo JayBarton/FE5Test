@@ -121,6 +121,7 @@ void InfoDisplays::EnemyUse(Unit* unit, int index)
 	state = ENEMY_USE;
 	focusedUnit = unit;
 	itemToUse = index;
+	unit->SetFocus();
 }
 
 void InfoDisplays::EnemyTrade(EnemyManager* enemyManager)

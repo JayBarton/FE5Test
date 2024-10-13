@@ -17,6 +17,8 @@ struct Cursor
 	//This can probably be a map of vec2s rather than this pathPoint thing
 	std::unordered_map<glm::vec2, pathCell, vec2Hash> path;
 
+	class PlayerManager* playerManager = nullptr;
+
 	glm::vec2 previousPosition;
 	glm::vec2 movePosition;
 	glm::vec2 moveDirection;
@@ -57,7 +59,7 @@ struct Cursor
 	class Unit* focusedUnit = nullptr;
 	class Unit* selectedUnit = nullptr;
 	
-	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera, class PlayerManager& playerManager);
+	void CheckInput(class InputManager& inputManager, float deltaTime, class Camera& camera);
 	void MovementInput(InputManager& inputManager, float deltaTime);
 	bool CheckBounds(glm::vec2 pos);
 	void Move(int x, int y, bool held = false);

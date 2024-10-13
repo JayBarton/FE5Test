@@ -10,7 +10,7 @@
 #include "Settings.h"
 #include "PlayerManager.h"
 
-void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera, PlayerManager& playerManager)
+void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& camera)
 {
 	//This check insures the cursor moves properly to it's target location
 	if (moving)
@@ -154,26 +154,44 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				ResourceManager::PlaySound("cancel", -1, true);
 			}
 		}
-		else if (inputManager.isKeyPressed(SDLK_a))
+		else if(playerManager->unmovedUnits > 0)
 		{
-			playerIndex--;
-			if (playerIndex < 0)
+			if (inputManager.isKeyPressed(SDLK_a))
 			{
-				playerIndex = playerManager.units.size() - 1;
+				playerIndex--;
+				if (playerIndex < 0)
+				{
+					playerIndex = playerManager->units.size() - 1;
+				}
+				while (playerManager->units[playerIndex]->hasMoved)
+				{
+					playerIndex--;
+					if (playerIndex < 0)
+					{
+						playerIndex = playerManager->units.size() - 1;
+					}
+				}
+				SetFocus(playerManager->units[playerIndex]);
+				camera.SetMove(position);
 			}
-			SetFocus(playerManager.units[playerIndex]);
-			camera.SetMove(position);
-
-		}
-		else if (inputManager.isKeyPressed(SDLK_s))
-		{
-			playerIndex++;
-			if (playerIndex >= playerManager.units.size())
+			else if (inputManager.isKeyPressed(SDLK_s))
 			{
-				playerIndex = 0;
+				playerIndex++;
+				if (playerIndex >= playerManager->units.size())
+				{
+					playerIndex = 0;
+				}
+				while (playerManager->units[playerIndex]->hasMoved)
+				{
+					playerIndex++;
+					if (playerIndex >= playerManager->units.size())
+					{
+						playerIndex = 0;
+					}
+				}
+				SetFocus(playerManager->units[playerIndex]);
+				camera.SetMove(position);
 			}
-			SetFocus(playerManager.units[playerIndex]);
-			camera.SetMove(position);
 		}
 
 		//Movement input is all a mess
@@ -374,6 +392,7 @@ void Cursor::FinishMove()
 {
 	path.clear();
 	selectedUnit->hasMoved = true;
+	playerManager->unmovedUnits--;
 	focusedUnit = selectedUnit;
 	ClearSelected();
 	remainingMove = false;

@@ -293,6 +293,17 @@ struct TurnEvents : public Observer<int>
 			turnTransition = true;
 			turnUnit = 0;
 			currentRound++;
+			playerManager.unmovedUnits = playerManager.units.size();
+			for (int i = 0; i < playerManager.units.size(); i++)
+			{
+				if (playerManager.units[i]->carryingUnit)
+				{
+					playerManager.unmovedUnits--;
+					playerManager.units[i]->hasMoved = true;
+				}
+			}
+			cursor.playerIndex = 0;
+
 			roundSubject.notify(currentRound);
 			if (Settings::settings.autoCursor)
 			{
@@ -486,7 +497,6 @@ std::vector<IObserver*> observers;
 void loadMap(std::string nextMap);
 void loadSuspendedGame();
 
-
 void SetFadeIn(bool delay = false);
 
 std::mt19937 gen;
@@ -513,6 +523,7 @@ struct StartGameEvent : public Observer<int>
 			loadMap("2.map");
 			currentRound = 0;
 			cursor.SetFocus(playerManager.units[0]);
+			playerManager.unmovedUnits = playerManager.units.size();
 			Settings::settings.backgroundColors = Settings::settings.defaultColors;
 			Settings::settings.editedColor.resize(Settings::settings.backgroundColors.size());
 		}
@@ -524,6 +535,13 @@ struct StartGameEvent : public Observer<int>
 			if (auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y))
 			{
 				cursor.focusedUnit = tile->occupiedBy;
+			}
+			for (int i = 0; i < playerManager.units.size(); i++)
+			{
+				if (!playerManager.units[i]->hasMoved && !playerManager.units[i]->carryingUnit)
+				{
+					playerManager.unmovedUnits++;
+				}
 			}
 		}
 		camera.update();
@@ -608,7 +626,6 @@ int main(int argc, char** argv)
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/fireFragmentShader.txt", nullptr, "fire");
 	ResourceManager::LoadShader("Shaders/normalSpriteVertexShader.txt", "Shaders/circleSpriteFragmentShader.txt", nullptr, "circle");
 
-
 	SetShaderDefaults();
 
 	Text = new TextRenderer(800, 600);
@@ -631,6 +648,8 @@ int main(int argc, char** argv)
 	titleScreen->init();
 
 	camera = Camera(256, 224, 0, 0);
+
+	cursor.playerManager = &playerManager;
 
 	while (isRunning)
 	{
@@ -1208,7 +1227,7 @@ void PlayerUpdate(GLfloat deltaTime)
 		//Oh man I hate this
 		if (!camera.moving)
 		{
-			cursor.CheckInput(inputManager, deltaTime, camera, playerManager);
+			cursor.CheckInput(inputManager, deltaTime, camera);
 		}
 		if (!camera.moving)
 		{
@@ -1246,7 +1265,6 @@ void StartTurnChecks()
 		else
 		{
 			playerManager.units[turnUnit]->StartTurn(displays, &camera);
-
 			if (displays.state == NONE)
 			{
 				turnUnit++;

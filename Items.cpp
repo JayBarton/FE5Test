@@ -74,7 +74,8 @@ void ItemManager::UseItem(Unit* unit, int index)
 	switch (ID)
 	{
 	case HEAL:
-		Heal(unit, ID);
+		subject.notify(unit, ID);
+		Heal(unit, index);
 		break;
 	case HEALTH_RING:
 		subject.notify(unit, ID);
@@ -88,7 +89,6 @@ void ItemManager::UseItem(Unit* unit, int index)
 void ItemManager::Heal(Unit* unit, int index)
 {
 	//Send message to play animation of health bar filling up.
-	subject.notify(unit, index);
 	auto item = unit->inventory[index];
 	item->remainingUses--;
 	if (item->remainingUses == 0)
