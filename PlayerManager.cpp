@@ -49,6 +49,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		units[currentUnit] = newUnit;
 		currentUnit++;
 	}
+	units[1]->move = 20;
 //	units[0]->currentHP = 1;
 //	units[4]->currentHP = 1;
 /*	units[0]->currentHP = 1;
@@ -142,7 +143,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 				json mount = unit["Mount"];
 
 				newUnit->movementType = Unit::FOOT;
-				newUnit->mount = new Mount(Unit::HORSE, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
+				newUnit->mount = new Mount(Unit::FLYING, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
 				json mountProf = mount["WeaponProf"];
 				for (auto it = mountProf.begin(); it != mountProf.end(); ++it)
 				{

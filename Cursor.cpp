@@ -179,6 +179,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					}
 					SetFocus(playerManager->units[playerIndex]);
 					camera.SetMove(position);
+					ResourceManager::PlaySound("cursorMove", 1);
 				}
 				else if (inputManager.isKeyPressed(SDLK_s))
 				{
@@ -197,6 +198,7 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 					}
 					SetFocus(playerManager->units[playerIndex]);
 					camera.SetMove(position);
+					ResourceManager::PlaySound("cursorMove", 1);
 				}
 			}
 		}

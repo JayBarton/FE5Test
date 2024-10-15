@@ -954,7 +954,7 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		renderer->DrawSprite(texture, glm::vec2(turnTextX, 97), 0.0f, glm::ivec2(134, 22), glm::vec4(1, 1, 1, turnTextAlpha1));
 
 		renderer->shader = ResourceManager::GetShader("outline");
-		renderer->setUVs(turnTextUVs[turn + 4]);
+		renderer->setUVs(turnTextUVs[turn + 2]);
 
 		ResourceManager::GetShader("outline").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 

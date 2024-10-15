@@ -1586,6 +1586,8 @@ void SelectTalkMenu::SelectOption()
 	playerUnit->talkData[index].scene->activation->CheckActivation();
 	playerUnit->talkData[index] = playerUnit->talkData.back();
 	playerUnit->talkData.pop_back();
+	ResourceManager::PlaySound("select2");
+
 	ClearMenu();
 }
 
@@ -5290,7 +5292,6 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 			switch (operation)
 			{
 			case DROP:
-				movingUnit->placeUnit(dropPosition.x, dropPosition.y);
 				if (!doneHere)
 				{
 					cursor->GetRemainingMove();
@@ -5300,6 +5301,7 @@ void UnitMovement::CheckInput(InputManager& inputManager, float deltaTime)
 				{
 					cursor->Wait();
 				}
+				movingUnit->placeUnit(dropPosition.x, dropPosition.y);
 				ClearMenu();
 				break;
 			case RESCUE:

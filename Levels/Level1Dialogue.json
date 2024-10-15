@@ -407,7 +407,7 @@
           "speaker": 1,
           "location": 1,
           "portrait": 11,
-          "speech": "Additionally, we have also captured the daughter\nof the Prince's protector the knight Finn.\nThey won't be able to oppose us like this.<0"
+          "speech": "Additionally, we have also captured the daughter\nof the Prince's protector, the knight Finn.\nThey won't be able to oppose us like this.<0"
         },
         {
           "speaker": 0,
@@ -455,7 +455,7 @@
           "speaker": 4,
           "location": 1,
           "portrait": 8,
-          "speech": "Hmph....<0"
+          "speech": "Hmph...<0"
         },
         {
           "speaker": 0,

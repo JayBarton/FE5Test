@@ -309,6 +309,13 @@ struct TurnEvents : public Observer<int>
 			{
 				cursor.SetFocus(playerManager.units[0]);
 			}
+			else
+			{
+				if (auto tile = TileManager::tileManager.getTile(cursor.position.x, cursor.position.y))
+				{
+					cursor.focusedUnit = tile->occupiedBy;
+				}
+			}
 		}
 		displays.ChangeTurn(currentTurn);
 	}
@@ -949,6 +956,10 @@ int main(int argc, char** argv)
 		Draw();
 
 		fps = fpsLimiter.end();
+		if (fps < 50)
+		{
+			std::cout << fps << std::endl;
+		}
 	}
 
 	ClearMap();
@@ -1134,8 +1145,8 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	auto UITexture = ResourceManager::GetTexture("UIItems");
 	cursor.uvs = UITexture.GetUVs(208, 0, 21, 21, 2, 2, 3);
 	minimap.cursorUvs = UITexture.GetUVs(64, 0, 70, 62, 2, 1, 2);
-	terrainStatusUVs = UITexture.GetUVs(132, 64, 66, 34, 1, 1)[0];
-	nameBoxUVs = UITexture.GetUVs(0, 64, 66, 32, 2, 1);
+	terrainStatusUVs = UITexture.GetUVs(128, 64, 66, 34, 1, 1)[0];
+	nameBoxUVs = UITexture.GetUVs(304, 192, 66, 32, 3, 2);
 
 	mapTitleUV = UITexture.GetUVs(196, 132, 208, 48, 1, 1)[0];
 
@@ -1917,7 +1928,6 @@ void DrawText()
 			Texture2D test = ResourceManager::GetTexture("UIItems");
 			ResourceManager::GetShader("Nsprite").Use();
 			ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera.getCameraMatrix());
-			Renderer->setUVs(nameBoxUVs[unit->team]);
 			int yOffset = 42;
 			int textOffset = 6;
 			bool below = false;
@@ -1937,8 +1947,21 @@ void DrawText()
 			{
 				hpTextColor = glm::vec3(0.19f, 0.06f, 0.06f);
 			}
-
-			glm::vec2 drawPosition = glm::vec2(unit->sprite.getPosition()) - glm::vec2(21.0f, yOffset);
+			int uvIndex = unit->team * 3;
+			int xOffset = 21;
+			glm::vec2 drawPosition = glm::vec2(unit->sprite.getPosition());
+			if (drawPosition.x < 32)
+			{
+				xOffset = -11;
+				uvIndex += 1;
+			}
+			else if(drawPosition.x > (TileManager::tileManager.rowTiles - 3) * 16)
+			{
+				xOffset = 61;
+				uvIndex += 2;
+			}
+			drawPosition -= glm::vec2(xOffset, yOffset);
+			Renderer->setUVs(nameBoxUVs[uvIndex]);
 			Renderer->DrawSprite(test, drawPosition, 0, glm::vec2(66, 32), glm::vec4(1), false, below);
 			glm::vec2 textPosition = camera.worldToRealScreen(drawPosition + glm::vec2(5, textOffset), SCREEN_WIDTH, SCREEN_HEIGHT);
 			Text->RenderText(unit->name, textPosition.x, textPosition.y, 1, glm::vec3(0.0f));
