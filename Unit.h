@@ -210,6 +210,8 @@ struct Unit
 	int currentHP;
 	int experience = 0;
 
+	int fatigue = 0;
+
 	//Used for experience calculations
 	//Most non-promoted classes have a power of 3
 	int classPower = 3;

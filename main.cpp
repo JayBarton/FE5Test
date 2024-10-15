@@ -244,7 +244,6 @@ Minimap minimap;
 //Global
 float unitSpeed = 2.5f;
 
-int currentRound = 0;
 int currentTurn = 0;
 
 //Ugh. To handle healing units on turn transition
@@ -292,7 +291,7 @@ struct TurnEvents : public Observer<int>
 			//I'm just looping through right now, will need some different stuff set up to get heal animations playing properly
 			turnTransition = true;
 			turnUnit = 0;
-			currentRound++;
+			playerManager.currentRound++;
 			playerManager.unmovedUnits = playerManager.units.size();
 			for (int i = 0; i < playerManager.units.size(); i++)
 			{
@@ -304,7 +303,7 @@ struct TurnEvents : public Observer<int>
 			}
 			cursor.playerIndex = 0;
 
-			roundSubject.notify(currentRound);
+			roundSubject.notify(playerManager.currentRound);
 			if (Settings::settings.autoCursor)
 			{
 				cursor.SetFocus(playerManager.units[0]);
@@ -333,6 +332,18 @@ struct BattleEvents : public Observer<Unit*, Unit*>
 		{
 			displays.AddExperience(defender, attacker, battleManager.rightPosition);
 		}
+	}
+};
+
+struct PlayerWinEvent : public Observer<bool>
+{
+	virtual void onNotify(bool capturing)
+	{
+		if (capturing)
+		{
+			playerManager.totalCaptures++;
+		}
+		playerManager.totalWins++;
 	}
 };
 
@@ -528,7 +539,9 @@ struct StartGameEvent : public Observer<int>
 			gen.seed(time(nullptr));
 			//start new game
 			loadMap("2.map");
-			currentRound = 0;
+			playerManager.currentRound = 0;
+			playerManager.totalCaptures = 0;
+			playerManager.totalWins = 0;
 			cursor.SetFocus(playerManager.units[0]);
 			playerManager.unmovedUnits = playerManager.units.size();
 			Settings::settings.backgroundColors = Settings::settings.defaultColors;
@@ -1165,6 +1178,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	TurnEvents* turnEvents = new TurnEvents();
 	BattleEvents* battleEvents = new BattleEvents();
 	DeathEvent* deathEvents = new DeathEvent();
+	PlayerWinEvent* playerWinEvent = new PlayerWinEvent();
 	PostBattleEvents* postBattleEvents = new PostBattleEvents();
 	ItemEvents* itemEvents = new ItemEvents();
 	EndingEvents* endingEvents = new EndingEvents();
@@ -1174,6 +1188,8 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	observers.push_back(unitEvents);
 	observers.push_back(turnEvents);
 	observers.push_back(battleEvents);
+	observers.push_back(deathEvents);
+	observers.push_back(playerWinEvent);
 	observers.push_back(postBattleEvents);
 	observers.push_back(itemEvents);
 	observers.push_back(endingEvents);
@@ -1184,6 +1200,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	battleManager.endAttackSubject.addObserver(battleEvents);
 	battleManager.unitDiedSubject.addObserver(deathEvents);
 	battleManager.resumeMusic.addObserver(changeMusicEvents);
+	battleManager.playerWin.addObserver(playerWinEvent);
 	displays.endBattle.addObserver(postBattleEvents);
 	displays.endTurn.addObserver(changeMusicEvents);
 	playerManager.init(&gen, &distribution, unitEvents, &sceneUnits);
@@ -2114,7 +2131,9 @@ void SuspendGame()
 	json map;
 	json settings;
 	map["Level"] = currentLevel;
-	map["CurrentRound"] = currentRound;
+	map["CurrentRound"] = playerManager.currentRound;
+	map["Captures"] = playerManager.totalCaptures;
+	map["Wins"] = playerManager.totalWins;
 	map["Funds"] = playerManager.funds;
 	map["Cursor"] = json::array();
 	map["Cursor"].push_back(cursor.position.x);
@@ -2213,7 +2232,9 @@ void loadSuspendedGame()
 
 	json mapLevel = data["Map"];
 	std::string levelMap = mapLevel["Level"];
-	currentRound = mapLevel["CurrentRound"];
+	playerManager.currentRound = mapLevel["CurrentRound"];
+	playerManager.totalCaptures = mapLevel["Captures"];
+	playerManager.totalWins = mapLevel["Wins"];
 	currentLevel = mapLevel["Level"];
 	playerManager.funds = mapLevel["Funds"];
 	cursor.position = glm::vec2(mapLevel["Cursor"][0], mapLevel["Cursor"][1]);

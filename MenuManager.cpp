@@ -2296,7 +2296,14 @@ void UnitStatsViewMenu::DrawPage2()
 
 	text->RenderText(intToString(unit->getMove()), 200, 466 + adjustedOffset, 1);
 	//Fatigue
-	text->RenderText(intToString(0), 200, 508 + adjustedOffset, 1);
+	if (unit->fatigue >= 0)
+	{
+		text->RenderText(intToString(unit->fatigue), 200, 508 + adjustedOffset, 1);
+	}
+	else
+	{
+		text->RenderText("--", 171, 516 + adjustedOffset, 1);
+	}
 	//Status
 	text->RenderText("----", 153, 549 + adjustedOffset, 1);
 
@@ -3180,7 +3187,14 @@ void UnitListMenu::Draw()
 			int textY = 160 + 42 * i;
 			text->RenderText(unit->name, 106, textY, 1.0f);
 			text->RenderTextRight(intToString(unit->getMove()), 300, textY, 1, 28);
-			text->RenderTextRight("--", 350, textY, 1, 28, greenText);
+			if (unit->fatigue >= 0)
+			{
+				text->RenderTextRight(intToString(unit->fatigue), 350, textY, 1, 28, greenText);
+			}
+			else
+			{
+				text->RenderTextRight("--", 350, textY, 1, 28, greenText);
+			}
 			text->RenderText("----", 450, textY, 1);
 			if (unit->carriedUnit)
 			{
@@ -3568,6 +3582,14 @@ void UnitListMenu::SortView()
 			return a.first->getMove() > b.first->getMove();
 			});
 		break;
+	case 21:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			if (a.first->fatigue < 0 || b.first->fatigue < 0) {
+				return a.first->fatigue < b.first->fatigue;
+			}
+			return a.first->fatigue > b.first->fatigue;
+			});
+		break;
 	case 25:
 		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
 			auto aDisplay = a.first->weaponProficiencies;
@@ -3668,27 +3690,49 @@ void StatusMenu::Draw()
 
 		MenuManager::menuManager.DrawIndicator(glm::vec2(7, 137 + 16 * currentOption));
 
-		text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 0, 26, 1, 744); //Chapter Tile Goes here
-		text->RenderText("Sieze the manor's gate", 175, 91, 1); //Objective goes here
+		//So I think what I would want here ultimately would be for each unit to have an "affiliation" property,
+		//and using that I will construct vectors of references to these. When a unit dies it would have to be removed from both
+		//its team vector and its affiliation vector.
+		//Not going to bother with that right now, but it is an interesting thing to consider for the future
+		//Though only if I would want a separate affiliation from team, and who knows
+		if (currentOption == 0)
+		{
+			Texture2D portraitTexture = ResourceManager::GetTexture("Portraits");
+			Renderer->setUVs(UnitResources::portraitUVs[MenuManager::menuManager.playerManager->units[0]->portraitID][0]);
+			Renderer->DrawSprite(portraitTexture, glm::vec2(200, 144), 0, glm::vec2(48, 64), glm::vec4(1));
+
+			ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
+			SBatch Batch;
+			Batch.init();
+			Batch.begin();
+			MenuManager::menuManager.playerManager->units[0]->Draw(&Batch, glm::vec2(128, 144), true);
+			Batch.end();
+			Batch.renderBatch();
+
+			text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 450, 396, 1);
+			text->RenderText(MenuManager::menuManager.playerManager->units[0]->unitClass, 400, 439, 1);
+			text->RenderText("HP", 400, 530, 1, glm::vec3(0.69f, 0.62f, 0.49f));
+			text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->currentHP), 475, 530, 1);
+			text->RenderText("/", 500, 530, 1);
+			text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
+			text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 28);
+		}
+		else
+		{
+			text->RenderText("No leader for this army", 425, 460, 1);
+		}
 
 		text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 100, 375, 1);
 		text->RenderText("-----", 100, 431, 1);
 
-		text->RenderText(MenuManager::menuManager.playerManager->units[0]->name, 450, 396, 1);
-		text->RenderText(MenuManager::menuManager.playerManager->units[0]->unitClass, 400, 439, 1);
-		text->RenderText("HP", 400, 530, 1, glm::vec3(0.69f, 0.62f, 0.49f));
-		text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->currentHP), 475, 530, 1);
-		text->RenderText("/", 500, 530, 1);
-		text->RenderText(intToString(MenuManager::menuManager.playerManager->units[0]->maxHP), 515, 530, 1);
-		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->units[0]->level), 575, 487, 1, 28);
+		text->RenderTextCenter("Chapter 1: The Warrior of Fiana", 0, 26, 1, 744); //Chapter Tile Goes here
+		text->RenderText("Sieze the manor's gate", 175, 91, 1); //Objective goes here
 
-		ResourceManager::GetShader("sprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
-		SBatch Batch;
-		Batch.init();
-		Batch.begin();
-		MenuManager::menuManager.playerManager->units[0]->Draw(&Batch, glm::vec2(128, 144), true);
-		Batch.end();
-		Batch.renderBatch();
+		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->funds), 574, 230, 1, 70);
+		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->currentRound), 200, 230, 1, 42);
+		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->totalCaptures), 250, 187, 1, 42);
+		text->RenderTextRight(intToString(MenuManager::menuManager.playerManager->totalWins), 375, 187, 1, 42);
+
 	}
 	if (fullFadeIn || fullFadeOut)
 	{

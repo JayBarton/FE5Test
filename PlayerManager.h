@@ -9,6 +9,9 @@ struct PlayerManager : public UnitManager
 	int funds = 0;
 	int levelID = 0;
 	int unmovedUnits;
+	int currentRound = 0;
+	int totalCaptures = 0;
+	int totalWins = 0;
 
 	void init(std::mt19937* gen, std::uniform_int_distribution<int>* distribution, Observer<Unit*>* unitEvents, std::unordered_map<int, Unit*>* sceneUnits);
 	void Update(float deltaTime, int idleFrame, class InputManager& inputManager);

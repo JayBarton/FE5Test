@@ -51,6 +51,15 @@ void BattleManager::SetUp(Unit* attacker, Unit* defender, BattleStats attackerSt
 	}
 	else
 	{
+		//Leif doesn't gain fatigue. Checking that by just setting his to -1
+		if (attacker->fatigue >= 0 && attacker->fatigue < 99)
+		{
+			attacker->fatigue++;
+		}
+		if (defender->fatigue >= 0 && defender->fatigue < 99)
+		{
+			defender->fatigue++;
+		}
 		this->attackDistance = attackDistance;
 		this->attackerStats = attackerStats;
 		this->defenderStats = defenderStats;
@@ -431,7 +440,6 @@ void BattleManager::Update(float deltaTime, std::mt19937* gen, std::uniform_int_
 						else
 						{
 							EndAttack();
-
 						}
 					}
 				}
@@ -918,8 +926,12 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		if (otherUnit->currentHP <= 0)
 		{
 			otherUnit->currentHP = 0;
-			deadUnit = otherUnit;
+			deadUnit = otherUnit; //
 			battleQueue.clear();
+			if (thisUnit->team == 0)
+			{
+				playerWin.notify(capturing);
+			}
 		}
 		else
 		{

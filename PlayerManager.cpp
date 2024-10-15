@@ -49,6 +49,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		units[currentUnit] = newUnit;
 		currentUnit++;
 	}
+	units[0]->fatigue = -1;
 	units[1]->move = 20;
 //	units[0]->currentHP = 1;
 //	units[4]->currentHP = 1;
