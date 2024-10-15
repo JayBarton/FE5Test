@@ -691,11 +691,6 @@ int main(int argc, char** argv)
 				}
 				break;
 			}
-
-			if (inputManager.isKeyPressed(SDLK_ESCAPE))
-			{
-				isRunning = false;
-			}
 		}
 
 		/*if (inputManager.isKeyPressed(SDLK_f))

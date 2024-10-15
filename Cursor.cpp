@@ -154,43 +154,50 @@ void Cursor::CheckInput(InputManager& inputManager, float deltaTime, Camera& cam
 				ResourceManager::PlaySound("cancel", -1, true);
 			}
 		}
-		else if(playerManager->unmovedUnits > 0)
+		else if (!selectedUnit)
 		{
-			if (inputManager.isKeyPressed(SDLK_a))
+			if (inputManager.isKeyPressed(SDLK_ESCAPE))
 			{
-				playerIndex--;
-				if (playerIndex < 0)
-				{
-					playerIndex = playerManager->units.size() - 1;
-				}
-				while (playerManager->units[playerIndex]->hasMoved)
+				MenuManager::menuManager.AddMenu(3);
+			}
+			else if (playerManager->unmovedUnits > 0)
+			{
+				if (inputManager.isKeyPressed(SDLK_a))
 				{
 					playerIndex--;
 					if (playerIndex < 0)
 					{
 						playerIndex = playerManager->units.size() - 1;
 					}
+					while (playerManager->units[playerIndex]->hasMoved)
+					{
+						playerIndex--;
+						if (playerIndex < 0)
+						{
+							playerIndex = playerManager->units.size() - 1;
+						}
+					}
+					SetFocus(playerManager->units[playerIndex]);
+					camera.SetMove(position);
 				}
-				SetFocus(playerManager->units[playerIndex]);
-				camera.SetMove(position);
-			}
-			else if (inputManager.isKeyPressed(SDLK_s))
-			{
-				playerIndex++;
-				if (playerIndex >= playerManager->units.size())
-				{
-					playerIndex = 0;
-				}
-				while (playerManager->units[playerIndex]->hasMoved)
+				else if (inputManager.isKeyPressed(SDLK_s))
 				{
 					playerIndex++;
 					if (playerIndex >= playerManager->units.size())
 					{
 						playerIndex = 0;
 					}
+					while (playerManager->units[playerIndex]->hasMoved)
+					{
+						playerIndex++;
+						if (playerIndex >= playerManager->units.size())
+						{
+							playerIndex = 0;
+						}
+					}
+					SetFocus(playerManager->units[playerIndex]);
+					camera.SetMove(position);
 				}
-				SetFocus(playerManager->units[playerIndex]);
-				camera.SetMove(position);
 			}
 		}
 

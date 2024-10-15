@@ -3249,6 +3249,7 @@ void UnitListMenu::Draw()
 	case SKILLS:
 	{
 		pageName = "Skills";
+		text->RenderText("Skills", 450, 96, 1);
 		ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 		texture = ResourceManager::GetTexture("icons");
 		for (int i = 0; i < numberOfOptions; i++)
@@ -3567,12 +3568,32 @@ void UnitListMenu::SortView()
 		break;
 	case 25:
 		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
-			return a.first->weaponProficiencies[WeaponData::TYPE_SWORD] > b.first->weaponProficiencies[WeaponData::TYPE_SWORD];
+			auto aDisplay = a.first->weaponProficiencies;
+			auto bDisplay = b.first->weaponProficiencies;
+			if (a.first->isMounted())
+			{
+				aDisplay = a.first->mount->weaponProficiencies;
+			}
+			if (b.first->isMounted())
+			{
+				bDisplay = b.first->mount->weaponProficiencies;
+			}
+			return aDisplay[WeaponData::TYPE_SWORD] > bDisplay[WeaponData::TYPE_SWORD];
 			});
 		break;
 	case 26:
 		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
-			return a.first->weaponProficiencies[WeaponData::TYPE_LANCE] > b.first->weaponProficiencies[WeaponData::TYPE_LANCE];
+			auto aDisplay = a.first->weaponProficiencies;
+			auto bDisplay = b.first->weaponProficiencies;
+			if (a.first->isMounted())
+			{
+				aDisplay = a.first->mount->weaponProficiencies;
+			}
+			if (b.first->isMounted())
+			{
+				bDisplay = b.first->mount->weaponProficiencies;
+			}
+			return aDisplay[WeaponData::TYPE_LANCE] > bDisplay[WeaponData::TYPE_LANCE];
 			});
 		break;
 	case 27:
@@ -3613,6 +3634,11 @@ void UnitListMenu::SortView()
 	case 34:
 		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
 			return a.first->weaponProficiencies[WeaponData::TYPE_DARK] > b.first->weaponProficiencies[WeaponData::TYPE_DARK];
+			});
+		break;
+	case 36:
+		std::sort(unitData.begin(), unitData.end(), [](const auto& a, const auto& b) {
+			return a.first->skills.size() > b.first->skills.size() || ((a.first->skills.size() > 0 && b.first->skills.size() > 0) && a.first->skills[0] < b.first->skills[0]);
 			});
 		break;
 	}
