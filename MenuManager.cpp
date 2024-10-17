@@ -4602,18 +4602,20 @@ VendorMenu::VendorMenu(Cursor* Cursor, TextRenderer* Text, Camera* camera, int s
 
 	textManager.textLines.clear();
 
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Got a selection of GOOD things on\nsale, stranger.<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "This is a tool shop.\nYou buyin' or sellin'?<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya buyin'?<2", 14});
 	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "What are ya sellin'?<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Is that all stranger?<2", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Come back any time.<3", 14});
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Ahhh, I'll buy it at a HIGH price.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Hehehe, thank you.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Good choice, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not enough cash, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not enough space, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You've got nothing to sell, stranger.<2", 14 });
-	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Not interested, stranger.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Is that all?<2", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Thanks, come back any time.<3", 14});
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You sure?<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You want anything else?<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "That one look good?<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You haven't enough cash for that.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Looks like you haven't got the space.\nYou can't carry anything else.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "You ain't got nothing to sell.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "I can't buy that one.<2", 14 });
+	textManager.textLines.push_back(SpeakerText{ nullptr, 2, "Anything else to sell?<2", 14 });
+
 
 	textManager.init();
 	textManager.active = true;
@@ -4852,10 +4854,11 @@ void VendorMenu::SelectOption()
 				{
 					state = GREETING;
 					textManager.init(3);
+					ActivateText();
 				}
 				else
 				{
-					textManager.init(6);
+					textManager.init(12);
 					if (currentOption == numberOfOptions)
 					{
 						currentOption--;

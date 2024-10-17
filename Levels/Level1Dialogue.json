@@ -151,7 +151,37 @@
           "speaker": -1,
           "location": 1,
           "portrait": 18,
-          "speech": "Don't know what the fuck this old man is saying, he gives you a sword<1"
+          "speech": "We can't afford to replace weapons because\nof the high cost.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 18,
+          "speech": "I hate to say it, but capturing an enemy and\ntaking their weapons is a good idea.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 18,
+          "speech": "Look here, I took this from one of the\nimperial soldiers.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 18,
+          "speech": "...I took it from him while he was sleeping.\nHohoho.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 18,
+          "speech": "If you want this piece of junk, it's yours.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 18,
+          "speech": "If you don't need it, you can sell it to the\nshop over there. Should earn you a bit of money.<1"
         }
       ]
     },
@@ -809,7 +839,67 @@
           "speaker": -1,
           "location": 0,
           "portrait": 18,
-          "speech": "This is an alternate exchange.<0"
+          "speech": "Oh, Prince Leif, are you alright?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "I'm sorry, while you were woried about all of\nus, Nanna was...<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Nanna was what? What happened to her?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "She was captured by the imperial soliders.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "Lady Mareeta tried her best to save her,<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "but she was captured as well...<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Where were they taken after that?<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "I'm afraid I don't know...<0"
+        },
+        {
+          "speaker": -1,
+          "location": 0,
+          "portrait": 18,
+          "speech": "Oh, come to think of it, one of the soldiers\noutside said something about \"returning to\nManster\".<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Manster. I see. Okay, don't worry.<0"
+        },
+        {
+          "speaker": -1,
+          "location": 1,
+          "portrait": 0,
+          "speech": "Nanna, and Mareeta, and Eyvale too.\nI'll get everyone back!<0"
         },
         {
           "speaker": -1,
