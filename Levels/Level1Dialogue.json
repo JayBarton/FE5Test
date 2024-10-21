@@ -407,7 +407,13 @@
           "speaker": 1,
           "location": 1,
           "portrait": 11,
-          "speech": "This village was originally a bandit stronghold.\nThen, ten years ago, a travelling mercenary named\nEyvale put down the bandits and took\ncontrol of the area.<0"
+          "speech": "This village was originally a bandit stronghold.<0"
+        },
+        {
+          "speaker": 1,
+          "location": 1,
+          "portrait": 11,
+          "speech": "Then, ten years ago, a travelling mercenary named\nEyvale put down the bandits and took\ncontrol of the area.<0"
         },
         {
           "speaker": 1,
@@ -419,7 +425,7 @@
           "speaker": 0,
           "location": 0,
           "portrait": 10,
-          "speech": "Hmm...\nThat could be a small problem.<0"
+          "speech": "Hmm...\nThat could be a bit of a problem.<0"
         },
         {
           "speaker": 1,

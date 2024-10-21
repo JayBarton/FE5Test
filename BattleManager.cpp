@@ -1128,9 +1128,9 @@ void BattleManager::CalculateFinalStats(BattleStats& unitNormalStats, BattleStat
 	unitNormalStats.hitAccuracy -= enemyNormalStats.hitAvoid;
 	enemyNormalStats.hitAccuracy -= unitNormalStats.hitAvoid;
 
-	unitNormalStats.hitAccuracy = std::max(0, unitNormalStats.hitAccuracy);
+	unitNormalStats.hitAccuracy = std::min(std::max(0, unitNormalStats.hitAccuracy), 100);
 
-	enemyNormalStats.hitAccuracy = std::max(0, enemyNormalStats.hitAccuracy);
+	enemyNormalStats.hitAccuracy = std::min(std::max(0, enemyNormalStats.hitAccuracy), 100);
 
 	int unitCritEvade = unit->getLuck() / 2;
 	int enemyCritEvade = enemy->getLuck() / 2;

@@ -124,6 +124,7 @@ void TextObjectManager::init(int line/* = 0 */)
 		else
 		{
 			state = LAYER_1_FADE_IN;
+			layer1Alpha = 0;
 			fadeIn = true;
 		}
 	}
@@ -147,8 +148,13 @@ void TextObjectManager::init(int line/* = 0 */)
 	{
 		textObjects[0].boxDisplayPosition = boxStarts[0];
 		textObjects[0].boxIn = true;
+		textObjects[0].showPortrait = false;
+		textObjects[0].showBox = false;
 		textObjects[1].boxDisplayPosition = boxStarts[1];
 		textObjects[1].boxIn = true;
+		textObjects[1].showPortrait = false;
+		textObjects[1].showBox = false;
+		t = 0;
 	}
 }
 

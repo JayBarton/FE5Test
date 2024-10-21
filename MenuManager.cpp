@@ -1451,7 +1451,7 @@ void SelectTradeUnit::Draw()
 	glm::vec2 targetPosition;
 	if (tradeUnit->carryingUnit)
 	{
-		targetPosition = cursor->selectedUnit->sprite.getPosition();
+		targetPosition = tradeUnit->carryingUnit->sprite.getPosition();
 	}
 	else
 	{

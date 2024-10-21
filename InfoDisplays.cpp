@@ -910,25 +910,40 @@ void InfoDisplays::Draw(Camera* camera, TextRenderer* Text, int shapeVAO, Sprite
 		}
 		DrawBox(glm::vec2(88, boxY), 74, 34, renderer, camera);
 
-		Text->RenderText("Used " + focusedUnit->inventory[itemToUse]->name, 300, textY, 1);
-		break;
-	}
-	case ENEMY_TRADE:
-	{
-		DrawBox(glm::vec2(88, 102), 74, 34, renderer, camera);
 		ResourceManager::GetShader("Nsprite").Use();
 		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
 		auto texture = ResourceManager::GetTexture("icons");
 
 		renderer->setUVs(MenuManager::menuManager.itemIconUVs[focusedUnit->inventory[itemToUse]->ID]);
-		renderer->DrawSprite(texture, glm::vec2(96, 112), 0.0f, glm::ivec2(16));
-		Text->RenderText("Recieved " + focusedUnit->inventory[itemToUse]->name, 350, 300, 1);
+		renderer->DrawSprite(texture, glm::vec2(96, boxY+10), 0.0f, glm::ivec2(16));
+
+		Text->RenderText(focusedUnit->inventory[itemToUse]->name, 350, textY, 1);
+		break;
+	}
+	case ENEMY_TRADE:
+	{
+		DrawBox(glm::vec2(64, 102), 128, 34, renderer, camera);
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(MenuManager::menuManager.itemIconUVs[focusedUnit->inventory[itemToUse]->ID]);
+		renderer->DrawSprite(texture, glm::vec2(72, 112), 0.0f, glm::ivec2(16));
+		Text->RenderText("Recieved " + focusedUnit->inventory[itemToUse]->name, 275, 300, 1);
 		break;
 	}
 	case ENEMY_BUY:
-		DrawBox(glm::vec2(88, 102), 74, 34, renderer, camera);
-		Text->RenderText(focusedUnit->GetEquippedItem()->name, 350, 300, 1);
+	{
+		DrawBox(glm::vec2(64, 102), 128, 34, renderer, camera);
+		ResourceManager::GetShader("Nsprite").Use();
+		ResourceManager::GetShader("Nsprite").SetMatrix4("projection", camera->getOrthoMatrix());
+		auto texture = ResourceManager::GetTexture("icons");
+
+		renderer->setUVs(MenuManager::menuManager.itemIconUVs[focusedUnit->GetEquippedItem()->ID]);
+		renderer->DrawSprite(texture, glm::vec2(72, 112), 0.0f, glm::ivec2(16));
+		Text->RenderText("Bought " + focusedUnit->GetEquippedItem()->name, 275, 300, 1);
 		break;
+	}
 	case GOT_ITEM:
 	{
 		DrawBox(glm::vec2(80, 96), 90, 34, renderer, camera);
