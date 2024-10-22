@@ -50,15 +50,7 @@ void PlayerManager::LoadUnits(std::ifstream& map)
 		currentUnit++;
 	}
 	units[0]->fatigue = -1;
-	units[1]->move = 20;
-//	units[0]->currentHP = 1;
-//	units[4]->currentHP = 1;
-/*	units[0]->currentHP = 1;
-//	units[0]->build = 2;
-	units[4]->experience = 99;
-	units[4]->battleAnimations = true;
-	units[4]->currentHP = 1;
-	units[1]->move = 20;*/
+
 }
 
 Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
@@ -144,7 +136,7 @@ Unit* PlayerManager::LoadUnit(json& bases, int unitID, glm::vec2& position)
 				json mount = unit["Mount"];
 
 				newUnit->movementType = Unit::FOOT;
-				newUnit->mount = new Mount(Unit::FLYING, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
+				newUnit->mount = new Mount(Unit::HORSE, mount["AnimID"], mount["Str"], mount["Skl"], mount["Spd"], mount["Def"], mount["Mov"]);
 				json mountProf = mount["WeaponProf"];
 				for (auto it = mountProf.begin(); it != mountProf.end(); ++it)
 				{
@@ -227,6 +219,7 @@ void PlayerManager::AddUnit(int unitID, glm::vec2& position)
 
 	auto newUnit = LoadUnit(bases, unitID, position);
 	units.push_back(newUnit);
+	unmovedUnits++;
 }
 
 void PlayerManager::Draw(SpriteRenderer* Renderer)

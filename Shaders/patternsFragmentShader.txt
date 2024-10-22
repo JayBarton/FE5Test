@@ -27,8 +27,8 @@ void main()
 	}
 	else
 	{
-		vec4 tColor = mix(vec4(topColor, 1), imageColor, 0.25);
-		vec4 bColor = mix(vec4(bottomColor, 1), imageColor, 0.25);
+		vec4 tColor = mix(vec4(topColor, 1), imageColor, imageColor.r);
+		vec4 bColor = mix(vec4(bottomColor, 1), imageColor, imageColor.r);
 		
 		color = mix(tColor, bColor, TextureCoordinates.y);
 	}

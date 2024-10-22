@@ -359,6 +359,10 @@ struct DeathEvent : public Observer<Unit*>
 		{
 			auto it = std::find(playerManager.units.begin(), playerManager.units.end(), deadUnit);
 			sceneUnits.erase(deadUnit->sceneID);
+			if (currentTurn == 0 && deadUnit->hasMoved)
+			{
+				playerManager.unmovedUnits--;
+			}
 			playerManager.units.erase(it);
 			delete deadUnit;
 		}
@@ -659,10 +663,10 @@ int main(int argc, char** argv)
 
 	titleScreen = new TitleScreen();
 	titleScreen->subject.addObserver(startEvent);
-	ResourceManager::LoadTexture("TestSprites/UIItems.png", "UIItems");
-	ResourceManager::LoadTexture("TestSprites/icons.png", "icons");
-	ResourceManager::LoadTexture("TestSprites/UIStuff.png", "UIStuff");
-	ResourceManager::LoadTexture("TestSprites/testpattern.png", "testpattern");
+	ResourceManager::LoadTexture("Textures/UIItems.png", "UIItems");
+	ResourceManager::LoadTexture("Textures/icons.png", "icons");
+	ResourceManager::LoadTexture("Textures/UIStuff.png", "UIStuff");
+	ResourceManager::LoadTexture("Textures/testpattern.png", "testpattern");
 
 	MenuManager::menuManager.SetUp(&cursor, Text, &camera, shapeVAO, Renderer, &battleManager, &playerManager, &enemyManager);
 	titleScreen->init();
@@ -1081,31 +1085,31 @@ void SetShaderDefaults()
 
 void LoadEverythingElse(std::vector<IObserver*>& observers)
 {
-	ResourceManager::LoadTexture("TestSprites/Tiles.png", "tiles");
-	ResourceManager::LoadTexture2("TestSprites/sprites.png", "sprites");
-	ResourceManager::LoadTexture2("TestSprites/movesprites.png", "movesprites");
-	ResourceManager::LoadTexture("TestSprites/palette.png", "palette");
-	ResourceManager::LoadTexture("TestSprites/gameovermain.png", "GameOver1");
-	ResourceManager::LoadTexture("TestSprites/gameovertext.png", "GameOver2");
-	ResourceManager::LoadTexture("TestSprites/Portraits.png", "Portraits");
-	ResourceManager::LoadTexture("TestSprites/EndingBackground.png", "EndingBG");
-	ResourceManager::LoadTexture("TestSprites/BattleBackground.png", "BattleBG");
-	ResourceManager::LoadTexture("TestSprites/BattleFadeIn.png", "BattleFadeIn");
-	ResourceManager::LoadTexture("TestSprites/BattleLevelBackground.png", "BattleLevelBackground");
-	ResourceManager::LoadTexture("TestSprites/BattleExperienceBackground.png", "BattleExperienceBackground");
-	ResourceManager::LoadTexture("TestSprites/MapExperienceBackground.png", "MapExperienceBackground");
-	ResourceManager::LoadTexture("TestSprites/OptionsScreenBackground.png", "OptionsScreenBackground");
-	ResourceManager::LoadTexture("TestSprites/UnitViewBG.png", "UnitViewBG");
-	ResourceManager::LoadTexture("TestSprites/TradeMenuBG.png", "TradeMenuBG");
-	ResourceManager::LoadTexture("TestSprites/StatusMenuBG.png", "StatusMenuBG");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/page1lower.png", "page1lower");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/page2lower.png", "page2lower");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/unitViewUpper.png", "unitViewUpper");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBackground.png", "TextBackground");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/TextBorder.png", "TextBorder");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/VendorBackground.png", "VendorBackground");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/BattleSceneBoxes.png", "BattleSceneBoxes");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/EnemySelectBackground.png", "EnemySelectBackground");
+	ResourceManager::LoadTexture("Textures/Tiles.png", "tiles");
+	ResourceManager::LoadTexture2("Textures/sprites.png", "sprites");
+	ResourceManager::LoadTexture2("Textures/movesprites.png", "movesprites");
+	ResourceManager::LoadTexture("Textures/palette.png", "palette");
+	ResourceManager::LoadTexture("Textures/gameovermain.png", "GameOver1");
+	ResourceManager::LoadTexture("Textures/gameovertext.png", "GameOver2");
+	ResourceManager::LoadTexture("Textures/Portraits.png", "Portraits");
+	ResourceManager::LoadTexture("Textures/EndingBackground.png", "EndingBG");
+	ResourceManager::LoadTexture("Textures/BattleBackground.png", "BattleBG");
+	ResourceManager::LoadTexture("Textures/BattleFadeIn.png", "BattleFadeIn");
+	ResourceManager::LoadTexture("Textures/BattleLevelBackground.png", "BattleLevelBackground");
+	ResourceManager::LoadTexture("Textures/BattleExperienceBackground.png", "BattleExperienceBackground");
+	ResourceManager::LoadTexture("Textures/MapExperienceBackground.png", "MapExperienceBackground");
+	ResourceManager::LoadTexture("Textures/OptionsScreenBackground.png", "OptionsScreenBackground");
+	ResourceManager::LoadTexture("Textures/UnitViewBG.png", "UnitViewBG");
+	ResourceManager::LoadTexture("Textures/TradeMenuBG.png", "TradeMenuBG");
+	ResourceManager::LoadTexture("Textures/StatusMenuBG.png", "StatusMenuBG");
+	ResourceManager::LoadTexture("Textures/Backgrounds/page1lower.png", "page1lower");
+	ResourceManager::LoadTexture("Textures/Backgrounds/page2lower.png", "page2lower");
+	ResourceManager::LoadTexture("Textures/Backgrounds/unitViewUpper.png", "unitViewUpper");
+	ResourceManager::LoadTexture("Textures/Backgrounds/TextBackground.png", "TextBackground");
+	ResourceManager::LoadTexture("Textures/Backgrounds/TextBorder.png", "TextBorder");
+	ResourceManager::LoadTexture("Textures/Backgrounds/VendorBackground.png", "VendorBackground");
+	ResourceManager::LoadTexture("Textures/Backgrounds/BattleSceneBoxes.png", "BattleSceneBoxes");
+	ResourceManager::LoadTexture("Textures/Backgrounds/EnemySelectBackground.png", "EnemySelectBackground");
 
 	ResourceManager::LoadSound("Sounds/cursormove.wav", "cursorMove");
 	ResourceManager::LoadSound("Sounds/heldCursorMove.wav", "heldCursorMove");
@@ -2615,7 +2619,7 @@ void loadSuspendedGame()
 	//	camera.setScale(2.0f);
 	camera.update();
 	f.close();
-	//std::remove("suspendData.json");
+	std::remove("suspendData.json");
 }
 
 void SetFadeIn(bool delay)

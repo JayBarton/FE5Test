@@ -72,10 +72,9 @@ void main(void)
 		texCoord.y = mod(texCoord.y * imageScale.y, sheetScale.y);
 		
 		vec4 imageColor = texture(image2, texCoord);
-		
-		vec4 tColor = mix(vec4(topColor, 1), imageColor, 0.25);
-		vec4 bColor = mix(vec4(bottomColor, 1), imageColor, 0.25);
-		
+		vec4 tColor = mix(vec4(topColor, 1), imageColor, imageColor.r);
+		vec4 bColor = mix(vec4(bottomColor, 1), imageColor, imageColor.r);
+			
 		gl_FragColor = mix(tColor, bColor, backgroundTexCoords.y);
 	//	gl_FragColor = texture2D(image2, TextureCoordinates);
 	}

@@ -12,10 +12,10 @@
 
 void TitleScreen::init()
 {
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/Title1.png", "Title1");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/Title2.png", "Title2");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/Title3.png", "Title3");
-	ResourceManager::LoadTexture("TestSprites/Backgrounds/TitleButton.png", "TitleButton");
+	ResourceManager::LoadTexture("Textures/Backgrounds/Title1.png", "Title1");
+	ResourceManager::LoadTexture("Textures/Backgrounds/Title2.png", "Title2");
+	ResourceManager::LoadTexture("Textures/Backgrounds/Title3.png", "Title3");
+	ResourceManager::LoadTexture("Textures/Backgrounds/TitleButton.png", "TitleButton");
 
 	ResourceManager::LoadMusic("Sounds/TitleScreen.ogg", "TitleScreen");
 	//Need to load these here since they're used in the menu
