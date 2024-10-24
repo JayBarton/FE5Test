@@ -121,6 +121,7 @@ void ResourceManager::PlayMusic(std::string name, int loop)
 {
     if (Settings::settings.music)
     {
+        Mix_HaltMusic();
         Mix_PlayMusic(Music[name], loop);
         currentSong = name;
     }
@@ -141,6 +142,7 @@ void ResourceManager::PlayMusic(std::string name, std::string next)
 
 void ResourceManager::PlayNextSong()
 {
+    Mix_HaltMusic();
     Mix_PlayMusic(Music[nextSong], -1);
     currentSong = nextSong;
     nextSong = "";

@@ -1227,10 +1227,6 @@ void SelectWeaponMenu::SelectOption()
 		}
 	}
 	auto enemyUnits = unitsToAttack[currentOption];
-	for (int i = 0; i < unitsToAttack[currentOption].size(); i++)
-	{
-		std::cout << enemyUnits[i]->name << std::endl;
-	}
 	Menu* newMenu = new SelectEnemyMenu(cursor, text, camera, shapeVAO, Renderer, enemyUnits, selectedWeapon, capturing);
 	MenuManager::menuManager.menus.push_back(newMenu);
 }
@@ -1343,7 +1339,6 @@ void SelectEnemyMenu::Draw()
 void SelectEnemyMenu::SelectOption()
 {
 	ResourceManager::PlaySound("select2");
-	std::cout << unitsToAttack[currentOption]->name << std::endl;
 	cursor->selectedUnit->equipWeapon(selectedWeapon);
 	MenuManager::menuManager.battleManager->SetUp(cursor->selectedUnit, unitsToAttack[currentOption], unitNormalStats, enemyNormalStats, attackDistance, enemyCanCounter, *camera, false, capturing);
 	cursor->MoveUnitToTile();
@@ -2267,7 +2262,14 @@ void UnitStatsViewMenu::DrawPage2()
 	text->RenderText("Status", 25, 549 + adjustedOffset, 1);
 
 	//Leader
-	text->RenderText("Leif", 150, 291 + adjustedOffset, 1);
+	if (unit->team == 0)
+	{
+		text->RenderText("Leif", 150, 291 + adjustedOffset, 1);
+	}
+	else
+	{
+		text->RenderText("---", 150, 291 + adjustedOffset, 1);
+	}
 
 	if (unit->carriedUnit)
 	{
@@ -4550,7 +4552,8 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 			{
 				if (!Mix_PlayingMusic())
 				{
-					ResourceManager::PlayMusic("PlayerTurn"); //This needs to do something to determine the correct music
+					MenuManager::menuManager.resumeMusicSubject.notify();
+				//	ResourceManager::PlayMusic("PlayerTurn"); //This needs to do something to determine the correct music
 				}
 			}
 			else

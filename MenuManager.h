@@ -635,6 +635,7 @@ struct MenuManager
 
 	Subject<int> subject;
 	Subject<> endingSubject;
+	Subject<> resumeMusicSubject;
 	Subject<int> suspendSubject;
 	Subject<Unit*> unitDiedSubject;
 

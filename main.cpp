@@ -515,6 +515,15 @@ struct ChangeMusicEvent : public Observer<int>
 		}
 	}
 };
+
+struct ResumeMusicEvent : public Observer<>
+{
+	virtual void onNotify()
+	{
+		PlayerTurnMusic();
+	}
+};
+
 std::vector<IObserver*> observers;
 void loadMap(std::string nextMap);
 void loadSuspendedGame();
@@ -701,10 +710,6 @@ int main(int argc, char** argv)
 				break;
 			case SDL_KEYUP:
 				inputManager.releaseKey(event.key.keysym.sym);
-				break;
-			case SDL_MOUSEWHEEL:
-				//Not keeping this, just need it to get a sense of size
-				camera.setScale(glm::clamp(camera.getScale() + event.wheel.y * 0.1f, 0.3f, 4.5f));
 				break;
 
 			case SDL_WINDOWEVENT:
@@ -1188,6 +1193,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	EndingEvents* endingEvents = new EndingEvents();
 	SuspendEvent* suspendEvents = new SuspendEvent();
 	ChangeMusicEvent* changeMusicEvents = new ChangeMusicEvent();
+	ResumeMusicEvent* resumeMusicEvent = new ResumeMusicEvent();
 
 	observers.push_back(unitEvents);
 	observers.push_back(turnEvents);
@@ -1199,6 +1205,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	observers.push_back(endingEvents);
 	observers.push_back(suspendEvents);
 	observers.push_back(changeMusicEvents);
+	observers.push_back(resumeMusicEvent);
 
 	ItemManager::itemManager.subject.addObserver(itemEvents);
 	battleManager.endAttackSubject.addObserver(battleEvents);
@@ -1216,6 +1223,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	MenuManager::menuManager.endingSubject.addObserver(endingEvents);
 	MenuManager::menuManager.suspendSubject.addObserver(suspendEvents);
 	MenuManager::menuManager.unitDiedSubject.addObserver(deathEvents);
+	MenuManager::menuManager.resumeMusicSubject.addObserver(resumeMusicEvent);
 	enemyManager.subject.addObserver(turnEvents);
 	enemyManager.unitEscapedSubject.addObserver(deathEvents);
 	enemyManager.displays = &displays;

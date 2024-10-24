@@ -843,16 +843,13 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 		if (battleQueue[0].vantageAttack)
 		{
 			battleQueue[0].vantageAttack = false;
-			std::cout << foe->name << " activates vantage\n";
 		}
-		std::cout << thisUnit->name << " activates vantage\n";
 	}
 	auto crit = theseStats.hitCrit;
 	auto accuracy = theseStats.hitAccuracy;
 	//wrong, pass in the defense to the function
 	if (attack.wrathAttack)
 	{
-		std::cout << thisUnit->name << " activates wrath\n";
 		crit = 100;
 		accuracy = 100;
 	}
@@ -865,7 +862,6 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 		{
 			//prayer roll
 			auto roll = (*distribution)(*gen);
-			std::cout << "Prayer roll" << roll << std::endl;
 			if (roll <= foe->getLuck() * 3)
 			{
 				theseStats.hitAccuracy = 0;
@@ -884,7 +880,6 @@ void BattleManager::PreBattleChecks(Unit* thisUnit, BattleStats& theseStats, Uni
 void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy, int crit, BattleStats& theseStats, Attack& attack, int foeDefense, std::uniform_int_distribution<int>* distribution, std::mt19937* gen)
 {
 	auto roll = (*distribution)(*gen);
-	std::cout << "roll " << roll << std::endl;
 	//Do roll to determine if hit
 	if (roll <= accuracy)
 	{
@@ -901,7 +896,6 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 			else
 			{
 				roll = (*distribution)(*gen);
-				std::cout << "crit roll " << roll << std::endl;
 				if (roll <= crit)
 				{
 					critFactor = 2;
@@ -919,8 +913,6 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 		dealtDamage -= foeDefense;
 		thisUnit->GetEquippedItem()->remainingUses--;
 		otherUnit->TakeDamage(dealtDamage);
-
-		std::cout << thisUnit->name << " Attacks\n";
 
 		//Need to figure this out
 		if (otherUnit->currentHP <= 0)
@@ -940,11 +932,8 @@ void BattleManager::DoBattleAction(Unit* thisUnit, Unit* otherUnit, int accuracy
 			if (thisUnit->hasSkill(Unit::CONTINUE) && !attack.continuedAttack)
 			{
 				auto roll = (*distribution)(*gen);
-				std::cout << "continue roll " << roll << std::endl;
 				if (roll <= theseStats.attackSpeed * 2)
 				{
-					std::cout << thisUnit->name << " continues " << std::endl;
-
 					battleQueue.insert(battleQueue.begin(), Attack{ attack.firstAttacker, 1 });
 				}
 			}
