@@ -24,6 +24,10 @@ struct TitleScreen
 
 	void init();
 
+	void TitleStart();
+
+	void InitialLoad();
+
 	void Update(float deltaTime, InputManager& inputManager);
 
 	void Draw(SpriteRenderer* Renderer, TextRenderer* Text, Camera& camera);

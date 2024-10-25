@@ -749,7 +749,7 @@ int main(int argc, char** argv)
 				cursor.ClearTiles();
 				titleScreen = new TitleScreen();
 				titleScreen->subject.addObserver(startEvent);
-				titleScreen->init();
+				titleScreen->TitleStart();
 				SetShaderDefaults();
 				returningToMenu = false;
 				fadeAlpha = 0.0f;

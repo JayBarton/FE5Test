@@ -156,6 +156,7 @@
     <ClInclude Include="PathFinder.h" />
     <ClInclude Include="PlayerManager.h" />
     <ClInclude Include="RangeBatch.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SATCollision.h" />
     <ClInclude Include="SBatch.h" />
@@ -219,6 +220,12 @@
     <None Include="BaseStats.json" />
     <None Include="Levels\GameOverDialogues.json" />
     <None Include="Levels\Level1Dialogue.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FE5Test.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="FE5.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
