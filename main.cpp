@@ -552,7 +552,7 @@ struct StartGameEvent : public Observer<int>
 		{
 			gen.seed(time(nullptr));
 			//start new game
-			loadMap("2.map");
+			loadMap("1.map");
 			playerManager.currentRound = 0;
 			playerManager.totalCaptures = 0;
 			playerManager.totalWins = 0;
