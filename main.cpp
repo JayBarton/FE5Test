@@ -269,6 +269,7 @@ struct TurnEvents : public Observer<int>
 {
 	virtual void onNotify(int ID)
 	{
+		ResourceManager::nextSong = "";
 		Mix_HookMusicFinished(nullptr);
 		Mix_FadeOutMusic(500.0f);
 		if (ID == 0)

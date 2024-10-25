@@ -98,6 +98,8 @@ void TextObjectManager::init(int line/* = 0 */)
 		textObjects[i].displayedText = "";
 		textObjects[i].index = 0;
 	}
+	frame = 0;
+	frameDirection = 1;
 	currentLine = line;
 	auto thisLine = textLines[currentLine];
 	focusedObject = thisLine.location;
@@ -150,10 +152,12 @@ void TextObjectManager::init(int line/* = 0 */)
 		textObjects[0].boxIn = true;
 		textObjects[0].showPortrait = false;
 		textObjects[0].showBox = false;
+		textObjects[0].frame = 0;
 		textObjects[1].boxDisplayPosition = boxStarts[1];
 		textObjects[1].boxIn = true;
 		textObjects[1].showPortrait = false;
 		textObjects[1].showBox = false;
+		textObjects[1].frame = 0;
 		t = 0;
 	}
 }

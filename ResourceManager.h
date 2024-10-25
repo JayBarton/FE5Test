@@ -61,6 +61,9 @@ public:
 
     // Properly de-allocates all loaded resources
     static void      Clear();
+
+    static std::string nextSong;
+
 private:
     // Private constructor, that is we do not want any actual resource manager objects. Its members and functions should be publicly available (static).
     ResourceManager() { }
@@ -70,7 +73,6 @@ private:
     static Texture2D loadTextureFromFile(const GLchar *file);
     static Texture2D loadTextureFromFile2(const GLchar *file);
 
-    static std::string nextSong;
     static std::string currentSong;
     static std::string pausedSong;
     static std::string pausedNextSong;
