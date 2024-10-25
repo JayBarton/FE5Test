@@ -1142,6 +1142,7 @@ void LoadEverythingElse(std::vector<IObserver*>& observers)
 	ResourceManager::LoadSound("Sounds/nodamage.wav", "nodamage");
 	ResourceManager::LoadSound("Sounds/battleTransition.wav", "battleTransition");
 	ResourceManager::LoadSound("Sounds/experience.wav", "experience");
+	ResourceManager::LoadSound("Sounds/noGood.wav", "noGood");
 
 	ResourceManager::LoadMusic("Sounds/Map1.ogg", "PlayerTurn");
 	ResourceManager::LoadMusic("Sounds/Map2.1.ogg", "EnemyTurnStart");

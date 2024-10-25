@@ -158,6 +158,8 @@ struct ItemUseMenu : public Menu
 	ItemOptionsMenu* previous;
 
 	bool canUse = false;
+	//Used for cases where the item is not usable under the current circumstances
+	bool useBlocked = false;
 	bool canEquip = false;
 };
 

@@ -206,7 +206,6 @@ void Menu::DrawPattern(glm::vec2 size, glm::vec2 pos, bool gray)
 	ResourceManager::GetShader("patterns").SetInteger("index", patternID);
 
 	ResourceManager::GetShader("patterns").SetVector2f("scale", size / glm::vec2(64, 32));
-	//ResourceManager::GetShader("patterns").SetVector2f("sheetScale", glm::vec2(64, 32) / glm::vec2(128, 32));
 
 	auto patternTexture = ResourceManager::GetTexture("testpattern");
 
@@ -282,6 +281,7 @@ void UnitOptionsMenu::SelectOption()
 		//Have a bug here where since the weapon array does not reorder on reequip, this can put things in an odd ordering
 		//If I have weapon A equipped and it is a valid weapon, it should be the first in my list. But it is possible weapon B will be first if it is
 		//First in this list. Need to resolve this.
+		//I think this has actually been resolved and I just forgot to remove this comment. Keeping it here in case it comes up again.
 		auto playerWeapons = playerUnit->GetOrderedWeapons();
 		for (int i = 0; i < playerWeapons.size(); i++)
 		{
@@ -431,7 +431,6 @@ void UnitOptionsMenu::SelectOption()
 		break;
 	}
 	case SEIZE:
-		//Message
 		MenuManager::menuManager.endingSubject.notify();
 		ClearMenu();
 		break;
@@ -441,7 +440,6 @@ void UnitOptionsMenu::SelectOption()
 		MenuManager::menuManager.menus.push_back(newMenu);
 		break;
 	}
-	//Wait
 	default:
 		cursor->Wait();
 		ResourceManager::PlaySound("select2");
@@ -491,8 +489,6 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
 	MenuManager::menuManager.DrawIndicator(glm::vec2(xIndicator, 57 + (16 * currentOption)), animate);
 
-	//Just a little test with new line
-	std::string commands = "";
 	if (canSeize)
 	{
 		text->RenderText("Seize", xText, yOffset, 1);
@@ -505,7 +501,6 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 	}
 	if (canAttack)
 	{
-		commands += "Attack\n";
 		text->RenderText("Attack", xText, yOffset, 1);
 		yOffset += 42;
 	}
@@ -549,7 +544,6 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 	}
 	if (hasItems)
 	{
-		commands += "Items\n";
 		text->RenderText("Items", xText, yOffset, 1);
 		yOffset += 42;
 	}
@@ -560,13 +554,11 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 	}
 	if (canDismount)
 	{
-		commands += "Dismount\n";
 		text->RenderText("Dismount", xText, yOffset, 1);
 		yOffset += 42;
 	}
 	else if (canMount)
 	{
-		commands += "Mount\n";
 		text->RenderText("Mount", xText, yOffset, 1);
 		yOffset += 42;
 	}
@@ -575,9 +567,7 @@ void UnitOptionsMenu::DrawMenu(bool animate)
 		text->RenderText("Animation", xText, yOffset, 1);
 		yOffset += 42;
 	}
-	commands += "Wait";
 	text->RenderText("Wait", xText, yOffset, 1);
-	//Text->RenderText(commands, xText, 100, 1);
 }
 
 void UnitOptionsMenu::GetOptions()
@@ -974,7 +964,6 @@ void ItemUseMenu::Draw()
 
 void ItemUseMenu::DrawMenu(bool animate)
 {
-
 	DrawBox(glm::vec2(152, 72), 50, 18 + numberOfOptions * 16);
 
 	ResourceManager::GetShader("Nsprite").Use().SetMatrix4("projection", camera->getOrthoMatrix());
@@ -984,9 +973,15 @@ void ItemUseMenu::DrawMenu(bool animate)
 	auto inventory = unit->inventory;
 	previous->DrawItemWindow(inventory, unit);
 	int yOffset = 225;
+	glm::vec3 grey = glm::vec3(0.64);
+	glm::vec3 color = glm::vec3(1);
 	if (canUse)
 	{
-		text->RenderText("Use", 525, yOffset, 1);
+		if (useBlocked)
+		{
+			color = grey;
+		}
+		text->RenderText("Use", 525, yOffset, 1, color);
 		yOffset += 42;
 	}
 	if (canEquip)
@@ -994,8 +989,7 @@ void ItemUseMenu::DrawMenu(bool animate)
 		text->RenderText("Equip", 525, yOffset, 1);
 		yOffset += 42;
 	}
-	glm::vec3 grey = glm::vec3(0.64);
-	glm::vec3 color = glm::vec3(1);
+	color = glm::vec3(1);
 	if (!item->canDrop)
 	{
 		color = grey;
@@ -1005,14 +999,22 @@ void ItemUseMenu::DrawMenu(bool animate)
 
 void ItemUseMenu::SelectOption()
 {
-	ResourceManager::PlaySound("select2");
 	switch (optionsVector[currentOption])
 	{
 	case USE:
-		ItemManager::itemManager.UseItem(cursor->selectedUnit, inventoryIndex);
-		ClearMenu();
+		if (useBlocked)
+		{
+			ResourceManager::PlaySound("noGood");
+		}
+		else
+		{
+			ResourceManager::PlaySound("select2");
+			ItemManager::itemManager.UseItem(cursor->selectedUnit, inventoryIndex);
+			ClearMenu();
+		}
 		break;
 	case EQUIP:
+		ResourceManager::PlaySound("select2");
 		cursor->selectedUnit->equipWeapon(inventoryIndex);
 		MenuManager::menuManager.PreviousMenu();
 		MenuManager::menuManager.PreviousMenu();
@@ -1021,12 +1023,13 @@ void ItemUseMenu::SelectOption()
 	case DROP:
 		if (item->canDrop)
 		{
+			ResourceManager::PlaySound("select2");
 			Menu* newMenu = new DropConfirmMenu(cursor, text, camera, shapeVAO, Renderer, inventoryIndex);
 			MenuManager::menuManager.menus.push_back(newMenu);
 		}
 		else
 		{
-			//ResourceManager::PlaySound("no good"); //Play the sound when you cannot drop the item. Yep, it plays both this and the select
+			ResourceManager::PlaySound("noGood"); //Play the sound when you cannot drop the item. Yep, it plays both this and the select
 		}
 		break;
 	default:
@@ -1051,6 +1054,14 @@ void ItemUseMenu::GetOptions()
 	if (item->useID >= 0)
 	{
 		optionsVector.push_back(USE);
+		if(item->useID == 2)
+		{ 
+			useBlocked = true;
+		}
+		else if (item->useID == 0 && cursor->selectedUnit->currentHP == cursor->selectedUnit->maxHP)
+		{
+			useBlocked = true;
+		}
 		canUse = true;
 	}
 	if (item->isWeapon)
@@ -2746,8 +2757,6 @@ void SelectRescueUnit::SelectOption()
 	TileManager::tileManager.removeUnit(rescuedUnit->sprite.getPosition().x, rescuedUnit->sprite.getPosition().y);
 	Menu* newMenu = new UnitMovement(cursor, text, camera, shapeVAO, Renderer, rescuedUnit, playerUnit, 0);
 	MenuManager::menuManager.menus.push_back(newMenu);
-	//playerUnit->carryUnit(rescuedUnit);
-	//rescuedUnit->hasMoved = false;
 }
 
 void SelectRescueUnit::GetOptions()
@@ -3906,10 +3915,10 @@ void OptionsMenu::Draw()
 		xOffset += selectionXStart + text->GetTextWidth("1", 1) + 50;
 		RenderText("2", xOffset, 693 - (yOffset), 1, Settings::settings.backgroundPattern == 1);
 
-		text->RenderText("Window Color", optionNameX, 757 - (yOffset), 1); //757
+		text->RenderText("Window Color", optionNameX, 757 - (yOffset), 1);
 
-		text->RenderText("Upper", optionNameX + 50, 777 - (yOffset), 1); //42 diff
-		text->RenderText("Lower", optionNameX + 50, 841 - (yOffset), 1); //62 diff was 799
+		text->RenderText("Upper", optionNameX + 50, 777 - (yOffset), 1);
+		text->RenderText("Lower", optionNameX + 50, 841 - (yOffset), 1);
 
 		RenderText("Default", selectionXStart, 930 - (yOffset), 1, Settings::settings.editedColor[patternID]);
 
@@ -4553,7 +4562,6 @@ void OptionsMenu::CheckInput(InputManager& inputManager, float deltaTime)
 				if (!Mix_PlayingMusic())
 				{
 					MenuManager::menuManager.resumeMusicSubject.notify();
-				//	ResourceManager::PlayMusic("PlayerTurn"); //This needs to do something to determine the correct music
 				}
 			}
 			else
@@ -4731,7 +4739,7 @@ void VendorMenu::Draw()
 			}
 			else
 			{
-				currentItem = *buyer->inventory[currentOption]; //Need a way to handle 
+				currentItem = *buyer->inventory[currentOption];
 			}
 			int yPosition = 246;
 			if (currentItem.isWeapon)
@@ -4788,14 +4796,15 @@ void VendorMenu::SelectOption()
 			{
 				textManager.init(2);
 				state = SELLING;
+				ResourceManager::PlaySound("select2");
 			}
 			else
 			{
 				textManager.init(10);
-				//cancel sound
+				ResourceManager::PlaySound("noGood");
 			}
 		}
-		ResourceManager::PlaySound("select2");
+		
 		shopDelay = true;
 		ActivateText();
 		break;
@@ -4806,32 +4815,36 @@ void VendorMenu::SelectOption()
 		if (MenuManager::menuManager.playerManager->funds < items[vendor->items[currentOption]].value)
 		{
 			textManager.init(8);
+			ResourceManager::PlaySound("noGood");
 		}
 		else if (buyer->inventory.size() == 8)
 		{
 			textManager.init(9);
+			ResourceManager::PlaySound("noGood");
 		}
 		else
 		{
 			state = CONFIRMING;
 			confirm = true;
 			textManager.init(7);
+			ResourceManager::PlaySound("select2");
 		}
-		ResourceManager::PlaySound("select2");
+
 		break;
 	}
 	case SELLING:
 		if (buyer->inventory[currentOption]->value == 0)
 		{
 			textManager.init(11);
+			ResourceManager::PlaySound("noGood");
 		}
 		else
 		{
 			textManager.init(5);
 			state = CONFIRMING;
 			confirm = true;
+			ResourceManager::PlaySound("select2");
 		}
-		ResourceManager::PlaySound("select2");
 		break;
 	case CONFIRMING:
 		if (confirm)
@@ -5122,7 +5135,6 @@ void FullInventoryMenu::Draw()
 	}
 	if (focusedItem.isWeapon)
 	{
-		//temp
 		selectedStats = cursor->selectedUnit->CalculateBattleStats(focusedItem.ID);
 
 		int offSet = 42;
@@ -5270,7 +5282,6 @@ UnitMovement::UnitMovement(Cursor* Cursor, TextRenderer* Text, Camera* camera, i
 		movingUnit->hasMoved = false;
 		
 		playerUnit->releaseUnit();
-	//	movingUnit->sprite.SetPosition(playerUnit->sprite.getPosition());
 		std::vector<glm::ivec2> path = { dropPosition, playerUnit->sprite.getPosition() };
 		movingUnit->startMovement(path, 0, false);
 	}

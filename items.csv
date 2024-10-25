@@ -1,12 +1,12 @@
 :ID:name:maxUses:useID:isWeapon:canDrop:description:value
 0:0:Vulnerary:3:0::1:Heals all HP:600
 1:1:Iron Sword:40:-1:1:1::2200
-2:2:Light Brand:60:0:1::Heals all HP\nRanged, Luck+10:0
+2:2:Light Brand:60:0:1::Heals all all HP\nRanged, Luck+10:0
 3:3:Iron Bow:40:-1:1:1:Effective against\nflying enemies:2200
 4:4:Short Bow:20:-1:1:1:Effective against\nflying enemies:800
 5:5:Iron Blade:30:-1:1:1::2000
 6:6:Flame Sword:40:-1:1:1:Casts Fire at range\nMag+5:8200
-7:7:Door Key:1:1::1:Opens doors:500
+7:7:Door Key:1:2::1:Opens doors:500
 8:8:Iron Axe:30:-1:1:1::1100
 9:9:Brave Lance:60:-1:1:1:Consecutive Attacks\nLuck+10:0
 10:10:Short Lance:20:-1:1:1::800
@@ -14,7 +14,7 @@
 12:12:Long Sword:30:-1:1:1::1400
 13:13:Steel Axe:25:-1:1:1::1700
 14:14:Hammer:20:-1:1:1:Effective against\narmored enemies:1200
-15:15:Hand Axe:20:-1:1:1:Can attack at range:1000
-16:16:Bhuj:60:-1:1:1:Can attack at range:0
+15:15:Hand Axe:20:-1:1:1:Can attack at Range:1000
+16:16:Bhuj:60:-1:1:1:Can attack at Range:0
 17:17:Brave Axe:60:-1:1:1:Consecutive Attacks:0
 18:18:Life Ring:1:1::1:Gives HP+7\nVanishes when\nused.:8000
